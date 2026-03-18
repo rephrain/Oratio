@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: oratio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: oratio
+      POSTGRES_USER: oratio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oratio_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oratio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: oratio-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://oratio:${POSTGRES_PASSWORD:-oratio_secret}@db:5432/oratio
+      JWT_SECRET: ${JWT_SECRET}
+      SATUSEHAT_ENV: ${SATUSEHAT_ENV:-staging}
+      SATUSEHAT_CLIENT_ID: ${SATUSEHAT_CLIENT_ID}
+      SATUSEHAT_CLIENT_SECRET: ${SATUSEHAT_CLIENT_SECRET}
+      SATUSEHAT_ORG_ID: ${SATUSEHAT_ORG_ID}
+      SNOWSTORM_BASE_URL: ${SNOWSTORM_BASE_URL}
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:

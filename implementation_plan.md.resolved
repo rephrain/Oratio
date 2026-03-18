@@ -1,0 +1,477 @@
+# Oratio Dental – Medical Recording Web Application (v2)
+
+A SvelteKit web application for dental healthcare medical recording with three roles (Admin, Kasir, Dokter), integrating SatuSehat APIs and Snowstorm SNOMED-CT terminology. Deployed via Docker on Synology NAS.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Environment Configuration**: Defaults to **Staging** SatuSehat credentials. Production activated via `SATUSEHAT_ENV=production`.
+
+> [!IMPORTANT]
+> **Tech Stack**: Drizzle ORM, `jose` (JWT), `pdfmake` (PDF), `papaparse` (CSV), `chart.js` (doctor analytics), custom SVG odontogram.
+
+> [!WARNING]
+> **Credentials**: SatuSehat secrets stored in `.env` / Docker secrets only — **never committed to git**.
+
+> [!CAUTION]
+> **No HTTPS**: LAN-only (`192.168.100.118`). Add HTTPS reverse proxy if ever exposed to WAN.
+
+---
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Synology NAS (192.168.100.118)"
+        subgraph "Docker (Portainer)"
+            APP["SvelteKit App<br/>Node.js Container<br/>Port 3000"]
+            DB["PostgreSQL 16<br/>Container<br/>Port 5432"]
+        end
+    end
+
+    subgraph "External APIs"
+        SS["SatuSehat API<br/>(Staging/Production)"]
+        SNOW["Snowstorm<br/>SNOMED-CT Server"]
+    end
+
+    BROWSER["Browser (LAN)"] --> APP
+    APP --> DB
+    APP --> SS
+    APP --> SNOW
+```
+
+### Project Directory Structure
+
+```
+C:\Users\rephr\.gemini\antigravity\scratch\oratio-dental\
+├── .env / .env.example
+├── docker-compose.yml / Dockerfile
+├── package.json / svelte.config.js / vite.config.js
+├── drizzle.config.ts
+├── drizzle/
+│   ├── migrations/
+│   └── seed.js
+├── static/fonts/
+├── src/
+│   ├── app.html / app.css
+│   ├── hooks.server.js
+│   ├── lib/
+│   │   ├── server/
+│   │   │   ├── db/ (index.js, schema.js)
+│   │   │   ├── auth.js / satusehat.js / snowstorm.js
+│   │   │   ├── pdf.js / csv.js / cron.js
+│   │   ├── stores/auth.js
+│   │   ├── components/
+│   │   │   ├── Layout/ (Sidebar, Header, AppShell)
+│   │   │   ├── Odontogram/ (ToothDiagram, OdontogramChart, ToothDetailModal)
+│   │   │   ├── Forms/ (PatientForm, SOAPForm, SOAPWHOForm, PaymentForm, SearchableSelect)
+│   │   │   ├── Tables/ (DataTable, AppointmentList)
+│   │   │   ├── Charts/ (EncounterChart, TreatmentBreakdown, PatientVolume)
+│   │   │   ├── Queue/ (QueueBoard, QueueCard)
+│   │   │   └── UI/ (Modal, Toast, Badge, FileUpload)
+│   │   └── utils/ (constants.js, validators.js, formatters.js)
+│   └── routes/
+│       ├── login/+page.svelte
+│       ├── api/ (auth, satusehat, snowstorm, kfa, patients, encounters, payments, admin, pdf)
+│       ├── kasir/
+│       │   ├── +page.svelte              # Appointment list + queue board
+│       │   ├── new-patient/+page.svelte   # New patient → auto-queue
+│       │   ├── existing-patient/+page.svelte
+│       │   └── payment/+page.svelte
+│       ├── dokter/
+│       │   ├── +page.svelte              # Queue + history
+│       │   ├── analytics/+page.svelte    # ★ NEW: Analytics dashboard
+│       │   ├── [encounterId]/+page.svelte # SOAP / SOAP-WHO form
+│       │   └── patient/[patientId]/+page.svelte
+│       └── admin/
+│           ├── +page.svelte              # Dashboard
+│           ├── [table]/+page.svelte      # ★ Dynamic CRUD for ALL tables
+│           └── import/+page.svelte       # CSV import
+```
+
+---
+
+## Proposed Changes
+
+### 1. Project Scaffolding & Configuration
+
+#### [NEW] [docker-compose.yml](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/docker-compose.yml)
+
+Two services: `app` (Node adapter) + `db` (PostgreSQL 16). Health checks, `restart: unless-stopped`, volumes for data + uploads, bound to `192.168.100.118`.
+
+#### [NEW] [Dockerfile](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/Dockerfile)
+
+Multi-stage build: `node:20-alpine`, `npm ci && npm run build`, production with `node build/index.js`.
+
+#### [NEW] [.env.example](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/.env.example)
+
+All env vars documented.
+
+---
+
+### 2. Database Schema & Migrations
+
+#### [NEW] [schema.js](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/lib/server/db/schema.js)
+
+**18 tables** (★ = new/changed from v1):
+
+| Table | Key Details |
+|-------|------------|
+| `users` | UUID, name, username, password_hash, role, doctor_code, is_active |
+| ★ `doctor_shifts` | **NEW** — doctor_id FK, day_of_week (0–6), start_time, end_time |
+| `patients` | id (O000001 format), NIK unique, all demographics, document_id FK |
+| `patient_disease_history` | personal/family, FK to terminology_master |
+| `patient_allergy` | substance_code + reaction_code FKs |
+| `patient_medication` | code FK, dosage, note |
+| `terminology_master` | system (SNOMED/ICD-10/ICD-9-CM/KFA), code, display |
+| `documents` | polymorphic patient_id / encounter_id, file metadata |
+| `encounters` | id=YYYYMM{DoctorCode}NNNNNN, form_mode, SOAP, status |
+| `status_history` | Arrived/In Progress/Finished, start/end timestamps |
+| `encounter_odontograms` | dentition, occlusi, torus, palatum, diastema, anomali |
+| `odontogram_details` | tooth_number, surface, keadaan, restorasi, ICD refs |
+| `encounter_prescriptions` | KFA code, product, dosage, quantity |
+| `encounter_referrals` | doctor_code, date, note |
+| `encounter_diagnoses` | FK to terminology_master (ICD-10) |
+| `encounter_procedures` | FK to terminology_master (ICD-9-CM), tooth, surface |
+| `items` | Master items, user_id (doctor), price |
+| `encounter_items` | quantity, price_at_time, computed subtotal |
+| `payments` | mode, discount, totals, payment_type, ★ **no reference_number**, card_number (conditional) |
+
+#### ★ NEW: `doctor_shifts` Table
+
+```sql
+CREATE TABLE doctor_shifts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+        -- 0=Sunday, 1=Monday, ..., 6=Saturday
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    CHECK (end_time > start_time),
+    UNIQUE (doctor_id, day_of_week, start_time)
+);
+```
+
+**Example data**: Doctor A (BS) works Sunday 10:00–17:00, Tuesday 13:00–15:00, Friday 08:00–10:00. This table is managed by Admin and displayed in Kasir's appointment form so kasir can see which doctors are available on a given day.
+
+#### ★ Updated: `payments` Table Changes
+
+- **Removed**: `reference_number` column
+- **`card_number`**: only populated when patient pays with card-based payment types (EDC-*)
+- **Added**: `cashier_id` already exists — will show cashier name prominently in the payment UI
+
+#### [NEW] [seed.js](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/drizzle/seed.js)
+
+Seeds: default admin, 14 doctors as users, allergy reaction codes (30 items), sample doctor shifts.
+
+---
+
+### 3. Authentication & Authorization
+
+*(No changes from v1)*
+
+- JWT with 1-hour expiry via `jose`, httpOnly cookie
+- Route guards in `hooks.server.js`
+- Login page with auto-redirect by role
+- SatuSehat token cached server-side
+
+---
+
+### 4. External API Integrations
+
+*(No changes from v1)*
+
+- `satusehat.js`: KFA product search, token caching
+- `snowstorm.js`: SNOMED-CT terminology (disease history, allergy, reason codes)
+- Proxy API routes to avoid CORS
+
+---
+
+### 5. Kasir Module
+
+#### [NEW] [kasir/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/kasir/+page.svelte)
+
+**Appointment List + ★ Queue Board**:
+
+★ **Insightful Queue Management**:
+- **Visual queue board** (Kanban-style columns): Waiting → In Progress → Discharged → Completed
+- Each card shows: queue number, patient name, doctor, wait time elapsed, status badge
+- Cards are color-coded by wait time (green <15min, yellow 15-30min, red >30min)
+- **Drag-disabled** (status changes only via workflow), but provides instant visual overview
+- **Summary bar** at top: "3 waiting · 2 in progress · 5 completed today"
+- Auto-refresh every 30 seconds
+
+**Data Table** (toggle between queue board and table view):
+- Columns: Queue#, Patient Name, NIK, Doctor, Status, Arrived Time, Duration
+- Filters: date range, doctor, status
+- Status badges with color coding
+
+#### [NEW] [kasir/new-patient/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/kasir/new-patient/+page.svelte)
+
+**New Patient Registration Form** — ★ **Auto-queues patient on submission**:
+
+| Section | Fields |
+|---------|--------|
+| Identity | NIK*, Nama Lengkap*, Birth Date*, Birthplace, Gender |
+| Family | Nomor KK |
+| Address | Address*, Province*, City*, District*, Village*, RT*, RW* |
+| Contact | Handphone, Email |
+| Personal | Marital Status (S/M/W/D), Citizenship (WNI/WNA), Language (BCP-47) |
+| Medical | Golongan Darah*, Rhesus, Status Kehamilan |
+| Vitals | Tekanan Darah (XX/XX mmHg) |
+| Assignment | Kode Dokter* (dropdown, ★ shows only doctors on-shift today per `doctor_shifts`) |
+| Condition | Keluhan Utama (SNOMED autocomplete, 404684003) |
+| History | Riwayat Penyakit Pribadi / Keluarga (Snowstorm) |
+| Medication | Riwayat Pengobatan (KFA search) |
+| Allergy | Substance (Snowstorm) + Reaction (fixed dropdown, 30 items) |
+
+**On submit**:
+1. Creates patient record
+2. Creates encounter (status=Planned) with auto-generated queue number
+3. ★ **Patient immediately appears on the Queue Board** — kasir sees them in "Waiting" column
+4. Generates patient profile PDF
+5. Redirects to queue board with success toast: "Pasien {name} ditambahkan ke antrian #{queue}"
+
+#### [NEW] [kasir/existing-patient/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/kasir/existing-patient/+page.svelte)
+
+**Existing Patient Appointment Form**:
+- ★ Search by **medical record number (ID), NIK, or patient name** (fuzzy search)
+- Results shown in searchable dropdown with: ID, Name, NIK preview
+- Display patient info (read-only) after selection
+- Input: Kode Dokter* (filtered to on-shift), optional referral source
+- On submit: creates encounter, auto-queues → appears on queue board
+
+#### [NEW] [kasir/payment/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/kasir/payment/+page.svelte)
+
+**Payment Form** (for encounters with status=Discharged):
+
+- ★ **Shows which kasir is processing** this payment (logged-in user name displayed)
+- Encounter items summary with subtotals
+- Payment mode: NORMAL / VOUCHER
+- Discount: percent or fixed amount
+- Calculated: total_sales → discount_amount → net_sales
+- ★ **Payment type: Fixed dropdown** with exact codes:
+
+| Label | Code |
+|-------|------|
+| ORATIO BCA DEBIT | EDC-B1 |
+| ORATIO BCA CREDIT | EDC-B2 |
+| ORATIO BCA SWITCHING | EDC-B3 |
+| ORATIO MANDIRI DEBIT | EDC-OO |
+| ORATIO MANDIRI CREDIT | EDC-OQ |
+| ORATIO MANDIRI SWITCHING | EDC-OP |
+| KUO BCA DEBIT | EDC-B4 |
+| KUO BCA CREDIT | EDC-B5 |
+| KUO BCA SWITCHING | EDC-B6 |
+| KUO MANDIRI DEBIT | EDC-KO |
+| KUO MANDIRI CREDIT | EDC-KQ |
+| KUO MANDIRI SWITCHING | EDC-KP |
+| ASURANSI | A-ASS1 |
+| TUNAI | K-01 |
+| AR-PIUTANG | *(empty)* |
+| QRIS | E-QRIS |
+| NO PAYMENT | - |
+| TRANSFER BCA 7773778789 | B-BCA |
+| TRANSFER MANDIRI 1310072789789 | B-MDR |
+
+- ★ **Card number field**: only visible when payment type starts with `EDC-`
+- ★ ~~Reference number~~: **removed**
+- Note, proof of payment upload
+- On submit: status → Completed
+
+---
+
+### 6. Dokter Module
+
+#### [NEW] [dokter/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/dokter/+page.svelte)
+
+**Doctor Dashboard**: queue, history, referrals. Click patient → encounter form.
+
+★ **Shift Countdown Timer**: A persistent header bar showing the doctor's current shift end time and a **live countdown** (e.g., "Shift ends at 17:00 — 2h 34m remaining"). Updates every minute via client-side `setInterval`. When <30 minutes remaining, the badge pulses amber; when <10 minutes, it turns red. If the doctor is outside their shift hours, it shows "No active shift" with the next scheduled shift time.
+
+#### ★ [NEW] [dokter/analytics/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/dokter/analytics/+page.svelte)
+
+**Doctor Analytics & Visualization Page** — insightful monitoring dashboard:
+
+| Widget | Visualization | Purpose |
+|--------|--------------|---------|
+| **Patient Volume** | Line chart (daily/weekly/monthly) | Track patient flow trends |
+| **Treatment Breakdown** | Doughnut chart by ICD-9-CM procedure | See most common treatments |
+| **Top Diagnoses** | Horizontal bar chart by ICD-10 | Understand diagnostic patterns |
+| **Revenue Summary** | Stacked bar chart (items × quantity) | Monitor revenue contribution |
+| **Avg. Treatment Time** | Gauge/KPI card | Track efficiency (In Progress duration) |
+| **Appointment Completion** | Pie chart (Completed vs Cancelled/Discontinued) | Monitor completion rates |
+| **Referral Flow** | Sankey or table (referred-from / referred-to) | Track inter-doctor referrals |
+| **Recent Activity** | Timeline feed (last 10 encounters) | Quick overview of recent work |
+
+**Design principles**:
+- **At-a-glance**: KPI cards at top (patients today, this week, this month, avg time)
+- **Filterable**: date range picker to narrow data
+- **Clean visuals**: uses `chart.js` with the doctor's role-specific color palette
+- **No data overload**: defaults to "This Month" view, only shows meaningful metrics
+- **Actionable**: click on a chart segment → filters the encounter list below
+
+#### [NEW] [dokter/[encounterId]/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/dokter/%5BencounterId%5D/+page.svelte)
+
+**Single-Page Encounter Form** with two modes (SOAP / SOAP-WHO).
+
+★ **Patient Context Sidebar** (collapsible, pinned to the right):
+While filling the form, the doctor sees a side panel with:
+- **Patient Info**: name, age, gender, blood type, allergies (highlighted), pregnancy status
+- **Past Encounters**: accordion list of previous encounters by this doctor — each showing date, diagnosis (ICD-10), procedures (ICD-9-CM), SOAP summary
+- **Past Prescriptions**: medications prescribed in prior visits
+- **Referral Source**: if this patient was referred, shows the referring doctor's notes
+- The panel auto-loads when the encounter page opens and is scrollable independently from the form
+
+##### Mode: SOAP-WHO — Odontogram
+
+★ **Odontogram follows PDGI Standard** (Panduan Rekam Medis Dokter Gigi):
+- **Layout**: Upper arch (maxilla) teeth 18-11, 21-28 on top row; Lower arch (mandible) teeth 48-41, 31-38 on bottom row. Child dentition: 55-51, 61-65 / 85-81, 71-75.
+- **FDI Notation**: International two-digit numbering system
+- **Each tooth rendered as 5-surface SVG** (cross/diamond shape):
+  - Center: Occlusal (O)
+  - Top: Buccal/Labial (B)
+  - Bottom: Lingual/Palatal (L)
+  - Left: Mesial (M)
+  - Right: Distal (D)
+- **Condition symbols drawn on teeth** per PDGI standard (e.g., filled surface = restorasi, X = extraction, etc.)
+- **Click** any surface → opens detail modal for that tooth
+- **Multi-select**: hold Shift to select multiple teeth surfaces simultaneously
+- **Summary table** below the chart shows all filled-in teeth conditions
+
+**Status Logic**: Opening → In Progress, Close without submit → On Hold, Submit → Discharged.
+
+**PDF Generation**: SOAP → SOAP PDF; SOAP-WHO → Odontogram PDF (★ PDGI standard layout with teeth diagram + condition legend) + SOAP PDF.
+
+#### [NEW] [dokter/patient/[patientId]/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/dokter/patient/%5BpatientId%5D/+page.svelte)
+
+Patient detail: ID, demographics, medical history, encounter history for this doctor.
+
+---
+
+### 7. Admin Module
+
+#### [NEW] [admin/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/admin/+page.svelte)
+
+Dashboard with summary stats.
+
+#### ★ [NEW] [admin/[table]/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/admin/%5Btable%5D/+page.svelte)
+
+**Dynamic CRUD page for ALL 18 tables** — single component parametrized by table name:
+
+| Admin Route | Table |
+|-------------|-------|
+| `/admin/users` | users |
+| `/admin/doctor-shifts` | ★ doctor_shifts |
+| `/admin/patients` | patients |
+| `/admin/patient-disease-history` | patient_disease_history |
+| `/admin/patient-allergy` | patient_allergy |
+| `/admin/patient-medication` | patient_medication |
+| `/admin/terminology` | terminology_master |
+| `/admin/documents` | documents |
+| `/admin/encounters` | encounters |
+| `/admin/status-history` | status_history |
+| `/admin/encounter-odontograms` | encounter_odontograms |
+| `/admin/odontogram-details` | odontogram_details |
+| `/admin/encounter-prescriptions` | encounter_prescriptions |
+| `/admin/encounter-referrals` | encounter_referrals |
+| `/admin/encounter-diagnoses` | encounter_diagnoses |
+| `/admin/encounter-procedures` | encounter_procedures |
+| `/admin/items` | items |
+| `/admin/encounter-items` | encounter_items |
+| `/admin/payments` | payments |
+
+Each page: data table with search/filter/sort, create/edit modal, delete with confirmation.
+
+#### [NEW] [admin/import/+page.svelte](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/routes/admin/import/+page.svelte)
+
+CSV import: select table → upload → preview → validate → import. Uses `papaparse`.
+
+---
+
+### 8. PDF Generation — ★ PDGI Standard
+
+#### [NEW] [pdf.js](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/lib/server/pdf.js)
+
+Three PDF types using `pdfmake`:
+
+1. **Patient Profile PDF** — demographics, disease history, allergies, medications
+
+2. **SOAP PDF** — patient header, SOAP sections, prescriptions, doctor signature
+
+3. ★ **Odontogram + SOAP PDF** — follows **PDGI "Panduan Rekam Medis Dokter Gigi"** format:
+   - **Page 1**: Odontogram diagram with FDI-numbered teeth in standard arch layout
+     - Upper arch: 18→11 | 21→28, midline marked
+     - Lower arch: 48→41 | 31→38, midline marked
+     - Each tooth drawn with 5-surface cross pattern
+     - Conditions marked with standard dental notation symbols
+     - Legend table for condition codes
+   - **Page 2**: Condition summary table (tooth number, surface, keadaan, restorasi, diagnosa, tindakan)
+   - **Page 3**: SOAP notes, prescriptions, doctor signature block
+
+---
+
+### 9. Scheduled Tasks
+
+End-of-day cron: Planned (no doctor interaction) → Cancelled; On Hold → Discontinued.
+
+---
+
+### 10. UI Design System — ★ Role-Specific Color Palettes
+
+#### [NEW] [app.css](file:///C:/Users/rephr/.gemini/antigravity/scratch/oratio-dental/src/app.css)
+
+★ **Three distinct color palettes** — modern, calming, seamless:
+
+| Role | Primary | Secondary | Accent | Sidebar | Mood |
+|------|---------|-----------|--------|---------|------|
+| **Admin** | Slate Blue `#6366F1` | Cool Gray `#F1F5F9` | Violet `#8B5CF6` | Dark Slate `#1E293B` | Professional, authoritative |
+| **Kasir** | Sage Green `#10B981` | Warm Cream `#FEFCE8` | Teal `#14B8A6` | Deep Forest `#064E3B` | Calm, efficient, organized |
+| **Dokter** | Ocean Blue `#3B82F6` | Soft White `#F8FAFC` | Sky `#38BDF8` | Navy `#1E3A5F` | Clinical, trustworthy, focused |
+
+**Shared design tokens**:
+- Typography: Inter (Google Fonts), clean hierarchies
+- Border-radius: 12px cards, 8px inputs
+- Shadows: subtle, layered (`0 1px 3px`, `0 4px 6px`)
+- Micro-animations: 200ms ease transitions, hover lifts, loading skeletons
+- Responsive: tablet + desktop optimized for clinic use
+- Sidebar detects role via CSS custom properties set by layout
+
+---
+
+### 11. Docker Deployment
+
+*(No changes from v1)* — `restart: unless-stopped`, health checks, persistent volumes, Portainer-ready.
+
+---
+
+## Verification Plan
+
+### Build Tests
+```bash
+npm run build          # Must succeed
+docker build -t oratio-dental .  # Must succeed
+npx drizzle-kit push --dry-run   # Shows all 18 tables
+```
+
+### Browser Verification
+1. Login flow + role redirect
+2. Role-based access restrictions
+3. New patient form → auto-queue verification
+4. ★ Patient search by name/NIK/ID in existing-patient form
+5. Odontogram interaction (click teeth, fill surfaces)
+6. ★ Doctor analytics charts render with data
+7. ★ Payment form: card number shows/hides based on payment type
+8. PDF generation for all 3 types
+
+### User Manual Verification
+> [!NOTE]
+> After NAS deployment:
+> 1. Access `http://192.168.100.118:3000` from LAN
+> 2. Admin: create kasir + dokter users, set doctor shifts
+> 3. Full workflow: Kasir queues patient → Dokter fills SOAP → Kasir pays
+> 4. Verify PDFs match PDGI standard
+> 5. Test CSV import, analytics page, auto-logout

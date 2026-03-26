@@ -1,19 +1,16 @@
 import PdfPrinter from 'pdfmake';
 import { PERMANENT_TEETH } from '$lib/utils/constants.js';
+import { resolve } from 'path';
 
-const fonts = {
-	Roboto: {
-		normal: 'node_modules/pdfmake/build/vfs_fonts.js'
-	}
-};
+const fontsDir = resolve('static/fonts');
 
 function createPrinter() {
 	return new PdfPrinter({
 		Roboto: {
-			normal: Buffer.from(''),
-			bold: Buffer.from(''),
-			italics: Buffer.from(''),
-			bolditalics: Buffer.from('')
+			normal: resolve(fontsDir, 'Roboto-Regular.ttf'),
+			bold: resolve(fontsDir, 'Roboto-Medium.ttf'),
+			italics: resolve(fontsDir, 'Roboto-Italic.ttf'),
+			bolditalics: resolve(fontsDir, 'Roboto-BoldItalic.ttf')
 		}
 	});
 }

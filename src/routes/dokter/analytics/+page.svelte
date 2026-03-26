@@ -1,6 +1,7 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { formatCurrency, formatDate } from '$lib/utils/formatters.js';
+	import { STATUS_COLORS } from '$lib/utils/constants.js';
 
 	export let data;
 	$: user = data?.user;
@@ -10,9 +11,17 @@
 	let dateFrom = getMonthStart();
 	let dateTo = new Date().toISOString().split('T')[0];
 
-	// helper for chart
-	function getMaxVolume(volume) { return Math.max(...volume.map(d => d[1]), 1); }
-	function getBarHeight(count, maxCount) { return maxCount ? (count / maxCount) * 120 : 0; }
+	// Chart instances
+	let volumeChart = null;
+	let treatmentChart = null;
+	let diagnosisChart = null;
+	let completionChart = null;
+
+	// Canvas refs
+	let volumeCanvas;
+	let treatmentCanvas;
+	let diagnosisCanvas;
+	let completionCanvas;
 
 	function getMonthStart() {
 		const d = new Date();
@@ -35,14 +44,29 @@
 	$: patientsThisMonth = encounters.length;
 
 	$: completedCount = encounters.filter(e => e.encounter?.status === 'Completed').length;
+	$: dischargedCount = encounters.filter(e => e.encounter?.status === 'Discharged').length;
 	$: cancelledCount = encounters.filter(e => ['Cancelled', 'Discontinued'].includes(e.encounter?.status)).length;
-	$: completionRate = encounters.length ? Math.round((completedCount / encounters.length) * 100) : 0;
+	$: inProgressCount = encounters.filter(e => e.encounter?.status === 'In Progress').length;
+	$: completionRate = encounters.length ? Math.round(((completedCount + dischargedCount) / encounters.length) * 100) : 0;
 
-	// Avg duration
+	// Avg duration estimate (from created_at to updated_at for completed)
 	$: avgDuration = (() => {
-		const completed = encounters.filter(e => e.encounter?.status === 'Completed' || e.encounter?.status === 'Discharged');
+		const completed = encounters.filter(e =>
+			['Completed', 'Discharged'].includes(e.encounter?.status)
+		);
 		if (!completed.length) return 0;
-		return Math.round(completed.length > 0 ? 25 : 0); // placeholder
+		let totalMs = 0;
+		let validCount = 0;
+		for (const e of completed) {
+			const start = new Date(e.encounter.created_at);
+			const end = new Date(e.encounter.updated_at);
+			const diff = end - start;
+			if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+				totalMs += diff;
+				validCount++;
+			}
+		}
+		return validCount > 0 ? Math.round(totalMs / validCount / 60000) : 0;
 	})();
 
 	// Diagnosis breakdown
@@ -50,17 +74,12 @@
 		const map = {};
 		encounters.forEach(e => {
 			if (e.encounter?.assessment) {
-				const key = e.encounter.assessment.substring(0, 50);
+				const key = e.encounter.assessment.substring(0, 60);
 				map[key] = (map[key] || 0) + 1;
 			}
 		});
-		return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
+		return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10);
 	})();
-
-	// Recent activity
-	$: recentEncounters = encounters
-		.sort((a, b) => new Date(b.encounter?.created_at) - new Date(a.encounter?.created_at))
-		.slice(0, 10);
 
 	// Daily volume
 	$: dailyVolume = (() => {
@@ -72,21 +91,191 @@
 		return Object.entries(map);
 	})();
 
+	// Recent activity
+	$: recentEncounters = [...encounters]
+		.sort((a, b) => new Date(b.encounter?.created_at) - new Date(a.encounter?.created_at))
+		.slice(0, 10);
+
+	// Referral data
+	$: referralData = (() => {
+		const refs = {};
+		encounters.forEach(e => {
+			if (e.encounter?.referral_source) {
+				const src = e.encounter.referral_source;
+				const doc = e.doctor_name || 'Unknown';
+				const key = `${src} → ${doc}`;
+				refs[key] = (refs[key] || 0) + 1;
+			}
+		});
+		return Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 10);
+	})();
+
 	async function loadData() {
 		loading = true;
 		try {
-			const params = new URLSearchParams();
-			const res = await fetch(`/api/encounters?limit=500`);
+			const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo, limit: '1000' });
+			const res = await fetch(`/api/encounters?${params}`);
 			const resp = await res.json();
 			encounters = resp.data || [];
 		} catch (err) {
 			console.error(err);
 		} finally {
 			loading = false;
+			// Render charts after data loads
+			setTimeout(renderCharts, 50);
+		}
+	}
+
+	async function renderCharts() {
+		if (typeof window === 'undefined') return;
+		const { Chart, registerables } = await import('chart.js');
+		Chart.register(...registerables);
+
+		const colors = {
+			primary: '#3B82F6',
+			accent: '#38BDF8',
+			success: '#10B981',
+			warning: '#F59E0B',
+			danger: '#EF4444',
+			purple: '#8B5CF6',
+			pink: '#EC4899',
+			teal: '#14B8A6',
+			orange: '#F97316',
+			indigo: '#6366F1'
+		};
+		const palette = [colors.primary, colors.accent, colors.success, colors.warning, colors.danger, colors.purple, colors.pink, colors.teal, colors.orange, colors.indigo];
+
+		// Volume Line Chart
+		if (volumeCanvas) {
+			if (volumeChart) volumeChart.destroy();
+			volumeChart = new Chart(volumeCanvas.getContext('2d'), {
+				type: 'line',
+				data: {
+					labels: dailyVolume.map(d => d[0]),
+					datasets: [{
+						label: 'Pasien',
+						data: dailyVolume.map(d => d[1]),
+						borderColor: colors.primary,
+						backgroundColor: colors.primary + '20',
+						fill: true,
+						tension: 0.4,
+						pointRadius: 4,
+						pointBackgroundColor: colors.primary
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: { legend: { display: false } },
+					scales: {
+						y: { beginAtZero: true, ticks: { stepSize: 1 } },
+						x: { grid: { display: false } }
+					}
+				}
+			});
+		}
+
+		// Top Diagnoses Bar Chart
+		if (diagnosisCanvas && diagnosisMap.length > 0) {
+			if (diagnosisChart) diagnosisChart.destroy();
+			diagnosisChart = new Chart(diagnosisCanvas.getContext('2d'), {
+				type: 'bar',
+				data: {
+					labels: diagnosisMap.map(d => d[0].length > 30 ? d[0].substring(0, 30) + '...' : d[0]),
+					datasets: [{
+						label: 'Jumlah',
+						data: diagnosisMap.map(d => d[1]),
+						backgroundColor: palette.slice(0, diagnosisMap.length),
+						borderRadius: 6,
+						barThickness: 24
+					}]
+				},
+				options: {
+					indexAxis: 'y',
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: { legend: { display: false } },
+					scales: {
+						x: { beginAtZero: true, ticks: { stepSize: 1 } },
+						y: { grid: { display: false } }
+					}
+				}
+			});
+		}
+
+		// Completion Rate Doughnut
+		if (completionCanvas) {
+			if (completionChart) completionChart.destroy();
+			completionChart = new Chart(completionCanvas.getContext('2d'), {
+				type: 'doughnut',
+				data: {
+					labels: ['Selesai', 'Discharged', 'Dalam Proses', 'Dibatalkan', 'Lainnya'],
+					datasets: [{
+						data: [
+							completedCount,
+							dischargedCount,
+							inProgressCount,
+							cancelledCount,
+							Math.max(0, encounters.length - completedCount - dischargedCount - inProgressCount - cancelledCount)
+						],
+						backgroundColor: [colors.success, colors.teal, colors.primary, colors.danger, '#E5E7EB'],
+						borderWidth: 0,
+						hoverOffset: 8
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: '65%',
+					plugins: {
+						legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true } }
+					}
+				}
+			});
+		}
+
+		// Treatment/Procedure Breakdown (reuse diagnosis canvas if no separate one)
+		if (treatmentCanvas) {
+			if (treatmentChart) treatmentChart.destroy();
+			// Group by doctor for revenue-like view
+			const doctorGroups = {};
+			encounters.forEach(e => {
+				const doc = e.doctor_name || 'N/A';
+				doctorGroups[doc] = (doctorGroups[doc] || 0) + 1;
+			});
+			const docEntries = Object.entries(doctorGroups).sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+			treatmentChart = new Chart(treatmentCanvas.getContext('2d'), {
+				type: 'doughnut',
+				data: {
+					labels: docEntries.map(d => d[0]),
+					datasets: [{
+						data: docEntries.map(d => d[1]),
+						backgroundColor: palette.slice(0, docEntries.length),
+						borderWidth: 0,
+						hoverOffset: 8
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: '55%',
+					plugins: {
+						legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true } }
+					}
+				}
+			});
 		}
 	}
 
 	onMount(loadData);
+
+	onDestroy(() => {
+		if (volumeChart) volumeChart.destroy();
+		if (treatmentChart) treatmentChart.destroy();
+		if (diagnosisChart) diagnosisChart.destroy();
+		if (completionChart) completionChart.destroy();
+	});
 </script>
 
 <svelte:head>
@@ -129,7 +318,7 @@
 				<div class="stat-icon stat-icon-warning">📊</div>
 				<div>
 					<div class="stat-value">{patientsThisMonth}</div>
-					<div class="stat-label">Bulan Ini</div>
+					<div class="stat-label">Periode Ini</div>
 				</div>
 			</div>
 			<div class="stat-card">
@@ -142,32 +331,25 @@
 		</div>
 
 		<div class="grid grid-2 gap-6 mb-6">
-			<!-- Completion Rate -->
+			<!-- Completion Rate Doughnut -->
 			<div class="card">
 				<h3 class="card-title mb-4">✅ Tingkat Penyelesaian</h3>
-				<div style="text-align: center; padding: var(--space-4);">
-					<div style="font-size: 3rem; font-weight: 800; color: var(--primary);">{completionRate}%</div>
-					<div class="text-sm text-muted mt-2">
-						{completedCount} selesai · {cancelledCount} dibatalkan
+				<div style="position: relative; text-align: center;">
+					<div style="height: 220px;">
+						<canvas bind:this={completionCanvas}></canvas>
 					</div>
-					<div style="background: var(--gray-100); border-radius: var(--radius-full); height: 12px; margin-top: var(--space-4); overflow: hidden;">
-						<div style="background: var(--success); height: 100%; width: {completionRate}%; border-radius: var(--radius-full); transition: width 0.5s ease;"></div>
+					<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); font-size: 2rem; font-weight: 800; color: var(--primary);">
+						{completionRate}%
 					</div>
 				</div>
 			</div>
 
-			<!-- Patient Volume -->
+			<!-- Patient Volume Line Chart -->
 			<div class="card">
 				<h3 class="card-title mb-4">📈 Volume Pasien Harian</h3>
 				{#if dailyVolume.length > 0}
-					<div style="display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: var(--space-2);">
-						{#each dailyVolume as [day, count]}
-							<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-								<span class="text-xs font-bold">{count}</span>
-								<div style="width: 100%; height: {getBarHeight(count, getMaxVolume(dailyVolume))}px; background: linear-gradient(180deg, var(--primary), var(--accent)); border-radius: var(--radius-sm) var(--radius-sm) 0 0; min-height: 4px;"></div>
-								<span class="text-xs text-muted">{day}</span>
-							</div>
-						{/each}
+					<div style="height: 220px;">
+						<canvas bind:this={volumeCanvas}></canvas>
 					</div>
 				{:else}
 					<p class="text-sm text-muted">Tidak ada data</p>
@@ -176,23 +358,56 @@
 		</div>
 
 		<div class="grid grid-2 gap-6 mb-6">
-			<!-- Top Diagnoses -->
+			<!-- Top Diagnoses Bar Chart -->
 			<div class="card">
 				<h3 class="card-title mb-4">🏥 Diagnosis Terbanyak</h3>
 				{#if diagnosisMap.length > 0}
-					{#each diagnosisMap as [diagnosis, count]}
-						<div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
-							<div style="flex: 1;">
-								<div class="text-sm truncate">{diagnosis}</div>
-								<div style="background: var(--gray-100); border-radius: var(--radius-full); height: 6px; margin-top: 4px; overflow: hidden;">
-									<div style="background: var(--primary); height: 100%; width: {(count / (diagnosisMap[0]?.[1] || 1)) * 100}%; border-radius: var(--radius-full);"></div>
-								</div>
-							</div>
-							<span class="badge badge-primary">{count}</span>
-						</div>
-					{/each}
+					<div style="height: {Math.max(200, diagnosisMap.length * 36)}px;">
+						<canvas bind:this={diagnosisCanvas}></canvas>
+					</div>
 				{:else}
 					<p class="text-sm text-muted">Tidak ada data diagnosis</p>
+				{/if}
+			</div>
+
+			<!-- Encounters by Doctor Doughnut -->
+			<div class="card">
+				<h3 class="card-title mb-4">👨‍⚕️ Distribusi per Dokter</h3>
+				{#if encounters.length > 0}
+					<div style="height: 250px;">
+						<canvas bind:this={treatmentCanvas}></canvas>
+					</div>
+				{:else}
+					<p class="text-sm text-muted">Tidak ada data</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-2 gap-6 mb-6">
+			<!-- Referral Flow Table -->
+			<div class="card">
+				<h3 class="card-title mb-4">🔄 Alur Rujukan</h3>
+				{#if referralData.length > 0}
+					<div class="table-container">
+						<table>
+							<thead>
+								<tr>
+									<th>Rujukan</th>
+									<th>Jumlah</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each referralData as [ref, count]}
+									<tr>
+										<td class="text-sm">{ref}</td>
+										<td><span class="badge badge-primary">{count}</span></td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else}
+					<p class="text-sm text-muted">Tidak ada data rujukan</p>
 				{/if}
 			</div>
 
@@ -205,9 +420,9 @@
 							<div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0;"></div>
 							<div style="flex: 1; min-width: 0;">
 								<div class="text-sm font-medium truncate">{item.patient_name || '-'}</div>
-								<div class="text-xs text-muted">{formatDate(item.encounter?.created_at)}</div>
+								<div class="text-xs text-muted">{formatDate(item.encounter?.created_at)} · Dr. {item.doctor_name || '-'}</div>
 							</div>
-							<span class="badge badge-gray">{item.encounter?.status}</span>
+							<span class="badge {STATUS_COLORS[item.encounter?.status] || 'badge-gray'}">{item.encounter?.status}</span>
 						</div>
 					{:else}
 						<p class="text-sm text-muted">Tidak ada aktivitas</p>

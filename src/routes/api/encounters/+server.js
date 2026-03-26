@@ -11,6 +11,8 @@ import { generateEncounterId } from '$lib/utils/formatters.js';
 // GET /api/encounters
 export async function GET({ url, locals }) {
 	const date = url.searchParams.get('date');
+	const dateFrom = url.searchParams.get('date_from');
+	const dateTo = url.searchParams.get('date_to');
 	const doctorId = url.searchParams.get('doctor_id');
 	const status = url.searchParams.get('status');
 	const patientId = url.searchParams.get('patient_id');
@@ -20,7 +22,15 @@ export async function GET({ url, locals }) {
 
 	let conditions = [];
 
-	if (date) {
+	if (dateFrom && dateTo) {
+		// Date range filter
+		const start = new Date(dateFrom);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(dateTo);
+		end.setHours(23, 59, 59, 999);
+		conditions.push(gte(encounters.created_at, start));
+		conditions.push(lte(encounters.created_at, end));
+	} else if (date) {
 		const start = new Date(date);
 		start.setHours(0, 0, 0, 0);
 		const end = new Date(date);

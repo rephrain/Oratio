@@ -19,6 +19,7 @@
     "vite": "^4.5.0"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "chart.js": "^4.4.0",
     "drizzle-orm": "^0.45.1",
     "jose": "^5.2.0",

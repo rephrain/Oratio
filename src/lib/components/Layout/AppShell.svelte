@@ -8,7 +8,6 @@
 </script>
 
 <div class="app-shell role-{role}">
-	<Sidebar {user} {role} />
 	<div class="main-content">
 		<Header {title} {user} />
 		<div class="page-content">

@@ -2,13 +2,18 @@
 import 'dotenv/config';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { createHash } from 'crypto';
+import argon2 from 'argon2';
 
 const client = postgres(process.env.DATABASE_URL || 'postgresql://oratio:oratio_secret@localhost:5432/oratio');
 const db = drizzle(client);
 
-function hash(pw) {
-	return createHash('sha256').update(pw).digest('hex');
+async function hash(pw) {
+	return await argon2.hash(pw, {
+		type: argon2.argon2id,
+		memoryCost: 65536,   // 64 MiB
+		timeCost: 3,         // 3 iterations
+		parallelism: 4
+	});
 }
 
 async function seed() {
@@ -17,7 +22,7 @@ async function seed() {
 	// 1. Admin user
 	await db.execute`
 		INSERT INTO users (name, username, password_hash, role, is_active)
-		VALUES ('Administrator', 'admin', ${hash('admin123')}, 'admin', true)
+		VALUES ('Administrator', 'admin', ${await hash('admin123')}, 'admin', true)
 		ON CONFLICT (username) DO NOTHING
 	`;
 	console.log('✅ Admin user created');
@@ -43,7 +48,7 @@ async function seed() {
 	for (const doc of doctors) {
 		await db.execute`
 			INSERT INTO users (name, username, password_hash, role, doctor_code, is_active)
-			VALUES (${doc.name}, ${doc.username}, ${hash('dokter123')}, 'dokter', ${doc.code}, true)
+			VALUES (${doc.name}, ${doc.username}, ${await hash('dokter123')}, 'dokter', ${doc.code}, true)
 			ON CONFLICT (username) DO NOTHING
 		`;
 	}
@@ -52,7 +57,7 @@ async function seed() {
 	// 3. Kasir users
 	await db.execute`
 		INSERT INTO users (name, username, password_hash, role, is_active)
-		VALUES ('Kasir Utama', 'kasir1', ${hash('kasir123')}, 'kasir', true)
+		VALUES ('Kasir Utama', 'kasir1', ${await hash('kasir123')}, 'kasir', true)
 		ON CONFLICT (username) DO NOTHING
 	`;
 	console.log('✅ Kasir user created');

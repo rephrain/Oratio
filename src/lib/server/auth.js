@@ -27,13 +27,22 @@ export async function verifyToken(token) {
 	}
 }
 
-// Removed the broken synchronous hashPassword — use hashPasswordAsync instead
+// Argon2id password hashing (OWASP recommended)
+import argon2 from 'argon2';
+
 export async function hashPasswordAsync(password) {
-	const { createHash } = await import('crypto');
-	return createHash('sha256').update(password).digest('hex');
+	return await argon2.hash(password, {
+		type: argon2.argon2id,
+		memoryCost: 65536,   // 64 MiB
+		timeCost: 3,         // 3 iterations
+		parallelism: 4
+	});
 }
 
 export async function verifyPassword(password, hash) {
-	const hashed = await hashPasswordAsync(password);
-	return hashed === hash;
+	try {
+		return await argon2.verify(hash, password);
+	} catch {
+		return false;
+	}
 }

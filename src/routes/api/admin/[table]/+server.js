@@ -60,8 +60,8 @@ export async function POST({ params, request }) {
 
 	// Hash password for users table
 	if (params.table === 'users' && body.password) {
-		const { createHash } = await import('crypto');
-		body.password_hash = createHash('sha256').update(body.password).digest('hex');
+		const { hashPasswordAsync } = await import('$lib/server/auth.js');
+		body.password_hash = await hashPasswordAsync(body.password);
 		delete body.password;
 	}
 
@@ -90,8 +90,8 @@ export async function PUT({ params, request }) {
 
 	// Hash password for users table
 	if (params.table === 'users' && updateData.password) {
-		const { createHash } = await import('crypto');
-		updateData.password_hash = createHash('sha256').update(updateData.password).digest('hex');
+		const { hashPasswordAsync } = await import('$lib/server/auth.js');
+		updateData.password_hash = await hashPasswordAsync(updateData.password);
 		delete updateData.password;
 	}
 

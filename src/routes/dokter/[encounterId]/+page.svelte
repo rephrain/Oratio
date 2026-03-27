@@ -4,6 +4,7 @@
 	import { goto } from "$app/navigation";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import Modal from "$lib/components/UI/Modal.svelte";
+	import OdontogramChart from "$lib/components/Odontogram/OdontogramChart.svelte";
 	import {
 		PERMANENT_TEETH,
 		DECIDUOUS_TEETH,
@@ -65,6 +66,21 @@
 		procedure_code: "",
 		procedure_display: "",
 	};
+
+	// Reactive map: Convert array of details to visual OdontogramChart format
+	$: mappedOdontogramData = (odontogram.details || []).reduce((acc, d) => {
+		if (!acc[d.tooth_number]) acc[d.tooth_number] = {};
+		// For simplicity in this integration, map the first recorded surface as "center"
+		// A full implementation would parse d.surface ("O","M","D") into top/bottom/left/right/center
+		let color = '#10B981'; // Default green
+		if (d.keadaan && d.keadaan.toUpperCase().includes('CARIES')) color = '#EF4444'; 
+		else if (d.keadaan === 'MISSING') color = '#9CA3AF';
+		
+		acc[d.tooth_number].center = { condition: d.keadaan, color, restoration: d.restorasi };
+		if (d.keadaan === 'EXTRACTED') acc[d.tooth_number].global = 'Extracted';
+		else if (d.keadaan === 'MISSING') acc[d.tooth_number].global = 'Missing';
+		return acc;
+	}, {});
 
 	// Shift-click multi-select
 	let selectedTeeth = new Set();
@@ -408,103 +424,10 @@
 							🦷 Odontogram (PDGI Standard)
 						</h3>
 
-						<!-- Upper Arch -->
-						<div class="odontogram-container">
-							<p class="text-sm font-semibold text-muted">
-								RAHANG ATAS (Maxilla)
-							</p>
-
-							<div class="odontogram-arch">
-								{#each PERMANENT_TEETH.upper_right as tooth}
-									<button
-										type="button"
-										class="tooth-wrapper"
-										class:selected={selectedTeeth.has(
-											tooth,
-										)}
-										on:click={(e) =>
-											handleToothClick(tooth, e)}
-									>
-										<span class="tooth-number">{tooth}</span
-										>
-										{#key tooth}
-											{@html renderToothSVG(
-												hasCondition(tooth),
-											)}
-										{/key}
-									</button>
-								{/each}
-
-								<div class="divider"></div>
-
-								{#each PERMANENT_TEETH.upper_left as tooth}
-									<button
-										type="button"
-										class="tooth-wrapper"
-										class:selected={selectedTeeth.has(
-											tooth,
-										)}
-										on:click={(e) =>
-											handleToothClick(tooth, e)}
-									>
-										<span class="tooth-number">{tooth}</span
-										>
-										{#key tooth}
-											{@html renderToothSVG(
-												hasCondition(tooth),
-											)}
-										{/key}
-									</button>
-								{/each}
-							</div>
-
-							<div class="horizontal-divider"></div>
-
-							<!-- Lower Arch -->
-							<div class="odontogram-arch lower">
-								{#each PERMANENT_TEETH.lower_right as tooth}
-									<button
-										type="button"
-										class="tooth-wrapper"
-										class:selected={selectedTeeth.has(
-											tooth,
-										)}
-										on:click={(e) =>
-											handleToothClick(tooth, e)}
-									>
-										{@html renderToothSVG(
-											hasCondition(tooth),
-										)}
-										<span class="tooth-number">{tooth}</span
-										>
-									</button>
-								{/each}
-
-								<div class="divider"></div>
-
-								{#each PERMANENT_TEETH.lower_left as tooth}
-									<button
-										type="button"
-										class="tooth-wrapper"
-										class:selected={selectedTeeth.has(
-											tooth,
-										)}
-										on:click={(e) =>
-											handleToothClick(tooth, e)}
-									>
-										{@html renderToothSVG(
-											hasCondition(tooth),
-										)}
-										<span class="tooth-number">{tooth}</span
-										>
-									</button>
-								{/each}
-							</div>
-
-							<p class="text-sm font-semibold text-muted">
-								RAHANG BAWAH (Mandible)
-							</p>
-						</div>
+						<OdontogramChart 
+							odontogramData={mappedOdontogramData} 
+							on:toothClick={(e) => handleToothClick(e.detail.tooth, { shiftKey: e.detail.shiftKey })} 
+						/>
 
 						<!-- Odontogram Metadata -->
 						<div class="form-row mt-4">
@@ -759,81 +682,39 @@
 			<!-- Patient Context Sidebar -->
 			{#if showSidebar}
 				<div style="width: 320px; flex-shrink: 0;">
-					<div
-						class="card"
-						style="position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto;"
-					>
-						<h3 class="card-title mb-4">📋 Konteks Pasien</h3>
+					<div class="card" style="position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; display: flex; flex-direction: column;">
+						<div class="card-header border-b border-color pb-4 mb-4 flex justify-between items-center">
+							<h3 class="font-semibold">Konteks Pasien</h3>
+							<button class="btn btn-ghost btn-sm" on:click={() => (showSidebar = false)}>✕</button>
+						</div>
 
 						{#if encounter}
-							<div class="mb-4">
-								<div class="text-xs text-muted">Nama</div>
-								<div class="font-semibold">
-									{encounter.patient_name}
-								</div>
-							</div>
-							<div class="grid grid-2 gap-2 mb-4">
-								<div>
-									<div class="text-xs text-muted">
-										Tgl Lahir
-									</div>
-									<div class="text-sm">
-										{encounter.patient_birth_date || "-"}
-									</div>
-								</div>
-								<div>
-									<div class="text-xs text-muted">Gender</div>
-									<div class="text-sm">
-										{encounter.patient_gender === "male"
-											? "L"
-											: "P"}
-									</div>
-								</div>
-								<div>
-									<div class="text-xs text-muted">
-										Gol. Darah
-									</div>
-									<div class="text-sm">
-										{encounter.patient_blood_type ||
-											"-"}{encounter.patient_rhesus || ""}
-									</div>
-								</div>
-								<div>
-									<div class="text-xs text-muted">Hamil</div>
-									<div class="text-sm">
-										{encounter.patient_pregnancy_status
-											? "⚠️ Ya"
-											: "Tidak"}
-									</div>
+							<div class="patient-profile mb-6">
+								<div class="font-bold text-lg mb-1">{encounter.patient_name}</div>
+								<div class="grid grid-2 gap-2 text-sm text-muted mb-4">
+									<div><strong>Tgl Lahir:</strong> {encounter.patient_birth_date || '-'}</div>
+									<div><strong>Gender:</strong> {encounter.patient_gender === 'male' ? 'L' : 'P'}</div>
+									<div><strong>Gol Darah:</strong> {encounter.patient_blood_type || '-'}{encounter.patient_rhesus || ''}</div>
+									{#if encounter.patient_pregnancy_status}
+										<div class="text-danger font-bold">⚠️ Hamil</div>
+									{/if}
 								</div>
 							</div>
 
-							<hr
-								style="border: none; border-top: 1px solid var(--border-color); margin: var(--space-4) 0;"
-							/>
-
-							<h4 class="text-sm font-semibold mb-2">
-								Riwayat Kunjungan
-							</h4>
-							{#each patientHistory.slice(0, 5) as hist}
-								<div
-									style="padding: var(--space-2) 0; border-bottom: 1px solid var(--border-color);"
-								>
-									<div class="text-xs text-muted">
-										{formatDate(hist.encounter?.created_at)}
+							<div class="font-semibold text-sm mb-3">Riwayat Kunjungan</div>
+							<div class="history-list flex-1 overflow-y-auto" style="padding-right: 8px;">
+								{#each patientHistory.slice(0, 5) as hist}
+									<div class="p-3 border border-color rounded-md mb-3 text-sm" style="background: var(--gray-50);">
+										<div class="flex justify-between mb-1">
+											<span class="font-semibold">{formatDate(hist.encounter?.created_at)}</span>
+											<span class="badge badge-gray text-xs">{hist.encounter?.status}</span>
+										</div>
+										<p class="text-muted mb-1 line-clamp-2">{hist.encounter?.assessment || "Belum ada assessment"}</p>
 									</div>
-									<div class="text-sm">
-										{hist.encounter?.assessment || "N/A"}
-									</div>
-									<span class="badge badge-gray text-xs"
-										>{hist.encounter?.status}</span
-									>
-								</div>
-							{:else}
-								<p class="text-xs text-muted">
-									Belum ada riwayat
-								</p>
-							{/each}
+								{:else}
+									<p class="text-xs text-muted">Belum ada riwayat</p>
+								{/each}
+							</div>
 						{/if}
 					</div>
 				</div>

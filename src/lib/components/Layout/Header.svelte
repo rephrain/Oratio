@@ -1,4 +1,6 @@
 <script>
+	import ShiftTimer from './ShiftTimer.svelte';
+
 	export let title = '';
 	export let user = null;
 </script>
@@ -8,6 +10,9 @@
 		<h2 style="font-size: var(--font-size-lg); font-weight: 600;">{title}</h2>
 	</div>
 	<div class="flex items-center gap-3">
+		{#if user?.role === 'dokter'}
+			<ShiftTimer />
+		{/if}
 		<span class="text-sm text-muted">{user?.name || ''}</span>
 		<div class="badge badge-primary" style="text-transform: capitalize;">{user?.role || ''}</div>
 	</div>

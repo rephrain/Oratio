@@ -1,4 +1,4 @@
-import { c as create_ssr_component, f as createEventDispatcher, e as escape, h as compute_slots } from "./ssr.js";
+import { c as create_ssr_component, d as createEventDispatcher, e as escape, h as compute_slots } from "./ssr.js";
 const Modal = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let $$slots = compute_slots(slots);
   let { show = false } = $$props;

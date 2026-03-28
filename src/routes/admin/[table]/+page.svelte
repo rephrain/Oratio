@@ -165,18 +165,18 @@
 		{#each columns as col}
 			{#if col.key !== 'id' || modalMode === 'edit'}
 				<div class="form-group">
-					<label class="form-label">{col.label}</label>
+					<label class="form-label" for="inp-{col.key}">{col.label}</label>
 					{#if col.key === 'id'}
-						<input class="form-input" value={editRecord[col.key] || ''} disabled />
+						<input id="inp-{col.key}" class="form-input" value={editRecord[col.key] || ''} disabled />
 					{:else if col.key === 'password'}
-						<input type="password" class="form-input" bind:value={editRecord[col.key]} placeholder="Enter password" />
+						<input id="inp-{col.key}" type="password" class="form-input" bind:value={editRecord[col.key]} placeholder="Enter password" />
 					{:else if typeof editRecord[col.key] === 'boolean'}
-						<select class="form-select" bind:value={editRecord[col.key]}>
+						<select id="inp-{col.key}" class="form-select" bind:value={editRecord[col.key]}>
 							<option value={true}>Yes</option>
 							<option value={false}>No</option>
 						</select>
 					{:else}
-						<input class="form-input" bind:value={editRecord[col.key]} />
+						<input id="inp-{col.key}" class="form-input" bind:value={editRecord[col.key]} />
 					{/if}
 				</div>
 			{/if}
@@ -184,8 +184,8 @@
 
 		{#if tableName === 'users' && modalMode === 'create'}
 			<div class="form-group">
-				<label class="form-label">Password</label>
-				<input type="password" class="form-input" bind:value={editRecord.password} placeholder="Set password" />
+				<label class="form-label" for="inp-new-password">Password</label>
+				<input id="inp-new-password" type="password" class="form-input" bind:value={editRecord.password} placeholder="Set password" />
 			</div>
 		{/if}
 	</div>

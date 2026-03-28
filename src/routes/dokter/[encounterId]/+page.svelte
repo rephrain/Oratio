@@ -4,12 +4,19 @@
 	import { goto } from "$app/navigation";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import Modal from "$lib/components/UI/Modal.svelte";
+	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import OdontogramChart from "$lib/components/Odontogram/OdontogramChart.svelte";
 	import {
 		PERMANENT_TEETH,
 		DECIDUOUS_TEETH,
 		TOOTH_SURFACES,
 		ALLERGY_REACTIONS,
+		OCCLUSI_OPTIONS,
+		TORUS_PALATINUS_OPTIONS,
+		TORUS_MANDIBULARIS_OPTIONS,
+		PALATUM_OPTIONS,
+		REASON_CATEGORIES,
+		DOCTOR_CODES,
 	} from "$lib/utils/constants.js";
 	import { formatDate } from "$lib/utils/formatters.js";
 	import { addToast } from "$lib/stores/toast.js";
@@ -27,7 +34,14 @@
 	let objective = "";
 	let assessment = "";
 	let plan = "";
+	let resep = "";
+	let keterangan = "";
 	let tekananDarah = "";
+
+	// Reason (SOAP-WHO)
+	let reasonCode = "";
+	let reasonDisplay = "";
+	let reasonCategory = "finding";
 
 	// Prescriptions
 	let prescriptions = [];
@@ -35,18 +49,23 @@
 	let diagnoses = [];
 	// Procedures
 	let procedures = [];
+	// Referrals
+	let referrals = [];
 	// Odontogram
 	let odontogram = {
 		dentition: "permanent",
 		occlusi: "",
-		torus: "",
+		torus_palatinus: "Tidak Ada",
+		torus_mandibularis: "Tidak Ada",
 		palatum: "",
-		diastema: false,
-		anomali: "",
+		diastema: "Tidak Ada",
+		gigi_anomali: "Tidak Ada",
 		details: [],
 	};
 	// Encounter items
 	let encounterItems = [];
+	// Available master items for doctor
+	let availableItems = [];
 
 	// Patient context
 	let patientInfo = null;
@@ -60,7 +79,10 @@
 		tooth_number: "",
 		surface: "",
 		keadaan: "",
+		bahan_restorasi: "",
 		restorasi: "",
+		protesa: "",
+		bahan_protesa: "",
 		diagnosis_code: "",
 		diagnosis_display: "",
 		procedure_code: "",
@@ -108,7 +130,22 @@
 				};
 			}
 
-			encounterItems = data.items || [];
+		encounterItems = data.items || [];
+			referrals = data.referrals || [];
+			resep = data.encounter?.resep || "";
+			keterangan = data.encounter?.keterangan || "";
+			reasonCode = data.encounter?.reason_code || "";
+			reasonDisplay = data.encounter?.reason_display || "";
+			reasonCategory = data.encounter?.reason_category || "finding";
+
+			// Load available items for this doctor
+			try {
+				const itemsRes = await fetch(`/api/admin/items?doctor_id=${data.encounter.doctor_id}`);
+				if (itemsRes.ok) {
+					const itemsData = await itemsRes.json();
+					availableItems = itemsData.data || [];
+				}
+			} catch {}
 
 			// Load patient context
 			if (data.encounter?.patient_id) {
@@ -195,6 +232,42 @@
 		procedures = procedures.filter((_, idx) => idx !== i);
 	}
 
+	// Referral management
+	function addReferral() {
+		referrals = [...referrals, { doctor_code: "", referral_date: "", note: "" }];
+	}
+	function removeReferral(i) {
+		referrals = referrals.filter((_, idx) => idx !== i);
+	}
+
+	// Encounter item management
+	function addEncounterItem() {
+		encounterItems = [...encounterItems, { item_id: "", item_name: "", quantity: 1, price_at_time: 0, subtotal: 0 }];
+	}
+	function removeEncounterItem(i) {
+		encounterItems = encounterItems.filter((_, idx) => idx !== i);
+	}
+	function onItemSelect(idx, itemId) {
+		const item = availableItems.find(it => it.id === itemId);
+		if (item) {
+			encounterItems[idx].item_name = item.name;
+			encounterItems[idx].price_at_time = parseFloat(item.price);
+			encounterItems[idx].subtotal = encounterItems[idx].quantity * parseFloat(item.price);
+			encounterItems = [...encounterItems];
+		}
+	}
+	function updateItemSubtotal(idx) {
+		encounterItems[idx].subtotal = encounterItems[idx].quantity * encounterItems[idx].price_at_time;
+		encounterItems = [...encounterItems];
+	}
+
+	// Reason search (SOAP-WHO)
+	async function searchReason(term) {
+		const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&type=reason_${reasonCategory}`);
+		const data = await res.json();
+		return (data.results || []).map(r => ({ value: r.code, label: r.display }));
+	}
+
 	// Tooth click
 	function handleToothClick(toothNum, event) {
 		if (event.shiftKey) {
@@ -215,7 +288,10 @@
 						tooth_number: toothNum,
 						surface: "",
 						keadaan: "",
+						bahan_restorasi: "",
 						restorasi: "",
+						protesa: "",
+						bahan_protesa: "",
 						diagnosis_code: "",
 						diagnosis_display: "",
 						procedure_code: "",
@@ -265,10 +341,16 @@
 				objective,
 				assessment,
 				plan,
+				resep,
+				keterangan,
+				reason_code: reasonCode,
+				reason_display: reasonDisplay,
+				reason_category: reasonCategory,
 				tekanan_darah: tekananDarah,
 				prescriptions,
 				diagnoses,
 				procedures,
+				referrals,
 				encounter_items: encounterItems,
 			};
 
@@ -371,8 +453,9 @@
 				<div class="card mb-6">
 					<h3 class="card-title mb-4">📝 SOAP Notes</h3>
 					<div class="form-group mb-4">
-						<label class="form-label">Subjective</label>
+						<label class="form-label" for="soap-subjective">Subjective</label>
 						<textarea
+							id="soap-subjective"
 							class="form-textarea"
 							bind:value={subjective}
 							rows="3"
@@ -380,8 +463,9 @@
 						></textarea>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label">Objective</label>
+						<label class="form-label" for="soap-objective">Objective</label>
 						<textarea
+							id="soap-objective"
 							class="form-textarea"
 							bind:value={objective}
 							rows="3"
@@ -389,8 +473,9 @@
 						></textarea>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label">Tekanan Darah</label>
+						<label class="form-label" for="soap-bp">Tekanan Darah</label>
 						<input
+							id="soap-bp"
 							class="form-input"
 							style="max-width: 200px;"
 							bind:value={tekananDarah}
@@ -398,23 +483,78 @@
 						/>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label">Assessment</label>
+						<label class="form-label" for="soap-assessment">Assessment</label>
 						<textarea
+							id="soap-assessment"
 							class="form-textarea"
 							bind:value={assessment}
 							rows="3"
 							placeholder="Penilaian/diagnosis..."
 						></textarea>
 					</div>
-					<div class="form-group">
-						<label class="form-label">Plan</label>
+					<div class="form-group mb-4">
+						<label class="form-label" for="soap-plan">Plan</label>
 						<textarea
+							id="soap-plan"
 							class="form-textarea"
 							bind:value={plan}
 							rows="3"
 							placeholder="Rencana tindakan/pengobatan..."
 						></textarea>
 					</div>
+					<div class="form-group mb-4">
+						<label class="form-label" for="soap-resep">Resep</label>
+						<textarea
+							id="soap-resep"
+							class="form-textarea"
+							bind:value={resep}
+							rows="2"
+							placeholder="Resep obat / catatan resep..."
+						></textarea>
+					</div>
+
+					{#if formMode === 'SOAP-WHO'}
+						<!-- SOAP-WHO Auto-generation -->
+						<div class="flex gap-3 mb-4">
+							<button type="button" class="btn btn-secondary btn-sm" on:click={() => {
+								// Auto-generate SOAP from odontogram
+								const details = odontogram.details || [];
+								const diagList = details.filter(d => d.diagnosis_display).map(d => `Gigi ${d.tooth_number}: ${d.diagnosis_display}`).join('\n');
+								const procList = details.filter(d => d.procedure_display).map(d => `Gigi ${d.tooth_number}: ${d.procedure_display}`).join('\n');
+								const metaParts = [];
+								if (odontogram.occlusi) metaParts.push(`Occlusi: ${odontogram.occlusi}`);
+								if (odontogram.torus_palatinus && odontogram.torus_palatinus !== 'Tidak Ada') metaParts.push(`Torus Palatinus: ${odontogram.torus_palatinus}`);
+								if (odontogram.torus_mandibularis && odontogram.torus_mandibularis !== 'Tidak Ada') metaParts.push(`Torus Mandibularis: ${odontogram.torus_mandibularis}`);
+								if (odontogram.diastema && odontogram.diastema !== 'Tidak Ada') metaParts.push(`Diastema: ${odontogram.diastema}`);
+								if (encounter?.chief_complaint_display) subjective = encounter.chief_complaint_display;
+								objective = metaParts.join(', ');
+								if (diagList) assessment = diagList;
+								if (procList) plan = procList;
+							}}>🔄 Auto-generate SOAP dari Odontogram</button>
+						</div>
+
+						<!-- Reason field -->
+						<div class="form-group mb-4">
+							<label class="form-label">Reason (SNOMED)</label>
+							<div class="flex gap-2 mb-2">
+								{#each REASON_CATEGORIES as cat}
+									<button
+										type="button"
+										class="btn btn-sm {reasonCategory === cat.key ? 'btn-primary' : 'btn-ghost'}"
+										on:click={() => { reasonCategory = cat.key; }}
+									>{cat.label}</button>
+								{/each}
+							</div>
+							<SearchableSelect
+								searchFn={searchReason}
+								placeholder="Cari reason ({reasonCategory})..."
+								on:select={(e) => { reasonCode = e.detail.value; reasonDisplay = e.detail.label; }}
+							/>
+							{#if reasonDisplay}
+								<div class="text-sm mt-1 text-muted">✓ {reasonCode} — {reasonDisplay}</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 
 				<!-- Odontogram (only for SOAP-WHO) -->
@@ -430,46 +570,52 @@
 						/>
 
 						<!-- Odontogram Metadata -->
-						<div class="form-row mt-4">
-							<div class="form-group">
-								<label class="form-label">Occlusi</label>
-								<input
-									class="form-input"
-									bind:value={odontogram.occlusi}
-								/>
-							</div>
-							<div class="form-group">
-								<label class="form-label">Torus</label>
-								<input
-									class="form-input"
-									bind:value={odontogram.torus}
-								/>
-							</div>
-							<div class="form-group">
-								<label class="form-label">Palatum</label>
-								<input
-									class="form-input"
-									bind:value={odontogram.palatum}
-								/>
-							</div>
+					<div class="form-row mt-4">
+						<div class="form-group">
+							<label class="form-label" for="occlusi-sel">Occlusi</label>
+							<select id="occlusi-sel" class="form-select" bind:value={odontogram.occlusi}>
+								<option value="">-- Pilih --</option>
+								{#each OCCLUSI_OPTIONS as opt}
+									<option value={opt}>{opt}</option>
+								{/each}
+							</select>
 						</div>
-						<div class="form-row mt-4">
-							<div class="form-group">
-								<label class="form-label">
-									<input
-										type="checkbox"
-										bind:checked={odontogram.diastema}
-									/> Diastema
-								</label>
-							</div>
-							<div class="form-group">
-								<label class="form-label">Anomali</label>
-								<input
-									class="form-input"
-									bind:value={odontogram.anomali}
-								/>
-							</div>
+						<div class="form-group">
+							<label class="form-label" for="tp-sel">Torus Palatinus</label>
+							<select id="tp-sel" class="form-select" bind:value={odontogram.torus_palatinus}>
+								{#each TORUS_PALATINUS_OPTIONS as opt}
+									<option value={opt}>{opt}</option>
+								{/each}
+							</select>
 						</div>
+						<div class="form-group">
+							<label class="form-label" for="tm-sel">Torus Mandibularis</label>
+							<select id="tm-sel" class="form-select" bind:value={odontogram.torus_mandibularis}>
+								{#each TORUS_MANDIBULARIS_OPTIONS as opt}
+									<option value={opt}>{opt}</option>
+								{/each}
+							</select>
+						</div>
+					</div>
+					<div class="form-row mt-4">
+						<div class="form-group">
+							<label class="form-label" for="palatum-sel">Palatum</label>
+							<select id="palatum-sel" class="form-select" bind:value={odontogram.palatum}>
+								<option value="">-- Pilih --</option>
+								{#each PALATUM_OPTIONS as opt}
+									<option value={opt}>{opt}</option>
+								{/each}
+							</select>
+						</div>
+						<div class="form-group">
+							<label class="form-label" for="diastema-inp">Diastema</label>
+							<input id="diastema-inp" class="form-input" bind:value={odontogram.diastema} placeholder="Tidak Ada / lokasi dan lebar" />
+						</div>
+						<div class="form-group">
+							<label class="form-label" for="anomali-inp">Gigi Anomali</label>
+							<input id="anomali-inp" class="form-input" bind:value={odontogram.gigi_anomali} placeholder="Tidak Ada / lokasi dan bentuk" />
+						</div>
+					</div>
 
 						<!-- Conditions Table -->
 						{#if odontogram.details.length > 0}
@@ -536,6 +682,7 @@
 						<div class="flex gap-3 items-end mt-2">
 							<div class="form-group" style="flex: 0 0 120px;">
 								<input
+									aria-label="Kode ICD-10"
 									class="form-input"
 									bind:value={d.code}
 									placeholder="Kode ICD-10"
@@ -543,6 +690,7 @@
 							</div>
 							<div class="form-group" style="flex: 1;">
 								<input
+									aria-label="Deskripsi diagnosis"
 									class="form-input"
 									bind:value={d.display}
 									placeholder="Deskripsi diagnosis"
@@ -577,6 +725,7 @@
 						<div class="flex gap-3 items-end mt-2">
 							<div class="form-group" style="flex: 0 0 120px;">
 								<input
+									aria-label="Kode Tindakan"
 									class="form-input"
 									bind:value={p.code}
 									placeholder="Kode"
@@ -584,6 +733,7 @@
 							</div>
 							<div class="form-group" style="flex: 1;">
 								<input
+									aria-label="Deskripsi tindakan"
 									class="form-input"
 									bind:value={p.display}
 									placeholder="Deskripsi tindakan"
@@ -591,6 +741,7 @@
 							</div>
 							<div class="form-group" style="flex: 0 0 80px;">
 								<input
+									aria-label="Nomor Gigi"
 									class="form-input"
 									bind:value={p.tooth_number}
 									placeholder="Gigi"
@@ -619,6 +770,7 @@
 						<div class="flex gap-3 items-end mt-2">
 							<div class="form-group" style="flex: 1;">
 								<input
+									aria-label="Nama obat"
 									class="form-input"
 									bind:value={rx.product_name}
 									placeholder="Nama obat"
@@ -626,6 +778,7 @@
 							</div>
 							<div class="form-group" style="flex: 0 0 120px;">
 								<input
+									aria-label="Dosis"
 									class="form-input"
 									bind:value={rx.dosage}
 									placeholder="Dosis"
@@ -633,6 +786,7 @@
 							</div>
 							<div class="form-group" style="flex: 0 0 80px;">
 								<input
+									aria-label="Kuantitas"
 									type="number"
 									class="form-input"
 									bind:value={rx.quantity}
@@ -647,6 +801,79 @@
 							>
 						</div>
 					{/each}
+				</div>
+
+				<!-- Keterangan -->
+				<div class="card mb-6">
+					<h3 class="card-title mb-4">📋 Keterangan</h3>
+					<div class="form-group">
+						<label class="form-label" for="keterangan-ta">Keterangan Tambahan</label>
+						<textarea id="keterangan-ta" class="form-textarea" bind:value={keterangan} rows="2" placeholder="Catatan tambahan..."></textarea>
+					</div>
+				</div>
+
+				<!-- Referrals -->
+				<div class="card mb-6">
+					<div class="card-header">
+						<h3 class="card-title">🔄 Rujukan</h3>
+						<button type="button" class="btn btn-secondary btn-sm" on:click={addReferral}>+ Tambah</button>
+					</div>
+					{#each referrals as ref, i}
+						<div class="flex gap-3 items-end mt-2">
+							<div class="form-group" style="flex: 0 0 140px;">
+								<select class="form-select" bind:value={ref.doctor_code}>
+									<option value="">-- Dokter --</option>
+									{#each DOCTOR_CODES as doc}
+										<option value={doc.code}>{doc.code} - {doc.name}</option>
+									{/each}
+								</select>
+							</div>
+							<div class="form-group" style="flex: 0 0 140px;">
+								<input type="date" class="form-input" bind:value={ref.referral_date} />
+							</div>
+							<div class="form-group" style="flex: 1;">
+								<input class="form-input" bind:value={ref.note} placeholder="Catatan rujukan" />
+							</div>
+							<button type="button" class="btn btn-danger btn-sm btn-icon" on:click={() => removeReferral(i)}>✕</button>
+						</div>
+					{/each}
+					{#if referrals.length === 0}
+						<p class="text-sm text-muted mt-2">Belum ada rujukan</p>
+					{/if}
+				</div>
+
+				<!-- Encounter Items -->
+				<div class="card mb-6">
+					<div class="card-header">
+						<h3 class="card-title">🛒 Item Tindakan</h3>
+						<button type="button" class="btn btn-secondary btn-sm" on:click={addEncounterItem}>+ Tambah</button>
+					</div>
+					{#each encounterItems as item, i}
+						<div class="flex gap-3 items-end mt-2">
+							<div class="form-group" style="flex: 1;">
+								<select class="form-select" bind:value={item.item_id} on:change={() => onItemSelect(i, item.item_id)}>
+									<option value="">-- Pilih Item --</option>
+									{#each availableItems as ai}
+										<option value={ai.id}>{ai.name} ({ai.item_group || '-'})</option>
+									{/each}
+								</select>
+							</div>
+							<div class="form-group" style="flex: 0 0 80px;">
+								<input type="number" class="form-input" bind:value={item.quantity} min="1"
+									on:input={() => updateItemSubtotal(i)} placeholder="Qty" />
+							</div>
+							<div class="form-group" style="flex: 0 0 120px;">
+								<input class="form-input" value={item.price_at_time} disabled placeholder="Harga" />
+							</div>
+							<div class="form-group" style="flex: 0 0 120px;">
+								<input class="form-input font-semibold" value={item.subtotal} disabled placeholder="Subtotal" />
+							</div>
+							<button type="button" class="btn btn-danger btn-sm btn-icon" on:click={() => removeEncounterItem(i)}>✕</button>
+						</div>
+					{/each}
+					{#if encounterItems.length === 0}
+						<p class="text-sm text-muted mt-2">Belum ada item tindakan</p>
+					{/if}
 				</div>
 
 				<!-- Actions -->
@@ -759,19 +986,50 @@
 	</div>
 	<div class="form-row mt-4">
 		<div class="form-group">
-			<label class="form-label">Keadaan</label>
+			<label class="form-label" for="td-keadaan">Keadaan</label>
 			<input
+				id="td-keadaan"
 				class="form-input"
 				bind:value={toothDetail.keadaan}
 				placeholder="Kondisi gigi"
 			/>
 		</div>
 		<div class="form-group">
-			<label class="form-label">Restorasi</label>
+			<label class="form-label" for="td-bahan-restorasi">Bahan Restorasi</label>
 			<input
+				id="td-bahan-restorasi"
+				class="form-input"
+				bind:value={toothDetail.bahan_restorasi}
+				placeholder="Bahan restorasi"
+			/>
+		</div>
+		<div class="form-group">
+			<label class="form-label" for="td-restorasi">Restorasi</label>
+			<input
+				id="td-restorasi"
 				class="form-input"
 				bind:value={toothDetail.restorasi}
 				placeholder="Jenis restorasi"
+			/>
+		</div>
+	</div>
+	<div class="form-row mt-4">
+		<div class="form-group">
+			<label class="form-label" for="td-protesa">Protesa</label>
+			<input
+				id="td-protesa"
+				class="form-input"
+				bind:value={toothDetail.protesa}
+				placeholder="Jenis protesa"
+			/>
+		</div>
+		<div class="form-group">
+			<label class="form-label" for="td-bahan-protesa">Bahan Protesa</label>
+			<input
+				id="td-bahan-protesa"
+				class="form-input"
+				bind:value={toothDetail.bahan_protesa}
+				placeholder="Bahan protesa"
 			/>
 		</div>
 	</div>

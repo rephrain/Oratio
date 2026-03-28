@@ -31,7 +31,7 @@ export async function GET({ url }) {
 }
 
 // POST /api/patients - create
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
 	const body = await request.json();
 
 	// Generate next patient ID
@@ -64,7 +64,8 @@ export async function POST({ request }) {
 		language: body.language || 'id',
 		blood_type: body.blood_type,
 		rhesus: body.rhesus || null,
-		pregnancy_status: body.pregnancy_status || false
+		pregnancy_status: body.pregnancy_status || false,
+		user_id: locals?.user?.id || null
 	}).returning();
 
 	// Insert disease history

@@ -31,11 +31,14 @@ async function POST({ request, locals }) {
     payment_type: body.payment_type,
     payment_code: body.payment_code,
     card_number: body.card_number || null,
+    reference_number: body.reference_number || null,
     total_sales: String(totalSales),
     discount_percent: body.discount_percent ? String(body.discount_percent) : "0",
     discount_amount: String(discountAmount),
     net_sales: String(netSales),
-    note: body.note
+    total_paid: String(body.total_paid || netSales),
+    note: body.note,
+    paid_at: /* @__PURE__ */ new Date()
   }).returning();
   await db.update(encounters).set({ status: "Completed", updated_at: /* @__PURE__ */ new Date() }).where(eq(encounters.id, body.encounter_id));
   return json({ payment }, { status: 201 });

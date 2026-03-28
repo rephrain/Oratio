@@ -51,6 +51,16 @@ async function PUT({ params, request }) {
     updateData.assessment = body.assessment;
   if (body.plan !== void 0)
     updateData.plan = body.plan;
+  if (body.resep !== void 0)
+    updateData.resep = body.resep;
+  if (body.keterangan !== void 0)
+    updateData.keterangan = body.keterangan;
+  if (body.reason_code !== void 0)
+    updateData.reason_code = body.reason_code;
+  if (body.reason_display !== void 0)
+    updateData.reason_display = body.reason_display;
+  if (body.reason_category !== void 0)
+    updateData.reason_category = body.reason_category;
   if (body.tekanan_darah !== void 0)
     updateData.tekanan_darah = body.tekanan_darah;
   if (body.form_mode !== void 0)
@@ -123,10 +133,11 @@ async function PUT({ params, request }) {
       encounter_id: params.id,
       dentition: body.odontogram.dentition || "permanent",
       occlusi: body.odontogram.occlusi,
-      torus: body.odontogram.torus,
+      torus_palatinus: body.odontogram.torus_palatinus,
+      torus_mandibularis: body.odontogram.torus_mandibularis,
       palatum: body.odontogram.palatum,
-      diastema: body.odontogram.diastema || false,
-      anomali: body.odontogram.anomali
+      diastema: body.odontogram.diastema || "Tidak Ada",
+      gigi_anomali: body.odontogram.gigi_anomali || "Tidak Ada"
     }).returning();
     if (body.odontogram.details) {
       for (const d of body.odontogram.details) {
@@ -135,7 +146,10 @@ async function PUT({ params, request }) {
           tooth_number: d.tooth_number,
           surface: d.surface,
           keadaan: d.keadaan,
+          bahan_restorasi: d.bahan_restorasi,
           restorasi: d.restorasi,
+          protesa: d.protesa,
+          bahan_protesa: d.bahan_protesa,
           diagnosis_code: d.diagnosis_code,
           diagnosis_display: d.diagnosis_display,
           procedure_code: d.procedure_code,

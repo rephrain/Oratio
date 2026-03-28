@@ -1,4 +1,4 @@
-import { a as verifyToken } from "./auth.js";
+import { verifyToken } from "./auth.js";
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 const ROLE_PATHS = {
   admin: "/admin",

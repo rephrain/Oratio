@@ -1,4 +1,4 @@
-import { c as create_ssr_component, f as createEventDispatcher, d as add_attribute, e as escape, b as each, v as validate_component } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, d as createEventDispatcher, f as add_attribute, e as escape, b as each, v as validate_component } from "../../../../chunks/ssr.js";
 import { A as ADMIN_TABLES } from "../../../../chunks/constants.js";
 const FileUpload = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { accept = "" } = $$props;

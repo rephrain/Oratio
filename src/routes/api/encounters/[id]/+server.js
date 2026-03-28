@@ -80,6 +80,11 @@ export async function PUT({ params, request }) {
 	if (body.objective !== undefined) updateData.objective = body.objective;
 	if (body.assessment !== undefined) updateData.assessment = body.assessment;
 	if (body.plan !== undefined) updateData.plan = body.plan;
+	if (body.resep !== undefined) updateData.resep = body.resep;
+	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
+	if (body.reason_code !== undefined) updateData.reason_code = body.reason_code;
+	if (body.reason_display !== undefined) updateData.reason_display = body.reason_display;
+	if (body.reason_category !== undefined) updateData.reason_category = body.reason_category;
 	if (body.tekanan_darah !== undefined) updateData.tekanan_darah = body.tekanan_darah;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
 	if (body.chief_complaint_code !== undefined) updateData.chief_complaint_code = body.chief_complaint_code;
@@ -171,10 +176,11 @@ export async function PUT({ params, request }) {
 			encounter_id: params.id,
 			dentition: body.odontogram.dentition || 'permanent',
 			occlusi: body.odontogram.occlusi,
-			torus: body.odontogram.torus,
+			torus_palatinus: body.odontogram.torus_palatinus,
+			torus_mandibularis: body.odontogram.torus_mandibularis,
 			palatum: body.odontogram.palatum,
-			diastema: body.odontogram.diastema || false,
-			anomali: body.odontogram.anomali
+			diastema: body.odontogram.diastema || 'Tidak Ada',
+			gigi_anomali: body.odontogram.gigi_anomali || 'Tidak Ada'
 		}).returning();
 
 		if (body.odontogram.details) {
@@ -184,7 +190,10 @@ export async function PUT({ params, request }) {
 					tooth_number: d.tooth_number,
 					surface: d.surface,
 					keadaan: d.keadaan,
+					bahan_restorasi: d.bahan_restorasi,
 					restorasi: d.restorasi,
+					protesa: d.protesa,
+					bahan_protesa: d.bahan_protesa,
 					diagnosis_code: d.diagnosis_code,
 					diagnosis_display: d.diagnosis_display,
 					procedure_code: d.procedure_code,

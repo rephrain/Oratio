@@ -1,4 +1,4 @@
-import { c as create_ssr_component, e as escape, b as each, d as add_attribute } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, e as escape, b as each, f as add_attribute } from "../../../../chunks/ssr.js";
 import { P as PAYMENT_TYPES } from "../../../../chunks/constants.js";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let cashierName;

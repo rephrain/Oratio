@@ -1,4 +1,4 @@
-import { c as create_ssr_component, d as add_attribute } from "../../../chunks/ssr.js";
+import { c as create_ssr_component, f as add_attribute } from "../../../chunks/ssr.js";
 const _page_svelte_svelte_type_style_lang = "";
 const css = {
   code: ".alert-error.svelte-s0oevp{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--danger-light);color:#991B1B;border-radius:var(--radius-md);font-size:var(--font-size-sm);margin-bottom:var(--space-4);animation:slideUp 200ms ease}.footer-text.svelte-s0oevp{text-align:center;color:var(--text-secondary);font-size:var(--font-size-xs);margin-top:var(--space-6)}",

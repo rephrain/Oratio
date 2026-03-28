@@ -93,7 +93,7 @@
 	<div style="margin-top: var(--space-4);">
 		<div class="flex items-center justify-between mb-6">
 			<h1 class="page-title" style="margin: 0;">Dashboard</h1>
-			<input type="date" class="form-input" style="width: auto;" bind:value={filterDate} on:change={loadEncounters} />
+			<input type="date" aria-label="Filter Tanggal" class="form-input" style="width: auto;" bind:value={filterDate} on:change={loadEncounters} />
 		</div>
 
 		<!-- Stats -->

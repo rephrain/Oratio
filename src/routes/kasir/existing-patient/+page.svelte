@@ -126,8 +126,8 @@
 				<h3 class="card-title mb-4">👨‍⚕️ Penugasan</h3>
 				<div class="form-row">
 					<div class="form-group">
-						<label class="form-label">Kode Dokter <span class="required">*</span></label>
-						<select class="form-select" bind:value={doctorId} required>
+						<label class="form-label" for="doctor-assign-sel">Kode Dokter <span class="required">*</span></label>
+						<select id="doctor-assign-sel" class="form-select" bind:value={doctorId} required>
 							<option value="">-- Pilih Dokter (On-Shift Hari Ini) --</option>
 							{#each doctors as doc}
 								<option value={doc.id}>{doc.name} ({doc.doctor_code})</option>
@@ -135,8 +135,8 @@
 						</select>
 					</div>
 					<div class="form-group">
-						<label class="form-label">Sumber Rujukan</label>
-						<input class="form-input" bind:value={referralSource} placeholder="Opsional" />
+						<label class="form-label" for="rujukan-inp">Sumber Rujukan</label>
+						<input id="rujukan-inp" class="form-input" bind:value={referralSource} placeholder="Opsional" />
 					</div>
 				</div>
 			</div>

@@ -1,4 +1,4 @@
-import { c as create_ssr_component, d as add_attribute, e as escape, b as each, v as validate_component } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, f as add_attribute, e as escape, b as each, v as validate_component } from "../../../../chunks/ssr.js";
 import { S as SearchableSelect } from "../../../../chunks/SearchableSelect.js";
 import { B as BLOOD_TYPES, a as ALLERGY_REACTIONS } from "../../../../chunks/constants.js";
 async function searchAllergy(term) {

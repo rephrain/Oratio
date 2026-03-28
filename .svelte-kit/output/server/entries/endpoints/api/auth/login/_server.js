@@ -1,7 +1,7 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { d as db, u as users } from "../../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
-import { v as verifyPassword, c as createToken } from "../../../../../chunks/auth.js";
+import { verifyPassword, createToken } from "../../../../../chunks/auth.js";
 async function POST({ request, cookies }) {
   const { username, password } = await request.json();
   if (!username || !password) {

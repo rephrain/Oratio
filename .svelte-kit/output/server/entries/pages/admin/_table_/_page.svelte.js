@@ -1,4 +1,4 @@
-import { c as create_ssr_component, f as createEventDispatcher, d as add_attribute, b as each, e as escape, a as subscribe, v as validate_component } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, d as createEventDispatcher, f as add_attribute, b as each, e as escape, a as subscribe, v as validate_component } from "../../../../chunks/ssr.js";
 import { p as page } from "../../../../chunks/stores.js";
 /* empty css                                                          */import { M as Modal } from "../../../../chunks/Modal.js";
 import { A as ADMIN_TABLES } from "../../../../chunks/constants.js";

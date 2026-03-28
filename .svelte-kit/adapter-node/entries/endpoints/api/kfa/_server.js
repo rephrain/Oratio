@@ -1,23 +1,32 @@
 import { j as json } from "../../../../chunks/index.js";
-const SATUSEHAT_URLS = {
-  staging: "https://api-satusehat.kemkes.go.id/fhir-r4/v1",
-  production: "https://api-satusehat.kemkes.go.id/fhir-r4/v1"
-};
-const AUTH_URLS = {
-  staging: "https://api-satusehat.dto.kemkes.go.id/oauth2/v1/accesstoken",
-  production: "https://api-satusehat.kemkes.go.id/oauth2/v1/accesstoken"
+const SATUSEHAT_CONFIG = {
+  staging: {
+    base_url: "https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1",
+    auth_url: "https://api-satusehat-stg.dto.kemkes.go.id/oauth2/v1/accesstoken",
+    kfa_url: "https://api-satusehat-stg.dto.kemkes.go.id/kfa-v2/products/all",
+    consent_url: "https://api-satusehat-stg.dto.kemkes.go.id/consent/v1"
+  },
+  production: {
+    base_url: "https://api-satusehat.kemkes.go.id/fhir-r4/v1",
+    auth_url: "https://api-satusehat.kemkes.go.id/oauth2/v1/accesstoken",
+    kfa_url: "https://api-satusehat.kemkes.go.id/kfa-v2/products/all",
+    consent_url: "https://api-satusehat.kemkes.go.id/consent/v1"
+  }
 };
 let cachedToken = null;
 let tokenExpiry = 0;
 function getEnv() {
   return process.env.SATUSEHAT_ENV || "staging";
 }
+function getConfig() {
+  return SATUSEHAT_CONFIG[getEnv()] || SATUSEHAT_CONFIG.staging;
+}
 async function getToken() {
   if (cachedToken && Date.now() < tokenExpiry) {
     return cachedToken;
   }
-  const env = getEnv();
-  const url = `${AUTH_URLS[env]}?grant_type=client_credentials`;
+  const config = getConfig();
+  const url = `${config.auth_url}?grant_type=client_credentials`;
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -38,30 +47,47 @@ async function getToken() {
     throw error;
   }
 }
-async function searchKFA(query) {
+async function searchKFA(keyword, page = 1, size = 10) {
   const token = await getToken();
-  const env = getEnv();
-  const baseUrl = SATUSEHAT_URLS[env];
-  const res = await fetch(`${baseUrl}/Medication?name=${encodeURIComponent(query)}`, {
-    headers: { Authorization: `Bearer ${token}` }
+  const config = getConfig();
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    product_type: "farmasi",
+    keyword
+  });
+  const res = await fetch(`${config.kfa_url}?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json"
+    }
   });
   if (!res.ok)
     throw new Error(`KFA search failed: ${res.status}`);
-  return await res.json();
+  const data = await res.json();
+  const items = data?.items?.data || [];
+  return items.map((item) => {
+    const isUnknown = item.kfa_code?.startsWith("92");
+    return {
+      code: isUnknown ? item.prodct_template?.kfa_code : item.kfa_code,
+      display: isUnknown ? item.prodct_template?.name : item.name,
+      dosage_form: item.dosage_form?.name || "",
+      kfa_code: item.kfa_code
+    };
+  });
 }
 async function GET({ url }) {
   const query = url.searchParams.get("query") || "";
+  const page = parseInt(url.searchParams.get("page") || "1");
+  const size = parseInt(url.searchParams.get("size") || "10");
   if (!query || query.length < 2) {
     return json({ results: [] });
   }
   try {
-    const data = await searchKFA(query);
-    const results = (data.entry || []).map((e) => ({
-      code: e.resource?.code?.coding?.[0]?.code || "",
-      display: e.resource?.code?.coding?.[0]?.display || e.resource?.code?.text || ""
-    }));
+    const results = await searchKFA(query, page, size);
     return json({ results });
   } catch (error) {
+    console.error("KFA search error:", error);
     return json({ error: error.message, results: [] }, { status: 500 });
   }
 }

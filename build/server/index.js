@@ -203,10 +203,10 @@ const options = {
 		<div class="error">\r
 			<span class="status">` + status + '</span>\r\n			<div class="message">\r\n				<h1>' + message + "</h1>\r\n			</div>\r\n		</div>\r\n	</body>\r\n</html>\r\n"
   },
-  version_hash: "1k8dvgd"
+  version_hash: "ahu3hy"
 };
 function get_hooks() {
-  return import('./chunks/hooks.server-d8949283.js');
+  return import('./chunks/hooks.server-988ff709.js');
 }
 
 /** @type {Record<string, string>} */

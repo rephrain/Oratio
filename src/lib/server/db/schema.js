@@ -61,6 +61,7 @@ export const patients = pgTable('patients', {
 	rhesus: rhesusEnum('rhesus'),
 	pregnancy_status: boolean('pregnancy_status').default(false),
 	document_id: uuid('document_id'),
+	user_id: uuid('user_id').references(() => users.id), // kasir who registered
 	created_at: timestamp('created_at').defaultNow().notNull(),
 	updated_at: timestamp('updated_at').defaultNow().notNull()
 });
@@ -133,6 +134,11 @@ export const encounters = pgTable('encounters', {
 	objective: text('objective'),
 	assessment: text('assessment'),
 	plan: text('plan'),
+	resep: text('resep'),
+	keterangan: text('keterangan'),
+	reason_code: varchar('reason_code', { length: 50 }),
+	reason_display: varchar('reason_display', { length: 255 }),
+	reason_category: varchar('reason_category', { length: 30 }), // finding, procedure, situation, event
 	tekanan_darah: varchar('tekanan_darah', { length: 20 }),
 	referral_source: varchar('referral_source', { length: 100 }),
 	created_at: timestamp('created_at').defaultNow().notNull(),
@@ -154,11 +160,12 @@ export const encounterOdontograms = pgTable('encounter_odontograms', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
 	dentition: varchar('dentition', { length: 20 }).default('permanent'), // permanent, deciduous, mixed
-	occlusi: text('occlusi'),
-	torus: text('torus'),
-	palatum: text('palatum'),
-	diastema: boolean('diastema').default(false),
-	anomali: text('anomali'),
+	occlusi: varchar('occlusi', { length: 30 }), // Normal Bite, Cross Bite, Steep Bite
+	torus_palatinus: varchar('torus_palatinus', { length: 30 }), // Tidak Ada, Kecil, Sedang, Besar, Multiple
+	torus_mandibularis: varchar('torus_mandibularis', { length: 30 }), // Tidak Ada, Sisi Kiri, Sisi Kanan, Kedua Sisi
+	palatum: varchar('palatum', { length: 20 }), // Dalam, Sedang, Rendah
+	diastema: text('diastema'), // text: "Tidak Ada" or description of location/width
+	gigi_anomali: text('gigi_anomali'), // text: "Tidak Ada" or description of location/shape
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -169,7 +176,10 @@ export const odontogramDetails = pgTable('odontogram_details', {
 	tooth_number: varchar('tooth_number', { length: 5 }).notNull(),
 	surface: varchar('surface', { length: 10 }), // M, D, O, B, L or combinations
 	keadaan: varchar('keadaan', { length: 50 }),
+	bahan_restorasi: varchar('bahan_restorasi', { length: 50 }),
 	restorasi: varchar('restorasi', { length: 50 }),
+	protesa: varchar('protesa', { length: 50 }),
+	bahan_protesa: varchar('bahan_protesa', { length: 50 }),
 	diagnosis_code: varchar('diagnosis_code', { length: 50 }),
 	diagnosis_display: varchar('diagnosis_display', { length: 255 }),
 	procedure_code: varchar('procedure_code', { length: 50 }),
@@ -185,6 +195,7 @@ export const encounterPrescriptions = pgTable('encounter_prescriptions', {
 	product_name: varchar('product_name', { length: 255 }).notNull(),
 	dosage: varchar('dosage', { length: 100 }),
 	quantity: integer('quantity'),
+	instruction: text('instruction'),
 	notes: text('notes'),
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
@@ -227,6 +238,8 @@ export const items = pgTable('items', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
 	user_id: uuid('user_id').references(() => users.id), // doctor owner
+	item_group: varchar('item_group', { length: 50 }),
+	denomination: varchar('denomination', { length: 50 }),
 	price: decimal('price', { precision: 12, scale: 2 }).notNull(),
 	is_active: boolean('is_active').default(true).notNull(),
 	created_at: timestamp('created_at').defaultNow().notNull(),
@@ -253,12 +266,15 @@ export const payments = pgTable('payments', {
 	payment_type: varchar('payment_type', { length: 50 }),
 	payment_code: varchar('payment_code', { length: 20 }),
 	card_number: varchar('card_number', { length: 30 }),
+	reference_number: varchar('reference_number', { length: 50 }),
 	total_sales: decimal('total_sales', { precision: 12, scale: 2 }).notNull(),
 	discount_percent: decimal('discount_percent', { precision: 5, scale: 2 }).default('0'),
 	discount_amount: decimal('discount_amount', { precision: 12, scale: 2 }).default('0'),
 	net_sales: decimal('net_sales', { precision: 12, scale: 2 }).notNull(),
+	total_paid: decimal('total_paid', { precision: 12, scale: 2 }).notNull(),
 	note: text('note'),
 	proof_document_id: uuid('proof_document_id').references(() => documents.id),
+	paid_at: timestamp('paid_at').defaultNow().notNull(),
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
 

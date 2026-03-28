@@ -21,7 +21,7 @@ async function GET({ url }) {
   const [{ count }] = await db.select({ count: sql`count(*)` }).from(patients);
   return json({ data, total: Number(count), page, limit });
 }
-async function POST({ request }) {
+async function POST({ request, locals }) {
   const body = await request.json();
   const [last] = await db.select({ id: patients.id }).from(patients).orderBy(desc(patients.id)).limit(1);
   const newId = generatePatientId(last?.id);
@@ -47,7 +47,8 @@ async function POST({ request }) {
     language: body.language || "id",
     blood_type: body.blood_type,
     rhesus: body.rhesus || null,
-    pregnancy_status: body.pregnancy_status || false
+    pregnancy_status: body.pregnancy_status || false,
+    user_id: locals?.user?.id || null
   }).returning();
   if (body.disease_history?.length) {
     for (const h of body.disease_history) {

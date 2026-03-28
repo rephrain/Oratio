@@ -1,4 +1,4 @@
-import { c as create_ssr_component, o as onDestroy, d as add_attribute, e as escape } from "../../../chunks/ssr.js";
+import { c as create_ssr_component, o as onDestroy, f as add_attribute, e as escape } from "../../../chunks/ssr.js";
 /* empty css                                                       */const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let todayQueue;
   let inProgress;

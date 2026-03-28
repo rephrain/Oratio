@@ -47,8 +47,8 @@ async function POST({ params, request }) {
   const table = schemaMap[tableConfig.schema];
   const body = await request.json();
   if (params.table === "users" && body.password) {
-    const { createHash } = await import("crypto");
-    body.password_hash = createHash("sha256").update(body.password).digest("hex");
+    const { hashPasswordAsync } = await import("../../../../../chunks/auth.js");
+    body.password_hash = await hashPasswordAsync(body.password);
     delete body.password;
   }
   try {
@@ -70,8 +70,8 @@ async function PUT({ params, request }) {
     return json({ error: "ID required" }, { status: 400 });
   }
   if (params.table === "users" && updateData.password) {
-    const { createHash } = await import("crypto");
-    updateData.password_hash = createHash("sha256").update(updateData.password).digest("hex");
+    const { hashPasswordAsync } = await import("../../../../../chunks/auth.js");
+    updateData.password_hash = await hashPasswordAsync(updateData.password);
     delete updateData.password;
   }
   try {

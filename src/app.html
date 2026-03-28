@@ -6,7 +6,65 @@
 		<meta name="description" content="Oratio Dental – Sistem Rekam Medis Kedokteran Gigi" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+		<script>
+			tailwind.config = {
+				darkMode: "class",
+				theme: {
+					extend: {
+						colors: {
+							"primary": "var(--tw-primary)",
+							"secondary": "var(--tw-secondary)",
+							"accent": "var(--tw-accent)",
+							"forest": "var(--tw-forest)",
+							"background-light": "var(--tw-bg-light)",
+							"background-dark": "var(--tw-bg-dark)",
+						},
+						fontFamily: {
+							"display": ["Inter", "sans-serif"]
+						},
+						borderRadius: {
+							"DEFAULT": "0.5rem",
+							"lg": "1rem",
+							"xl": "1.5rem",
+							"2xl": "2rem",
+							"full": "9999px"
+						},
+						keyframes: {
+							fadeInUp: {
+								'0%': { opacity: '0', transform: 'translateY(20px)' },
+								'100%': { opacity: '1', transform: 'translateY(0)' },
+							},
+							float: {
+								'0%, 100%': { transform: 'translate(0, 0)' },
+								'50%': { transform: 'translate(-20px, 20px)' },
+							},
+							floatReverse: {
+								'0%, 100%': { transform: 'translate(0, 0)' },
+								'50%': { transform: 'translate(20px, -20px)' },
+							}
+						},
+						animation: {
+							fadeInUp: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+							float: 'float 20s ease-in-out infinite',
+							floatReverse: 'floatReverse 25s ease-in-out infinite',
+						}
+					},
+				},
+			}
+		</script>
+		<style>
+			:root {
+				--tw-primary: #3b82f6;
+				--tw-secondary: #E0E0E0;
+				--tw-accent: #0ea5e9;
+				--tw-forest: #064E3B;
+				--tw-bg-light: #f8fafc;
+				--tw-bg-dark: #0f172a;
+			}
+		</style>
 		<title>Oratio Dental</title>
 		%sveltekit.head%
 	</head>

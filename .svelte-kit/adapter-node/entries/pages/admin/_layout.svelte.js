@@ -1,6 +1,5 @@
 import { c as create_ssr_component, v as validate_component } from "../../../chunks/ssr.js";
 import { A as AppShell, T as Toast } from "../../../chunks/Toast.js";
-const app = "";
 const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let user;
   let { data } = $$props;

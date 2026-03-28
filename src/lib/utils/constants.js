@@ -55,38 +55,38 @@ export const DAYS_OF_WEEK = [
 // Blood types
 export const BLOOD_TYPES = ['A', 'B', 'AB', 'O'];
 
-// Allergy reactions (30 items)
+// Allergy reactions — exact 30 items from the original spec
 export const ALLERGY_REACTIONS = [
+	{ code: '1985008', display: 'Vomitus' },
+	{ code: '4386001', display: 'Bronchospasm' },
+	{ code: '9826008', display: 'Conjunctivitis' },
+	{ code: '23924001', display: 'Tight chest' },
+	{ code: '24079001', display: 'Atopic dermatitis' },
+	{ code: '31996006', display: 'Vasculitis' },
 	{ code: '39579001', display: 'Anaphylaxis' },
-	{ code: '271807003', display: 'Rash' },
-	{ code: '126485001', display: 'Urticaria' },
-	{ code: '25064002', display: 'Headache' },
-	{ code: '422587007', display: 'Nausea' },
-	{ code: '422400008', display: 'Vomiting' },
-	{ code: '62315008', display: 'Diarrhea' },
-	{ code: '267036007', display: 'Dyspnea' },
+	{ code: '41291007', display: 'Angioedema' },
+	{ code: '43116000', display: 'Eczema' },
 	{ code: '49727002', display: 'Cough' },
-	{ code: '418290006', display: 'Itching' },
-	{ code: '267101005', display: 'Rhinitis' },
-	{ code: '247472004', display: 'Wheezing' },
-	{ code: '271757001', display: 'Swelling' },
-	{ code: '76067001', display: 'Sneezing' },
-	{ code: '84229001', display: 'Fatigue' },
-	{ code: '386661006', display: 'Fever' },
-	{ code: '23924001', display: 'Chest tightness' },
-	{ code: '418363000', display: 'Pruritus' },
-	{ code: '74776002', display: 'Itching of eye' },
-	{ code: '703630003', display: 'Red eye' },
-	{ code: '162397003', display: 'Pain in stomach' },
-	{ code: '271681002', display: 'Angioedema' },
-	{ code: '56018004', display: 'Wheal' },
-	{ code: '64531003', display: 'Nasal congestion' },
-	{ code: '279382005', display: 'Skin reaction' },
-	{ code: '73442001', display: 'Stevens-Johnson syndrome' },
-	{ code: '16932000', display: 'Nausea and vomiting' },
+	{ code: '51599000', display: 'Edema of larynx' },
 	{ code: '62315008', display: 'Diarrhea' },
-	{ code: '404640003', display: 'Dizziness' },
-	{ code: '267038008', display: 'Edema' }
+	{ code: '70076002', display: 'Rhinitis' },
+	{ code: '73442001', display: 'Stevens-Johnson syndrome' },
+	{ code: '76067001', display: 'Sneezing' },
+	{ code: '91175000', display: 'Seizure' },
+	{ code: '126485001', display: 'Urticaria' },
+	{ code: '162290004', display: 'Dry eyes' },
+	{ code: '195967001', display: 'Asthma' },
+	{ code: '247472004', display: 'Wheal' },
+	{ code: '267036007', display: 'Dyspnea' },
+	{ code: '271757001', display: 'Papular eruption' },
+	{ code: '271759003', display: 'Bullous eruption' },
+	{ code: '271807003', display: 'Eruption of skin' },
+	{ code: '410430005', display: 'Cardiorespiratory arrest' },
+	{ code: '418363000', display: 'Itching of skin' },
+	{ code: '422587007', display: 'Nausea' },
+	{ code: '698247007', display: 'Cardiac arrhythmia' },
+	{ code: '702809001', display: 'Drug reaction with eosinophilia and systemic symptoms' },
+	{ code: '768962006', display: 'Lyell syndrome' }
 ];
 
 // Tooth numbers for odontogram
@@ -113,6 +113,23 @@ export const TOOTH_SURFACES = [
 	{ key: 'D', label: 'Distal' }
 ];
 
+// Odontogram dropdown options (per spec)
+export const OCCLUSI_OPTIONS = ['Normal Bite', 'Cross Bite', 'Steep Bite'];
+
+export const TORUS_PALATINUS_OPTIONS = ['Tidak Ada', 'Kecil', 'Sedang', 'Besar', 'Multiple'];
+
+export const TORUS_MANDIBULARIS_OPTIONS = ['Tidak Ada', 'Sisi Kiri', 'Sisi Kanan', 'Kedua Sisi'];
+
+export const PALATUM_OPTIONS = ['Dalam', 'Sedang', 'Rendah'];
+
+// SOAP-WHO Reason categories
+export const REASON_CATEGORIES = [
+	{ key: 'finding', label: 'Finding', snomedCode: '404684003' },
+	{ key: 'procedure', label: 'Procedure', snomedCode: '71388002' },
+	{ key: 'situation', label: 'Situation', snomedCode: '243796009' },
+	{ key: 'event', label: 'Event', snomedCode: '272379006' }
+];
+
 // Admin table names mapped to schema keys
 export const ADMIN_TABLES = {
 	'users': { label: 'Users', schema: 'users' },
@@ -135,3 +152,21 @@ export const ADMIN_TABLES = {
 	'encounter-items': { label: 'Encounter Items', schema: 'encounterItems' },
 	'payments': { label: 'Payments', schema: 'payments' }
 };
+
+// Doctor codes mapping (14 doctors from spec)
+export const DOCTOR_CODES = [
+	{ code: 'BS', name: 'drg. Badi Soerachman, Sp.KG' },
+	{ code: 'MK', name: 'drg. Merrida Kartawidjaja, Sp.KG' },
+	{ code: 'MM', name: 'drg. Maya Mukti Sari, Sp.KG' },
+	{ code: 'MG', name: 'drg. Monique Gabriela' },
+	{ code: 'ER', name: 'drg. Erika Subiyanto, Sp.KGA' },
+	{ code: 'HH', name: 'drg. Henri Hartman, Sp.KGA' },
+	{ code: 'FL', name: 'drg. Felicia Melati, Sp.KGA' },
+	{ code: 'CY', name: 'drg. Cynthia Tanujaya' },
+	{ code: 'AM', name: 'drg. Arismunandar, Sp.BM' },
+	{ code: 'AA', name: 'drg. Asri Arumsari, Sp.BM(K), MMRS' },
+	{ code: 'EK', name: 'drg. Eka Marwansyah Oli\'i, Sp.BM(K)' },
+	{ code: 'HS', name: 'drg. Helmi Siti Aminah, Sp.Pros' },
+	{ code: 'WA', name: 'drg. Wenny Awalia, Sp.Pros' },
+	{ code: 'WD', name: 'drg. Widia Hafsyah, Sp.Perio' }
+];

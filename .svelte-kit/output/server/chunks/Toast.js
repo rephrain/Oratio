@@ -1,113 +1,23 @@
-import { c as create_ssr_component, a as subscribe, e as escape, b as each, d as add_attribute, v as validate_component } from "./ssr.js";
-import { p as page } from "./stores.js";
+import { c as create_ssr_component, o as onDestroy, e as escape, v as validate_component, a as subscribe, b as each } from "./ssr.js";
 import { d as derived, w as writable } from "./index2.js";
 import { t as toasts } from "./toast2.js";
 const currentUser = writable(null);
 derived(currentUser, ($user) => !!$user);
 derived(currentUser, ($user) => $user?.role || null);
-const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let items;
-  let currentPath;
-  let $page, $$unsubscribe_page;
-  $$unsubscribe_page = subscribe(page, (value) => $page = value);
-  let { user } = $$props;
-  let { role } = $$props;
-  const menuItems = {
-    admin: [
-      {
-        href: "/admin",
-        icon: "📊",
-        label: "Dashboard"
-      },
-      {
-        href: "/admin/users",
-        icon: "👥",
-        label: "Users"
-      },
-      {
-        href: "/admin/doctor-shifts",
-        icon: "🕐",
-        label: "Doctor Shifts"
-      },
-      {
-        href: "/admin/patients",
-        icon: "🏥",
-        label: "Patients"
-      },
-      {
-        href: "/admin/encounters",
-        icon: "📋",
-        label: "Encounters"
-      },
-      {
-        href: "/admin/terminology",
-        icon: "📖",
-        label: "Terminology"
-      },
-      {
-        href: "/admin/items",
-        icon: "💊",
-        label: "Items"
-      },
-      {
-        href: "/admin/payments",
-        icon: "💳",
-        label: "Payments"
-      },
-      {
-        href: "/admin/import",
-        icon: "📤",
-        label: "CSV Import"
-      }
-    ],
-    kasir: [
-      {
-        href: "/kasir",
-        icon: "📋",
-        label: "Antrian"
-      },
-      {
-        href: "/kasir/new-patient",
-        icon: "➕",
-        label: "Pasien Baru"
-      },
-      {
-        href: "/kasir/existing-patient",
-        icon: "🔍",
-        label: "Pasien Lama"
-      },
-      {
-        href: "/kasir/payment",
-        icon: "💳",
-        label: "Pembayaran"
-      }
-    ],
-    dokter: [
-      {
-        href: "/dokter",
-        icon: "📋",
-        label: "Dashboard"
-      },
-      {
-        href: "/dokter/analytics",
-        icon: "📊",
-        label: "Analytics"
-      }
-    ]
-  };
-  if ($$props.user === void 0 && $$bindings.user && user !== void 0)
-    $$bindings.user(user);
-  if ($$props.role === void 0 && $$bindings.role && role !== void 0)
-    $$bindings.role(role);
-  items = menuItems[role] || [];
-  currentPath = $page.url.pathname;
-  $$unsubscribe_page();
-  return `<aside class="sidebar"><div class="sidebar-header"><div class="sidebar-logo" data-svelte-h="svelte-ptelwy">O</div> <div><div class="sidebar-brand" data-svelte-h="svelte-1dbj2dd">Oratio</div> <div style="font-size: var(--font-size-xs); opacity: 0.7; text-transform: capitalize;">${escape(role)}</div></div></div> <nav class="sidebar-nav"><div class="sidebar-section" data-svelte-h="svelte-karbua">Menu</div> ${each(items, (item) => {
-    return `<a${add_attribute("href", item.href, 0)} class="${[
-      "sidebar-link",
-      currentPath === item.href || item.href !== "/" + role && currentPath.startsWith(item.href) ? "active" : ""
-    ].join(" ").trim()}"><span class="icon">${escape(item.icon)}</span> ${escape(item.label)} </a>`;
-  })}</nav> <div class="sidebar-footer"><div style="font-size: var(--font-size-sm); margin-bottom: var(--space-2);"><div class="font-semibold" style="color: white;">${escape(user?.name || "User")}</div> <div style="font-size: var(--font-size-xs); opacity: 0.6; text-transform: capitalize;">${escape(user?.role)}</div></div> <button class="btn btn-ghost" style="color: var(--sidebar-text); width: 100%; justify-content: flex-start;" data-svelte-h="svelte-1ae93m3">🚪 Logout</button></div></aside>`;
+const ShiftTimer_svelte_svelte_type_style_lang = "";
+const css = {
+  code: ".shift-timer.svelte-16gowge{display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:var(--radius-full);transition:all 0.3s ease}.timer-normal.svelte-16gowge{background-color:var(--primary-light);color:var(--primary)}.timer-warning.svelte-16gowge{background-color:var(--warning-light);color:#92400e}.timer-critical.svelte-16gowge{background-color:var(--danger-light);color:var(--danger)}@keyframes svelte-16gowge-pulse-warn{0%{box-shadow:0 0 0 0 rgba(245, 158, 11, 0.4)}70%{box-shadow:0 0 0 6px rgba(245, 158, 11, 0)}100%{box-shadow:0 0 0 0 rgba(245, 158, 11, 0)}}@keyframes svelte-16gowge-pulse-crit{0%{box-shadow:0 0 0 0 rgba(239, 68, 68, 0.4)}70%{box-shadow:0 0 0 6px rgba(239, 68, 68, 0)}100%{box-shadow:0 0 0 0 rgba(239, 68, 68, 0)}}.timer-warning.pulse.svelte-16gowge{animation:svelte-16gowge-pulse-warn 2s infinite}.timer-critical.pulse.svelte-16gowge{animation:svelte-16gowge-pulse-crit 1s infinite}",
+  map: null
+};
+const ShiftTimer = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let shiftEnd = /* @__PURE__ */ new Date();
+  shiftEnd.setHours(17, 0, 0, 0);
+  let timeRemaining = "Menghitung...";
+  let timerClass = "timer-normal";
+  onDestroy(() => {
+  });
+  $$result.css.add(css);
+  return `<div class="${"shift-timer " + escape(timerClass, true) + " svelte-16gowge"}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <span class="font-medium text-sm">Shift s/d ${escape(shiftEnd.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }))} • ${escape(timeRemaining)}</span> </div>`;
 });
 const Header = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { title = "" } = $$props;
@@ -116,7 +26,7 @@ const Header = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     $$bindings.title(title);
   if ($$props.user === void 0 && $$bindings.user && user !== void 0)
     $$bindings.user(user);
-  return `<header class="top-header"><div class="flex items-center gap-4"><h2 style="font-size: var(--font-size-lg); font-weight: 600;">${escape(title)}</h2></div> <div class="flex items-center gap-3"><span class="text-sm text-muted">${escape(user?.name || "")}</span> <div class="badge badge-primary" style="text-transform: capitalize;">${escape(user?.role || "")}</div></div></header>`;
+  return `<header class="top-header"><div class="flex items-center gap-4"><h2 style="font-size: var(--font-size-lg); font-weight: 600;">${escape(title)}</h2></div> <div class="flex items-center gap-3">${user?.role === "dokter" ? `${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}` : ``} <span class="text-sm text-muted">${escape(user?.name || "")}</span> <div class="badge badge-primary" style="text-transform: capitalize;">${escape(user?.role || "")}</div></div></header>`;
 });
 const AppShell = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { user } = $$props;
@@ -128,7 +38,7 @@ const AppShell = create_ssr_component(($$result, $$props, $$bindings, slots) => 
     $$bindings.role(role);
   if ($$props.title === void 0 && $$bindings.title && title !== void 0)
     $$bindings.title(title);
-  return `<div class="${"app-shell role-" + escape(role, true)}">${validate_component(Sidebar, "Sidebar").$$render($$result, { user, role }, {}, {})} <div class="main-content">${validate_component(Header, "Header").$$render($$result, { title, user }, {}, {})} <div class="page-content">${slots.default ? slots.default({}) : ``}</div></div></div>`;
+  return `<div class="${"app-shell role-" + escape(role, true)}"><div class="main-content">${validate_component(Header, "Header").$$render($$result, { title, user }, {}, {})} <div class="page-content">${slots.default ? slots.default({}) : ``}</div></div></div>`;
 });
 const Toast = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let $toasts, $$unsubscribe_toasts;

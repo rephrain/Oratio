@@ -1,4 +1,4 @@
-import { c as create_ssr_component, o as onDestroy, d as add_attribute } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, o as onDestroy, f as add_attribute } from "../../../../chunks/ssr.js";
 function getMonthStart() {
   const d = /* @__PURE__ */ new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;

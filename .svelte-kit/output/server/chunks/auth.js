@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import argon2 from "argon2";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-in-production");
 const JWT_EXPIRY = "1h";
 async function createToken(user) {
@@ -19,15 +20,25 @@ async function verifyToken(token) {
   }
 }
 async function hashPasswordAsync(password) {
-  const { createHash } = await import("crypto");
-  return createHash("sha256").update(password).digest("hex");
+  return await argon2.hash(password, {
+    type: argon2.argon2id,
+    memoryCost: 65536,
+    // 64 MiB
+    timeCost: 3,
+    // 3 iterations
+    parallelism: 4
+  });
 }
 async function verifyPassword(password, hash) {
-  const hashed = await hashPasswordAsync(password);
-  return hashed === hash;
+  try {
+    return await argon2.verify(hash, password);
+  } catch {
+    return false;
+  }
 }
 export {
-  verifyToken as a,
-  createToken as c,
-  verifyPassword as v
+  createToken,
+  hashPasswordAsync,
+  verifyPassword,
+  verifyToken
 };

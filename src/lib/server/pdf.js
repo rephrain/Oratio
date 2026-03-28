@@ -221,10 +221,11 @@ export function generateOdontogramPDF(encounter, patient, odontogram, details, d
 					body: [
 						['Dentition', odontogram?.dentition || 'permanent'],
 						['Occlusi', odontogram?.occlusi || '-'],
-						['Torus', odontogram?.torus || '-'],
+						['Torus Palatinus', odontogram?.torus_palatinus || '-'],
+						['Torus Mandibularis', odontogram?.torus_mandibularis || '-'],
 						['Palatum', odontogram?.palatum || '-'],
-						['Diastema', odontogram?.diastema ? 'Ya' : 'Tidak'],
-						['Anomali', odontogram?.anomali || '-']
+						['Diastema', odontogram?.diastema || 'Tidak Ada'],
+						['Gigi Anomali', odontogram?.gigi_anomali || 'Tidak Ada']
 					]
 				},
 				layout: 'lightHorizontalLines'

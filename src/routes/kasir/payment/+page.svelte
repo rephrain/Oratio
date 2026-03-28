@@ -19,6 +19,8 @@
 	let paymentType = '';
 	let paymentCode = '';
 	let cardNumber = '';
+	let referenceNumber = '';
+	let totalPaid = 0;
 	let discountType = 'percent'; // 'percent' | 'fixed'
 	let discountValue = 0;
 	let note = '';
@@ -74,8 +76,10 @@
 					payment_type: paymentType,
 					payment_code: paymentCode,
 					card_number: showCardNumber ? cardNumber : null,
+					reference_number: referenceNumber || null,
 					discount_percent: discountType === 'percent' ? discountValue : null,
 					discount_amount: discountType === 'fixed' ? discountValue : null,
+					total_paid: totalPaid || netSales,
 					note
 				})
 			});
@@ -114,8 +118,8 @@
 		</div>
 
 		<div class="form-group">
-			<label class="form-label">Pilih Encounter (Status: Discharged)</label>
-			<select class="form-select" bind:value={selectedEncounterId} on:change={loadEncounterDetail}>
+			<label class="form-label" for="encounter-select">Pilih Encounter (Status: Discharged)</label>
+			<select id="encounter-select" class="form-select" bind:value={selectedEncounterId} on:change={loadEncounterDetail}>
 				<option value="">-- Pilih Encounter --</option>
 				{#each dischargedEncounters as enc}
 					<option value={enc.encounter.id}>
@@ -172,8 +176,8 @@
 						</select>
 					</div>
 					<div class="form-group">
-						<label class="form-label">Tipe Pembayaran <span class="required">*</span></label>
-						<select class="form-select" bind:value={paymentType}>
+						<label class="form-label" for="payment-type-sel">Tipe Pembayaran <span class="required">*</span></label>
+						<select id="payment-type-sel" class="form-select" bind:value={paymentType}>
 							<option value="">-- Pilih --</option>
 							{#each PAYMENT_TYPES as pt}
 								<option value={pt.label}>{pt.label} {pt.code ? `(${pt.code})` : ''}</option>
@@ -206,6 +210,16 @@
 				<div class="form-group mt-4">
 					<label class="form-label">Catatan</label>
 					<textarea class="form-textarea" bind:value={note} rows="2"></textarea>
+				</div>
+				<div class="form-row mt-4">
+					<div class="form-group">
+						<label class="form-label">Nomor Referensi</label>
+						<input class="form-input" bind:value={referenceNumber} placeholder="Nomor referensi (opsional)" />
+					</div>
+					<div class="form-group">
+						<label class="form-label">Total Dibayar</label>
+						<input type="number" class="form-input" bind:value={totalPaid} min="0" placeholder="Total dibayar oleh pasien" />
+					</div>
 				</div>
 			</div>
 

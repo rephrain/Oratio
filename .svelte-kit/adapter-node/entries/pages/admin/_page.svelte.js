@@ -6,7 +6,7 @@ const css = {
 };
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   $$result.css.add(css);
-  return `${$$result.head += `<!-- HEAD_svelte-ues6c1_START -->${$$result.title = `<title>Admin Dashboard — Oratio Dental</title>`, ""}<!-- HEAD_svelte-ues6c1_END -->`, ""} <div><h1 class="page-title" data-svelte-h="svelte-dzix1s">Dashboard Admin</h1> ${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-h9r9zk"><div class="spinner spinner-lg" style="margin: 0 auto;"></div></div>`} </div>`;
+  return `${$$result.head += `<!-- HEAD_svelte-ues6c1_START -->${$$result.title = `<title>Admin Dashboard — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-ues6c1_END -->`, ""} <div><h1 class="page-title" data-svelte-h="svelte-dzix1s">Dashboard Admin</h1> ${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-h9r9zk"><div class="spinner spinner-lg" style="margin: 0 auto;"></div></div>`} </div>`;
 });
 export {
   Page as default

@@ -1,9 +1,9 @@
 <script>
-	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
-	import DataTable from '$lib/components/Tables/DataTable.svelte';
-	import { formatDate, formatCurrency } from '$lib/utils/formatters.js';
-	import { STATUS_COLORS } from '$lib/utils/constants.js';
+	import { page } from "$app/stores";
+	import { onMount } from "svelte";
+	import DataTable from "$lib/components/Tables/DataTable.svelte";
+	import { formatDate, formatCurrency } from "$lib/utils/formatters.js";
+	import { STATUS_COLORS } from "$lib/utils/constants.js";
 
 	const patientId = $page.params.patientId;
 	let patient = null;
@@ -12,11 +12,15 @@
 
 	async function loadPatient() {
 		try {
-			const res = await fetch(`/api/patients?search=${patientId}&limit=1`);
+			const res = await fetch(
+				`/api/patients?search=${patientId}&limit=1`,
+			);
 			const data = await res.json();
 			patient = data.data?.[0] || null;
 
-			const encRes = await fetch(`/api/encounters?patient_id=${patientId}&limit=50`);
+			const encRes = await fetch(
+				`/api/encounters?patient_id=${patientId}&limit=50`,
+			);
 			const encData = await encRes.json();
 			encounters = encData.data || [];
 		} catch (err) {
@@ -27,18 +31,34 @@
 	}
 
 	const encColumns = [
-		{ key: 'id', label: 'ID', format: (_, r) => r.encounter?.id || '-' },
-		{ key: 'date', label: 'Tanggal', format: (_, r) => formatDate(r.encounter?.created_at) },
-		{ key: 'status', label: 'Status', format: (_, r) => r.encounter?.status || '-' },
-		{ key: 'mode', label: 'Mode', format: (_, r) => r.encounter?.form_mode || '-' },
-		{ key: 'doctor', label: 'Dokter', format: (_, r) => r.doctor_name || '-' }
+		{ key: "id", label: "ID", format: (_, r) => r.encounter?.id || "-" },
+		{
+			key: "date",
+			label: "Tanggal",
+			format: (_, r) => formatDate(r.encounter?.created_at),
+		},
+		{
+			key: "status",
+			label: "Status",
+			format: (_, r) => r.encounter?.status || "-",
+		},
+		{
+			key: "mode",
+			label: "Mode",
+			format: (_, r) => r.encounter?.form_mode || "-",
+		},
+		{
+			key: "doctor",
+			label: "Dokter",
+			format: (_, r) => r.doctor_name || "-",
+		},
 	];
 
 	onMount(loadPatient);
 </script>
 
 <svelte:head>
-	<title>Pasien {patientId} — Oratio Dental</title>
+	<title>Pasien {patientId} — Oratio Clinic</title>
 </svelte:head>
 
 <div>
@@ -65,31 +85,33 @@
 				</div>
 				<div>
 					<span class="text-sm text-muted">NIK</span>
-					<p>{patient.nik || '-'}</p>
+					<p>{patient.nik || "-"}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Tanggal Lahir</span>
-					<p>{patient.birth_date || '-'}</p>
+					<p>{patient.birth_date || "-"}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Jenis Kelamin</span>
-					<p>{patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
+					<p>
+						{patient.gender === "male" ? "Laki-laki" : "Perempuan"}
+					</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Gol. Darah</span>
-					<p>{patient.blood_type || '-'}{patient.rhesus || ''}</p>
+					<p>{patient.blood_type || "-"}{patient.rhesus || ""}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Telepon</span>
-					<p>{patient.handphone || '-'}</p>
+					<p>{patient.handphone || "-"}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Email</span>
-					<p>{patient.email || '-'}</p>
+					<p>{patient.email || "-"}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Alamat</span>
-					<p>{patient.address || '-'}</p>
+					<p>{patient.address || "-"}</p>
 				</div>
 			</div>
 		</div>

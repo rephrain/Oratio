@@ -23,20 +23,12 @@ export async function GET({ url, locals }) {
 	let conditions = [];
 
 	if (dateFrom && dateTo) {
-		// Date range filter
-		const start = new Date(dateFrom);
-		start.setHours(0, 0, 0, 0);
-		const end = new Date(dateTo);
-		end.setHours(23, 59, 59, 999);
-		conditions.push(gte(encounters.created_at, start));
-		conditions.push(lte(encounters.created_at, end));
+		// Date range filter — use SQL DATE() cast to avoid timezone issues
+		conditions.push(sql`DATE(${encounters.created_at}) >= ${dateFrom}`);
+		conditions.push(sql`DATE(${encounters.created_at}) <= ${dateTo}`);
 	} else if (date) {
-		const start = new Date(date);
-		start.setHours(0, 0, 0, 0);
-		const end = new Date(date);
-		end.setHours(23, 59, 59, 999);
-		conditions.push(gte(encounters.created_at, start));
-		conditions.push(lte(encounters.created_at, end));
+		// Single date filter — compare at the date level, timezone-safe
+		conditions.push(sql`DATE(${encounters.created_at}) = ${date}`);
 	}
 
 	if (doctorId) conditions.push(eq(encounters.doctor_id, doctorId));
@@ -87,12 +79,10 @@ export async function POST({ request, locals }) {
 
 	const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
 
-	// Get next queue number for today
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
+	// Get next queue number for today — use SQL CURRENT_DATE to avoid timezone issues
 	const [{ maxQueue }] = await db.select({
 		maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
-	}).from(encounters).where(gte(encounters.created_at, today));
+	}).from(encounters).where(sql`DATE(${encounters.created_at}) = CURRENT_DATE`);
 
 	const queueNumber = Number(maxQueue) + 1;
 

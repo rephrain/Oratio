@@ -2,13 +2,17 @@
 	import Toast from "$lib/components/UI/Toast.svelte";
 	import Sidebar from "$lib/components/Layout/Sidebar.svelte";
 	import { page } from "$app/stores";
+	import { logout } from "$lib/stores/auth.js";
+
 	export let data;
 	$: user = data?.user;
 	$: currentPath = $page.url.pathname;
+
+	let showProfileMenu = false;
 </script>
 
 <svelte:head>
-	<title>Oratio Dental - Kasir</title>
+	<title>Oratio Clinic - Kasir</title>
 </svelte:head>
 
 <div
@@ -57,22 +61,62 @@
 					</button>
 				</div>
 				<div class="h-8 w-px bg-slate-200"></div>
-				<div class="flex items-center gap-3">
-					<div class="text-right">
-						<p
-							class="text-sm font-semibold text-slate-900 leading-none"
-						>
-							{user?.name || "Receptionist"}
-						</p>
-						<p class="text-xs text-slate-500 mt-1 capitalize">
-							{user?.role || "kasir"}
-						</p>
-					</div>
-					<div
-						class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+				<div class="relative">
+					<button
+						class="flex items-center gap-3 focus:outline-none hover:opacity-80 transition-opacity"
+						on:click={() => (showProfileMenu = !showProfileMenu)}
+						on:blur={() =>
+							setTimeout(() => (showProfileMenu = false), 200)}
 					>
-						{user?.name?.[0]?.toUpperCase() || "R"}
-					</div>
+						<div class="text-right">
+							<p
+								class="text-sm font-semibold text-slate-900 leading-none"
+							>
+								{user?.name || "Receptionist"}
+							</p>
+							<p class="text-xs text-slate-500 mt-1 capitalize">
+								{user?.role || "kasir"}
+							</p>
+						</div>
+						<div
+							class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+						>
+							{user?.name?.[0]?.toUpperCase() || "R"}
+						</div>
+						<span
+							class="material-symbols-outlined text-slate-400 text-sm {showProfileMenu
+								? 'rotate-180'
+								: ''} transition-transform">expand_more</span
+						>
+					</button>
+
+					{#if showProfileMenu}
+						<div
+							class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50 origin-top-right transition-all"
+						>
+							<button
+								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors"
+							>
+								<span
+									class="material-symbols-outlined text-[20px] text-slate-400"
+									>settings</span
+								>
+								<span class="font-medium text-sm">Settings</span
+								>
+							</button>
+							<div class="h-px bg-slate-100 my-1"></div>
+							<button
+								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 text-red-500 transition-colors"
+								on:click={logout}
+							>
+								<span
+									class="material-symbols-outlined text-[20px]"
+									>logout</span
+								>
+								<span class="font-medium text-sm">Logout</span>
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</header>
@@ -88,12 +132,12 @@
 
 <style>
 	:global(:root) {
-		--tw-primary: #10B981;
-		--tw-secondary: #E0E0E0;
-		--tw-accent: #14B8A6;
-		--tw-forest: #064E3B;
-		--tw-bg-light: #F9FAFB;
-		--tw-bg-dark: #064E3B;
+		--tw-primary: #10b981;
+		--tw-secondary: #e0e0e0;
+		--tw-accent: #14b8a6;
+		--tw-forest: #064e3b;
+		--tw-bg-light: #f9fafb;
+		--tw-bg-dark: #064e3b;
 	}
 	:global(body) {
 		margin: 0;

@@ -114,7 +114,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         loadData();
       }
     }
-    $$rendered = `${$$result.head += `<!-- HEAD_svelte-3mjat5_START -->${$$result.title = `<title>${escape(tableConfig?.label || tableName)} — Admin — Oratio Dental</title>`, ""}<!-- HEAD_svelte-3mjat5_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><div><h1 class="page-title" style="margin: 0;">${escape(tableConfig?.label || tableName)}</h1> <p class="text-sm text-muted">${escape(total)} total records</p></div> <div class="flex gap-3"><a href="/admin" class="btn btn-secondary" data-svelte-h="svelte-yxrebi">← Dashboard</a> <button class="btn btn-primary" data-svelte-h="svelte-17kkdq">+ Tambah</button></div></div> ${validate_component(DataTable, "DataTable").$$render(
+    $$rendered = `${$$result.head += `<!-- HEAD_svelte-3mjat5_START -->${$$result.title = `<title>${escape(tableConfig?.label || tableName)} — Admin — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-3mjat5_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><div><h1 class="page-title" style="margin: 0;">${escape(tableConfig?.label || tableName)}</h1> <p class="text-sm text-muted">${escape(total)} total records</p></div> <div class="flex gap-3"><a href="/admin" class="btn btn-secondary" data-svelte-h="svelte-yxrebi">← Dashboard</a> <button class="btn btn-primary" data-svelte-h="svelte-17kkdq">+ Tambah</button></div></div> ${validate_component(DataTable, "DataTable").$$render(
       $$result,
       {
         data,

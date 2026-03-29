@@ -28,7 +28,7 @@ async function expandValueSet(eclUrl, filter, count = 10) {
 	return contains.map(item => ({
 		code: item.code,
 		display: item.display,
-		system: item.system || 'http://snomed.info/sct'
+		system: item.system === 'http://snomed.info/sct' ? 'SNOMED' : (item.system || 'SNOMED')
 	}));
 }
 

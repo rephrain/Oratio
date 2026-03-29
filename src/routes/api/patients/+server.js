@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { patients, patientDiseaseHistory, patientAllergy, patientMedication } from '$lib/server/db/schema.js';
-import { eq, or, ilike, desc, sql } from 'drizzle-orm';
+import { patients, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster } from '$lib/server/db/schema.js';
+import { eq, and, or, ilike, desc, sql } from 'drizzle-orm';
 import { generatePatientId } from '$lib/utils/formatters.js';
 
 // GET /api/patients - list/search
@@ -69,13 +69,37 @@ export async function POST({ request, locals }) {
 	}).returning();
 
 	// Insert disease history
-	if (body.disease_history?.length) {
+	if (body.disease_history && Array.isArray(body.disease_history)) {
 		for (const h of body.disease_history) {
+			if (!h.code || !h.display) continue;
+
+			// 1. Get or create terminology record
+			let termId;
+			const [existing] = await db.select()
+				.from(terminologyMaster)
+				.where(and(
+					eq(terminologyMaster.code, h.code),
+					eq(terminologyMaster.system, h.system || 'SNOMED')
+				))
+				.limit(1);
+
+			if (existing) {
+				termId = existing.id;
+			} else {
+				const [inserted] = await db.insert(terminologyMaster).values({
+					code: h.code,
+					display: h.display,
+					system: h.system || 'SNOMED'
+				}).returning();
+				termId = inserted.id;
+			}
+
+			// 2. Link in patient history
 			await db.insert(patientDiseaseHistory).values({
 				patient_id: newId,
-				type: h.type,
-				terminology_id: h.terminology_id || null,
-				description: h.description
+				type: h.type || 'personal',
+				terminology_id: termId,
+				description: h.description || null
 			});
 		}
 	}

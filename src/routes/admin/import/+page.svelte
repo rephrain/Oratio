@@ -1,11 +1,11 @@
 <script>
-	import { ADMIN_TABLES } from '$lib/utils/constants.js';
-	import FileUpload from '$lib/components/UI/FileUpload.svelte';
-	import { addToast } from '$lib/stores/toast.js';
+	import { ADMIN_TABLES } from "$lib/utils/constants.js";
+	import FileUpload from "$lib/components/UI/FileUpload.svelte";
+	import { addToast } from "$lib/stores/toast.js";
 
-	let selectedTable = '';
+	let selectedTable = "";
 	let csvFile = null;
-	let csvText = '';
+	let csvText = "";
 	let previewData = [];
 	let previewFields = [];
 	let importing = false;
@@ -23,17 +23,21 @@
 	}
 
 	function parsePreview() {
-		const lines = csvText.split('\n').filter(l => l.trim());
+		const lines = csvText.split("\n").filter((l) => l.trim());
 		if (lines.length < 2) {
-			addToast('File CSV kosong atau tidak valid', 'error');
+			addToast("File CSV kosong atau tidak valid", "error");
 			return;
 		}
 
-		previewFields = lines[0].split(',').map(f => f.trim().replace(/"/g, ''));
-		previewData = lines.slice(1, 11).map(line => {
-			const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+		previewFields = lines[0]
+			.split(",")
+			.map((f) => f.trim().replace(/"/g, ""));
+		previewData = lines.slice(1, 11).map((line) => {
+			const values = line
+				.split(",")
+				.map((v) => v.trim().replace(/"/g, ""));
 			const obj = {};
-			previewFields.forEach((f, i) => obj[f] = values[i] || '');
+			previewFields.forEach((f, i) => (obj[f] = values[i] || ""));
 			return obj;
 		});
 
@@ -42,30 +46,36 @@
 
 	async function doImport() {
 		if (!selectedTable) {
-			addToast('Pilih tabel tujuan', 'error');
+			addToast("Pilih tabel tujuan", "error");
 			return;
 		}
 
 		importing = true;
 		importErrors = [];
 
-		const allLines = csvText.split('\n').filter(l => l.trim());
-		const fields = allLines[0].split(',').map(f => f.trim().replace(/"/g, ''));
+		const allLines = csvText.split("\n").filter((l) => l.trim());
+		const fields = allLines[0]
+			.split(",")
+			.map((f) => f.trim().replace(/"/g, ""));
 		const rows = allLines.slice(1);
 
 		let success = 0;
 		let failed = 0;
 
 		for (let i = 0; i < rows.length; i++) {
-			const values = rows[i].split(',').map(v => v.trim().replace(/"/g, ''));
+			const values = rows[i]
+				.split(",")
+				.map((v) => v.trim().replace(/"/g, ""));
 			const obj = {};
-			fields.forEach((f, j) => { if (values[j]) obj[f] = values[j]; });
+			fields.forEach((f, j) => {
+				if (values[j]) obj[f] = values[j];
+			});
 
 			try {
 				const res = await fetch(`/api/admin/${selectedTable}`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(obj)
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(obj),
 				});
 
 				if (res.ok) {
@@ -73,22 +83,28 @@
 				} else {
 					const err = await res.json();
 					failed++;
-					importErrors.push({ row: i + 2, error: err.error || 'Unknown error' });
+					importErrors.push({
+						row: i + 2,
+						error: err.error || "Unknown error",
+					});
 				}
 			} catch {
 				failed++;
-				importErrors.push({ row: i + 2, error: 'Network error' });
+				importErrors.push({ row: i + 2, error: "Network error" });
 			}
 		}
 
 		importing = false;
 		step = 3;
-		addToast(`Import selesai: ${success} berhasil, ${failed} gagal`, success > 0 ? 'success' : 'error');
+		addToast(
+			`Import selesai: ${success} berhasil, ${failed} gagal`,
+			success > 0 ? "success" : "error",
+		);
 	}
 
 	function reset() {
 		csvFile = null;
-		csvText = '';
+		csvText = "";
 		previewData = [];
 		previewFields = [];
 		importErrors = [];
@@ -97,7 +113,7 @@
 </script>
 
 <svelte:head>
-	<title>CSV Import — Admin — Oratio Dental</title>
+	<title>CSV Import — Admin — Oratio Clinic</title>
 </svelte:head>
 
 <div>
@@ -118,11 +134,17 @@
 					{/each}
 				</select>
 			</div>
-			<FileUpload accept=".csv" label="Upload file CSV" on:file={handleFile} />
+			<FileUpload
+				accept=".csv"
+				label="Upload file CSV"
+				on:file={handleFile}
+			/>
 		</div>
 	{:else if step === 2}
 		<div class="card mb-6">
-			<h3 class="card-title mb-4">2. Preview Data ({previewData.length} rows shown)</h3>
+			<h3 class="card-title mb-4">
+				2. Preview Data ({previewData.length} rows shown)
+			</h3>
 			<div class="table-container">
 				<table>
 					<thead>
@@ -136,7 +158,7 @@
 						{#each previewData as row}
 							<tr>
 								{#each previewFields as field}
-									<td>{row[field] || '-'}</td>
+									<td>{row[field] || "-"}</td>
 								{/each}
 							</tr>
 						{/each}
@@ -144,12 +166,19 @@
 				</table>
 			</div>
 			<div class="flex justify-between mt-6">
-				<button class="btn btn-secondary" on:click={reset}>← Kembali</button>
-				<button class="btn btn-primary btn-lg" on:click={doImport} disabled={importing || !selectedTable}>
+				<button class="btn btn-secondary" on:click={reset}
+					>← Kembali</button
+				>
+				<button
+					class="btn btn-primary btn-lg"
+					on:click={doImport}
+					disabled={importing || !selectedTable}
+				>
 					{#if importing}
 						<span class="spinner"></span> Mengimpor...
 					{:else}
-						📥 Import ke {ADMIN_TABLES[selectedTable]?.label || selectedTable}
+						📥 Import ke {ADMIN_TABLES[selectedTable]?.label ||
+							selectedTable}
 					{/if}
 				</button>
 			</div>
@@ -165,15 +194,25 @@
 						</thead>
 						<tbody>
 							{#each importErrors as err}
-								<tr><td>{err.row}</td><td class="text-sm" style="color: var(--danger);">{err.error}</td></tr>
+								<tr
+									><td>{err.row}</td><td
+										class="text-sm"
+										style="color: var(--danger);"
+										>{err.error}</td
+									></tr
+								>
 							{/each}
 						</tbody>
 					</table>
 				</div>
 			{:else}
-				<p class="text-sm" style="color: var(--success);">✅ Semua data berhasil diimpor!</p>
+				<p class="text-sm" style="color: var(--success);">
+					✅ Semua data berhasil diimpor!
+				</p>
 			{/if}
-			<button class="btn btn-primary mt-6" on:click={reset}>Import File Lain</button>
+			<button class="btn btn-primary mt-6" on:click={reset}
+				>Import File Lain</button
+			>
 		</div>
 	{/if}
 </div>

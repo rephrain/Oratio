@@ -15,7 +15,7 @@ function generatePatientProfilePDF(patient, history, allergies, medications) {
     defaultStyle: { fontSize: 10 },
     content: [
       { text: "REKAM MEDIS PASIEN", style: "header", alignment: "center" },
-      { text: "Oratio Dental Clinic", alignment: "center", margin: [0, 0, 0, 20] },
+      { text: "Oratio Clinic Clinic", alignment: "center", margin: [0, 0, 0, 20] },
       { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
       { text: " ", margin: [0, 10] },
       // Patient info table
@@ -60,7 +60,7 @@ function generateSOAPPDF(encounter, patient, prescriptions, diagnoses, procedure
     defaultStyle: { fontSize: 10 },
     content: [
       { text: "CATATAN MEDIS - SOAP", style: "header", alignment: "center" },
-      { text: "Oratio Dental Clinic", alignment: "center", margin: [0, 0, 0, 5] },
+      { text: "Oratio Clinic Clinic", alignment: "center", margin: [0, 0, 0, 5] },
       { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
       { text: " ", margin: [0, 10] },
       {
@@ -149,7 +149,7 @@ function generateOdontogramPDF(encounter, patient, odontogram, details, doctor) 
       // Page 1: Odontogram header
       { text: "ODONTOGRAM", style: "header", alignment: "center" },
       { text: "Berdasarkan Standar PDGI", alignment: "center", fontSize: 9, color: "#666", margin: [0, 0, 0, 5] },
-      { text: "Oratio Dental Clinic", alignment: "center", margin: [0, 0, 0, 10] },
+      { text: "Oratio Clinic Clinic", alignment: "center", margin: [0, 0, 0, 10] },
       {
         columns: [
           { text: `Pasien: ${patient.nama_lengkap} (${patient.id})`, fontSize: 9 },

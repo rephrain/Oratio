@@ -1,11 +1,17 @@
 <script>
-	import { onMount } from 'svelte';
-	import { ADMIN_TABLES } from '$lib/utils/constants.js';
+	import { onMount } from "svelte";
+	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 
 	let stats = {};
 	let loading = true;
 
-	const importantTables = ['users', 'patients', 'encounters', 'payments', 'items'];
+	const importantTables = [
+		"users",
+		"patients",
+		"encounters",
+		"payments",
+		"items",
+	];
 
 	async function loadStats() {
 		try {
@@ -25,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin Dashboard — Oratio Dental</title>
+	<title>Admin Dashboard — Oratio Clinic</title>
 </svelte:head>
 
 <div>

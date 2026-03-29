@@ -6,7 +6,7 @@ import {
 } from '$lib/server/snowstorm.js';
 
 export async function GET({ url }) {
-	const term = url.searchParams.get('term') || '';
+	const term = url.searchParams.get('filter') || url.searchParams.get('term') || '';
 	const type = url.searchParams.get('type') || 'general';
 	const ecl = url.searchParams.get('ecl') || '';
 	const limit = parseInt(url.searchParams.get('limit') || '10');

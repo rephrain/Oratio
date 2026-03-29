@@ -63,7 +63,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       },
       {}
     );
-    $$rendered = `${$$result.head += `<!-- HEAD_svelte-12w82bp_START -->${$$result.title = `<title>Encounter ${escape(encounterId)} — Oratio Dental</title>`, ""}<!-- HEAD_svelte-12w82bp_END -->`, ""} <div>${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-2ll8s8"><div class="spinner spinner-lg" style="margin: 0 auto;"></div> <p class="text-muted mt-4">Memuat encounter...</p></div>`}</div>  ${validate_component(Modal, "Modal").$$render(
+    $$rendered = `${$$result.head += `<!-- HEAD_svelte-12w82bp_START -->${$$result.title = `<title>Encounter ${escape(encounterId)} — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-12w82bp_END -->`, ""} <div>${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-2ll8s8"><div class="spinner spinner-lg" style="margin: 0 auto;"></div> <p class="text-muted mt-4">Memuat encounter...</p></div>`}</div>  ${validate_component(Modal, "Modal").$$render(
       $$result,
       {
         title: "Detail Gigi #" + toothDetail.tooth_number,

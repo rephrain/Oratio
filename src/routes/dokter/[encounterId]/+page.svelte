@@ -94,13 +94,19 @@
 		if (!acc[d.tooth_number]) acc[d.tooth_number] = {};
 		// For simplicity in this integration, map the first recorded surface as "center"
 		// A full implementation would parse d.surface ("O","M","D") into top/bottom/left/right/center
-		let color = '#10B981'; // Default green
-		if (d.keadaan && d.keadaan.toUpperCase().includes('CARIES')) color = '#EF4444'; 
-		else if (d.keadaan === 'MISSING') color = '#9CA3AF';
-		
-		acc[d.tooth_number].center = { condition: d.keadaan, color, restoration: d.restorasi };
-		if (d.keadaan === 'EXTRACTED') acc[d.tooth_number].global = 'Extracted';
-		else if (d.keadaan === 'MISSING') acc[d.tooth_number].global = 'Missing';
+		let color = "#10B981"; // Default green
+		if (d.keadaan && d.keadaan.toUpperCase().includes("CARIES"))
+			color = "#EF4444";
+		else if (d.keadaan === "MISSING") color = "#9CA3AF";
+
+		acc[d.tooth_number].center = {
+			condition: d.keadaan,
+			color,
+			restoration: d.restorasi,
+		};
+		if (d.keadaan === "EXTRACTED") acc[d.tooth_number].global = "Extracted";
+		else if (d.keadaan === "MISSING")
+			acc[d.tooth_number].global = "Missing";
 		return acc;
 	}, {});
 
@@ -130,7 +136,7 @@
 				};
 			}
 
-		encounterItems = data.items || [];
+			encounterItems = data.items || [];
 			referrals = data.referrals || [];
 			resep = data.encounter?.resep || "";
 			keterangan = data.encounter?.keterangan || "";
@@ -140,7 +146,9 @@
 
 			// Load available items for this doctor
 			try {
-				const itemsRes = await fetch(`/api/admin/items?doctor_id=${data.encounter.doctor_id}`);
+				const itemsRes = await fetch(
+					`/api/admin/items?doctor_id=${data.encounter.doctor_id}`,
+				);
 				if (itemsRes.ok) {
 					const itemsData = await itemsRes.json();
 					availableItems = itemsData.data || [];
@@ -234,7 +242,10 @@
 
 	// Referral management
 	function addReferral() {
-		referrals = [...referrals, { doctor_code: "", referral_date: "", note: "" }];
+		referrals = [
+			...referrals,
+			{ doctor_code: "", referral_date: "", note: "" },
+		];
 	}
 	function removeReferral(i) {
 		referrals = referrals.filter((_, idx) => idx !== i);
@@ -242,30 +253,46 @@
 
 	// Encounter item management
 	function addEncounterItem() {
-		encounterItems = [...encounterItems, { item_id: "", item_name: "", quantity: 1, price_at_time: 0, subtotal: 0 }];
+		encounterItems = [
+			...encounterItems,
+			{
+				item_id: "",
+				item_name: "",
+				quantity: 1,
+				price_at_time: 0,
+				subtotal: 0,
+			},
+		];
 	}
 	function removeEncounterItem(i) {
 		encounterItems = encounterItems.filter((_, idx) => idx !== i);
 	}
 	function onItemSelect(idx, itemId) {
-		const item = availableItems.find(it => it.id === itemId);
+		const item = availableItems.find((it) => it.id === itemId);
 		if (item) {
 			encounterItems[idx].item_name = item.name;
 			encounterItems[idx].price_at_time = parseFloat(item.price);
-			encounterItems[idx].subtotal = encounterItems[idx].quantity * parseFloat(item.price);
+			encounterItems[idx].subtotal =
+				encounterItems[idx].quantity * parseFloat(item.price);
 			encounterItems = [...encounterItems];
 		}
 	}
 	function updateItemSubtotal(idx) {
-		encounterItems[idx].subtotal = encounterItems[idx].quantity * encounterItems[idx].price_at_time;
+		encounterItems[idx].subtotal =
+			encounterItems[idx].quantity * encounterItems[idx].price_at_time;
 		encounterItems = [...encounterItems];
 	}
 
 	// Reason search (SOAP-WHO)
 	async function searchReason(term) {
-		const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&type=reason_${reasonCategory}`);
+		const res = await fetch(
+			`/api/snowstorm?term=${encodeURIComponent(term)}&type=reason_${reasonCategory}`,
+		);
 		const data = await res.json();
-		return (data.results || []).map(r => ({ value: r.code, label: r.display }));
+		return (data.results || []).map((r) => ({
+			value: r.code,
+			label: r.display,
+		}));
 	}
 
 	// Tooth click
@@ -320,10 +347,12 @@
 
 	// Render 5-surface tooth SVG (cross/diamond pattern per PDGI standard)
 	function renderToothSVG(hasConditionFlag) {
-		const fillColor = hasConditionFlag ? 'var(--primary)' : 'white';
-		const strokeColor = hasConditionFlag ? 'var(--primary-hover)' : 'var(--gray-400)';
+		const fillColor = hasConditionFlag ? "var(--primary)" : "white";
+		const strokeColor = hasConditionFlag
+			? "var(--primary-hover)"
+			: "var(--gray-400)";
 		return `<svg class="tooth-svg" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-			<polygon points="12,12 24,12 18,2" fill="${hasConditionFlag ? 'var(--accent-light)' : 'white'}" stroke="${strokeColor}" stroke-width="1"/>
+			<polygon points="12,12 24,12 18,2" fill="${hasConditionFlag ? "var(--accent-light)" : "white"}" stroke="${strokeColor}" stroke-width="1"/>
 			<polygon points="12,24 24,24 18,34" fill="white" stroke="${strokeColor}" stroke-width="1"/>
 			<polygon points="2,18 12,12 12,24" fill="white" stroke="${strokeColor}" stroke-width="1"/>
 			<polygon points="34,18 24,12 24,24" fill="white" stroke="${strokeColor}" stroke-width="1"/>
@@ -398,7 +427,7 @@
 </script>
 
 <svelte:head>
-	<title>Encounter {encounterId} — Oratio Dental</title>
+	<title>Encounter {encounterId} — Oratio Clinic</title>
 </svelte:head>
 
 <div>
@@ -453,7 +482,9 @@
 				<div class="card mb-6">
 					<h3 class="card-title mb-4">📝 SOAP Notes</h3>
 					<div class="form-group mb-4">
-						<label class="form-label" for="soap-subjective">Subjective</label>
+						<label class="form-label" for="soap-subjective"
+							>Subjective</label
+						>
 						<textarea
 							id="soap-subjective"
 							class="form-textarea"
@@ -463,7 +494,9 @@
 						></textarea>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label" for="soap-objective">Objective</label>
+						<label class="form-label" for="soap-objective"
+							>Objective</label
+						>
 						<textarea
 							id="soap-objective"
 							class="form-textarea"
@@ -473,7 +506,9 @@
 						></textarea>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label" for="soap-bp">Tekanan Darah</label>
+						<label class="form-label" for="soap-bp"
+							>Tekanan Darah</label
+						>
 						<input
 							id="soap-bp"
 							class="form-input"
@@ -483,7 +518,9 @@
 						/>
 					</div>
 					<div class="form-group mb-4">
-						<label class="form-label" for="soap-assessment">Assessment</label>
+						<label class="form-label" for="soap-assessment"
+							>Assessment</label
+						>
 						<textarea
 							id="soap-assessment"
 							class="form-textarea"
@@ -513,24 +550,65 @@
 						></textarea>
 					</div>
 
-					{#if formMode === 'SOAP-WHO'}
+					{#if formMode === "SOAP-WHO"}
 						<!-- SOAP-WHO Auto-generation -->
 						<div class="flex gap-3 mb-4">
-							<button type="button" class="btn btn-secondary btn-sm" on:click={() => {
-								// Auto-generate SOAP from odontogram
-								const details = odontogram.details || [];
-								const diagList = details.filter(d => d.diagnosis_display).map(d => `Gigi ${d.tooth_number}: ${d.diagnosis_display}`).join('\n');
-								const procList = details.filter(d => d.procedure_display).map(d => `Gigi ${d.tooth_number}: ${d.procedure_display}`).join('\n');
-								const metaParts = [];
-								if (odontogram.occlusi) metaParts.push(`Occlusi: ${odontogram.occlusi}`);
-								if (odontogram.torus_palatinus && odontogram.torus_palatinus !== 'Tidak Ada') metaParts.push(`Torus Palatinus: ${odontogram.torus_palatinus}`);
-								if (odontogram.torus_mandibularis && odontogram.torus_mandibularis !== 'Tidak Ada') metaParts.push(`Torus Mandibularis: ${odontogram.torus_mandibularis}`);
-								if (odontogram.diastema && odontogram.diastema !== 'Tidak Ada') metaParts.push(`Diastema: ${odontogram.diastema}`);
-								if (encounter?.chief_complaint_display) subjective = encounter.chief_complaint_display;
-								objective = metaParts.join(', ');
-								if (diagList) assessment = diagList;
-								if (procList) plan = procList;
-							}}>🔄 Auto-generate SOAP dari Odontogram</button>
+							<button
+								type="button"
+								class="btn btn-secondary btn-sm"
+								on:click={() => {
+									// Auto-generate SOAP from odontogram
+									const details = odontogram.details || [];
+									const diagList = details
+										.filter((d) => d.diagnosis_display)
+										.map(
+											(d) =>
+												`Gigi ${d.tooth_number}: ${d.diagnosis_display}`,
+										)
+										.join("\n");
+									const procList = details
+										.filter((d) => d.procedure_display)
+										.map(
+											(d) =>
+												`Gigi ${d.tooth_number}: ${d.procedure_display}`,
+										)
+										.join("\n");
+									const metaParts = [];
+									if (odontogram.occlusi)
+										metaParts.push(
+											`Occlusi: ${odontogram.occlusi}`,
+										);
+									if (
+										odontogram.torus_palatinus &&
+										odontogram.torus_palatinus !==
+											"Tidak Ada"
+									)
+										metaParts.push(
+											`Torus Palatinus: ${odontogram.torus_palatinus}`,
+										);
+									if (
+										odontogram.torus_mandibularis &&
+										odontogram.torus_mandibularis !==
+											"Tidak Ada"
+									)
+										metaParts.push(
+											`Torus Mandibularis: ${odontogram.torus_mandibularis}`,
+										);
+									if (
+										odontogram.diastema &&
+										odontogram.diastema !== "Tidak Ada"
+									)
+										metaParts.push(
+											`Diastema: ${odontogram.diastema}`,
+										);
+									if (encounter?.chief_complaint_display)
+										subjective =
+											encounter.chief_complaint_display;
+									objective = metaParts.join(", ");
+									if (diagList) assessment = diagList;
+									if (procList) plan = procList;
+								}}>🔄 Auto-generate SOAP dari Odontogram</button
+							>
 						</div>
 
 						<!-- Reason field -->
@@ -540,18 +618,28 @@
 								{#each REASON_CATEGORIES as cat}
 									<button
 										type="button"
-										class="btn btn-sm {reasonCategory === cat.key ? 'btn-primary' : 'btn-ghost'}"
-										on:click={() => { reasonCategory = cat.key; }}
-									>{cat.label}</button>
+										class="btn btn-sm {reasonCategory ===
+										cat.key
+											? 'btn-primary'
+											: 'btn-ghost'}"
+										on:click={() => {
+											reasonCategory = cat.key;
+										}}>{cat.label}</button
+									>
 								{/each}
 							</div>
 							<SearchableSelect
 								searchFn={searchReason}
 								placeholder="Cari reason ({reasonCategory})..."
-								on:select={(e) => { reasonCode = e.detail.value; reasonDisplay = e.detail.label; }}
+								on:select={(e) => {
+									reasonCode = e.detail.value;
+									reasonDisplay = e.detail.label;
+								}}
 							/>
 							{#if reasonDisplay}
-								<div class="text-sm mt-1 text-muted">✓ {reasonCode} — {reasonDisplay}</div>
+								<div class="text-sm mt-1 text-muted">
+									✓ {reasonCode} — {reasonDisplay}
+								</div>
 							{/if}
 						</div>
 					{/if}
@@ -564,58 +652,99 @@
 							🦷 Odontogram (PDGI Standard)
 						</h3>
 
-						<OdontogramChart 
-							odontogramData={mappedOdontogramData} 
-							on:toothClick={(e) => handleToothClick(e.detail.tooth, { shiftKey: e.detail.shiftKey })} 
+						<OdontogramChart
+							odontogramData={mappedOdontogramData}
+							on:toothClick={(e) =>
+								handleToothClick(e.detail.tooth, {
+									shiftKey: e.detail.shiftKey,
+								})}
 						/>
 
 						<!-- Odontogram Metadata -->
-					<div class="form-row mt-4">
-						<div class="form-group">
-							<label class="form-label" for="occlusi-sel">Occlusi</label>
-							<select id="occlusi-sel" class="form-select" bind:value={odontogram.occlusi}>
-								<option value="">-- Pilih --</option>
-								{#each OCCLUSI_OPTIONS as opt}
-									<option value={opt}>{opt}</option>
-								{/each}
-							</select>
+						<div class="form-row mt-4">
+							<div class="form-group">
+								<label class="form-label" for="occlusi-sel"
+									>Occlusi</label
+								>
+								<select
+									id="occlusi-sel"
+									class="form-select"
+									bind:value={odontogram.occlusi}
+								>
+									<option value="">-- Pilih --</option>
+									{#each OCCLUSI_OPTIONS as opt}
+										<option value={opt}>{opt}</option>
+									{/each}
+								</select>
+							</div>
+							<div class="form-group">
+								<label class="form-label" for="tp-sel"
+									>Torus Palatinus</label
+								>
+								<select
+									id="tp-sel"
+									class="form-select"
+									bind:value={odontogram.torus_palatinus}
+								>
+									{#each TORUS_PALATINUS_OPTIONS as opt}
+										<option value={opt}>{opt}</option>
+									{/each}
+								</select>
+							</div>
+							<div class="form-group">
+								<label class="form-label" for="tm-sel"
+									>Torus Mandibularis</label
+								>
+								<select
+									id="tm-sel"
+									class="form-select"
+									bind:value={odontogram.torus_mandibularis}
+								>
+									{#each TORUS_MANDIBULARIS_OPTIONS as opt}
+										<option value={opt}>{opt}</option>
+									{/each}
+								</select>
+							</div>
 						</div>
-						<div class="form-group">
-							<label class="form-label" for="tp-sel">Torus Palatinus</label>
-							<select id="tp-sel" class="form-select" bind:value={odontogram.torus_palatinus}>
-								{#each TORUS_PALATINUS_OPTIONS as opt}
-									<option value={opt}>{opt}</option>
-								{/each}
-							</select>
+						<div class="form-row mt-4">
+							<div class="form-group">
+								<label class="form-label" for="palatum-sel"
+									>Palatum</label
+								>
+								<select
+									id="palatum-sel"
+									class="form-select"
+									bind:value={odontogram.palatum}
+								>
+									<option value="">-- Pilih --</option>
+									{#each PALATUM_OPTIONS as opt}
+										<option value={opt}>{opt}</option>
+									{/each}
+								</select>
+							</div>
+							<div class="form-group">
+								<label class="form-label" for="diastema-inp"
+									>Diastema</label
+								>
+								<input
+									id="diastema-inp"
+									class="form-input"
+									bind:value={odontogram.diastema}
+									placeholder="Tidak Ada / lokasi dan lebar"
+								/>
+							</div>
+							<div class="form-group">
+								<label class="form-label" for="anomali-inp"
+									>Gigi Anomali</label
+								>
+								<input
+									id="anomali-inp"
+									class="form-input"
+									bind:value={odontogram.gigi_anomali}
+									placeholder="Tidak Ada / lokasi dan bentuk"
+								/>
+							</div>
 						</div>
-						<div class="form-group">
-							<label class="form-label" for="tm-sel">Torus Mandibularis</label>
-							<select id="tm-sel" class="form-select" bind:value={odontogram.torus_mandibularis}>
-								{#each TORUS_MANDIBULARIS_OPTIONS as opt}
-									<option value={opt}>{opt}</option>
-								{/each}
-							</select>
-						</div>
-					</div>
-					<div class="form-row mt-4">
-						<div class="form-group">
-							<label class="form-label" for="palatum-sel">Palatum</label>
-							<select id="palatum-sel" class="form-select" bind:value={odontogram.palatum}>
-								<option value="">-- Pilih --</option>
-								{#each PALATUM_OPTIONS as opt}
-									<option value={opt}>{opt}</option>
-								{/each}
-							</select>
-						</div>
-						<div class="form-group">
-							<label class="form-label" for="diastema-inp">Diastema</label>
-							<input id="diastema-inp" class="form-input" bind:value={odontogram.diastema} placeholder="Tidak Ada / lokasi dan lebar" />
-						</div>
-						<div class="form-group">
-							<label class="form-label" for="anomali-inp">Gigi Anomali</label>
-							<input id="anomali-inp" class="form-input" bind:value={odontogram.gigi_anomali} placeholder="Tidak Ada / lokasi dan bentuk" />
-						</div>
-					</div>
 
 						<!-- Conditions Table -->
 						{#if odontogram.details.length > 0}
@@ -807,8 +936,16 @@
 				<div class="card mb-6">
 					<h3 class="card-title mb-4">📋 Keterangan</h3>
 					<div class="form-group">
-						<label class="form-label" for="keterangan-ta">Keterangan Tambahan</label>
-						<textarea id="keterangan-ta" class="form-textarea" bind:value={keterangan} rows="2" placeholder="Catatan tambahan..."></textarea>
+						<label class="form-label" for="keterangan-ta"
+							>Keterangan Tambahan</label
+						>
+						<textarea
+							id="keterangan-ta"
+							class="form-textarea"
+							bind:value={keterangan}
+							rows="2"
+							placeholder="Catatan tambahan..."
+						></textarea>
 					</div>
 				</div>
 
@@ -816,25 +953,46 @@
 				<div class="card mb-6">
 					<div class="card-header">
 						<h3 class="card-title">🔄 Rujukan</h3>
-						<button type="button" class="btn btn-secondary btn-sm" on:click={addReferral}>+ Tambah</button>
+						<button
+							type="button"
+							class="btn btn-secondary btn-sm"
+							on:click={addReferral}>+ Tambah</button
+						>
 					</div>
 					{#each referrals as ref, i}
 						<div class="flex gap-3 items-end mt-2">
 							<div class="form-group" style="flex: 0 0 140px;">
-								<select class="form-select" bind:value={ref.doctor_code}>
+								<select
+									class="form-select"
+									bind:value={ref.doctor_code}
+								>
 									<option value="">-- Dokter --</option>
 									{#each DOCTOR_CODES as doc}
-										<option value={doc.code}>{doc.code} - {doc.name}</option>
+										<option value={doc.code}
+											>{doc.code} - {doc.name}</option
+										>
 									{/each}
 								</select>
 							</div>
 							<div class="form-group" style="flex: 0 0 140px;">
-								<input type="date" class="form-input" bind:value={ref.referral_date} />
+								<input
+									type="date"
+									class="form-input"
+									bind:value={ref.referral_date}
+								/>
 							</div>
 							<div class="form-group" style="flex: 1;">
-								<input class="form-input" bind:value={ref.note} placeholder="Catatan rujukan" />
+								<input
+									class="form-input"
+									bind:value={ref.note}
+									placeholder="Catatan rujukan"
+								/>
 							</div>
-							<button type="button" class="btn btn-danger btn-sm btn-icon" on:click={() => removeReferral(i)}>✕</button>
+							<button
+								type="button"
+								class="btn btn-danger btn-sm btn-icon"
+								on:click={() => removeReferral(i)}>✕</button
+							>
 						</div>
 					{/each}
 					{#if referrals.length === 0}
@@ -846,33 +1004,68 @@
 				<div class="card mb-6">
 					<div class="card-header">
 						<h3 class="card-title">🛒 Item Tindakan</h3>
-						<button type="button" class="btn btn-secondary btn-sm" on:click={addEncounterItem}>+ Tambah</button>
+						<button
+							type="button"
+							class="btn btn-secondary btn-sm"
+							on:click={addEncounterItem}>+ Tambah</button
+						>
 					</div>
 					{#each encounterItems as item, i}
 						<div class="flex gap-3 items-end mt-2">
 							<div class="form-group" style="flex: 1;">
-								<select class="form-select" bind:value={item.item_id} on:change={() => onItemSelect(i, item.item_id)}>
+								<select
+									class="form-select"
+									bind:value={item.item_id}
+									on:change={() =>
+										onItemSelect(i, item.item_id)}
+								>
 									<option value="">-- Pilih Item --</option>
 									{#each availableItems as ai}
-										<option value={ai.id}>{ai.name} ({ai.item_group || '-'})</option>
+										<option value={ai.id}
+											>{ai.name} ({ai.item_group ||
+												"-"})</option
+										>
 									{/each}
 								</select>
 							</div>
 							<div class="form-group" style="flex: 0 0 80px;">
-								<input type="number" class="form-input" bind:value={item.quantity} min="1"
-									on:input={() => updateItemSubtotal(i)} placeholder="Qty" />
+								<input
+									type="number"
+									class="form-input"
+									bind:value={item.quantity}
+									min="1"
+									on:input={() => updateItemSubtotal(i)}
+									placeholder="Qty"
+								/>
 							</div>
 							<div class="form-group" style="flex: 0 0 120px;">
-								<input class="form-input" value={item.price_at_time} disabled placeholder="Harga" />
+								<input
+									class="form-input"
+									value={item.price_at_time}
+									disabled
+									placeholder="Harga"
+								/>
 							</div>
 							<div class="form-group" style="flex: 0 0 120px;">
-								<input class="form-input font-semibold" value={item.subtotal} disabled placeholder="Subtotal" />
+								<input
+									class="form-input font-semibold"
+									value={item.subtotal}
+									disabled
+									placeholder="Subtotal"
+								/>
 							</div>
-							<button type="button" class="btn btn-danger btn-sm btn-icon" on:click={() => removeEncounterItem(i)}>✕</button>
+							<button
+								type="button"
+								class="btn btn-danger btn-sm btn-icon"
+								on:click={() => removeEncounterItem(i)}
+								>✕</button
+							>
 						</div>
 					{/each}
 					{#if encounterItems.length === 0}
-						<p class="text-sm text-muted mt-2">Belum ada item tindakan</p>
+						<p class="text-sm text-muted mt-2">
+							Belum ada item tindakan
+						</p>
 					{/if}
 				</div>
 
@@ -909,37 +1102,83 @@
 			<!-- Patient Context Sidebar -->
 			{#if showSidebar}
 				<div style="width: 320px; flex-shrink: 0;">
-					<div class="card" style="position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; display: flex; flex-direction: column;">
-						<div class="card-header border-b border-color pb-4 mb-4 flex justify-between items-center">
+					<div
+						class="card"
+						style="position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; display: flex; flex-direction: column;"
+					>
+						<div
+							class="card-header border-b border-color pb-4 mb-4 flex justify-between items-center"
+						>
 							<h3 class="font-semibold">Konteks Pasien</h3>
-							<button class="btn btn-ghost btn-sm" on:click={() => (showSidebar = false)}>✕</button>
+							<button
+								class="btn btn-ghost btn-sm"
+								on:click={() => (showSidebar = false)}>✕</button
+							>
 						</div>
 
 						{#if encounter}
 							<div class="patient-profile mb-6">
-								<div class="font-bold text-lg mb-1">{encounter.patient_name}</div>
-								<div class="grid grid-2 gap-2 text-sm text-muted mb-4">
-									<div><strong>Tgl Lahir:</strong> {encounter.patient_birth_date || '-'}</div>
-									<div><strong>Gender:</strong> {encounter.patient_gender === 'male' ? 'L' : 'P'}</div>
-									<div><strong>Gol Darah:</strong> {encounter.patient_blood_type || '-'}{encounter.patient_rhesus || ''}</div>
+								<div class="font-bold text-lg mb-1">
+									{encounter.patient_name}
+								</div>
+								<div
+									class="grid grid-2 gap-2 text-sm text-muted mb-4"
+								>
+									<div>
+										<strong>Tgl Lahir:</strong>
+										{encounter.patient_birth_date || "-"}
+									</div>
+									<div>
+										<strong>Gender:</strong>
+										{encounter.patient_gender === "male"
+											? "L"
+											: "P"}
+									</div>
+									<div>
+										<strong>Gol Darah:</strong>
+										{encounter.patient_blood_type ||
+											"-"}{encounter.patient_rhesus || ""}
+									</div>
 									{#if encounter.patient_pregnancy_status}
-										<div class="text-danger font-bold">⚠️ Hamil</div>
+										<div class="text-danger font-bold">
+											⚠️ Hamil
+										</div>
 									{/if}
 								</div>
 							</div>
 
-							<div class="font-semibold text-sm mb-3">Riwayat Kunjungan</div>
-							<div class="history-list flex-1 overflow-y-auto" style="padding-right: 8px;">
+							<div class="font-semibold text-sm mb-3">
+								Riwayat Kunjungan
+							</div>
+							<div
+								class="history-list flex-1 overflow-y-auto"
+								style="padding-right: 8px;"
+							>
 								{#each patientHistory.slice(0, 5) as hist}
-									<div class="p-3 border border-color rounded-md mb-3 text-sm" style="background: var(--gray-50);">
+									<div
+										class="p-3 border border-color rounded-md mb-3 text-sm"
+										style="background: var(--gray-50);"
+									>
 										<div class="flex justify-between mb-1">
-											<span class="font-semibold">{formatDate(hist.encounter?.created_at)}</span>
-											<span class="badge badge-gray text-xs">{hist.encounter?.status}</span>
+											<span class="font-semibold"
+												>{formatDate(
+													hist.encounter?.created_at,
+												)}</span
+											>
+											<span
+												class="badge badge-gray text-xs"
+												>{hist.encounter?.status}</span
+											>
 										</div>
-										<p class="text-muted mb-1 line-clamp-2">{hist.encounter?.assessment || "Belum ada assessment"}</p>
+										<p class="text-muted mb-1 line-clamp-2">
+											{hist.encounter?.assessment ||
+												"Belum ada assessment"}
+										</p>
 									</div>
 								{:else}
-									<p class="text-xs text-muted">Belum ada riwayat</p>
+									<p class="text-xs text-muted">
+										Belum ada riwayat
+									</p>
 								{/each}
 							</div>
 						{/if}
@@ -995,7 +1234,9 @@
 			/>
 		</div>
 		<div class="form-group">
-			<label class="form-label" for="td-bahan-restorasi">Bahan Restorasi</label>
+			<label class="form-label" for="td-bahan-restorasi"
+				>Bahan Restorasi</label
+			>
 			<input
 				id="td-bahan-restorasi"
 				class="form-input"
@@ -1024,7 +1265,9 @@
 			/>
 		</div>
 		<div class="form-group">
-			<label class="form-label" for="td-bahan-protesa">Bahan Protesa</label>
+			<label class="form-label" for="td-bahan-protesa"
+				>Bahan Protesa</label
+			>
 			<input
 				id="td-bahan-protesa"
 				class="form-input"

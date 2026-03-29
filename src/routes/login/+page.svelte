@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-	<title>Login - Oratio Dental</title>
+	<title>Login - Oratio Clinic</title>
 </svelte:head>
 
 <div
@@ -77,7 +77,7 @@
 				<span class="material-symbols-outlined text-5xl">dentistry</span
 				>
 				<h1 class="text-4xl font-black tracking-tightest">
-					Oratio Dental
+					Oratio Clinic
 				</h1>
 			</div>
 			<div class="space-y-4">
@@ -115,7 +115,7 @@
 					<span class="material-symbols-outlined text-3xl"
 						>dentistry</span
 					>
-					<span class="text-xl font-bold">Oratio Dental</span>
+					<span class="text-xl font-bold">Oratio Clinic</span>
 				</div>
 				<div class="flex flex-col gap-2 mb-4">
 					<h3

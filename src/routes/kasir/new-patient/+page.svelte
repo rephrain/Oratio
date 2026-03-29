@@ -4,10 +4,12 @@
     import { ALLERGY_REACTIONS, BLOOD_TYPES } from "$lib/utils/constants.js";
     import { validatePatientForm } from "$lib/utils/validators.js";
     import { addToast } from "$lib/stores/toast.js";
+    import { onMount } from "svelte";
 
     let loading = false;
     let errors = {};
     let doctors = [];
+
     let form = {
         nik: "",
         nama_lengkap: "",
@@ -40,7 +42,7 @@
     let allergies = [];
     let medications = [];
 
-    // Load on-shift doctors
+    // ── Doctors ──────────────────────────────────────────────────────────────
     async function loadDoctors() {
         const today = new Date().getDay();
         const res = await fetch(`/api/doctors?day=${today}`);
@@ -48,47 +50,55 @@
         doctors = data.doctors || [];
     }
 
-    // Snowstorm search — split personal/family disease history
+    // ── Snowstorm searches ───────────────────────────────────────────────────
+    // All functions now use `filter=` consistently (family was wrongly using `term=`)
     async function searchPersonalDisease(term) {
         const res = await fetch(
-            `/api/snowstorm?term=${encodeURIComponent(term)}&type=disease_personal`,
+            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=disease_personal`,
         );
         const data = await res.json();
+        // FIX: carry `display` and `system` in `meta` so onDiseaseSelected can write them back
         return (data.results || []).map((r) => ({
             value: r.code,
-            label: r.display || r.preferred,
+            label: r.display,
+            meta: { display: r.display, system: r.system ?? "SNOMED" },
         }));
     }
+
     async function searchFamilyDisease(term) {
+        // FIX: was `/api/snowstorm?term=...` — unified to `filter=`
         const res = await fetch(
-            `/api/snowstorm?term=${encodeURIComponent(term)}&type=disease_family`,
+            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=disease_family`,
         );
         const data = await res.json();
         return (data.results || []).map((r) => ({
             value: r.code,
-            label: r.display || r.preferred,
+            label: r.display,
+            meta: { display: r.display, system: r.system ?? "SNOMED" },
         }));
     }
 
     async function searchAllergy(term) {
         const res = await fetch(
-            `/api/snowstorm?term=${encodeURIComponent(term)}&type=allergy`,
+            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=allergy`,
         );
         const data = await res.json();
         return (data.results || []).map((r) => ({
             value: r.code,
-            label: r.display || r.preferred,
+            label: r.display,
+            meta: { display: r.display, system: r.system ?? "SNOMED" },
         }));
     }
 
     async function searchComplaint(term) {
         const res = await fetch(
-            `/api/snowstorm?term=${encodeURIComponent(term)}&type=reason`,
+            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=reason`,
         );
         const data = await res.json();
         return (data.results || []).map((r) => ({
             value: r.code,
-            label: r.display || r.preferred,
+            label: r.display,
+            meta: { display: r.display, system: r.system ?? "SNOMED" },
         }));
     }
 
@@ -101,16 +111,45 @@
         }));
     }
 
+    // ── Disease history helpers ──────────────────────────────────────────────
     function addDiseaseHistory() {
         diseaseHistory = [
             ...diseaseHistory,
-            { type: "personal", description: "", code: "" },
+            // FIX: include `display` and `system` — the API skips entries missing these
+            {
+                type: "personal",
+                code: "",
+                display: "",
+                system: "SNOMED",
+                description: "",
+            },
         ];
     }
+
     function removeDiseaseHistory(i) {
         diseaseHistory = diseaseHistory.filter((_, idx) => idx !== i);
     }
 
+    /**
+     * FIX: new handler — writes code + display + system from the selected option
+     * back into diseaseHistory[i]. Without this, `display` stayed "" and the
+     * patients API's `if (!entry.code || !entry.display) continue` silently
+     * skipped every entry, so nothing was ever saved to terminology_master /
+     * patient_disease_history.
+     */
+    function onDiseaseSelected(i, option) {
+        diseaseHistory = diseaseHistory.map((entry, idx) => {
+            if (idx !== i) return entry;
+            return {
+                ...entry,
+                code: option.value,
+                display: option.label, // <- was never set before
+                system: option.meta?.system ?? "SNOMED",
+            };
+        });
+    }
+
+    // ── Allergy helpers ──────────────────────────────────────────────────────
     function addAllergy() {
         allergies = [
             ...allergies,
@@ -122,20 +161,42 @@
             },
         ];
     }
+
     function removeAllergy(i) {
         allergies = allergies.filter((_, idx) => idx !== i);
     }
 
+    function onAllergySelected(i, option) {
+        allergies = allergies.map((entry, idx) => {
+            if (idx !== i) return entry;
+            return {
+                ...entry,
+                substance_code: option.value,
+                substance_display: option.label,
+            };
+        });
+    }
+
+    // ── Medication helpers ───────────────────────────────────────────────────
     function addMedication() {
         medications = [
             ...medications,
             { code: "", display: "", dosage: "", note: "" },
         ];
     }
+
     function removeMedication(i) {
         medications = medications.filter((_, idx) => idx !== i);
     }
 
+    function onMedicationSelected(i, option) {
+        medications = medications.map((entry, idx) => {
+            if (idx !== i) return entry;
+            return { ...entry, code: option.value, display: option.label };
+        });
+    }
+
+    // ── Submit ───────────────────────────────────────────────────────────────
     async function handleSubmit() {
         const validation = validatePatientForm(form);
         if (!validation.valid) {
@@ -152,7 +213,7 @@
         errors = {};
 
         try {
-            // 1. Create patient
+            // 1. Create patient (disease_history now carries code + display + system)
             const patientRes = await fetch("/api/patients", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -195,25 +256,24 @@
             }
 
             const encData = await encRes.json();
-
             addToast(
                 `Pasien ${form.nama_lengkap} ditambahkan ke antrian #${encData.queue_number}`,
                 "success",
             );
             goto("/kasir");
         } catch (err) {
+            console.error(err);
             addToast("Terjadi kesalahan", "error");
         } finally {
             loading = false;
         }
     }
 
-    import { onMount } from "svelte";
     onMount(loadDoctors);
 </script>
 
 <svelte:head>
-    <title>Pasien Baru — Oratio Dental</title>
+    <title>Pasien Baru — Oratio Clinic</title>
 </svelte:head>
 
 <div class="p-8 max-w-5xl mx-auto">
@@ -226,7 +286,10 @@
         </p>
     </div>
 
-    <form class="flex flex-col gap-8 pb-20" on:submit|preventDefault={handleSubmit}>
+    <form
+        class="flex flex-col gap-8 pb-20"
+        on:submit|preventDefault={handleSubmit}
+    >
         <!-- Section: Patient Identity -->
         <section
             class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
@@ -751,8 +814,12 @@
                             class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
                             on:click={() => removeDiseaseHistory(i)}
                         >
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                            <span class="md:hidden text-sm font-semibold">Hapus</span>
+                            <span class="material-symbols-outlined text-[18px]"
+                                >delete</span
+                            >
+                            <span class="md:hidden text-sm font-semibold"
+                                >Hapus</span
+                            >
                         </button>
                     </div>
                 {/each}
@@ -790,7 +857,9 @@
                     <div
                         class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
-                        <div class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm">
+                        <div
+                            class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                        >
                             <SearchableSelect
                                 placeholder="Cari alergen/substansi..."
                                 searchFn={searchAllergy}
@@ -823,8 +892,12 @@
                             class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
                             on:click={() => removeAllergy(i)}
                         >
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                            <span class="md:hidden text-sm font-semibold">Hapus</span>
+                            <span class="material-symbols-outlined text-[18px]"
+                                >delete</span
+                            >
+                            <span class="md:hidden text-sm font-semibold"
+                                >Hapus</span
+                            >
                         </button>
                     </div>
                 {/each}
@@ -864,7 +937,9 @@
                     <div
                         class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
-                        <div class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm">
+                        <div
+                            class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                        >
                             <SearchableSelect
                                 placeholder="Cari obat (KFA)..."
                                 searchFn={searchMedication}
@@ -886,8 +961,12 @@
                             class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
                             on:click={() => removeMedication(i)}
                         >
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                            <span class="md:hidden text-sm font-semibold">Hapus</span>
+                            <span class="material-symbols-outlined text-[18px]"
+                                >delete</span
+                            >
+                            <span class="md:hidden text-sm font-semibold"
+                                >Hapus</span
+                            >
                         </button>
                     </div>
                 {/each}

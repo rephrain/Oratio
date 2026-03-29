@@ -1,4 +1,4 @@
-# Oratio Dental – Medical Recording Web Application (v2)
+# Oratio Clinic – Medical Recording Web Application (v2)
 
 A SvelteKit web application for dental healthcare medical recording with three roles (Admin, Kasir, Dokter), integrating SatuSehat APIs and Snowstorm SNOMED-CT terminology. Deployed via Docker on Synology NAS.
 

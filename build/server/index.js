@@ -131,7 +131,7 @@ const options = {
   root: Root,
   service_worker: false,
   templates: {
-    app: ({ head, body, assets: assets2, nonce, env }) => '<!doctype html>\r\n<html lang="id">\r\n	<head>\r\n		<meta charset="utf-8" />\r\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\r\n		<meta name="description" content="Oratio Dental – Sistem Rekam Medis Kedokteran Gigi" />\r\n		<link rel="preconnect" href="https://fonts.googleapis.com" />\r\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\r\n		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />\r\n		<title>Oratio Dental</title>\r\n		' + head + '\r\n	</head>\r\n	<body data-sveltekit-preload-data="hover">\r\n		<div style="display: contents">' + body + "</div>\r\n	</body>\r\n</html>\r\n",
+    app: ({ head, body, assets: assets2, nonce, env }) => '<!doctype html>\r\n<html lang="id">\r\n	<head>\r\n		<meta charset="utf-8" />\r\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\r\n		<meta name="description" content="Oratio Clinic – Sistem Rekam Medis Kedokteran Gigi" />\r\n		<link rel="preconnect" href="https://fonts.googleapis.com" />\r\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\r\n		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />\r\n		<title>Oratio Clinic</title>\r\n		' + head + '\r\n	</head>\r\n	<body data-sveltekit-preload-data="hover">\r\n		<div style="display: contents">' + body + "</div>\r\n	</body>\r\n</html>\r\n",
     error: ({ status, message }) => '<!doctype html>\r\n<html lang="en">\r\n	<head>\r\n		<meta charset="utf-8" />\r\n		<title>' + message + `</title>\r
 \r
 		<style>\r
@@ -211,108 +211,108 @@ function get_hooks() {
 
 /** @type {Record<string, string>} */
 const escaped = {
-	'<': '\\u003C',
-	'\\': '\\\\',
-	'\b': '\\b',
-	'\f': '\\f',
-	'\n': '\\n',
-	'\r': '\\r',
-	'\t': '\\t',
-	'\u2028': '\\u2028',
-	'\u2029': '\\u2029'
+  '<': '\\u003C',
+  '\\': '\\\\',
+  '\b': '\\b',
+  '\f': '\\f',
+  '\n': '\\n',
+  '\r': '\\r',
+  '\t': '\\t',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029'
 };
 
 class DevalueError extends Error {
-	/**
-	 * @param {string} message
-	 * @param {string[]} keys
-	 */
-	constructor(message, keys) {
-		super(message);
-		this.name = 'DevalueError';
-		this.path = keys.join('');
-	}
+  /**
+   * @param {string} message
+   * @param {string[]} keys
+   */
+  constructor(message, keys) {
+    super(message);
+    this.name = 'DevalueError';
+    this.path = keys.join('');
+  }
 }
 
 /** @param {any} thing */
 function is_primitive(thing) {
-	return Object(thing) !== thing;
+  return Object(thing) !== thing;
 }
 
 const object_proto_names = /* @__PURE__ */ Object.getOwnPropertyNames(
-	Object.prototype
+  Object.prototype
 )
-	.sort()
-	.join('\0');
+  .sort()
+  .join('\0');
 
 /** @param {any} thing */
 function is_plain_object(thing) {
-	const proto = Object.getPrototypeOf(thing);
+  const proto = Object.getPrototypeOf(thing);
 
-	return (
-		proto === Object.prototype ||
-		proto === null ||
-		Object.getOwnPropertyNames(proto).sort().join('\0') === object_proto_names
-	);
+  return (
+    proto === Object.prototype ||
+    proto === null ||
+    Object.getOwnPropertyNames(proto).sort().join('\0') === object_proto_names
+  );
 }
 
 /** @param {any} thing */
 function get_type(thing) {
-	return Object.prototype.toString.call(thing).slice(8, -1);
+  return Object.prototype.toString.call(thing).slice(8, -1);
 }
 
 /** @param {string} char */
 function get_escaped_char(char) {
-	switch (char) {
-		case '"':
-			return '\\"';
-		case '<':
-			return '\\u003C';
-		case '\\':
-			return '\\\\';
-		case '\n':
-			return '\\n';
-		case '\r':
-			return '\\r';
-		case '\t':
-			return '\\t';
-		case '\b':
-			return '\\b';
-		case '\f':
-			return '\\f';
-		case '\u2028':
-			return '\\u2028';
-		case '\u2029':
-			return '\\u2029';
-		default:
-			return char < ' '
-				? `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
-				: '';
-	}
+  switch (char) {
+    case '"':
+      return '\\"';
+    case '<':
+      return '\\u003C';
+    case '\\':
+      return '\\\\';
+    case '\n':
+      return '\\n';
+    case '\r':
+      return '\\r';
+    case '\t':
+      return '\\t';
+    case '\b':
+      return '\\b';
+    case '\f':
+      return '\\f';
+    case '\u2028':
+      return '\\u2028';
+    case '\u2029':
+      return '\\u2029';
+    default:
+      return char < ' '
+        ? `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
+        : '';
+  }
 }
 
 /** @param {string} str */
 function stringify_string(str) {
-	let result = '';
-	let last_pos = 0;
-	const len = str.length;
+  let result = '';
+  let last_pos = 0;
+  const len = str.length;
 
-	for (let i = 0; i < len; i += 1) {
-		const char = str[i];
-		const replacement = get_escaped_char(char);
-		if (replacement) {
-			result += str.slice(last_pos, i) + replacement;
-			last_pos = i + 1;
-		}
-	}
+  for (let i = 0; i < len; i += 1) {
+    const char = str[i];
+    const replacement = get_escaped_char(char);
+    if (replacement) {
+      result += str.slice(last_pos, i) + replacement;
+      last_pos = i + 1;
+    }
+  }
 
-	return `"${last_pos === 0 ? str : result + str.slice(last_pos)}"`;
+  return `"${last_pos === 0 ? str : result + str.slice(last_pos)}"`;
 }
 
 const chars$1 = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$';
 const unsafe_chars = /[<\b\f\n\r\t\0\u2028\u2029]/g;
 const reserved =
-	/^(?:do|if|in|for|int|let|new|try|var|byte|case|char|else|enum|goto|long|this|void|with|await|break|catch|class|const|final|float|short|super|throw|while|yield|delete|double|export|import|native|return|switch|throws|typeof|boolean|default|extends|finally|package|private|abstract|continue|debugger|function|volatile|interface|protected|transient|implements|instanceof|synchronized)$/;
+  /^(?:do|if|in|for|int|let|new|try|var|byte|case|char|else|enum|goto|long|this|void|with|await|break|catch|class|const|final|float|short|super|throw|while|yield|delete|double|export|import|native|return|switch|throws|typeof|boolean|default|extends|finally|package|private|abstract|continue|debugger|function|volatile|interface|protected|transient|implements|instanceof|synchronized)$/;
 
 /**
  * Turn a value into the JavaScript that creates an equivalent value
@@ -320,297 +320,296 @@ const reserved =
  * @param {(value: any) => string | void} [replacer]
  */
 function uneval(value, replacer) {
-	const counts = new Map();
+  const counts = new Map();
 
-	/** @type {string[]} */
-	const keys = [];
+  /** @type {string[]} */
+  const keys = [];
 
-	const custom = new Map();
+  const custom = new Map();
 
-	/** @param {any} thing */
-	function walk(thing) {
-		if (typeof thing === 'function') {
-			throw new DevalueError(`Cannot stringify a function`, keys);
-		}
+  /** @param {any} thing */
+  function walk(thing) {
+    if (typeof thing === 'function') {
+      throw new DevalueError(`Cannot stringify a function`, keys);
+    }
 
-		if (!is_primitive(thing)) {
-			if (counts.has(thing)) {
-				counts.set(thing, counts.get(thing) + 1);
-				return;
-			}
+    if (!is_primitive(thing)) {
+      if (counts.has(thing)) {
+        counts.set(thing, counts.get(thing) + 1);
+        return;
+      }
 
-			counts.set(thing, 1);
+      counts.set(thing, 1);
 
-			if (replacer) {
-				const str = replacer(thing);
+      if (replacer) {
+        const str = replacer(thing);
 
-				if (typeof str === 'string') {
-					custom.set(thing, str);
-					return;
-				}
-			}
+        if (typeof str === 'string') {
+          custom.set(thing, str);
+          return;
+        }
+      }
 
-			const type = get_type(thing);
+      const type = get_type(thing);
 
-			switch (type) {
-				case 'Number':
-				case 'BigInt':
-				case 'String':
-				case 'Boolean':
-				case 'Date':
-				case 'RegExp':
-					return;
+      switch (type) {
+        case 'Number':
+        case 'BigInt':
+        case 'String':
+        case 'Boolean':
+        case 'Date':
+        case 'RegExp':
+          return;
 
-				case 'Array':
+        case 'Array':
 					/** @type {any[]} */ (thing).forEach((value, i) => {
-						keys.push(`[${i}]`);
-						walk(value);
-						keys.pop();
-					});
-					break;
+          keys.push(`[${i}]`);
+          walk(value);
+          keys.pop();
+        });
+          break;
 
-				case 'Set':
-					Array.from(thing).forEach(walk);
-					break;
+        case 'Set':
+          Array.from(thing).forEach(walk);
+          break;
 
-				case 'Map':
-					for (const [key, value] of thing) {
-						keys.push(
-							`.get(${is_primitive(key) ? stringify_primitive$1(key) : '...'})`
-						);
-						walk(value);
-						keys.pop();
-					}
-					break;
+        case 'Map':
+          for (const [key, value] of thing) {
+            keys.push(
+              `.get(${is_primitive(key) ? stringify_primitive$1(key) : '...'})`
+            );
+            walk(value);
+            keys.pop();
+          }
+          break;
 
-				default:
-					if (!is_plain_object(thing)) {
-						throw new DevalueError(
-							`Cannot stringify arbitrary non-POJOs`,
-							keys
-						);
-					}
+        default:
+          if (!is_plain_object(thing)) {
+            throw new DevalueError(
+              `Cannot stringify arbitrary non-POJOs`,
+              keys
+            );
+          }
 
-					if (Object.getOwnPropertySymbols(thing).length > 0) {
-						throw new DevalueError(
-							`Cannot stringify POJOs with symbolic keys`,
-							keys
-						);
-					}
+          if (Object.getOwnPropertySymbols(thing).length > 0) {
+            throw new DevalueError(
+              `Cannot stringify POJOs with symbolic keys`,
+              keys
+            );
+          }
 
-					for (const key in thing) {
-						keys.push(`.${key}`);
-						walk(thing[key]);
-						keys.pop();
-					}
-			}
-		}
-	}
+          for (const key in thing) {
+            keys.push(`.${key}`);
+            walk(thing[key]);
+            keys.pop();
+          }
+      }
+    }
+  }
 
-	walk(value);
+  walk(value);
 
-	const names = new Map();
+  const names = new Map();
 
-	Array.from(counts)
-		.filter((entry) => entry[1] > 1)
-		.sort((a, b) => b[1] - a[1])
-		.forEach((entry, i) => {
-			names.set(entry[0], get_name(i));
-		});
+  Array.from(counts)
+    .filter((entry) => entry[1] > 1)
+    .sort((a, b) => b[1] - a[1])
+    .forEach((entry, i) => {
+      names.set(entry[0], get_name(i));
+    });
 
-	/**
-	 * @param {any} thing
-	 * @returns {string}
-	 */
-	function stringify(thing) {
-		if (names.has(thing)) {
-			return names.get(thing);
-		}
+  /**
+   * @param {any} thing
+   * @returns {string}
+   */
+  function stringify(thing) {
+    if (names.has(thing)) {
+      return names.get(thing);
+    }
 
-		if (is_primitive(thing)) {
-			return stringify_primitive$1(thing);
-		}
+    if (is_primitive(thing)) {
+      return stringify_primitive$1(thing);
+    }
 
-		if (custom.has(thing)) {
-			return custom.get(thing);
-		}
+    if (custom.has(thing)) {
+      return custom.get(thing);
+    }
 
-		const type = get_type(thing);
+    const type = get_type(thing);
 
-		switch (type) {
-			case 'Number':
-			case 'String':
-			case 'Boolean':
-				return `Object(${stringify(thing.valueOf())})`;
+    switch (type) {
+      case 'Number':
+      case 'String':
+      case 'Boolean':
+        return `Object(${stringify(thing.valueOf())})`;
 
-			case 'RegExp':
-				return `new RegExp(${stringify_string(thing.source)}, "${
-					thing.flags
-				}")`;
+      case 'RegExp':
+        return `new RegExp(${stringify_string(thing.source)}, "${thing.flags
+          }")`;
 
-			case 'Date':
-				return `new Date(${thing.getTime()})`;
+      case 'Date':
+        return `new Date(${thing.getTime()})`;
 
-			case 'Array':
-				const members = /** @type {any[]} */ (thing).map((v, i) =>
-					i in thing ? stringify(v) : ''
-				);
-				const tail = thing.length === 0 || thing.length - 1 in thing ? '' : ',';
-				return `[${members.join(',')}${tail}]`;
+      case 'Array':
+        const members = /** @type {any[]} */ (thing).map((v, i) =>
+          i in thing ? stringify(v) : ''
+        );
+        const tail = thing.length === 0 || thing.length - 1 in thing ? '' : ',';
+        return `[${members.join(',')}${tail}]`;
 
-			case 'Set':
-			case 'Map':
-				return `new ${type}([${Array.from(thing).map(stringify).join(',')}])`;
+      case 'Set':
+      case 'Map':
+        return `new ${type}([${Array.from(thing).map(stringify).join(',')}])`;
 
-			default:
-				const obj = `{${Object.keys(thing)
-					.map((key) => `${safe_key(key)}:${stringify(thing[key])}`)
-					.join(',')}}`;
-				const proto = Object.getPrototypeOf(thing);
-				if (proto === null) {
-					return Object.keys(thing).length > 0
-						? `Object.assign(Object.create(null),${obj})`
-						: `Object.create(null)`;
-				}
+      default:
+        const obj = `{${Object.keys(thing)
+          .map((key) => `${safe_key(key)}:${stringify(thing[key])}`)
+          .join(',')}}`;
+        const proto = Object.getPrototypeOf(thing);
+        if (proto === null) {
+          return Object.keys(thing).length > 0
+            ? `Object.assign(Object.create(null),${obj})`
+            : `Object.create(null)`;
+        }
 
-				return obj;
-		}
-	}
+        return obj;
+    }
+  }
 
-	const str = stringify(value);
+  const str = stringify(value);
 
-	if (names.size) {
-		/** @type {string[]} */
-		const params = [];
+  if (names.size) {
+    /** @type {string[]} */
+    const params = [];
 
-		/** @type {string[]} */
-		const statements = [];
+    /** @type {string[]} */
+    const statements = [];
 
-		/** @type {string[]} */
-		const values = [];
+    /** @type {string[]} */
+    const values = [];
 
-		names.forEach((name, thing) => {
-			params.push(name);
+    names.forEach((name, thing) => {
+      params.push(name);
 
-			if (custom.has(thing)) {
-				values.push(/** @type {string} */ (custom.get(thing)));
-				return;
-			}
+      if (custom.has(thing)) {
+        values.push(/** @type {string} */(custom.get(thing)));
+        return;
+      }
 
-			if (is_primitive(thing)) {
-				values.push(stringify_primitive$1(thing));
-				return;
-			}
+      if (is_primitive(thing)) {
+        values.push(stringify_primitive$1(thing));
+        return;
+      }
 
-			const type = get_type(thing);
+      const type = get_type(thing);
 
-			switch (type) {
-				case 'Number':
-				case 'String':
-				case 'Boolean':
-					values.push(`Object(${stringify(thing.valueOf())})`);
-					break;
+      switch (type) {
+        case 'Number':
+        case 'String':
+        case 'Boolean':
+          values.push(`Object(${stringify(thing.valueOf())})`);
+          break;
 
-				case 'RegExp':
-					values.push(thing.toString());
-					break;
+        case 'RegExp':
+          values.push(thing.toString());
+          break;
 
-				case 'Date':
-					values.push(`new Date(${thing.getTime()})`);
-					break;
+        case 'Date':
+          values.push(`new Date(${thing.getTime()})`);
+          break;
 
-				case 'Array':
-					values.push(`Array(${thing.length})`);
+        case 'Array':
+          values.push(`Array(${thing.length})`);
 					/** @type {any[]} */ (thing).forEach((v, i) => {
-						statements.push(`${name}[${i}]=${stringify(v)}`);
-					});
-					break;
+            statements.push(`${name}[${i}]=${stringify(v)}`);
+          });
+          break;
 
-				case 'Set':
-					values.push(`new Set`);
-					statements.push(
-						`${name}.${Array.from(thing)
-							.map((v) => `add(${stringify(v)})`)
-							.join('.')}`
-					);
-					break;
+        case 'Set':
+          values.push(`new Set`);
+          statements.push(
+            `${name}.${Array.from(thing)
+              .map((v) => `add(${stringify(v)})`)
+              .join('.')}`
+          );
+          break;
 
-				case 'Map':
-					values.push(`new Map`);
-					statements.push(
-						`${name}.${Array.from(thing)
-							.map(([k, v]) => `set(${stringify(k)}, ${stringify(v)})`)
-							.join('.')}`
-					);
-					break;
+        case 'Map':
+          values.push(`new Map`);
+          statements.push(
+            `${name}.${Array.from(thing)
+              .map(([k, v]) => `set(${stringify(k)}, ${stringify(v)})`)
+              .join('.')}`
+          );
+          break;
 
-				default:
-					values.push(
-						Object.getPrototypeOf(thing) === null ? 'Object.create(null)' : '{}'
-					);
-					Object.keys(thing).forEach((key) => {
-						statements.push(
-							`${name}${safe_prop(key)}=${stringify(thing[key])}`
-						);
-					});
-			}
-		});
+        default:
+          values.push(
+            Object.getPrototypeOf(thing) === null ? 'Object.create(null)' : '{}'
+          );
+          Object.keys(thing).forEach((key) => {
+            statements.push(
+              `${name}${safe_prop(key)}=${stringify(thing[key])}`
+            );
+          });
+      }
+    });
 
-		statements.push(`return ${str}`);
+    statements.push(`return ${str}`);
 
-		return `(function(${params.join(',')}){${statements.join(
-			';'
-		)}}(${values.join(',')}))`;
-	} else {
-		return str;
-	}
+    return `(function(${params.join(',')}){${statements.join(
+      ';'
+    )}}(${values.join(',')}))`;
+  } else {
+    return str;
+  }
 }
 
 /** @param {number} num */
 function get_name(num) {
-	let name = '';
+  let name = '';
 
-	do {
-		name = chars$1[num % chars$1.length] + name;
-		num = ~~(num / chars$1.length) - 1;
-	} while (num >= 0);
+  do {
+    name = chars$1[num % chars$1.length] + name;
+    num = ~~(num / chars$1.length) - 1;
+  } while (num >= 0);
 
-	return reserved.test(name) ? `${name}0` : name;
+  return reserved.test(name) ? `${name}0` : name;
 }
 
 /** @param {string} c */
 function escape_unsafe_char(c) {
-	return escaped[c] || c;
+  return escaped[c] || c;
 }
 
 /** @param {string} str */
 function escape_unsafe_chars(str) {
-	return str.replace(unsafe_chars, escape_unsafe_char);
+  return str.replace(unsafe_chars, escape_unsafe_char);
 }
 
 /** @param {string} key */
 function safe_key(key) {
-	return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key)
-		? key
-		: escape_unsafe_chars(JSON.stringify(key));
+  return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key)
+    ? key
+    : escape_unsafe_chars(JSON.stringify(key));
 }
 
 /** @param {string} key */
 function safe_prop(key) {
-	return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key)
-		? `.${key}`
-		: `[${escape_unsafe_chars(JSON.stringify(key))}]`;
+  return /^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(key)
+    ? `.${key}`
+    : `[${escape_unsafe_chars(JSON.stringify(key))}]`;
 }
 
 /** @param {any} thing */
 function stringify_primitive$1(thing) {
-	if (typeof thing === 'string') return stringify_string(thing);
-	if (thing === void 0) return 'void 0';
-	if (thing === 0 && 1 / thing < 0) return '-0';
-	const str = String(thing);
-	if (typeof thing === 'number') return str.replace(/^(-)?0\./, '$1.');
-	if (typeof thing === 'bigint') return thing + 'n';
-	return str;
+  if (typeof thing === 'string') return stringify_string(thing);
+  if (thing === void 0) return 'void 0';
+  if (thing === 0 && 1 / thing < 0) return '-0';
+  const str = String(thing);
+  if (typeof thing === 'number') return str.replace(/^(-)?0\./, '$1.');
+  if (typeof thing === 'bigint') return thing + 'n';
+  return str;
 }
 
 const UNDEFINED = -1;
@@ -626,169 +625,169 @@ const NEGATIVE_ZERO = -6;
  * @param {Record<string, (value: any) => any>} [reducers]
  */
 function stringify(value, reducers) {
-	/** @type {any[]} */
-	const stringified = [];
+  /** @type {any[]} */
+  const stringified = [];
 
-	/** @type {Map<any, number>} */
-	const indexes = new Map();
+  /** @type {Map<any, number>} */
+  const indexes = new Map();
 
-	/** @type {Array<{ key: string, fn: (value: any) => any }>} */
-	const custom = [];
-	for (const key in reducers) {
-		custom.push({ key, fn: reducers[key] });
-	}
+  /** @type {Array<{ key: string, fn: (value: any) => any }>} */
+  const custom = [];
+  for (const key in reducers) {
+    custom.push({ key, fn: reducers[key] });
+  }
 
-	/** @type {string[]} */
-	const keys = [];
+  /** @type {string[]} */
+  const keys = [];
 
-	let p = 0;
+  let p = 0;
 
-	/** @param {any} thing */
-	function flatten(thing) {
-		if (typeof thing === 'function') {
-			throw new DevalueError(`Cannot stringify a function`, keys);
-		}
+  /** @param {any} thing */
+  function flatten(thing) {
+    if (typeof thing === 'function') {
+      throw new DevalueError(`Cannot stringify a function`, keys);
+    }
 
-		if (indexes.has(thing)) return indexes.get(thing);
+    if (indexes.has(thing)) return indexes.get(thing);
 
-		if (thing === undefined) return UNDEFINED;
-		if (Number.isNaN(thing)) return NAN;
-		if (thing === Infinity) return POSITIVE_INFINITY;
-		if (thing === -Infinity) return NEGATIVE_INFINITY;
-		if (thing === 0 && 1 / thing < 0) return NEGATIVE_ZERO;
+    if (thing === undefined) return UNDEFINED;
+    if (Number.isNaN(thing)) return NAN;
+    if (thing === Infinity) return POSITIVE_INFINITY;
+    if (thing === -Infinity) return NEGATIVE_INFINITY;
+    if (thing === 0 && 1 / thing < 0) return NEGATIVE_ZERO;
 
-		const index = p++;
-		indexes.set(thing, index);
+    const index = p++;
+    indexes.set(thing, index);
 
-		for (const { key, fn } of custom) {
-			const value = fn(thing);
-			if (value) {
-				stringified[index] = `["${key}",${flatten(value)}]`;
-				return index;
-			}
-		}
+    for (const { key, fn } of custom) {
+      const value = fn(thing);
+      if (value) {
+        stringified[index] = `["${key}",${flatten(value)}]`;
+        return index;
+      }
+    }
 
-		let str = '';
+    let str = '';
 
-		if (is_primitive(thing)) {
-			str = stringify_primitive(thing);
-		} else {
-			const type = get_type(thing);
+    if (is_primitive(thing)) {
+      str = stringify_primitive(thing);
+    } else {
+      const type = get_type(thing);
 
-			switch (type) {
-				case 'Number':
-				case 'String':
-				case 'Boolean':
-					str = `["Object",${stringify_primitive(thing)}]`;
-					break;
+      switch (type) {
+        case 'Number':
+        case 'String':
+        case 'Boolean':
+          str = `["Object",${stringify_primitive(thing)}]`;
+          break;
 
-				case 'BigInt':
-					str = `["BigInt",${thing}]`;
-					break;
+        case 'BigInt':
+          str = `["BigInt",${thing}]`;
+          break;
 
-				case 'Date':
-					const valid = !isNaN(thing.getDate());
-					str = `["Date","${valid ? thing.toISOString() : ''}"]`;
-					break;
+        case 'Date':
+          const valid = !isNaN(thing.getDate());
+          str = `["Date","${valid ? thing.toISOString() : ''}"]`;
+          break;
 
-				case 'RegExp':
-					const { source, flags } = thing;
-					str = flags
-						? `["RegExp",${stringify_string(source)},"${flags}"]`
-						: `["RegExp",${stringify_string(source)}]`;
-					break;
+        case 'RegExp':
+          const { source, flags } = thing;
+          str = flags
+            ? `["RegExp",${stringify_string(source)},"${flags}"]`
+            : `["RegExp",${stringify_string(source)}]`;
+          break;
 
-				case 'Array':
-					str = '[';
+        case 'Array':
+          str = '[';
 
-					for (let i = 0; i < thing.length; i += 1) {
-						if (i > 0) str += ',';
+          for (let i = 0; i < thing.length; i += 1) {
+            if (i > 0) str += ',';
 
-						if (i in thing) {
-							keys.push(`[${i}]`);
-							str += flatten(thing[i]);
-							keys.pop();
-						} else {
-							str += HOLE;
-						}
-					}
+            if (i in thing) {
+              keys.push(`[${i}]`);
+              str += flatten(thing[i]);
+              keys.pop();
+            } else {
+              str += HOLE;
+            }
+          }
 
-					str += ']';
+          str += ']';
 
-					break;
+          break;
 
-				case 'Set':
-					str = '["Set"';
+        case 'Set':
+          str = '["Set"';
 
-					for (const value of thing) {
-						str += `,${flatten(value)}`;
-					}
+          for (const value of thing) {
+            str += `,${flatten(value)}`;
+          }
 
-					str += ']';
-					break;
+          str += ']';
+          break;
 
-				case 'Map':
-					str = '["Map"';
+        case 'Map':
+          str = '["Map"';
 
-					for (const [key, value] of thing) {
-						keys.push(
-							`.get(${is_primitive(key) ? stringify_primitive(key) : '...'})`
-						);
-						str += `,${flatten(key)},${flatten(value)}`;
-						keys.pop();
-					}
+          for (const [key, value] of thing) {
+            keys.push(
+              `.get(${is_primitive(key) ? stringify_primitive(key) : '...'})`
+            );
+            str += `,${flatten(key)},${flatten(value)}`;
+            keys.pop();
+          }
 
-					str += ']';
-					break;
+          str += ']';
+          break;
 
-				default:
-					if (!is_plain_object(thing)) {
-						throw new DevalueError(
-							`Cannot stringify arbitrary non-POJOs`,
-							keys
-						);
-					}
+        default:
+          if (!is_plain_object(thing)) {
+            throw new DevalueError(
+              `Cannot stringify arbitrary non-POJOs`,
+              keys
+            );
+          }
 
-					if (Object.getOwnPropertySymbols(thing).length > 0) {
-						throw new DevalueError(
-							`Cannot stringify POJOs with symbolic keys`,
-							keys
-						);
-					}
+          if (Object.getOwnPropertySymbols(thing).length > 0) {
+            throw new DevalueError(
+              `Cannot stringify POJOs with symbolic keys`,
+              keys
+            );
+          }
 
-					if (Object.getPrototypeOf(thing) === null) {
-						str = '["null"';
-						for (const key in thing) {
-							keys.push(`.${key}`);
-							str += `,${stringify_string(key)},${flatten(thing[key])}`;
-							keys.pop();
-						}
-						str += ']';
-					} else {
-						str = '{';
-						let started = false;
-						for (const key in thing) {
-							if (started) str += ',';
-							started = true;
-							keys.push(`.${key}`);
-							str += `${stringify_string(key)}:${flatten(thing[key])}`;
-							keys.pop();
-						}
-						str += '}';
-					}
-			}
-		}
+          if (Object.getPrototypeOf(thing) === null) {
+            str = '["null"';
+            for (const key in thing) {
+              keys.push(`.${key}`);
+              str += `,${stringify_string(key)},${flatten(thing[key])}`;
+              keys.pop();
+            }
+            str += ']';
+          } else {
+            str = '{';
+            let started = false;
+            for (const key in thing) {
+              if (started) str += ',';
+              started = true;
+              keys.push(`.${key}`);
+              str += `${stringify_string(key)}:${flatten(thing[key])}`;
+              keys.pop();
+            }
+            str += '}';
+          }
+      }
+    }
 
-		stringified[index] = str;
-		return index;
-	}
+    stringified[index] = str;
+    return index;
+  }
 
-	const index = flatten(value);
+  const index = flatten(value);
 
-	// special case — value is represented as a negative index
-	if (index < 0) return `${index}`;
+  // special case — value is represented as a negative index
+  if (index < 0) return `${index}`;
 
-	return `[${stringified.join(',')}]`;
+  return `[${stringified.join(',')}]`;
 }
 
 /**
@@ -796,13 +795,13 @@ function stringify(value, reducers) {
  * @returns {string}
  */
 function stringify_primitive(thing) {
-	const type = typeof thing;
-	if (type === 'string') return stringify_string(thing);
-	if (thing instanceof String) return stringify_string(thing.toString());
-	if (thing === void 0) return UNDEFINED.toString();
-	if (thing === 0 && 1 / thing < 0) return NEGATIVE_ZERO.toString();
-	if (type === 'bigint') return `["BigInt","${thing}"]`;
-	return String(thing);
+  const type = typeof thing;
+  if (type === 'string') return stringify_string(thing);
+  if (thing instanceof String) return stringify_string(thing.toString());
+  if (thing === void 0) return UNDEFINED.toString();
+  if (thing === 0 && 1 / thing < 0) return NEGATIVE_ZERO.toString();
+  if (type === 'bigint') return `["BigInt","${thing}"]`;
+  return String(thing);
 }
 
 var cookie = {};
@@ -816,525 +815,525 @@ var cookie = {};
 
 var hasRequiredCookie;
 
-function requireCookie () {
-	if (hasRequiredCookie) return cookie;
-	hasRequiredCookie = 1;
+function requireCookie() {
+  if (hasRequiredCookie) return cookie;
+  hasRequiredCookie = 1;
 
-	/**
-	 * Module exports.
-	 * @public
-	 */
+  /**
+   * Module exports.
+   * @public
+   */
 
-	cookie.parse = parse;
-	cookie.serialize = serialize;
+  cookie.parse = parse;
+  cookie.serialize = serialize;
 
-	/**
-	 * Module variables.
-	 * @private
-	 */
+  /**
+   * Module variables.
+   * @private
+   */
 
-	var __toString = Object.prototype.toString;
+  var __toString = Object.prototype.toString;
 
-	/**
-	 * RegExp to match field-content in RFC 7230 sec 3.2
-	 *
-	 * field-content = field-vchar [ 1*( SP / HTAB ) field-vchar ]
-	 * field-vchar   = VCHAR / obs-text
-	 * obs-text      = %x80-FF
-	 */
+  /**
+   * RegExp to match field-content in RFC 7230 sec 3.2
+   *
+   * field-content = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+   * field-vchar   = VCHAR / obs-text
+   * obs-text      = %x80-FF
+   */
 
-	var fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
+  var fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 
-	/**
-	 * Parse a cookie header.
-	 *
-	 * Parse the given cookie header string into an object
-	 * The object has the various cookies as keys(names) => values
-	 *
-	 * @param {string} str
-	 * @param {object} [options]
-	 * @return {object}
-	 * @public
-	 */
+  /**
+   * Parse a cookie header.
+   *
+   * Parse the given cookie header string into an object
+   * The object has the various cookies as keys(names) => values
+   *
+   * @param {string} str
+   * @param {object} [options]
+   * @return {object}
+   * @public
+   */
 
-	function parse(str, options) {
-	  if (typeof str !== 'string') {
-	    throw new TypeError('argument str must be a string');
-	  }
+  function parse(str, options) {
+    if (typeof str !== 'string') {
+      throw new TypeError('argument str must be a string');
+    }
 
-	  var obj = {};
-	  var opt = options || {};
-	  var dec = opt.decode || decode;
+    var obj = {};
+    var opt = options || {};
+    var dec = opt.decode || decode;
 
-	  var index = 0;
-	  while (index < str.length) {
-	    var eqIdx = str.indexOf('=', index);
+    var index = 0;
+    while (index < str.length) {
+      var eqIdx = str.indexOf('=', index);
 
-	    // no more cookie pairs
-	    if (eqIdx === -1) {
-	      break
-	    }
+      // no more cookie pairs
+      if (eqIdx === -1) {
+        break
+      }
 
-	    var endIdx = str.indexOf(';', index);
+      var endIdx = str.indexOf(';', index);
 
-	    if (endIdx === -1) {
-	      endIdx = str.length;
-	    } else if (endIdx < eqIdx) {
-	      // backtrack on prior semicolon
-	      index = str.lastIndexOf(';', eqIdx - 1) + 1;
-	      continue
-	    }
+      if (endIdx === -1) {
+        endIdx = str.length;
+      } else if (endIdx < eqIdx) {
+        // backtrack on prior semicolon
+        index = str.lastIndexOf(';', eqIdx - 1) + 1;
+        continue
+      }
 
-	    var key = str.slice(index, eqIdx).trim();
+      var key = str.slice(index, eqIdx).trim();
 
-	    // only assign once
-	    if (undefined === obj[key]) {
-	      var val = str.slice(eqIdx + 1, endIdx).trim();
+      // only assign once
+      if (undefined === obj[key]) {
+        var val = str.slice(eqIdx + 1, endIdx).trim();
 
-	      // quoted values
-	      if (val.charCodeAt(0) === 0x22) {
-	        val = val.slice(1, -1);
-	      }
+        // quoted values
+        if (val.charCodeAt(0) === 0x22) {
+          val = val.slice(1, -1);
+        }
 
-	      obj[key] = tryDecode(val, dec);
-	    }
+        obj[key] = tryDecode(val, dec);
+      }
 
-	    index = endIdx + 1;
-	  }
+      index = endIdx + 1;
+    }
 
-	  return obj;
-	}
+    return obj;
+  }
 
-	/**
-	 * Serialize data into a cookie header.
-	 *
-	 * Serialize the a name value pair into a cookie string suitable for
-	 * http headers. An optional options object specified cookie parameters.
-	 *
-	 * serialize('foo', 'bar', { httpOnly: true })
-	 *   => "foo=bar; httpOnly"
-	 *
-	 * @param {string} name
-	 * @param {string} val
-	 * @param {object} [options]
-	 * @return {string}
-	 * @public
-	 */
+  /**
+   * Serialize data into a cookie header.
+   *
+   * Serialize the a name value pair into a cookie string suitable for
+   * http headers. An optional options object specified cookie parameters.
+   *
+   * serialize('foo', 'bar', { httpOnly: true })
+   *   => "foo=bar; httpOnly"
+   *
+   * @param {string} name
+   * @param {string} val
+   * @param {object} [options]
+   * @return {string}
+   * @public
+   */
 
-	function serialize(name, val, options) {
-	  var opt = options || {};
-	  var enc = opt.encode || encode;
+  function serialize(name, val, options) {
+    var opt = options || {};
+    var enc = opt.encode || encode;
 
-	  if (typeof enc !== 'function') {
-	    throw new TypeError('option encode is invalid');
-	  }
+    if (typeof enc !== 'function') {
+      throw new TypeError('option encode is invalid');
+    }
 
-	  if (!fieldContentRegExp.test(name)) {
-	    throw new TypeError('argument name is invalid');
-	  }
+    if (!fieldContentRegExp.test(name)) {
+      throw new TypeError('argument name is invalid');
+    }
 
-	  var value = enc(val);
+    var value = enc(val);
 
-	  if (value && !fieldContentRegExp.test(value)) {
-	    throw new TypeError('argument val is invalid');
-	  }
+    if (value && !fieldContentRegExp.test(value)) {
+      throw new TypeError('argument val is invalid');
+    }
 
-	  var str = name + '=' + value;
+    var str = name + '=' + value;
 
-	  if (null != opt.maxAge) {
-	    var maxAge = opt.maxAge - 0;
+    if (null != opt.maxAge) {
+      var maxAge = opt.maxAge - 0;
 
-	    if (isNaN(maxAge) || !isFinite(maxAge)) {
-	      throw new TypeError('option maxAge is invalid')
-	    }
+      if (isNaN(maxAge) || !isFinite(maxAge)) {
+        throw new TypeError('option maxAge is invalid')
+      }
 
-	    str += '; Max-Age=' + Math.floor(maxAge);
-	  }
+      str += '; Max-Age=' + Math.floor(maxAge);
+    }
 
-	  if (opt.domain) {
-	    if (!fieldContentRegExp.test(opt.domain)) {
-	      throw new TypeError('option domain is invalid');
-	    }
+    if (opt.domain) {
+      if (!fieldContentRegExp.test(opt.domain)) {
+        throw new TypeError('option domain is invalid');
+      }
 
-	    str += '; Domain=' + opt.domain;
-	  }
+      str += '; Domain=' + opt.domain;
+    }
 
-	  if (opt.path) {
-	    if (!fieldContentRegExp.test(opt.path)) {
-	      throw new TypeError('option path is invalid');
-	    }
+    if (opt.path) {
+      if (!fieldContentRegExp.test(opt.path)) {
+        throw new TypeError('option path is invalid');
+      }
 
-	    str += '; Path=' + opt.path;
-	  }
+      str += '; Path=' + opt.path;
+    }
 
-	  if (opt.expires) {
-	    var expires = opt.expires;
+    if (opt.expires) {
+      var expires = opt.expires;
 
-	    if (!isDate(expires) || isNaN(expires.valueOf())) {
-	      throw new TypeError('option expires is invalid');
-	    }
+      if (!isDate(expires) || isNaN(expires.valueOf())) {
+        throw new TypeError('option expires is invalid');
+      }
 
-	    str += '; Expires=' + expires.toUTCString();
-	  }
+      str += '; Expires=' + expires.toUTCString();
+    }
 
-	  if (opt.httpOnly) {
-	    str += '; HttpOnly';
-	  }
+    if (opt.httpOnly) {
+      str += '; HttpOnly';
+    }
 
-	  if (opt.secure) {
-	    str += '; Secure';
-	  }
+    if (opt.secure) {
+      str += '; Secure';
+    }
 
-	  if (opt.priority) {
-	    var priority = typeof opt.priority === 'string'
-	      ? opt.priority.toLowerCase()
-	      : opt.priority;
+    if (opt.priority) {
+      var priority = typeof opt.priority === 'string'
+        ? opt.priority.toLowerCase()
+        : opt.priority;
 
-	    switch (priority) {
-	      case 'low':
-	        str += '; Priority=Low';
-	        break
-	      case 'medium':
-	        str += '; Priority=Medium';
-	        break
-	      case 'high':
-	        str += '; Priority=High';
-	        break
-	      default:
-	        throw new TypeError('option priority is invalid')
-	    }
-	  }
+      switch (priority) {
+        case 'low':
+          str += '; Priority=Low';
+          break
+        case 'medium':
+          str += '; Priority=Medium';
+          break
+        case 'high':
+          str += '; Priority=High';
+          break
+        default:
+          throw new TypeError('option priority is invalid')
+      }
+    }
 
-	  if (opt.sameSite) {
-	    var sameSite = typeof opt.sameSite === 'string'
-	      ? opt.sameSite.toLowerCase() : opt.sameSite;
+    if (opt.sameSite) {
+      var sameSite = typeof opt.sameSite === 'string'
+        ? opt.sameSite.toLowerCase() : opt.sameSite;
 
-	    switch (sameSite) {
-	      case true:
-	        str += '; SameSite=Strict';
-	        break;
-	      case 'lax':
-	        str += '; SameSite=Lax';
-	        break;
-	      case 'strict':
-	        str += '; SameSite=Strict';
-	        break;
-	      case 'none':
-	        str += '; SameSite=None';
-	        break;
-	      default:
-	        throw new TypeError('option sameSite is invalid');
-	    }
-	  }
+      switch (sameSite) {
+        case true:
+          str += '; SameSite=Strict';
+          break;
+        case 'lax':
+          str += '; SameSite=Lax';
+          break;
+        case 'strict':
+          str += '; SameSite=Strict';
+          break;
+        case 'none':
+          str += '; SameSite=None';
+          break;
+        default:
+          throw new TypeError('option sameSite is invalid');
+      }
+    }
 
-	  return str;
-	}
+    return str;
+  }
 
-	/**
-	 * URL-decode string value. Optimized to skip native call when no %.
-	 *
-	 * @param {string} str
-	 * @returns {string}
-	 */
+  /**
+   * URL-decode string value. Optimized to skip native call when no %.
+   *
+   * @param {string} str
+   * @returns {string}
+   */
 
-	function decode (str) {
-	  return str.indexOf('%') !== -1
-	    ? decodeURIComponent(str)
-	    : str
-	}
+  function decode(str) {
+    return str.indexOf('%') !== -1
+      ? decodeURIComponent(str)
+      : str
+  }
 
-	/**
-	 * URL-encode value.
-	 *
-	 * @param {string} str
-	 * @returns {string}
-	 */
+  /**
+   * URL-encode value.
+   *
+   * @param {string} str
+   * @returns {string}
+   */
 
-	function encode (val) {
-	  return encodeURIComponent(val)
-	}
+  function encode(val) {
+    return encodeURIComponent(val)
+  }
 
-	/**
-	 * Determine if value is a Date.
-	 *
-	 * @param {*} val
-	 * @private
-	 */
+  /**
+   * Determine if value is a Date.
+   *
+   * @param {*} val
+   * @private
+   */
 
-	function isDate (val) {
-	  return __toString.call(val) === '[object Date]' ||
-	    val instanceof Date
-	}
+  function isDate(val) {
+    return __toString.call(val) === '[object Date]' ||
+      val instanceof Date
+  }
 
-	/**
-	 * Try decoding a string using a decoding function.
-	 *
-	 * @param {string} str
-	 * @param {function} decode
-	 * @private
-	 */
+  /**
+   * Try decoding a string using a decoding function.
+   *
+   * @param {string} str
+   * @param {function} decode
+   * @private
+   */
 
-	function tryDecode(str, decode) {
-	  try {
-	    return decode(str);
-	  } catch (e) {
-	    return str;
-	  }
-	}
-	return cookie;
+  function tryDecode(str, decode) {
+    try {
+      return decode(str);
+    } catch (e) {
+      return str;
+    }
+  }
+  return cookie;
 }
 
 var cookieExports = requireCookie();
 
-var setCookie = {exports: {}};
+var setCookie = { exports: {} };
 
 var hasRequiredSetCookie;
 
-function requireSetCookie () {
-	if (hasRequiredSetCookie) return setCookie.exports;
-	hasRequiredSetCookie = 1;
+function requireSetCookie() {
+  if (hasRequiredSetCookie) return setCookie.exports;
+  hasRequiredSetCookie = 1;
 
-	var defaultParseOptions = {
-	  decodeValues: true,
-	  map: false,
-	  silent: false,
-	};
+  var defaultParseOptions = {
+    decodeValues: true,
+    map: false,
+    silent: false,
+  };
 
-	function isForbiddenKey(key) {
-	  return typeof key !== "string" || key in {};
-	}
+  function isForbiddenKey(key) {
+    return typeof key !== "string" || key in {};
+  }
 
-	function createNullObj() {
-	  return Object.create(null);
-	}
+  function createNullObj() {
+    return Object.create(null);
+  }
 
-	function isNonEmptyString(str) {
-	  return typeof str === "string" && !!str.trim();
-	}
+  function isNonEmptyString(str) {
+    return typeof str === "string" && !!str.trim();
+  }
 
-	function parseString(setCookieValue, options) {
-	  var parts = setCookieValue.split(";").filter(isNonEmptyString);
+  function parseString(setCookieValue, options) {
+    var parts = setCookieValue.split(";").filter(isNonEmptyString);
 
-	  var nameValuePairStr = parts.shift();
-	  var parsed = parseNameValuePair(nameValuePairStr);
-	  var name = parsed.name;
-	  var value = parsed.value;
+    var nameValuePairStr = parts.shift();
+    var parsed = parseNameValuePair(nameValuePairStr);
+    var name = parsed.name;
+    var value = parsed.value;
 
-	  options = options
-	    ? Object.assign({}, defaultParseOptions, options)
-	    : defaultParseOptions;
+    options = options
+      ? Object.assign({}, defaultParseOptions, options)
+      : defaultParseOptions;
 
-	  if (isForbiddenKey(name)) {
-	    return null;
-	  }
+    if (isForbiddenKey(name)) {
+      return null;
+    }
 
-	  try {
-	    value = options.decodeValues ? decodeURIComponent(value) : value; // decode cookie value
-	  } catch (e) {
-	    console.error(
-	      "set-cookie-parser: failed to decode cookie value. Set options.decodeValues=false to disable decoding.",
-	      e
-	    );
-	  }
+    try {
+      value = options.decodeValues ? decodeURIComponent(value) : value; // decode cookie value
+    } catch (e) {
+      console.error(
+        "set-cookie-parser: failed to decode cookie value. Set options.decodeValues=false to disable decoding.",
+        e
+      );
+    }
 
-	  var cookie = createNullObj();
-	  cookie.name = name;
-	  cookie.value = value;
+    var cookie = createNullObj();
+    cookie.name = name;
+    cookie.value = value;
 
-	  parts.forEach(function (part) {
-	    var sides = part.split("=");
-	    var key = sides.shift().trimLeft().toLowerCase();
-	    if (isForbiddenKey(key)) {
-	      return;
-	    }
-	    var value = sides.join("=");
-	    if (key === "expires") {
-	      cookie.expires = new Date(value);
-	    } else if (key === "max-age") {
-	      var n = parseInt(value, 10);
-	      if (!Number.isNaN(n)) cookie.maxAge = n;
-	    } else if (key === "secure") {
-	      cookie.secure = true;
-	    } else if (key === "httponly") {
-	      cookie.httpOnly = true;
-	    } else if (key === "samesite") {
-	      cookie.sameSite = value;
-	    } else if (key === "partitioned") {
-	      cookie.partitioned = true;
-	    } else if (key) {
-	      cookie[key] = value;
-	    }
-	  });
+    parts.forEach(function (part) {
+      var sides = part.split("=");
+      var key = sides.shift().trimLeft().toLowerCase();
+      if (isForbiddenKey(key)) {
+        return;
+      }
+      var value = sides.join("=");
+      if (key === "expires") {
+        cookie.expires = new Date(value);
+      } else if (key === "max-age") {
+        var n = parseInt(value, 10);
+        if (!Number.isNaN(n)) cookie.maxAge = n;
+      } else if (key === "secure") {
+        cookie.secure = true;
+      } else if (key === "httponly") {
+        cookie.httpOnly = true;
+      } else if (key === "samesite") {
+        cookie.sameSite = value;
+      } else if (key === "partitioned") {
+        cookie.partitioned = true;
+      } else if (key) {
+        cookie[key] = value;
+      }
+    });
 
-	  return cookie;
-	}
+    return cookie;
+  }
 
-	function parseNameValuePair(nameValuePairStr) {
-	  // Parses name-value-pair according to rfc6265bis draft
+  function parseNameValuePair(nameValuePairStr) {
+    // Parses name-value-pair according to rfc6265bis draft
 
-	  var name = "";
-	  var value = "";
-	  var nameValueArr = nameValuePairStr.split("=");
-	  if (nameValueArr.length > 1) {
-	    name = nameValueArr.shift();
-	    value = nameValueArr.join("="); // everything after the first =, joined by a "=" if there was more than one part
-	  } else {
-	    value = nameValuePairStr;
-	  }
+    var name = "";
+    var value = "";
+    var nameValueArr = nameValuePairStr.split("=");
+    if (nameValueArr.length > 1) {
+      name = nameValueArr.shift();
+      value = nameValueArr.join("="); // everything after the first =, joined by a "=" if there was more than one part
+    } else {
+      value = nameValuePairStr;
+    }
 
-	  return { name: name, value: value };
-	}
+    return { name: name, value: value };
+  }
 
-	function parse(input, options) {
-	  options = options
-	    ? Object.assign({}, defaultParseOptions, options)
-	    : defaultParseOptions;
+  function parse(input, options) {
+    options = options
+      ? Object.assign({}, defaultParseOptions, options)
+      : defaultParseOptions;
 
-	  if (!input) {
-	    if (!options.map) {
-	      return [];
-	    } else {
-	      return createNullObj();
-	    }
-	  }
+    if (!input) {
+      if (!options.map) {
+        return [];
+      } else {
+        return createNullObj();
+      }
+    }
 
-	  if (input.headers) {
-	    if (typeof input.headers.getSetCookie === "function") {
-	      // for fetch responses - they combine headers of the same type in the headers array,
-	      // but getSetCookie returns an uncombined array
-	      input = input.headers.getSetCookie();
-	    } else if (input.headers["set-cookie"]) {
-	      // fast-path for node.js (which automatically normalizes header names to lower-case)
-	      input = input.headers["set-cookie"];
-	    } else {
-	      // slow-path for other environments - see #25
-	      var sch =
-	        input.headers[
-	          Object.keys(input.headers).find(function (key) {
-	            return key.toLowerCase() === "set-cookie";
-	          })
-	        ];
-	      // warn if called on a request-like object with a cookie header rather than a set-cookie header - see #34, 36
-	      if (!sch && input.headers.cookie && !options.silent) {
-	        console.warn(
-	          "Warning: set-cookie-parser appears to have been called on a request object. It is designed to parse Set-Cookie headers from responses, not Cookie headers from requests. Set the option {silent: true} to suppress this warning."
-	        );
-	      }
-	      input = sch;
-	    }
-	  }
-	  if (!Array.isArray(input)) {
-	    input = [input];
-	  }
+    if (input.headers) {
+      if (typeof input.headers.getSetCookie === "function") {
+        // for fetch responses - they combine headers of the same type in the headers array,
+        // but getSetCookie returns an uncombined array
+        input = input.headers.getSetCookie();
+      } else if (input.headers["set-cookie"]) {
+        // fast-path for node.js (which automatically normalizes header names to lower-case)
+        input = input.headers["set-cookie"];
+      } else {
+        // slow-path for other environments - see #25
+        var sch =
+          input.headers[
+          Object.keys(input.headers).find(function (key) {
+            return key.toLowerCase() === "set-cookie";
+          })
+          ];
+        // warn if called on a request-like object with a cookie header rather than a set-cookie header - see #34, 36
+        if (!sch && input.headers.cookie && !options.silent) {
+          console.warn(
+            "Warning: set-cookie-parser appears to have been called on a request object. It is designed to parse Set-Cookie headers from responses, not Cookie headers from requests. Set the option {silent: true} to suppress this warning."
+          );
+        }
+        input = sch;
+      }
+    }
+    if (!Array.isArray(input)) {
+      input = [input];
+    }
 
-	  if (!options.map) {
-	    return input
-	      .filter(isNonEmptyString)
-	      .map(function (str) {
-	        return parseString(str, options);
-	      })
-	      .filter(Boolean);
-	  } else {
-	    var cookies = createNullObj();
-	    return input.filter(isNonEmptyString).reduce(function (cookies, str) {
-	      var cookie = parseString(str, options);
-	      if (cookie && !isForbiddenKey(cookie.name)) {
-	        cookies[cookie.name] = cookie;
-	      }
-	      return cookies;
-	    }, cookies);
-	  }
-	}
+    if (!options.map) {
+      return input
+        .filter(isNonEmptyString)
+        .map(function (str) {
+          return parseString(str, options);
+        })
+        .filter(Boolean);
+    } else {
+      var cookies = createNullObj();
+      return input.filter(isNonEmptyString).reduce(function (cookies, str) {
+        var cookie = parseString(str, options);
+        if (cookie && !isForbiddenKey(cookie.name)) {
+          cookies[cookie.name] = cookie;
+        }
+        return cookies;
+      }, cookies);
+    }
+  }
 
-	/*
-	  Set-Cookie header field-values are sometimes comma joined in one string. This splits them without choking on commas
-	  that are within a single set-cookie field-value, such as in the Expires portion.
+  /*
+    Set-Cookie header field-values are sometimes comma joined in one string. This splits them without choking on commas
+    that are within a single set-cookie field-value, such as in the Expires portion.
 
-	  This is uncommon, but explicitly allowed - see https://tools.ietf.org/html/rfc2616#section-4.2
-	  Node.js does this for every header *except* set-cookie - see https://github.com/nodejs/node/blob/d5e363b77ebaf1caf67cd7528224b651c86815c1/lib/_http_incoming.js#L128
-	  React Native's fetch does this for *every* header, including set-cookie.
+    This is uncommon, but explicitly allowed - see https://tools.ietf.org/html/rfc2616#section-4.2
+    Node.js does this for every header *except* set-cookie - see https://github.com/nodejs/node/blob/d5e363b77ebaf1caf67cd7528224b651c86815c1/lib/_http_incoming.js#L128
+    React Native's fetch does this for *every* header, including set-cookie.
 
-	  Based on: https://github.com/google/j2objc/commit/16820fdbc8f76ca0c33472810ce0cb03d20efe25
-	  Credits to: https://github.com/tomball for original and https://github.com/chrusart for JavaScript implementation
-	*/
-	function splitCookiesString(cookiesString) {
-	  if (Array.isArray(cookiesString)) {
-	    return cookiesString;
-	  }
-	  if (typeof cookiesString !== "string") {
-	    return [];
-	  }
+    Based on: https://github.com/google/j2objc/commit/16820fdbc8f76ca0c33472810ce0cb03d20efe25
+    Credits to: https://github.com/tomball for original and https://github.com/chrusart for JavaScript implementation
+  */
+  function splitCookiesString(cookiesString) {
+    if (Array.isArray(cookiesString)) {
+      return cookiesString;
+    }
+    if (typeof cookiesString !== "string") {
+      return [];
+    }
 
-	  var cookiesStrings = [];
-	  var pos = 0;
-	  var start;
-	  var ch;
-	  var lastComma;
-	  var nextStart;
-	  var cookiesSeparatorFound;
+    var cookiesStrings = [];
+    var pos = 0;
+    var start;
+    var ch;
+    var lastComma;
+    var nextStart;
+    var cookiesSeparatorFound;
 
-	  function skipWhitespace() {
-	    while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) {
-	      pos += 1;
-	    }
-	    return pos < cookiesString.length;
-	  }
+    function skipWhitespace() {
+      while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) {
+        pos += 1;
+      }
+      return pos < cookiesString.length;
+    }
 
-	  function notSpecialChar() {
-	    ch = cookiesString.charAt(pos);
+    function notSpecialChar() {
+      ch = cookiesString.charAt(pos);
 
-	    return ch !== "=" && ch !== ";" && ch !== ",";
-	  }
+      return ch !== "=" && ch !== ";" && ch !== ",";
+    }
 
-	  while (pos < cookiesString.length) {
-	    start = pos;
-	    cookiesSeparatorFound = false;
+    while (pos < cookiesString.length) {
+      start = pos;
+      cookiesSeparatorFound = false;
 
-	    while (skipWhitespace()) {
-	      ch = cookiesString.charAt(pos);
-	      if (ch === ",") {
-	        // ',' is a cookie separator if we have later first '=', not ';' or ','
-	        lastComma = pos;
-	        pos += 1;
+      while (skipWhitespace()) {
+        ch = cookiesString.charAt(pos);
+        if (ch === ",") {
+          // ',' is a cookie separator if we have later first '=', not ';' or ','
+          lastComma = pos;
+          pos += 1;
 
-	        skipWhitespace();
-	        nextStart = pos;
+          skipWhitespace();
+          nextStart = pos;
 
-	        while (pos < cookiesString.length && notSpecialChar()) {
-	          pos += 1;
-	        }
+          while (pos < cookiesString.length && notSpecialChar()) {
+            pos += 1;
+          }
 
-	        // currently special character
-	        if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
-	          // we found cookies separator
-	          cookiesSeparatorFound = true;
-	          // pos is inside the next cookie, so back up and return it.
-	          pos = nextStart;
-	          cookiesStrings.push(cookiesString.substring(start, lastComma));
-	          start = pos;
-	        } else {
-	          // in param ',' or param separator ';',
-	          // we continue from that comma
-	          pos = lastComma + 1;
-	        }
-	      } else {
-	        pos += 1;
-	      }
-	    }
+          // currently special character
+          if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
+            // we found cookies separator
+            cookiesSeparatorFound = true;
+            // pos is inside the next cookie, so back up and return it.
+            pos = nextStart;
+            cookiesStrings.push(cookiesString.substring(start, lastComma));
+            start = pos;
+          } else {
+            // in param ',' or param separator ';',
+            // we continue from that comma
+            pos = lastComma + 1;
+          }
+        } else {
+          pos += 1;
+        }
+      }
 
-	    if (!cookiesSeparatorFound || pos >= cookiesString.length) {
-	      cookiesStrings.push(cookiesString.substring(start, cookiesString.length));
-	    }
-	  }
+      if (!cookiesSeparatorFound || pos >= cookiesString.length) {
+        cookiesStrings.push(cookiesString.substring(start, cookiesString.length));
+      }
+    }
 
-	  return cookiesStrings;
-	}
+    return cookiesStrings;
+  }
 
-	setCookie.exports = parse;
-	setCookie.exports.parse = parse;
-	setCookie.exports.parseString = parseString;
-	setCookie.exports.splitCookiesString = splitCookiesString;
-	return setCookie.exports;
+  setCookie.exports = parse;
+  setCookie.exports.parse = parse;
+  setCookie.exports.parseString = parseString;
+  setCookie.exports.splitCookiesString = splitCookiesString;
+  return setCookie.exports;
 }
 
 var setCookieExports = requireSetCookie();
@@ -1431,8 +1430,8 @@ function exec(match, params, matchers) {
 }
 function coalesce_to_error(err) {
   return err instanceof Error || err && /** @type {any} */
-  err.name && /** @type {any} */
-  err.message ? (
+    err.name && /** @type {any} */
+    err.message ? (
     /** @type {Error} */
     err
   ) : new Error(JSON.stringify(err));
@@ -3344,7 +3343,7 @@ async function render_page(event, page, options2, manifest, state, resolve_opts)
           });
         } catch (e) {
           load_error = /** @type {Error} */
-          e;
+            e;
           throw load_error;
         }
       });
@@ -3373,7 +3372,7 @@ async function render_page(event, page, options2, manifest, state, resolve_opts)
           });
         } catch (e) {
           load_error = /** @type {Error} */
-          e;
+            e;
           throw load_error;
         }
       });
@@ -3838,7 +3837,7 @@ async function respond(request, options2, manifest, state) {
           headers[lower] = value;
           if (state.prerendering && lower === "cache-control") {
             state.prerendering.cache = /** @type {string} */
-            value;
+              value;
           }
         }
       }

@@ -116,10 +116,12 @@ export const patientDiseaseHistory = pgTable('patient_disease_history', {
 // =============================================================
 export const patientAllergy = pgTable('patient_allergy', {
 	id: uuid('id').defaultRandom().primaryKey(),
-	patient_id: varchar('patient_id', { length: 10 }).notNull().references(() => patients.id, { onDelete: 'cascade' }),
-	substance_code: varchar('substance_code', { length: 30 }),
-	substance_display: text('substance_display'),
-	reaction_code: varchar('reaction_code', { length: 30 }),
+	patient_id: varchar('patient_id', { length: 20 })
+		.notNull()
+		.references(() => patients.id, { onDelete: 'cascade' }),
+	substance_id: uuid('substance_id')
+		.references(() => terminologyMaster.id),
+	reaction: varchar('reaction', { length: 50 }),
 	reaction_display: text('reaction_display'),
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
@@ -156,8 +158,8 @@ export const encounters = pgTable('encounters', {
 	form_mode: formModeEnum('form_mode').default('SOAP'),
 	status: encounterStatusEnum('status').default('Planned').notNull(),
 
-	// Visit reason — FK to terminology_master (keluhan_utama)
-	keluhan_utama_id: uuid('keluhan_utama_id').references(() => terminologyMaster.id),
+	// Visit reason — FK to terminology_master (encounter_reason)
+	encounter_reason_id: uuid('encounter_reason_id').references(() => terminologyMaster.id),
 	reason_type: varchar('reason_type', { length: 15 }),  // Finding, Procedure, Situation, Event
 
 	// SOAP fields (filled by doctor)
@@ -235,7 +237,7 @@ export const encounterProcedures = pgTable('encounter_procedures', {
 	code: varchar('code', { length: 50 }).notNull(),
 	display: varchar('display', { length: 255 }).notNull(),
 	tooth_number: varchar('tooth_number', { length: 5 }),
-	surface: varchar('surface', { length: 5 }),
+	surface: varchar('surface', { length: 10 }),
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -303,9 +305,11 @@ export const encounterPrescriptions = pgTable('encounter_prescriptions', {
 // =============================================================
 export const encounterReferrals = pgTable('encounter_referrals', {
 	id: uuid('id').defaultRandom().primaryKey(),
-	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	doctor_code: varchar('doctor_code', { length: 5 }),
-	referral_date: date('referral_date'),
+	encounter_id: varchar('encounter_id', { length: 30 })
+		.notNull()
+		.references(() => encounters.id, { onDelete: 'cascade' }),
+	doctor_code: varchar('doctor_code', { length: 10 }).notNull(),
+	referral_date: date('referral_date').notNull(),
 	note: text('note'),
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
@@ -316,12 +320,14 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 // =============================================================
 export const items = pgTable('items', {
 	id: uuid('id').defaultRandom().primaryKey(),
-	description: text('description').notNull(),
+	name: varchar('name', { length: 255 }).notNull(),
+	user_id: uuid('user_id').references(() => users.id),
+	price: numeric('price', { precision: 12, scale: 2 }).notNull(),
 	item_group: varchar('item_group', { length: 50 }),
 	denomination: varchar('denomination', { length: 50 }),
-	price: integer('price').notNull(),
 	is_active: boolean('is_active').default(true).notNull(),
-	created_at: timestamp('created_at').defaultNow().notNull()
+	created_at: timestamp('created_at').defaultNow().notNull(),
+	updated_at: timestamp('updated_at').defaultNow().notNull()
 });
 
 
@@ -423,7 +429,7 @@ export const patientsRelations = relations(patients, ({ many }) => ({
 export const encountersRelations = relations(encounters, ({ one, many }) => ({
 	patient: one(patients, { fields: [encounters.patient_id], references: [patients.id] }),
 	doctor: one(users, { fields: [encounters.doctor_id], references: [users.id], relationName: 'doctor_encounters' }),
-	keluhan_utama: one(terminologyMaster, { fields: [encounters.keluhan_utama_id], references: [terminologyMaster.id] }),
+	encounter_reason: one(terminologyMaster, { fields: [encounters.encounter_reason_id], references: [terminologyMaster.id] }),
 	statusHistory: many(statusHistory),
 	odontograms: many(encounterOdontograms),
 	prescriptions: many(encounterPrescriptions),

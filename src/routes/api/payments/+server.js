@@ -29,13 +29,13 @@ export async function POST({ request, locals }) {
 	const items = await db.select().from(encounterItems)
 		.where(eq(encounterItems.encounter_id, body.encounter_id));
 
-	const totalSales = items.reduce((sum, item) => sum + parseFloat(item.subtotal || 0), 0);
+	const totalSales = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
 
 	let discountAmount = 0;
 	if (body.discount_percent) {
-		discountAmount = totalSales * (parseFloat(body.discount_percent) / 100);
+		discountAmount = Math.round(totalSales * (parseFloat(body.discount_percent) / 100));
 	} else if (body.discount_amount) {
-		discountAmount = parseFloat(body.discount_amount);
+		discountAmount = parseInt(body.discount_amount);
 	}
 
 	const netSales = totalSales - discountAmount;
@@ -45,15 +45,15 @@ export async function POST({ request, locals }) {
 		cashier_id: locals.user.id,
 		payment_mode: body.payment_mode || 'NORMAL',
 		payment_type: body.payment_type,
-		payment_code: body.payment_code,
 		card_number: body.card_number || null,
 		reference_number: body.reference_number || null,
-		total_sales: String(totalSales),
+		total_sales: totalSales,
 		discount_percent: body.discount_percent ? String(body.discount_percent) : '0',
-		discount_amount: String(discountAmount),
-		net_sales: String(netSales),
-		total_paid: String(body.total_paid || netSales),
+		discount_amount: discountAmount,
+		net_sales: netSales,
+		total_paid: parseInt(body.total_paid) || netSales,
 		note: body.note,
+		proof_document_id: body.proof_document_id || null,
 		paid_at: new Date()
 	}).returning();
 

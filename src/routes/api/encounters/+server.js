@@ -3,7 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
 	encounterPrescriptions, encounterReferrals, encounterDiagnoses,
-	encounterProcedures, encounterItems, patients, users
+	encounterProcedures, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq, and, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { generateEncounterId } from '$lib/utils/formatters.js';
@@ -23,11 +23,9 @@ export async function GET({ url, locals }) {
 	let conditions = [];
 
 	if (dateFrom && dateTo) {
-		// Date range filter — use SQL DATE() cast to avoid timezone issues
 		conditions.push(sql`DATE(${encounters.created_at}) >= ${dateFrom}`);
 		conditions.push(sql`DATE(${encounters.created_at}) <= ${dateTo}`);
 	} else if (date) {
-		// Single date filter — compare at the date level, timezone-safe
 		conditions.push(sql`DATE(${encounters.created_at}) = ${date}`);
 	}
 
@@ -79,31 +77,57 @@ export async function POST({ request, locals }) {
 
 	const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
 
-	// Get next queue number for today — use SQL CURRENT_DATE to avoid timezone issues
+	// Get next queue number for today
 	const [{ maxQueue }] = await db.select({
 		maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
 	}).from(encounters).where(sql`DATE(${encounters.created_at}) = CURRENT_DATE`);
 
 	const queueNumber = Number(maxQueue) + 1;
 
+	// Resolve keluhan_utama terminology FK
+	let keluhanUtamaId = null;
+	if (body.keluhan_utama_code) {
+		const [existing] = await db.select()
+			.from(terminologyMaster)
+			.where(and(
+				eq(terminologyMaster.code, body.keluhan_utama_code),
+				eq(terminologyMaster.system, 'SNOMED')
+			))
+			.limit(1);
+
+		if (existing) {
+			keluhanUtamaId = existing.id;
+		} else if (body.keluhan_utama_display) {
+			const [inserted] = await db.insert(terminologyMaster).values({
+				code: body.keluhan_utama_code,
+				display: body.keluhan_utama_display,
+				system: 'SNOMED'
+			}).returning();
+			keluhanUtamaId = inserted.id;
+		}
+	}
+
 	const [encounter] = await db.insert(encounters).values({
 		id: encId,
 		patient_id: body.patient_id,
+		kasir_id: locals?.user?.id || null,
 		doctor_id: body.doctor_id,
 		queue_number: queueNumber,
 		form_mode: body.form_mode || 'SOAP',
 		status: 'Planned',
-		chief_complaint_code: body.chief_complaint_code || null,
-		chief_complaint_display: body.chief_complaint_display || null,
+		keluhan_utama_id: keluhanUtamaId,
+		reason_type: body.reason_type || null,
 		tekanan_darah: body.tekanan_darah || null,
+		referral_from_doctor_code: body.referral_from_doctor_code || null,
+		referral_note: body.referral_note || null,
 		referral_source: body.referral_source || null
 	}).returning();
 
 	// Create initial status history
 	await db.insert(statusHistory).values({
 		encounter_id: encId,
-		status: 'Planned',
-		start_time: new Date()
+		status: 'Arrived',
+		start_at: new Date()
 	});
 
 	return json({ encounter, queue_number: queueNumber }, { status: 201 });

@@ -62,23 +62,23 @@ async function seed() {
 	`;
 	console.log('✅ Kasir user created');
 
-	// 4. Sample doctor shifts (BS = drg. Budi Santoso)
+	// 4. Sample shifts (BS = drg. Budi Santoso)
 	const budiResult = await db.execute`SELECT id FROM users WHERE username = 'drg.budi' LIMIT 1`;
 	if (budiResult.length > 0) {
 		const budiId = budiResult[0].id;
-		const shifts = [
+		const shiftData = [
 			{ day: 0, start: '10:00', end: '17:00' },  // Sunday
 			{ day: 2, start: '13:00', end: '15:00' },  // Tuesday
 			{ day: 5, start: '08:00', end: '10:00' }   // Friday
 		];
-		for (const s of shifts) {
+		for (const s of shiftData) {
 			await db.execute`
-				INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time)
+				INSERT INTO shifts (doctor_id, day_of_week, start_time, end_time)
 				VALUES (${budiId}, ${s.day}, ${s.start}, ${s.end})
 				ON CONFLICT DO NOTHING
 			`;
 		}
-		console.log('✅ Sample doctor shifts created');
+		console.log('✅ Sample shifts created');
 	}
 
 	// 5. Allergy reaction codes in terminology_master
@@ -100,10 +100,33 @@ async function seed() {
 		await db.execute`
 			INSERT INTO terminology_master (system, code, display)
 			VALUES ('SNOMED', ${code}, ${display})
-			ON CONFLICT DO NOTHING
+			ON CONFLICT (system, code) DO NOTHING
 		`;
 	}
 	console.log('✅ 30 allergy reaction codes seeded');
+
+	// 6. Sample items for billing
+	const sampleItems = [
+		{ desc: 'Konsultasi', group: 'Konsultasi', price: 100000 },
+		{ desc: 'Tambal Gigi (Komposit)', group: 'Restorasi', price: 350000 },
+		{ desc: 'Cabut Gigi Biasa', group: 'Bedah Mulut', price: 500000 },
+		{ desc: 'Scaling (Pembersihan Karang Gigi)', group: 'Periodonsia', price: 450000 },
+		{ desc: 'Rontgen Periapikal', group: 'Radiologi', price: 150000 },
+		{ desc: 'Bleaching Gigi', group: 'Estetik', price: 2500000 },
+		{ desc: 'Pemasangan Bracket (Behel)', group: 'Ortodonti', price: 8000000 },
+		{ desc: 'Perawatan Saluran Akar', group: 'Endodonsi', price: 1500000 },
+		{ desc: 'Crown / Mahkota Gigi', group: 'Prosthodonsi', price: 3000000 },
+		{ desc: 'Gigi Tiruan Lepasan', group: 'Prosthodonsi', price: 4000000 }
+	];
+
+	for (const item of sampleItems) {
+		await db.execute`
+			INSERT INTO items (description, item_group, price, is_active)
+			VALUES (${item.desc}, ${item.group}, ${item.price}, true)
+			ON CONFLICT DO NOTHING
+		`;
+	}
+	console.log('✅ 10 sample billing items seeded');
 
 	console.log('🎉 Seeding complete!');
 	await client.end();

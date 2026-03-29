@@ -3,7 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
 	encounterPrescriptions, encounterDiagnoses, encounterProcedures,
-	encounterReferrals, encounterItems, patients, users
+	encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq } from 'drizzle-orm';
 
@@ -18,12 +18,16 @@ export async function GET({ params }) {
 		patient_blood_type: patients.blood_type,
 		patient_rhesus: patients.rhesus,
 		patient_pregnancy_status: patients.pregnancy_status,
+		patient_tekanan_darah: patients.tekanan_darah,
 		doctor_name: users.name,
-		doctor_code: users.doctor_code
+		doctor_code: users.doctor_code,
+		keluhan_utama_code: terminologyMaster.code,
+		keluhan_utama_display: terminologyMaster.display
 	})
 		.from(encounters)
 		.leftJoin(patients, eq(encounters.patient_id, patients.id))
 		.leftJoin(users, eq(encounters.doctor_id, users.id))
+		.leftJoin(terminologyMaster, eq(encounters.keluhan_utama_id, terminologyMaster.id))
 		.where(eq(encounters.id, params.id))
 		.limit(1);
 
@@ -82,29 +86,65 @@ export async function PUT({ params, request }) {
 	if (body.plan !== undefined) updateData.plan = body.plan;
 	if (body.resep !== undefined) updateData.resep = body.resep;
 	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
-	if (body.reason_code !== undefined) updateData.reason_code = body.reason_code;
-	if (body.reason_display !== undefined) updateData.reason_display = body.reason_display;
-	if (body.reason_category !== undefined) updateData.reason_category = body.reason_category;
+	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
 	if (body.tekanan_darah !== undefined) updateData.tekanan_darah = body.tekanan_darah;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
-	if (body.chief_complaint_code !== undefined) updateData.chief_complaint_code = body.chief_complaint_code;
-	if (body.chief_complaint_display !== undefined) updateData.chief_complaint_display = body.chief_complaint_display;
+	if (body.referral_from_doctor_code !== undefined) updateData.referral_from_doctor_code = body.referral_from_doctor_code;
+	if (body.referral_note !== undefined) updateData.referral_note = body.referral_note;
+	if (body.referral_source !== undefined) updateData.referral_source = body.referral_source;
+
+	// Handle keluhan_utama FK update
+	if (body.keluhan_utama_code !== undefined) {
+		if (body.keluhan_utama_code) {
+			const { and: andOp, eq: eqOp } = await import('drizzle-orm');
+			const [existing] = await db.select()
+				.from(terminologyMaster)
+				.where(andOp(
+					eqOp(terminologyMaster.code, body.keluhan_utama_code),
+					eqOp(terminologyMaster.system, 'SNOMED')
+				))
+				.limit(1);
+
+			if (existing) {
+				updateData.keluhan_utama_id = existing.id;
+			} else if (body.keluhan_utama_display) {
+				const [inserted] = await db.insert(terminologyMaster).values({
+					code: body.keluhan_utama_code,
+					display: body.keluhan_utama_display,
+					system: 'SNOMED'
+				}).returning();
+				updateData.keluhan_utama_id = inserted.id;
+			}
+		} else {
+			updateData.keluhan_utama_id = null;
+		}
+	}
 
 	// Status transition
 	if (body.status) {
 		updateData.status = body.status;
 
-		// End previous status
+		// End previous status history
+		const statusMap = {
+			'In Progress': 'In Progress',
+			'Discharged': 'Finished',
+			'Completed': 'Finished'
+		};
+
+		// End all open status_history entries
 		await db.update(statusHistory)
-			.set({ end_time: new Date() })
+			.set({ end_at: new Date() })
 			.where(eq(statusHistory.encounter_id, params.id));
 
-		// Start new status
-		await db.insert(statusHistory).values({
-			encounter_id: params.id,
-			status: body.status,
-			start_time: new Date()
-		});
+		// Start new status history if applicable
+		const historyStatus = statusMap[body.status];
+		if (historyStatus) {
+			await db.insert(statusHistory).values({
+				encounter_id: params.id,
+				status: historyStatus,
+				start_at: new Date()
+			});
+		}
 	}
 
 	updateData.updated_at = new Date();
@@ -122,9 +162,9 @@ export async function PUT({ params, request }) {
 				encounter_id: params.id,
 				kfa_code: rx.kfa_code,
 				product_name: rx.product_name,
-				dosage: rx.dosage,
+				dosage_form: rx.dosage_form,
 				quantity: rx.quantity,
-				notes: rx.notes
+				instruction: rx.instruction
 			});
 		}
 	}
@@ -174,7 +214,7 @@ export async function PUT({ params, request }) {
 		await db.delete(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, params.id));
 		const [odonto] = await db.insert(encounterOdontograms).values({
 			encounter_id: params.id,
-			dentition: body.odontogram.dentition || 'permanent',
+			dentition_type: body.odontogram.dentition_type || 'Adult',
 			occlusi: body.odontogram.occlusi,
 			torus_palatinus: body.odontogram.torus_palatinus,
 			torus_mandibularis: body.odontogram.torus_mandibularis,
@@ -194,10 +234,8 @@ export async function PUT({ params, request }) {
 					restorasi: d.restorasi,
 					protesa: d.protesa,
 					bahan_protesa: d.bahan_protesa,
-					diagnosis_code: d.diagnosis_code,
-					diagnosis_display: d.diagnosis_display,
-					procedure_code: d.procedure_code,
-					procedure_display: d.procedure_display
+					icd10_id: d.icd10_id || null,
+					icd9cm_id: d.icd9cm_id || null
 				});
 			}
 		}
@@ -207,13 +245,13 @@ export async function PUT({ params, request }) {
 	if (body.encounter_items) {
 		await db.delete(encounterItems).where(eq(encounterItems.encounter_id, params.id));
 		for (const item of body.encounter_items) {
-			const subtotal = (item.quantity || 1) * parseFloat(item.price_at_time || 0);
+			const subtotal = (item.quantity || 1) * parseInt(item.price_at_time || 0);
 			await db.insert(encounterItems).values({
 				encounter_id: params.id,
 				item_id: item.item_id,
 				quantity: item.quantity || 1,
-				price_at_time: item.price_at_time,
-				subtotal: String(subtotal)
+				price_at_time: parseInt(item.price_at_time || 0),
+				subtotal: subtotal
 			});
 		}
 	}

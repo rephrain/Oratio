@@ -43,7 +43,6 @@ export async function runEndOfDayCron() {
 
 // Run cron at startup if enabled
 if (process.env.ENABLE_CRON === 'true') {
-	// Check every hour
 	setInterval(async () => {
 		const now = new Date();
 		if (now.getHours() === 23 && now.getMinutes() < 5) {

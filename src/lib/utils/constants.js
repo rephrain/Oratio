@@ -23,14 +23,13 @@ export const PAYMENT_TYPES = [
 
 // Encounter statuses
 export const ENCOUNTER_STATUSES = [
-	'Planned', 'Arrived', 'In Progress', 'On Hold',
+	'Planned', 'In Progress', 'On Hold',
 	'Discharged', 'Completed', 'Cancelled', 'Discontinued'
 ];
 
 // Status colors
 export const STATUS_COLORS = {
 	'Planned': 'badge-info',
-	'Arrived': 'badge-warning',
 	'In Progress': 'badge-primary',
 	'On Hold': 'badge-gray',
 	'Discharged': 'badge-success',
@@ -41,7 +40,7 @@ export const STATUS_COLORS = {
 
 // Queue board columns
 export const QUEUE_COLUMNS = [
-	{ key: 'waiting', label: 'Menunggu', statuses: ['Planned', 'Arrived'] },
+	{ key: 'waiting', label: 'Menunggu', statuses: ['Planned'] },
 	{ key: 'inprogress', label: 'Dalam Proses', statuses: ['In Progress'] },
 	{ key: 'discharged', label: 'Selesai Pemeriksaan', statuses: ['Discharged'] },
 	{ key: 'completed', label: 'Selesai', statuses: ['Completed'] }
@@ -133,7 +132,7 @@ export const REASON_CATEGORIES = [
 // Admin table names mapped to schema keys
 export const ADMIN_TABLES = {
 	'users': { label: 'Users', schema: 'users' },
-	'doctor-shifts': { label: 'Doctor Shifts', schema: 'doctorShifts' },
+	'shifts': { label: 'Shifts', schema: 'shifts' },
 	'patients': { label: 'Patients', schema: 'patients' },
 	'patient-disease-history': { label: 'Patient Disease History', schema: 'patientDiseaseHistory' },
 	'patient-allergy': { label: 'Patient Allergy', schema: 'patientAllergy' },
@@ -150,7 +149,8 @@ export const ADMIN_TABLES = {
 	'encounter-procedures': { label: 'Encounter Procedures', schema: 'encounterProcedures' },
 	'items': { label: 'Items', schema: 'items' },
 	'encounter-items': { label: 'Encounter Items', schema: 'encounterItems' },
-	'payments': { label: 'Payments', schema: 'payments' }
+	'payments': { label: 'Payments', schema: 'payments' },
+	'auth-tokens': { label: 'Auth Tokens', schema: 'authTokens' }
 };
 
 // Doctor codes mapping (14 doctors from spec)

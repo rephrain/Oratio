@@ -6,7 +6,7 @@ import { ADMIN_TABLES } from '$lib/utils/constants.js';
 
 const schemaMap = {
 	users: schema.users,
-	doctorShifts: schema.doctorShifts,
+	shifts: schema.shifts,
 	patients: schema.patients,
 	patientDiseaseHistory: schema.patientDiseaseHistory,
 	patientAllergy: schema.patientAllergy,
@@ -23,7 +23,8 @@ const schemaMap = {
 	encounterProcedures: schema.encounterProcedures,
 	items: schema.items,
 	encounterItems: schema.encounterItems,
-	payments: schema.payments
+	payments: schema.payments,
+	authTokens: schema.authTokens
 };
 
 // GET /api/admin/[table]

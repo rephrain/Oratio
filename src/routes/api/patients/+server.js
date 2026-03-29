@@ -61,19 +61,21 @@ export async function POST({ request, locals }) {
 		email: body.email,
 		marital_status: body.marital_status || null,
 		citizenship: body.citizenship || 'WNI',
-		language: body.language || 'id',
+		communication_language: body.communication_language || 'id',
+		doctor_code: body.doctor_code || null,
 		blood_type: body.blood_type,
 		rhesus: body.rhesus || null,
 		pregnancy_status: body.pregnancy_status || false,
-		user_id: locals?.user?.id || null
+		tekanan_darah: body.tekanan_darah || null,
+		kasir_id: locals?.user?.id || null
 	}).returning();
 
-	// Insert disease history
+	// Insert disease history (using FK to terminology_master)
 	if (body.disease_history && Array.isArray(body.disease_history)) {
 		for (const h of body.disease_history) {
 			if (!h.code || !h.display) continue;
 
-			// 1. Get or create terminology record
+			// Get or create terminology record
 			let termId;
 			const [existing] = await db.select()
 				.from(terminologyMaster)
@@ -94,7 +96,7 @@ export async function POST({ request, locals }) {
 				termId = inserted.id;
 			}
 
-			// 2. Link in patient history
+			// Link in patient history
 			await db.insert(patientDiseaseHistory).values({
 				patient_id: newId,
 				type: h.type || 'personal',
@@ -117,13 +119,37 @@ export async function POST({ request, locals }) {
 		}
 	}
 
-	// Insert medications
+	// Insert medications (using FK to terminology_master for KFA code)
 	if (body.medications?.length) {
 		for (const m of body.medications) {
+			let termId = null;
+			if (m.kfa_code) {
+				const [existing] = await db.select()
+					.from(terminologyMaster)
+					.where(and(
+						eq(terminologyMaster.code, m.kfa_code),
+						eq(terminologyMaster.system, 'KFA')
+					))
+					.limit(1);
+
+				if (existing) {
+					termId = existing.id;
+				} else {
+					const [inserted] = await db.insert(terminologyMaster).values({
+						code: m.kfa_code,
+						display: m.product_name || m.display || '',
+						system: 'KFA'
+					}).returning();
+					termId = inserted.id;
+				}
+			}
+
 			await db.insert(patientMedication).values({
 				patient_id: newId,
-				code: m.code,
-				display: m.display,
+				terminology_id: termId,
+				kfa_code: m.kfa_code || m.code || null,
+				product_name: m.product_name || m.display || null,
+				dosage_form: m.dosage_form || null,
 				dosage: m.dosage,
 				note: m.note
 			});

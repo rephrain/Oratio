@@ -62,7 +62,7 @@ export function generatePatientProfilePDF(patient, history, allergies, medicatio
 			{ text: ' ', margin: [0, 10] },
 			{ text: 'Riwayat Pengobatan', style: 'subheader' },
 			...(medications && medications.length > 0
-				? medications.map(m => ({ text: `• ${m.display || '-'} — ${m.dosage || '-'}`, margin: [10, 2] }))
+				? medications.map(m => ({ text: `• ${m.product_name || m.display || '-'} — ${m.dosage || '-'}`, margin: [10, 2] }))
 				: [{ text: 'Tidak ada riwayat pengobatan tercatat', italics: true, color: '#888' }]
 			)
 		],
@@ -140,7 +140,7 @@ export function generateSOAPPDF(encounter, patient, prescriptions, diagnoses, pr
 			{ text: 'Resep Obat', style: 'subheader' },
 			...(prescriptions && prescriptions.length > 0
 				? prescriptions.map(rx => ({
-					text: `• ${rx.product_name} — ${rx.dosage || '-'} — Qty: ${rx.quantity || 0}${rx.notes ? ` (${rx.notes})` : ''}`,
+					text: `• ${rx.product_name} — ${rx.dosage_form || '-'} — Qty: ${rx.quantity || 0}${rx.instruction ? ` (${rx.instruction})` : ''}`,
 					fontSize: 9, margin: [10, 2]
 				}))
 				: [{ text: 'Tidak ada resep obat', italics: true, color: '#888' }]
@@ -219,7 +219,7 @@ export function generateOdontogramPDF(encounter, patient, odontogram, details, d
 				table: {
 					widths: ['30%', '70%'],
 					body: [
-						['Dentition', odontogram?.dentition || 'permanent'],
+						['Dentition', odontogram?.dentition_type || 'Adult'],
 						['Occlusi', odontogram?.occlusi || '-'],
 						['Torus Palatinus', odontogram?.torus_palatinus || '-'],
 						['Torus Mandibularis', odontogram?.torus_mandibularis || '-'],

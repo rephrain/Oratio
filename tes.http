@@ -1,0 +1,10 @@
+###
+GET https://snowstorm.ihtsdotools.org/fhir/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%28%20%3C%20105590001%20%7CSubstance%20%28substance%29%7C%20MINUS%20%28%20%3C%3C%20410942007%20%7CDrug%20or%20medicament%20%28substance%29%7C%20OR%20%28%20%3C%3C%20787859002%20%7CVaccine%20product%20%28medicinal%20product%29%7C%20.%20127489000%20%7CHas%20active%20ingredient%7C%20%29%20%29%20%29%20OR%20%28%20%3C%3C%20716186003%20%7CNo%20known%20allergy%20%28situation%29%7C%20%3A%20%7B%20408729009%20%7CFinding%20context%20%28attribute%29%7C%20%3D%20410516002%20%7CKnown%20absent%20%28qualifier%20value%29%7C%20%7D%20%29&count=10&filter=milk
+Accept: application/fhir+json
+
+###
+GET https://snowstorm.ihtsdotools.org/fhir/ValueSet/$expand 
+    ?url=http://snomed.info/sct?fhir_vs=ecl/<404684003 
+    &filter= 
+    &count=10 
+Accept: application/fhir+json

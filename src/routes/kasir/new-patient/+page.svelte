@@ -34,6 +34,7 @@
         pregnancy_status: false,
         tekanan_darah: "",
         doctor_id: "",
+        reason_type: "finding",
         chief_complaint_code: "",
         chief_complaint_display: "",
     };
@@ -91,8 +92,9 @@
     }
 
     async function searchComplaint(term) {
+        const reasonType = form.reason_type || "finding";
         const res = await fetch(
-            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=reason`,
+            `/api/snowstorm?filter=${encodeURIComponent(term)}&type=reason_${reasonType}`,
         );
         const data = await res.json();
         return (data.results || []).map((r) => ({
@@ -102,13 +104,50 @@
         }));
     }
 
-    async function searchMedication(term) {
-        const res = await fetch(`/api/kfa?query=${encodeURIComponent(term)}`);
-        const data = await res.json();
-        return (data.results || []).map((r) => ({
-            value: r.code,
-            label: r.display,
-        }));
+    // Medication: button-triggered search (KFA doesn't auto-suggest)
+    let medicationSearchTerm = "";
+    let medicationSearchResults = [];
+    let medicationSearchLoading = false;
+    let medicationSearchIndex = -1; // which medication row triggered the search
+
+    async function triggerMedicationSearch(i) {
+        const term = medicationSearchTerm.trim();
+        if (!term || term.length < 2) return;
+        medicationSearchLoading = true;
+        medicationSearchIndex = i;
+        try {
+            const res = await fetch(
+                `/api/kfa?query=${encodeURIComponent(term)}`,
+            );
+            const data = await res.json();
+            medicationSearchResults = (data.results || []).map((r) => ({
+                kfa_code: r.kfa_code || r.code,
+                product_name: r.display || r.product_name || "",
+                dosage_form: r.dosage_form || "",
+                code: r.code,
+                display: r.display,
+            }));
+        } catch {
+            medicationSearchResults = [];
+        }
+        medicationSearchLoading = false;
+    }
+
+    function selectMedicationResult(i, result) {
+        medications = medications.map((entry, idx) => {
+            if (idx !== i) return entry;
+            return {
+                ...entry,
+                kfa_code: result.kfa_code,
+                product_name: result.product_name,
+                dosage_form: result.dosage_form,
+                code: result.code,
+                display: result.product_name,
+            };
+        });
+        medicationSearchResults = [];
+        medicationSearchIndex = -1;
+        medicationSearchTerm = "";
     }
 
     // ── Disease history helpers ──────────────────────────────────────────────
@@ -181,19 +220,20 @@
     function addMedication() {
         medications = [
             ...medications,
-            { code: "", display: "", dosage: "", note: "" },
+            {
+                kfa_code: "",
+                product_name: "",
+                dosage_form: "",
+                code: "",
+                display: "",
+                dosage: "",
+                note: "",
+            },
         ];
     }
 
     function removeMedication(i) {
         medications = medications.filter((_, idx) => idx !== i);
-    }
-
-    function onMedicationSelected(i, option) {
-        medications = medications.map((entry, idx) => {
-            if (idx !== i) return entry;
-            return { ...entry, code: option.value, display: option.label };
-        });
     }
 
     // ── Submit ───────────────────────────────────────────────────────────────
@@ -244,6 +284,7 @@
                     doctor_id: form.doctor_id,
                     chief_complaint_code: form.chief_complaint_code,
                     chief_complaint_display: form.chief_complaint_display,
+                    reason_type: form.reason_type || "finding",
                     tekanan_darah: form.tekanan_darah,
                 }),
             });
@@ -742,19 +783,37 @@
                 <div>
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Keluhan Utama (Main Complaint)</label
+                        >Keluhan Utama (Encounter Reason)</label
                     >
-                    <div
-                        class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary [&_input]:focus:border-primary"
-                    >
-                        <SearchableSelect
-                            placeholder="Cari keluhan (SNOMED)..."
-                            searchFn={searchComplaint}
-                            bind:value={form.chief_complaint_code}
-                            on:select={(e) => {
-                                form.chief_complaint_display = e.detail.label;
+                    <div class="flex flex-col gap-3">
+                        <select
+                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all text-sm"
+                            bind:value={form.reason_type}
+                            on:change={() => {
+                                form.chief_complaint_code = "";
+                                form.chief_complaint_display = "";
                             }}
-                        />
+                        >
+                            <option value="finding"
+                                >Finding (Clinical Finding)</option
+                            >
+                            <option value="procedure">Procedure</option>
+                            <option value="situation">Situation</option>
+                            <option value="event">Event</option>
+                        </select>
+                        <div
+                            class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary [&_input]:focus:border-primary"
+                        >
+                            <SearchableSelect
+                                placeholder="Cari keluhan (SNOMED)..."
+                                searchFn={searchComplaint}
+                                bind:value={form.chief_complaint_code}
+                                on:select={(e) => {
+                                    form.chief_complaint_display =
+                                        e.detail.label;
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -804,9 +863,8 @@
                                     ? searchFamilyDisease
                                     : searchPersonalDisease}
                                 bind:value={item.code}
-                                on:select={(e) => {
-                                    item.description = e.detail.label;
-                                }}
+                                on:select={(e) =>
+                                    onDiseaseSelected(i, e.detail)}
                             />
                         </div>
                         <button
@@ -864,9 +922,8 @@
                                 placeholder="Cari alergen/substansi..."
                                 searchFn={searchAllergy}
                                 bind:value={item.substance_code}
-                                on:select={(e) => {
-                                    item.substance_display = e.detail.label;
-                                }}
+                                on:select={(e) =>
+                                    onAllergySelected(i, e.detail)}
                             />
                         </div>
                         <div class="w-full md:w-64 shrink-0">
@@ -935,39 +992,134 @@
             <div class="space-y-4">
                 {#each medications as item, i}
                     <div
-                        class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
+                        class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
-                        <div
-                            class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
-                        >
-                            <SearchableSelect
-                                placeholder="Cari obat (KFA)..."
-                                searchFn={searchMedication}
-                                bind:value={item.code}
-                                on:select={(e) => {
-                                    item.display = e.detail.label;
-                                }}
-                            />
-                        </div>
-                        <div class="w-full md:w-32 shrink-0">
-                            <input
-                                class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
-                                bind:value={item.dosage}
-                                placeholder="Dosis"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
-                            on:click={() => removeMedication(i)}
-                        >
-                            <span class="material-symbols-outlined text-[18px]"
-                                >delete</span
+                        {#if item.product_name}
+                            <div class="flex items-center gap-2 text-sm">
+                                <span
+                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    >check_circle</span
+                                >
+                                <span class="font-medium text-slate-800"
+                                    >{item.product_name}</span
+                                >
+                                {#if item.dosage_form}
+                                    <span class="text-slate-400"
+                                        >— {item.dosage_form}</span
+                                    >
+                                {/if}
+                                <span class="text-xs text-slate-400 ml-auto"
+                                    >KFA: {item.kfa_code}</span
+                                >
+                                <button
+                                    type="button"
+                                    class="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                                    on:click={() => {
+                                        item.product_name = "";
+                                        item.kfa_code = "";
+                                        item.dosage_form = "";
+                                        item.code = "";
+                                        item.display = "";
+                                        medications = medications;
+                                    }}>✕</button
+                                >
+                            </div>
+                        {:else}
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    class="flex-1 h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                    placeholder="Ketik nama obat..."
+                                    bind:value={medicationSearchTerm}
+                                    on:keydown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            triggerMedicationSearch(i);
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    class="h-11 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-1 shrink-0 disabled:opacity-50"
+                                    disabled={medicationSearchLoading}
+                                    on:click={() => triggerMedicationSearch(i)}
+                                >
+                                    {#if medicationSearchLoading && medicationSearchIndex === i}
+                                        <span
+                                            class="material-symbols-outlined text-sm animate-spin"
+                                            style="animation: spin 1s linear infinite;"
+                                            >refresh</span
+                                        >
+                                    {:else}
+                                        <span
+                                            class="material-symbols-outlined text-sm"
+                                            >search</span
+                                        >
+                                    {/if}
+                                    Cari KFA
+                                </button>
+                            </div>
+                            {#if medicationSearchIndex === i && medicationSearchResults.length > 0}
+                                <div
+                                    class="bg-white border border-slate-200 rounded-lg max-h-48 overflow-y-auto shadow-sm"
+                                >
+                                    {#each medicationSearchResults as result}
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0"
+                                            on:click={() =>
+                                                selectMedicationResult(
+                                                    i,
+                                                    result,
+                                                )}
+                                        >
+                                            <div
+                                                class="text-sm font-medium text-slate-800"
+                                            >
+                                                {result.product_name}
+                                            </div>
+                                            <div class="text-xs text-slate-400">
+                                                {result.dosage_form
+                                                    ? result.dosage_form + " — "
+                                                    : ""}KFA: {result.kfa_code}
+                                            </div>
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                            {#if medicationSearchIndex === i && !medicationSearchLoading && medicationSearchResults.length === 0 && medicationSearchTerm.length >= 2}
+                                <p
+                                    class="text-xs text-slate-400 text-center py-2"
+                                >
+                                    Tidak ditemukan hasil untuk "{medicationSearchTerm}"
+                                </p>
+                            {/if}
+                        {/if}
+                        <div class="flex flex-row gap-3 items-center">
+                            <div class="w-full md:w-40 shrink-0">
+                                <input
+                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                    bind:value={item.dosage}
+                                    placeholder="Dosis"
+                                />
+                            </div>
+                            <div class="flex-1">
+                                <input
+                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                    bind:value={item.note}
+                                    placeholder="Catatan (opsional)"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                class="w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
+                                on:click={() => removeMedication(i)}
                             >
-                            <span class="md:hidden text-sm font-semibold"
-                                >Hapus</span
-                            >
-                        </button>
+                                <span
+                                    class="material-symbols-outlined text-[18px]"
+                                    >delete</span
+                                >
+                            </button>
+                        </div>
                     </div>
                 {/each}
                 {#if medications.length === 0}

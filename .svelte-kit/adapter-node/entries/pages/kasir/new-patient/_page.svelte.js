@@ -2,7 +2,7 @@ import { c as create_ssr_component, f as add_attribute, e as escape, b as each, 
 import { S as SearchableSelect } from "../../../../chunks/SearchableSelect.js";
 import { B as BLOOD_TYPES, a as ALLERGY_REACTIONS } from "../../../../chunks/constants.js";
 async function searchAllergy(term) {
-  const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&type=allergy`);
+  const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&count=10`);
   const data = await res.json();
   return (data.results || []).map((r) => ({
     value: r.code,

@@ -84,26 +84,28 @@ export async function POST({ request, locals }) {
 
 	const queueNumber = Number(maxQueue) + 1;
 
-	// Resolve keluhan_utama terminology FK
-	let keluhanUtamaId = null;
-	if (body.keluhan_utama_code) {
+	// Resolve encounter reason → terminology_master FK
+	let encounterReasonId = null;
+	const complaintCode = body.chief_complaint_code;
+	const complaintDisplay = body.chief_complaint_display;
+	if (complaintCode && complaintDisplay) {
 		const [existing] = await db.select()
 			.from(terminologyMaster)
 			.where(and(
-				eq(terminologyMaster.code, body.keluhan_utama_code),
+				eq(terminologyMaster.code, complaintCode),
 				eq(terminologyMaster.system, 'SNOMED')
 			))
 			.limit(1);
 
 		if (existing) {
-			keluhanUtamaId = existing.id;
-		} else if (body.keluhan_utama_display) {
+			encounterReasonId = existing.id;
+		} else {
 			const [inserted] = await db.insert(terminologyMaster).values({
-				code: body.keluhan_utama_code,
-				display: body.keluhan_utama_display,
+				code: complaintCode,
+				display: complaintDisplay,
 				system: 'SNOMED'
 			}).returning();
-			keluhanUtamaId = inserted.id;
+			encounterReasonId = inserted.id;
 		}
 	}
 
@@ -115,7 +117,7 @@ export async function POST({ request, locals }) {
 		queue_number: queueNumber,
 		form_mode: body.form_mode || 'SOAP',
 		status: 'Planned',
-		keluhan_utama_id: keluhanUtamaId,
+		encounter_reason_id: encounterReasonId,
 		reason_type: body.reason_type || null,
 		tekanan_darah: body.tekanan_darah || null,
 		referral_from_doctor_code: body.referral_from_doctor_code || null,

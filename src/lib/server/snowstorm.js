@@ -5,27 +5,42 @@ const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || 'https://snowstorm
 
 /**
  * Core FHIR ValueSet/$expand search
- * @param {string} eclUrl - The full url parameter including ECL expression
+ * @param {string} ecl - The raw ECL expression ONLY
  * @param {string} filter - The search term
  * @param {number} count - Max results
  */
-async function expandValueSet(eclUrl, filter, count = 10) {
-	const params = new URLSearchParams({
-		url: eclUrl,
-		count: String(count),
-		filter
-	});
+async function expandValueSet(ecl, filter, count = 10) {
+	// 1. Strict Encoder: Standard encodeURIComponent ignores () characters. 
+	// This custom function forces them into %28 and %29 to match your exact required format.
+	const encodeStrict = (str) => encodeURIComponent(str).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
 
-	const res = await fetch(`${SNOWSTORM_FHIR_BASE}?${params}`, {
+	const encodedEcl = encodeStrict(ecl);
+	const encodedFilter = encodeStrict(filter || '');
+
+	// 2. Stitch together the exact string sequence you requested:
+	// - Raw base URL
+	// - ?url=http://snomed.info/sct
+	// - %3Ffhir_vs%3Decl/  (Hardcoded encoded part)
+	// - The strictly encoded ECL string
+	// - The standard count and filter params
+	const queryString = `?url=http://snomed.info/sct?fhir_vs=ecl/${encodedEcl}&count=${count}&filter=${encodedFilter}`;
+
+	const fullUrl = `${SNOWSTORM_FHIR_BASE}${queryString}`;
+
+	console.log('Fetching Snowstorm:', fullUrl);
+
+	const res = await fetch(fullUrl, {
 		headers: { Accept: 'application/fhir+json' }
 	});
 
-	if (!res.ok) throw new Error(`Snowstorm FHIR search failed: ${res.status}`);
+	if (!res.ok) {
+		const text = await res.text();
+		console.error('Snowstorm response:', text);
+		throw new Error(`Snowstorm FHIR search failed: ${res.status}`);
+	}
 
 	const data = await res.json();
-	const contains = data?.expansion?.contains || [];
-
-	return contains.map(item => ({
+	return (data?.expansion?.contains || []).map(item => ({
 		code: item.code,
 		display: item.display,
 		system: item.system === 'http://snomed.info/sct' ? 'SNOMED' : (item.system || 'SNOMED')
@@ -37,7 +52,7 @@ async function expandValueSet(eclUrl, filter, count = 10) {
  * ECL: < 417662000 |History of clinical finding in subject (situation)| OR < 443508001 |No history of clinical finding in subject (situation)|
  */
 export async function searchPersonalDiseaseHistory(term) {
-	const eclUrl = 'http://snomed.info/sct?fhir_vs=ecl/< 417662000 |History of clinical finding in subject (situation)| OR < 443508001 |No history of clinical finding in subject (situation)|';
+	const eclUrl = '< 417662000 |History of clinical finding in subject (situation)| OR < 443508001 |No history of clinical finding in subject (situation)|';
 	return expandValueSet(eclUrl, term);
 }
 
@@ -46,7 +61,7 @@ export async function searchPersonalDiseaseHistory(term) {
  * ECL: < 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No family history of clinical finding (situation)|
  */
 export async function searchFamilyDiseaseHistory(term) {
-	const eclUrl = 'http://snomed.info/sct?fhir_vs=ecl/< 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No family history of clinical finding (situation)|';
+	const eclUrl = '< 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No family history of clinical finding (situation)|';
 	return expandValueSet(eclUrl, term);
 }
 
@@ -55,8 +70,10 @@ export async function searchFamilyDiseaseHistory(term) {
  * Complex ECL: substances minus drugs/vaccines, plus no-known-allergy situations
  */
 export async function searchAllergySubstances(term) {
-	const eclUrl = 'http://snomed.info/sct?fhir_vs=ecl/( < 105590001 |Substance (substance)| MINUS ( << 410942007 |Drug or medicament (substance)| OR ( << 787859002 |Vaccine product (medicinal product)| . 127489000 |Has active ingredient| ) ) ) OR ( << 716186003 |No known allergy (situation)| : { 408729009 |Finding context (attribute)| = 410516002 |Known absent (qualifier value)| } )';
-	return expandValueSet(eclUrl, term);
+	// Pass ONLY the raw ECL expression. No url prefixes here!
+	const ecl = '( < 105590001 |Substance (substance)| MINUS ( << 410942007 |Drug or medicament (substance)| OR ( << 787859002 |Vaccine product (medicinal product)| . 127489000 |Has active ingredient| ) ) ) OR ( << 716186003 |No known allergy (situation)| : { 408729009 |Finding context (attribute)| = 410516002 |Known absent (qualifier value)| } )';
+
+	return expandValueSet(ecl, term);
 }
 
 /**
@@ -73,10 +90,10 @@ export async function searchChiefComplaint(term) {
  */
 export async function searchReasonByCategory(term, category = 'finding') {
 	const eclMap = {
-		finding: 'http://snomed.info/sct?fhir_vs=ecl/<404684003',
-		procedure: 'http://snomed.info/sct?fhir_vs=ecl/<71388002',
-		situation: 'http://snomed.info/sct?fhir_vs=ecl/<243796009',
-		event: 'http://snomed.info/sct?fhir_vs=ecl/<272379006'
+		finding: '<404684003',
+		procedure: '<71388002',
+		situation: '<243796009',
+		event: '<272379006'
 	};
 
 	const eclUrl = eclMap[category] || eclMap.finding;
@@ -86,7 +103,7 @@ export async function searchReasonByCategory(term, category = 'finding') {
 // Legacy compatibility — general concept search via FHIR
 export async function searchConcepts(term, ecl = '', limit = 10) {
 	if (ecl) {
-		const eclUrl = `http://snomed.info/sct?fhir_vs=ecl/${ecl}`;
+		const eclUrl = `${ecl}`;
 		return expandValueSet(eclUrl, term, limit);
 	}
 	// Fallback to finding search

@@ -106,15 +106,37 @@ export async function POST({ request, locals }) {
 		}
 	}
 
-	// Insert allergies
+	// Insert allergies (using FK to terminology_master for substance)
 	if (body.allergies?.length) {
 		for (const a of body.allergies) {
+			if (!a.substance_code || !a.substance_display) continue;
+
+			// Find or create terminology record for the substance
+			let substanceId = null;
+			const [existing] = await db.select()
+				.from(terminologyMaster)
+				.where(and(
+					eq(terminologyMaster.code, a.substance_code),
+					eq(terminologyMaster.system, 'SNOMED')
+				))
+				.limit(1);
+
+			if (existing) {
+				substanceId = existing.id;
+			} else {
+				const [inserted] = await db.insert(terminologyMaster).values({
+					code: a.substance_code,
+					display: a.substance_display,
+					system: 'SNOMED'
+				}).returning();
+				substanceId = inserted.id;
+			}
+
 			await db.insert(patientAllergy).values({
 				patient_id: newId,
-				substance_code: a.substance_code,
-				substance_display: a.substance_display,
-				reaction_code: a.reaction_code,
-				reaction_display: a.reaction_display
+				substance_id: substanceId,
+				reaction: a.reaction_code || null,
+				reaction_display: a.reaction_display || null
 			});
 		}
 	}
@@ -122,12 +144,16 @@ export async function POST({ request, locals }) {
 	// Insert medications (using FK to terminology_master for KFA code)
 	if (body.medications?.length) {
 		for (const m of body.medications) {
+			const kfaCode = m.kfa_code || m.code || null;
+			const productName = m.product_name || m.display || null;
+			const dosageForm = m.dosage_form || null;
+
 			let termId = null;
-			if (m.kfa_code) {
+			if (kfaCode && productName) {
 				const [existing] = await db.select()
 					.from(terminologyMaster)
 					.where(and(
-						eq(terminologyMaster.code, m.kfa_code),
+						eq(terminologyMaster.code, kfaCode),
 						eq(terminologyMaster.system, 'KFA')
 					))
 					.limit(1);
@@ -136,8 +162,8 @@ export async function POST({ request, locals }) {
 					termId = existing.id;
 				} else {
 					const [inserted] = await db.insert(terminologyMaster).values({
-						code: m.kfa_code,
-						display: m.product_name || m.display || '',
+						code: kfaCode,
+						display: productName,
 						system: 'KFA'
 					}).returning();
 					termId = inserted.id;
@@ -147,11 +173,11 @@ export async function POST({ request, locals }) {
 			await db.insert(patientMedication).values({
 				patient_id: newId,
 				terminology_id: termId,
-				kfa_code: m.kfa_code || m.code || null,
-				product_name: m.product_name || m.display || null,
-				dosage_form: m.dosage_form || null,
-				dosage: m.dosage,
-				note: m.note
+				kfa_code: kfaCode,
+				product_name: productName,
+				dosage_form: dosageForm,
+				dosage: m.dosage || null,
+				note: m.note || null
 			});
 		}
 	}

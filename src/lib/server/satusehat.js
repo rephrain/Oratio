@@ -87,9 +87,12 @@ export async function searchKFA(keyword, page = 1, size = 10) {
 		// Scenario 1: Merk Known (93xxxxxx) — use item directly
 		// Scenario 2: Merk Unknown (92xxxxxx) — use product_template
 		const isUnknown = item.kfa_code?.startsWith('92');
+		const name = isUnknown ? item.prodct_template?.name : item.name;
+		const code = isUnknown ? item.prodct_template?.kfa_code : item.kfa_code;
 		return {
-			code: isUnknown ? item.prodct_template?.kfa_code : item.kfa_code,
-			display: isUnknown ? item.prodct_template?.name : item.name,
+			code,
+			display: name,
+			product_name: name,
 			dosage_form: item.dosage_form?.name || '',
 			kfa_code: item.kfa_code
 		};

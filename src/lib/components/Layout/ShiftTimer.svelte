@@ -1,13 +1,16 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
+	import { isSidebarOpen } from '$lib/stores/layout.js';
 
 	// Hardcoded fallback for UI demonstration.
 	// In reality, this would be fetched from the database / current session.
 	let shiftEnd = new Date();
 	shiftEnd.setHours(17, 0, 0, 0); // Example: 5 PM
 
-	let timeRemaining = 'Menghitung...';
-	let timerClass = 'timer-normal';
+	let hours = '00';
+	let mins = '00';
+	let secs = '00';
+	let timerClass = 'text-white';
 	let interval;
 
 	function updateTimer() {
@@ -15,29 +18,34 @@
 		const diffMs = shiftEnd - now;
 
 		if (diffMs <= 0) {
-			timeRemaining = 'Shift berakhir';
-			timerClass = 'timer-critical';
+			hours = '00';
+			mins = '00';
+			secs = '00';
+			timerClass = 'text-red-400';
 			return;
 		}
 
-		const totalMinutes = Math.floor(diffMs / 1000 / 60);
-		const hours = Math.floor(totalMinutes / 60);
-		const mins = totalMinutes % 60;
+		const totalSeconds = Math.floor(diffMs / 1000);
+		const h = Math.floor(totalSeconds / 3600);
+		const m = Math.floor((totalSeconds % 3600) / 60);
+		const s = totalSeconds % 60;
 
-		timeRemaining = `${hours}j ${mins}m tersisa`;
+		hours = h.toString().padStart(2, '0');
+		mins = m.toString().padStart(2, '0');
+		secs = s.toString().padStart(2, '0');
 
-		if (totalMinutes < 10) {
-			timerClass = 'timer-critical pulse';
-		} else if (totalMinutes < 30) {
-			timerClass = 'timer-warning pulse';
+		if (totalSeconds < 600) {
+			timerClass = 'text-red-400 font-bold';
+		} else if (totalSeconds < 1800) {
+			timerClass = 'text-yellow-400';
 		} else {
-			timerClass = 'timer-normal';
+			timerClass = 'text-white';
 		}
 	}
 
 	onMount(() => {
 		updateTimer();
-		interval = setInterval(updateTimer, 60000); // update every minute
+		interval = setInterval(updateTimer, 1000);
 	});
 
 	onDestroy(() => {
@@ -45,57 +53,30 @@
 	});
 </script>
 
-<div class="shift-timer {timerClass}">
-	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-		<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-	</svg>
-	<span class="font-medium text-sm">
-		Shift s/d {shiftEnd.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {timeRemaining}
-	</span>
+{#if $isSidebarOpen}
+<div class="flex flex-col bg-black/20 rounded-2xl p-5 shadow-inner w-full font-display">
+	<span class="text-[10px] font-bold tracking-[0.15em] text-white/50 uppercase mb-4">Shift Countdown</span>
+	<div class="flex justify-between items-center w-full">
+		<div class="flex flex-col items-center gap-2">
+			<span class="text-[26px] {timerClass} font-medium tracking-wide leading-none">{hours}</span>
+			<span class="text-[10px] text-white/40 font-semibold tracking-wider">HRS</span>
+		</div>
+		<div class="text-xl text-white/20 pb-5 font-bold leading-none">:</div>
+		<div class="flex flex-col items-center gap-2">
+			<span class="text-[26px] {timerClass} font-medium tracking-wide leading-none">{mins}</span>
+			<span class="text-[10px] text-white/40 font-semibold tracking-wider">MIN</span>
+		</div>
+		<div class="text-xl text-white/20 pb-5 font-bold leading-none">:</div>
+		<div class="flex flex-col items-center gap-2">
+			<span class="text-[26px] {timerClass} font-medium tracking-wide leading-none">{secs}</span>
+			<span class="text-[10px] text-white/40 font-semibold tracking-wider">SEC</span>
+		</div>
+	</div>
 </div>
+{:else}
+<div class="flex items-center justify-center p-3 rounded-2xl bg-black/20 w-full" title="Shift Countdown: {hours}:{mins}:{secs}">
+	<span class="material-symbols-outlined {timerClass}" style="font-size: 24px;">timer</span>
+</div>
+{/if}
 
-<style>
-	.shift-timer {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 4px 12px;
-		border-radius: var(--radius-full);
-		transition: all 0.3s ease;
-	}
 
-	.timer-normal {
-		background-color: var(--primary-light);
-		color: var(--primary);
-	}
-
-	.timer-warning {
-		background-color: var(--warning-light);
-		color: #92400e;
-	}
-
-	.timer-critical {
-		background-color: var(--danger-light);
-		color: var(--danger);
-	}
-
-	@keyframes pulse-warn {
-		0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-		70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-		100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-	}
-
-	@keyframes pulse-crit {
-		0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-		70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-		100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-	}
-
-	.timer-warning.pulse {
-		animation: pulse-warn 2s infinite;
-	}
-
-	.timer-critical.pulse {
-		animation: pulse-crit 1s infinite;
-	}
-</style>

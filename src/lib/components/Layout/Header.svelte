@@ -1,19 +1,68 @@
 <script>
-	import ShiftTimer from './ShiftTimer.svelte';
+	import { isSidebarOpen } from '$lib/stores/layout.js';
+	import { logout } from '$lib/stores/auth.js';
 
 	export let title = '';
 	export let user = null;
+
+	let showProfileMenu = false;
 </script>
 
-<header class="top-header">
-	<div class="flex items-center gap-4">
-		<h2 style="font-size: var(--font-size-lg); font-weight: 600;">{title}</h2>
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 w-full" style="position: sticky; top: 0; z-index: 40;">
+	<div class="flex-1 max-w-xl">
+		<div class="relative group">
+			<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+			<input
+				class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm outline-none transition-all"
+				placeholder="Search by ID, NIK, or Patient Name..."
+				type="text"
+			/>
+		</div>
 	</div>
-	<div class="flex items-center gap-3">
-		{#if user?.role === 'dokter'}
-			<ShiftTimer />
-		{/if}
-		<span class="text-sm text-muted">{user?.name || ''}</span>
-		<div class="badge badge-primary" style="text-transform: capitalize;">{user?.role || ''}</div>
+	<div class="flex items-center gap-6">
+		<div class="flex items-center gap-4">
+			<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors focus:outline-none">
+				<span class="material-symbols-outlined">notifications</span>
+				<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+			</button>
+			<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors focus:outline-none">
+				<span class="material-symbols-outlined">chat_bubble</span>
+			</button>
+		</div>
+		<div class="h-8 w-px bg-slate-200"></div>
+		<div class="relative">
+			<button
+				class="flex items-center gap-3 focus:outline-none hover:opacity-80 transition-opacity"
+				on:click={() => (showProfileMenu = !showProfileMenu)}
+				on:blur={() => setTimeout(() => (showProfileMenu = false), 200)}
+			>
+				<div class="text-right">
+					<p class="text-sm font-semibold text-slate-900 leading-none">{user?.name || "User"}</p>
+					<p class="text-xs text-slate-500 mt-1 capitalize">{user?.role || "user"}</p>
+				</div>
+				<div class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold uppercase overflow-hidden">
+					{user?.name?.[0] || "U"}
+				</div>
+				<span class="material-symbols-outlined text-slate-400 text-sm {showProfileMenu ? 'rotate-180' : ''} transition-transform">expand_more</span>
+			</button>
+
+			{#if showProfileMenu}
+				<div class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50 origin-top-right transition-all">
+					<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors">
+						<span class="material-symbols-outlined text-[20px] text-slate-400">account_circle</span>
+						<span class="font-medium text-sm">My Profile</span>
+					</button>
+					<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors">
+						<span class="material-symbols-outlined text-[20px] text-slate-400">settings</span>
+						<span class="font-medium text-sm">Settings</span>
+					</button>
+					<div class="h-px bg-slate-100 my-1"></div>
+					<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 text-red-500 transition-colors" on:click={logout}>
+						<span class="material-symbols-outlined text-[20px]">logout</span>
+						<span class="font-medium text-sm">Logout</span>
+					</button>
+				</div>
+			{/if}
+		</div>
 	</div>
 </header>

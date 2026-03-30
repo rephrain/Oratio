@@ -3,7 +3,7 @@ import { S as SearchableSelect } from './SearchableSelect-39e7cc67.js';
 import { B as BLOOD_TYPES, a as ALLERGY_REACTIONS } from './constants-6ed35477.js';
 
 async function searchAllergy(term) {
-  const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&type=allergy`);
+  const res = await fetch(`/api/snowstorm?term=${encodeURIComponent(term)}&count=10`);
   const data = await res.json();
   return (data.results || []).map((r) => ({
     value: r.code,

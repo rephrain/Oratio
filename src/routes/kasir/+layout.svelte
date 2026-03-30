@@ -3,6 +3,7 @@
 	import Sidebar from "$lib/components/Layout/Sidebar.svelte";
 	import { page } from "$app/stores";
 	import { logout } from "$lib/stores/auth.js";
+	import { isSidebarOpen } from "$lib/stores/layout.js";
 
 	export let data;
 	$: user = data?.user;
@@ -94,6 +95,16 @@
 						<div
 							class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50 origin-top-right transition-all"
 						>
+							<button
+								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors"
+							>
+								<span
+									class="material-symbols-outlined text-[20px] text-slate-400"
+									>account_circle</span
+								>
+								<span class="font-medium text-sm">My Profile</span
+								>
+							</button>
 							<button
 								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors"
 							>

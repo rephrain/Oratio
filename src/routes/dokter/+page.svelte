@@ -7,6 +7,7 @@
 		formatElapsedTime,
 		formatTime,
 		getShiftCountdown,
+		formatDate,
 	} from "$lib/utils/formatters.js";
 
 	export let data;
@@ -58,9 +59,63 @@
 		shiftInfo = getShiftCountdown(doctorShifts);
 	}
 
-	function openEncounter(row) {
-		const enc = row.encounter || row;
-		if (enc?.id) goto(`/dokter/${enc.id}`);
+	let selectedEncounterData = null;
+	let patientMedicalBackground = null;
+	let patientHistory = [];
+	let loadingMedical = false;
+	let expandedHistoryId = null;
+	let isSidebarOpen = true;
+
+	function toggleHistory(id) {
+		expandedHistoryId = expandedHistoryId === id ? null : id;
+	}
+
+	function calculateAge(birthDate) {
+		if (!birthDate) return "-";
+		const today = new Date();
+		const birth = new Date(birthDate);
+		let age = today.getFullYear() - birth.getFullYear();
+		const m = today.getMonth() - birth.getMonth();
+		if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+			age--;
+		}
+		return age;
+	}
+
+	async function selectEncounter(row) {
+		selectedEncounterData = row;
+		patientMedicalBackground = null;
+		patientHistory = [];
+		expandedHistoryId = null;
+		isSidebarOpen = true;
+		if (row?.patient?.id) {
+			loadingMedical = true;
+			try {
+				const [bgRes, histRes] = await Promise.all([
+					fetch(`/api/patients/${row.patient.id}/medical-background`),
+					fetch(
+						`/api/encounters?patient_id=${row.patient.id}&limit=5`,
+					),
+				]);
+				if (bgRes.ok) patientMedicalBackground = await bgRes.json();
+				if (histRes.ok) {
+					const data = await histRes.json();
+					patientHistory = (data.data || []).filter(
+						(e) => e.encounter?.id !== row.encounter?.id,
+					);
+				}
+			} catch (e) {
+				console.error(e);
+			} finally {
+				loadingMedical = false;
+			}
+		}
+	}
+
+	function startEncounter() {
+		if (selectedEncounterData?.encounter?.id) {
+			goto(`/dokter/${selectedEncounterData.encounter.id}`);
+		}
 	}
 
 	const tableColumns = [
@@ -109,100 +164,210 @@
 	<title>Dashboard Dokter — Oratio Clinic</title>
 </svelte:head>
 
-<div class="-m-6 flex h-[calc(100vh-73px)] bg-slate-50 overflow-hidden font-sans">
-	<section class="flex-1 overflow-y-auto custom-scrollbar p-6">
+<div
+	class="-m-6 flex h-[calc(100vh-73px)] bg-slate-50 overflow-hidden font-sans relative"
+>
+	<section
+		class="flex-1 min-w-0 {isSidebarOpen && selectedEncounterData
+			? 'mr-80'
+			: 'mr-0'} transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden custom-scrollbar p-6"
+	>
 		<!-- 1. Top Section (Blue Banner) -->
-		<div class="bg-[#1E40AF] rounded-2xl p-8 mb-8 text-white shadow-xl flex items-center justify-between relative overflow-hidden">
+		<div
+			class="bg-[#1E40AF] rounded-2xl p-8 mb-8 text-white shadow-xl flex items-center justify-between relative overflow-hidden"
+		>
 			<div class="relative z-10">
-				<p class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2">
-					Session • {new Date(filterDate).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
+				<p
+					class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2"
+				>
+					Session • {new Date(filterDate).toLocaleDateString(
+						"en-US",
+						{ weekday: "long", day: "numeric", month: "short" },
+					)}
 				</p>
 				<h2 class="text-4xl font-bold">
 					{#if shiftInfo.active}
-						Shift ends in <span class="text-[#FACC15]">{shiftInfo.remaining}</span>
+						Shift ends in <span class="text-[#FACC15]"
+							>{shiftInfo.remaining}</span
+						>
 					{:else}
 						No Active Shift
 					{/if}
 				</h2>
 				<div class="mt-6 flex gap-4">
-					<div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10">
-						<span class="material-symbols-outlined text-lg">person</span>
-						<span class="text-sm font-semibold">{completedToday.length} Patients Treated</span>
+					<div
+						class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
+					>
+						<span class="material-symbols-outlined text-lg"
+							>person</span
+						>
+						<span class="text-sm font-semibold"
+							>{completedToday.length} Patients Treated</span
+						>
 					</div>
-					<div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10">
-						<span class="material-symbols-outlined text-lg">schedule</span>
-						<span class="text-sm font-semibold">{todayQueue.length} Remaining</span>
+					<div
+						class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
+					>
+						<span class="material-symbols-outlined text-lg"
+							>schedule</span
+						>
+						<span class="text-sm font-semibold"
+							>{todayQueue.length} Remaining</span
+						>
 					</div>
 				</div>
 			</div>
 			<div class="relative z-10 text-right">
-				<div class="text-6xl font-black text-white/10 mb-2">STATION 04</div>
-				<div class="flex items-center justify-end gap-2 text-sm font-bold text-blue-100">
+				<div class="text-6xl font-black text-white/10 mb-2">
+					STATION 04
+				</div>
+				<div
+					class="flex items-center justify-end gap-2 text-sm font-bold text-blue-100"
+				>
 					{#if shiftInfo.active}
-						<span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+						<span
+							class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"
+						></span>
 						System Active
 					{:else}
-						<span class="w-2.5 h-2.5 bg-gray-400 rounded-full"></span>
+						<span class="w-2.5 h-2.5 bg-gray-400 rounded-full"
+						></span>
 						Offline
 					{/if}
 				</div>
 			</div>
 			<!-- Background Decoration -->
-			<div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-			<div class="absolute -left-16 -top-16 w-48 h-48 bg-blue-400/10 rounded-full blur-2xl"></div>
+			<div
+				class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"
+			></div>
+			<div
+				class="absolute -left-16 -top-16 w-48 h-48 bg-blue-400/10 rounded-full blur-2xl"
+			></div>
 		</div>
 
 		<!-- 2. Patient Queue Section -->
 		<div class="mb-10">
 			<div class="flex items-center justify-between mb-6">
-				<h3 class="text-lg font-bold text-blue-900 flex items-center gap-2">
-					<span class="material-symbols-outlined text-primary">pending_actions</span>
+				<h3
+					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+				>
+					<span class="material-symbols-outlined text-primary"
+						>pending_actions</span
+					>
 					Active Patient Queue
 				</h3>
-				<span class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md">{todayQueue.length + inProgress.length} IN QUEUE</span>
+				<span
+					class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md"
+					>{todayQueue.length + inProgress.length} IN QUEUE</span
+				>
 			</div>
-			
+
 			{#if loading}
 				<div style="text-align: center; padding: 2rem;">
-					<div class="spinner spinner-lg" style="margin: 0 auto;"></div>
+					<div
+						class="spinner spinner-lg"
+						style="margin: 0 auto;"
+					></div>
 				</div>
 			{:else}
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					{#each encounters.filter(e => ['Arrived', 'Planned', 'In Progress'].includes(e.encounter?.status)) as row, index}
+				<div
+					class="flex gap-6 overflow-x-auto pb-6 custom-scrollbar snap-x"
+				>
+					{#each encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ) as row, index}
 						<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
-						<div 
-							class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer relative"
-							on:click={() => openEncounter(row)}
+						<div
+							class="bg-white p-6 rounded-2xl shadow-sm border {selectedEncounterData
+								?.encounter?.id === row.encounter?.id
+								? 'border-primary ring-2 ring-blue-100'
+								: 'border-slate-100 hover:shadow-md'} transition-all cursor-pointer relative min-w-[340px] shrink-0 snap-start"
+							on:click={() => selectEncounter(row)}
 						>
 							<div class="flex justify-between items-start mb-4">
-								<div class="w-14 h-14 rounded-xl {row.encounter?.status === 'In Progress' ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400'} flex items-center justify-center font-bold text-xl">
-									{String(row.encounter?.queue_number || index + 1).padStart(2, '0')}
+								<div
+									class="w-14 h-14 rounded-xl {row.encounter
+										?.status === 'In Progress'
+										? 'bg-blue-50 text-blue-600'
+										: 'bg-slate-50 text-slate-400'} flex items-center justify-center font-bold text-xl"
+								>
+									{String(
+										row.encounter?.queue_number ||
+											index + 1,
+									).padStart(2, "0")}
 								</div>
-								<div class="{row.encounter?.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'} px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight">
-									{row.encounter?.status || 'Waiting'}
+								<div
+									class="{row.encounter?.status ===
+									'In Progress'
+										? 'bg-blue-100 text-blue-700'
+										: 'bg-slate-100 text-slate-500'} px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight"
+								>
+									{row.encounter?.status || "Waiting"}
 								</div>
 							</div>
 							<div class="mb-6">
-								<div class="text-xs text-slate-400 font-bold mb-1">ENC-{String(row.encounter?.id).padStart(5, '0')}</div>
-								<h4 class="text-xl font-bold text-slate-900 mb-2">{row.patient_name}</h4>
-								<p class="text-sm text-slate-500 leading-relaxed line-clamp-2">
-									Poli: {row.encounter?.notes || 'Menunggu pemeriksaan awal'}
+								<div
+									class="text-xs text-slate-400 font-bold mb-1"
+								>
+									ENC-{String(row.encounter?.id).padStart(
+										5,
+										"0",
+									)}
+								</div>
+								<h4
+									class="text-xl font-bold text-slate-900 mb-2"
+								>
+									{row.patient_name}
+								</h4>
+								<p
+									class="text-sm text-slate-500 leading-relaxed line-clamp-2"
+								>
+									<span
+										class="font-bold text-slate-700 text-xs uppercase tracking-wider"
+										>{row.patient?.gender === "Male" ||
+										row.patient?.gender === "L"
+											? "Laki-laki"
+											: row.patient?.gender ===
+														"Female" ||
+												  row.patient?.gender === "P"
+												? "Perempuan"
+												: row.patient?.gender || "-"} • {calculateAge(
+											row.patient?.birth_date,
+										)}th</span
+									>
+									<br />
+									Keluhan: {row.encounter_reason_display ||
+										row.encounter?.subjective ||
+										row.encounter?.reason_type ||
+										"Menunggu pemeriksaan awal"}
 								</p>
 							</div>
-							<div class="pt-4 border-t border-slate-50 flex justify-between items-center">
+							<div
+								class="pt-4 border-t border-slate-50 flex justify-between items-center"
+							>
 								<div class="flex items-center gap-2">
-									<div class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm">
-										{row.patient_name.substring(0,2).toUpperCase()}
+									<div
+										class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm"
+									>
+										{row.patient_name
+											.substring(0, 2)
+											.toUpperCase()}
 									</div>
 								</div>
-								<span class="text-[10px] font-black text-slate-400 tracking-wider uppercase">
-									Wait Time: {formatElapsedTime(row.encounter?.created_at)}
+								<span
+									class="text-[10px] font-black text-slate-400 tracking-wider uppercase"
+								>
+									Wait Time: {formatElapsedTime(
+										row.encounter?.created_at,
+									)}
 								</span>
 							</div>
 						</div>
 					{/each}
-					{#if encounters.filter(e => ['Arrived', 'Planned', 'In Progress'].includes(e.encounter?.status)).length === 0}
-						<div class="col-span-full py-8 text-center text-slate-400 text-sm font-medium">Bagus! Tidak ada antrian pasien saat ini.</div>
+					{#if encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ).length === 0}
+						<div
+							class="col-span-full py-8 text-center text-slate-400 text-sm font-medium"
+						>
+							Bagus! Tidak ada antrian pasien saat ini.
+						</div>
 					{/if}
 				</div>
 			{/if}
@@ -211,41 +376,86 @@
 		<!-- 3. Referral Inbox Section -->
 		<div>
 			<div class="flex items-center justify-between mb-6">
-				<h3 class="text-lg font-bold text-blue-900 flex items-center gap-2">
-					<span class="material-symbols-outlined text-primary">inbox</span>
+				<h3
+					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+				>
+					<span class="material-symbols-outlined text-primary"
+						>inbox</span
+					>
 					Referral Inbox
 				</h3>
-				<button class="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline">View All</button>
+				<button
+					class="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
+					>View All</button
+				>
 			</div>
-			<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+			<div
+				class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden"
+			>
 				<table class="w-full text-left">
 					<thead>
 						<tr class="bg-slate-50/50">
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sender Doctor</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Name</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Note</th>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+								>Sender Doctor</th
+							>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+								>Date</th
+							>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+								>Patient Name</th
+							>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+								>Note</th
+							>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-50">
 						<!-- Mock Referral Data -->
-						<tr class="hover:bg-slate-50 transition-colors cursor-pointer group">
+						<tr
+							class="hover:bg-slate-50 transition-colors cursor-pointer group"
+						>
 							<td class="px-6 py-5">
 								<div class="flex items-center gap-3">
-									<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm">ST</div>
+									<div
+										class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm"
+									>
+										ST
+									</div>
 									<div>
-										<div class="text-sm font-bold text-slate-900">Dr. Sarah Thompson</div>
-										<div class="text-[10px] text-slate-400">Cardiology Unit</div>
+										<div
+											class="text-sm font-bold text-slate-900"
+										>
+											Dr. Sarah Thompson
+										</div>
+										<div class="text-[10px] text-slate-400">
+											Cardiology Unit
+										</div>
 									</div>
 								</div>
 							</td>
-							<td class="px-6 py-5 text-xs text-slate-600 font-medium">Oct 23, 2024</td>
+							<td
+								class="px-6 py-5 text-xs text-slate-600 font-medium"
+								>Oct 23, 2024</td
+							>
 							<td class="px-6 py-5">
-								<div class="text-sm font-bold text-slate-900">David Miller</div>
-								<div class="text-[10px] text-slate-400">ID: 8829-X</div>
+								<div class="text-sm font-bold text-slate-900">
+									David Miller
+								</div>
+								<div class="text-[10px] text-slate-400">
+									ID: 8829-X
+								</div>
 							</td>
 							<td class="px-6 py-5">
-								<p class="text-sm text-slate-500 line-clamp-1 italic">"Pre-op clearance for periodontal surgery. Patient has history of hypertension."</p>
+								<p
+									class="text-sm text-slate-500 line-clamp-1 italic"
+								>
+									"Pre-op clearance for periodontal surgery.
+									Patient has history of hypertension."
+								</p>
 							</td>
 						</tr>
 					</tbody>
@@ -254,81 +464,489 @@
 		</div>
 	</section>
 
-	<!-- 4. Right Sidebar (Patient Detail) -->
-	<aside class="w-80 h-full bg-white border-l border-slate-200 flex flex-col shadow-2xl relative z-30">
-		<div class="flex-1 overflow-y-auto custom-scrollbar">
-			<!-- Identification Header -->
-			<div class="p-6 border-b border-slate-100 bg-slate-50/30 text-center">
-				<div class="relative inline-block mb-4">
-					<div class="w-24 h-24 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-2xl font-bold ring-4 ring-white shadow-xl mx-auto">
-						JW
+	<!-- Right Pinned Sidebar (Patient Context) -->
+	<aside
+		class="fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-slate-200 z-40 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out {isSidebarOpen &&
+		selectedEncounterData
+			? 'translate-x-0'
+			: 'translate-x-full'}"
+	>
+		{#if selectedEncounterData}
+			<div class="flex-1 overflow-y-auto custom-scrollbar relative">
+				<!-- Close Button -->
+				<button
+					type="button"
+					class="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
+					on:click={() => (isSidebarOpen = false)}
+				>
+					<span class="material-symbols-outlined text-[18px]"
+						>close</span
+					>
+				</button>
+
+				<!-- Patient Header -->
+				<div class="p-6 border-b border-slate-100 bg-slate-50/30">
+					<div class="flex flex-col items-center text-center">
+						<div class="relative mb-4">
+							<div
+								class="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-md bg-blue-100 flex items-center justify-center"
+							>
+								<span class="text-3xl font-black text-blue-500"
+									>{selectedEncounterData.patient_name
+										.substring(0, 2)
+										.toUpperCase()}</span
+								>
+							</div>
+							<span
+								class="absolute bottom-0 right-0 w-5 h-5 bg-tertiary rounded-full border-2 border-white flex items-center justify-center"
+							>
+								<span
+									class="material-symbols-outlined text-white text-[12px]"
+									style="font-variation-settings: 'FILL' 1;"
+									>check</span
+								>
+							</span>
+						</div>
+						<h3
+							class="text-lg font-bold text-slate-800 leading-tight"
+						>
+							{selectedEncounterData.patient_name}
+						</h3>
+						<p
+							class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest"
+						>
+							MR ID: {selectedEncounterData.patient?.id || "-"}
+						</p>
 					</div>
-					<div class="absolute bottom-0 right-1 w-6 h-6 bg-emerald-500 border-4 border-white rounded-full"></div>
 				</div>
-				<h2 class="text-xl font-bold text-blue-900">Jonathan Wickham</h2>
-				<p class="text-[10px] font-bold text-slate-400 tracking-tighter mt-1 uppercase">NIK: 3174092104920003</p>
-				
-				<div class="grid grid-cols-2 gap-3 mt-6">
-					<div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-						<p class="text-[9px] text-slate-400 font-black uppercase">Age / Sex</p>
-						<p class="text-xs font-bold text-slate-900">32y / Male</p>
-					</div>
-					<div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-						<p class="text-[9px] text-slate-400 font-black uppercase">Blood Type</p>
-						<p class="text-xs font-bold text-slate-900">O Positive</p>
-					</div>
+
+				<!-- Context Sections -->
+				<div class="p-6 flex flex-col gap-8">
+					<!-- Identification Section -->
+					<section>
+						<h4
+							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+						>
+							<span class="material-symbols-outlined text-sm"
+								>id_card</span
+							>
+							Identification
+						</h4>
+						<div class="space-y-3">
+							<div
+								class="flex justify-between items-center group"
+							>
+								<span class="text-[11px] text-slate-500"
+									>NIK</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800"
+									>{selectedEncounterData.patient_nik ||
+										"-"}</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>DOB / Age</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800"
+									>{formatDate(
+										selectedEncounterData.patient
+											?.birth_date,
+									) || "-"} ({calculateAge(
+										selectedEncounterData.patient
+											?.birth_date,
+									)}y)</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>Gender</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800"
+									>{selectedEncounterData.patient?.gender ===
+										"Male" ||
+									selectedEncounterData.patient?.gender ===
+										"L"
+										? "Male"
+										: selectedEncounterData.patient
+													?.gender === "Female" ||
+											  selectedEncounterData.patient
+													?.gender === "P"
+											? "Female"
+											: selectedEncounterData.patient
+													?.gender || "-"}</span
+								>
+							</div>
+							<div class="flex justify-between items-start">
+								<span class="text-[11px] text-slate-500"
+									>Address</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800 text-right w-40 leading-relaxed"
+									>{selectedEncounterData.patient?.address ||
+										"-"}</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>Contact</span
+								>
+								<div class="text-right">
+									{#if selectedEncounterData.patient?.email}
+										<span
+											class="text-[11px] font-bold text-primary block"
+											>{selectedEncounterData.patient
+												.email}</span
+										>
+									{/if}
+									<span
+										class="text-[11px] font-bold text-slate-800"
+										>{selectedEncounterData.patient
+											?.handphone || "-"}</span
+									>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Medical Background -->
+					<section>
+						<h4
+							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+						>
+							<span class="material-symbols-outlined text-sm"
+								>medical_services</span
+							>
+							Medical Background
+						</h4>
+						<div class="grid grid-cols-2 gap-2 mb-4">
+							<div
+								class="p-2 bg-slate-50 rounded-lg flex flex-col items-center"
+							>
+								<span
+									class="text-[9px] text-slate-400 uppercase font-bold"
+									>Blood Type</span
+								>
+								<span class="text-sm font-black text-slate-800">
+									{selectedEncounterData.patient
+										?.blood_type ||
+										"-"}{selectedEncounterData.patient
+										?.rhesus === "Positive"
+										? "+"
+										: selectedEncounterData.patient
+													?.rhesus === "Negative"
+											? "-"
+											: ""}
+								</span>
+							</div>
+							<div
+								class="p-2 bg-slate-50 rounded-lg flex flex-col items-center"
+							>
+								<span
+									class="text-[9px] text-slate-400 uppercase font-bold"
+									>BP</span
+								>
+								<span class="text-sm font-black text-slate-800"
+									>{selectedEncounterData.encounter
+										?.tekanan_darah || "-"}</span
+								>
+							</div>
+						</div>
+
+						{#if loadingMedical}
+							<div class="py-6 flex justify-center">
+								<div class="spinner spinner-sm"></div>
+							</div>
+						{:else if patientMedicalBackground}
+							<!-- Allergy Alerts -->
+							{#if patientMedicalBackground.allergies?.length > 0}
+								{#each patientMedicalBackground.allergies as allergy}
+									<div
+										class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-3 mb-4"
+									>
+										<span
+											class="material-symbols-outlined text-red-500 text-xl"
+											style="font-variation-settings: 'FILL' 1;"
+											>warning</span
+										>
+										<div>
+											<p
+												class="text-[10px] font-black text-red-700 uppercase"
+											>
+												Allergy Alert
+											</p>
+											<p
+												class="text-xs font-bold text-red-900 leading-tight"
+											>
+												{allergy.substance ||
+													allergy.reaction_display ||
+													"Unknown"}
+												{#if allergy.reaction}- {allergy.reaction}{/if}
+											</p>
+										</div>
+									</div>
+								{/each}
+							{/if}
+
+							<div class="space-y-6">
+								<div class="space-y-2">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-2"
+									>
+										Illness / History
+									</p>
+									{#if patientMedicalBackground.diseases?.length > 0}
+										{#each patientMedicalBackground.diseases as disease}
+											<div class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100">
+												<div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+													<span class="material-symbols-outlined text-[16px]">medical_information</span>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
+													>
+														{disease.disease || "Condition"}
+													</p>
+													<p class="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none">
+														{disease.type}
+													</p>
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+
+								<div class="space-y-2">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-2"
+									>
+										Current Medication
+									</p>
+									{#if patientMedicalBackground.medications?.length > 0}
+										{#each patientMedicalBackground.medications as med}
+											<div class="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">
+												<div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+													<span class="material-symbols-outlined text-[16px]">prescriptions</span>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
+													>
+														{med.product_name ||
+															med.medication ||
+															"Unknown"}
+													</p>
+													<p class="text-[10px] font-medium text-slate-600 leading-tight">
+														{med.dosage_form || ""} {med.dosage || ""}
+													</p>
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+							</div>
+						{/if}
+					</section>
+
+					<!-- Encounter History -->
+					<section>
+						<h4
+							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+						>
+							<span class="material-symbols-outlined text-sm"
+								>history</span
+							>
+							Encounter History
+						</h4>
+						<div
+							class="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-0 before:w-[2px] before:bg-slate-100 pb-2"
+						>
+							{#each patientHistory as hist, i}
+								<div class="relative pl-6">
+									<div
+										class="absolute left-0 top-1.5 w-[16px] h-[16px] bg-white border-2 {i ===
+										0
+											? 'border-primary'
+											: 'border-slate-200'} rounded-full"
+									></div>
+
+									<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
+									<div
+										class="cursor-pointer group"
+										on:click={() =>
+											toggleHistory(hist.encounter?.id)}
+									>
+										<div
+											class="flex justify-between items-start"
+										>
+											<div>
+												<p
+													class="text-[11px] font-bold text-slate-800 group-hover:text-primary transition-colors"
+												>
+													{hist.encounter?.id}
+												</p>
+												<p
+													class="text-[10px] text-slate-500"
+												>
+													{formatDate(
+														hist.encounter
+															?.created_at,
+													)} • {hist.encounter
+														?.reason_type ||
+														hist.encounter?.status}
+												</p>
+											</div>
+											<span
+												class="material-symbols-outlined text-slate-400 text-lg group-hover:text-primary transition-colors"
+											>
+												{expandedHistoryId ===
+												hist.encounter?.id
+													? "expand_less"
+													: "expand_more"}
+											</span>
+										</div>
+
+										{#if expandedHistoryId === hist.encounter?.id}
+											<div
+												class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-[11px] text-slate-700 space-y-2 relative z-10 leading-relaxed shadow-inner"
+											>
+												{#if hist.encounter?.subjective}
+													<div>
+														<strong
+															class="text-blue-900 font-black"
+															>S:</strong
+														>
+														{hist.encounter
+															.subjective}
+													</div>
+												{/if}
+												{#if hist.encounter?.objective}
+													<div>
+														<strong
+															class="text-blue-900 font-black"
+															>O:</strong
+														>
+														{hist.encounter
+															.objective}
+													</div>
+												{/if}
+												{#if hist.encounter?.assessment}
+													<div>
+														<strong
+															class="text-blue-900 font-black"
+															>A:</strong
+														>
+														{hist.encounter
+															.assessment}
+													</div>
+												{/if}
+												{#if hist.encounter?.plan}
+													<div>
+														<strong
+															class="text-blue-900 font-black"
+															>P:</strong
+														>
+														{hist.encounter.plan}
+													</div>
+												{/if}
+												{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.objective && !hist.encounter?.plan}
+													<div
+														class="italic text-slate-400"
+													>
+														No clinical notes
+														recorded.
+													</div>
+												{/if}
+												<div
+													class="pt-2 mt-2 border-t border-slate-200 flex justify-between items-center"
+												>
+													<span
+														class="text-[9px] font-bold uppercase tracking-wider text-slate-400"
+														>Status: {hist.encounter
+															?.status}</span
+													>
+												</div>
+											</div>
+										{/if}
+									</div>
+								</div>
+							{:else}
+								<div class="relative pl-6">
+									<p
+										class="text-[11px] font-medium text-slate-500 italic"
+									>
+										No past encounters recorded.
+									</p>
+								</div>
+							{/each}
+						</div>
+					</section>
 				</div>
 			</div>
 
-			<div class="p-6 space-y-8">
-				<section>
-					<h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-						<span class="material-symbols-outlined text-sm">id_card</span>
-						Identification
-					</h4>
-					<div class="space-y-3">
-						<div class="flex justify-between items-center text-[11px]">
-							<span class="text-slate-500">Gender</span>
-							<span class="font-bold text-slate-900">Male</span>
-						</div>
-						<div class="flex justify-between items-start text-[11px]">
-							<span class="text-slate-500">Address</span>
-							<span class="font-bold text-slate-900 text-right w-40 leading-relaxed">Pondok Indah Residence 4, Jakarta Selatan</span>
-						</div>
-					</div>
-				</section>
-				
-				<section>
-					<h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-						<span class="material-symbols-outlined text-sm">medical_information</span>
-						Medical Background
-					</h4>
-					<div class="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl mb-4 border border-blue-100">
-						<div>
-							<p class="text-[9px] text-blue-600 font-black uppercase">Current BP</p>
-							<div class="flex items-baseline gap-1">
-								<span class="text-xl font-black text-blue-900">128/84</span>
-								<span class="text-[10px] font-bold text-blue-700">mmHg</span>
-							</div>
-						</div>
-						<span class="material-symbols-outlined text-blue-300 text-3xl">vital_signs</span>
-					</div>
-					<div class="bg-[#FEF2F2] border-2 border-[#EF4444] p-4 rounded-xl flex items-start gap-3 mb-6">
-						<span class="material-symbols-outlined text-[#EF4444] font-bold" style="font-variation-settings: 'FILL' 1;">warning</span>
-						<div>
-							<p class="text-[10px] text-[#991B1B] font-black uppercase tracking-widest">Critical Allergy</p>
-							<p class="text-sm font-black text-[#991B1B]">PENICILLIN</p>
-						</div>
-					</div>
-				</section>
+			<!-- Bottom Actions Sticky -->
+			<div
+				class="sticky bottom-0 bg-white p-6 border-t border-slate-100 flex flex-col gap-2 shrink-0"
+			>
+				<button
+					on:click={startEncounter}
+					class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+				>
+					<span class="material-symbols-outlined text-[20px]"
+						>play_arrow</span
+					>
+					Start New Encounter
+				</button>
 			</div>
-		</div>
-		<div class="p-6 bg-slate-50 border-t border-slate-200">
-			<!-- svelte-ignore a11y-invalid-attribute -->
-			<a href="#" class="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-3">
-				<span class="material-symbols-outlined">edit_note</span>
-				Create New SOAP
-			</a>
-		</div>
+		{:else}
+			<div
+				class="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400"
+			>
+				<span
+					class="material-symbols-outlined text-6xl mb-4 text-slate-200"
+					>person_search</span
+				>
+				<h3 class="text-lg font-bold text-slate-500 mb-2">
+					No Patient Selected
+				</h3>
+				<p class="text-xs">
+					Select a patient from the active queue to view details
+				</p>
+			</div>
+		{/if}
 	</aside>
+
+	<!-- Button to Reopen Sidebar when collapsed -->
+	{#if selectedEncounterData && !isSidebarOpen}
+		<button
+			class="fixed right-0 top-1/2 -translate-y-1/2 bg-white hover:bg-slate-50 border-y border-l border-slate-200 px-2 py-4 rounded-l-xl shadow-[-8px_0_15px_-4px_rgba(0,0,0,0.1)] z-30 flex flex-col items-center gap-2 group transition-all"
+			on:click={() => (isSidebarOpen = true)}
+		>
+			<span
+				class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform"
+				>menu_open</span
+			>
+			<span
+				class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2"
+				style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);"
+			>
+				{selectedEncounterData.patient_name.split(" ")[0]} Profile
+			</span>
+		</button>
+	{/if}
 </div>

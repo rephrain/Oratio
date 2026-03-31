@@ -42,14 +42,17 @@ export async function GET({ url, locals }) {
 
 	const data = await db.select({
 		encounter: encounters,
+		patient: patients,
 		patient_name: patients.nama_lengkap,
 		patient_nik: patients.nik,
 		doctor_name: users.name,
-		doctor_code: users.doctor_code
+		doctor_code: users.doctor_code,
+		encounter_reason_display: terminologyMaster.display
 	})
 		.from(encounters)
 		.leftJoin(patients, eq(encounters.patient_id, patients.id))
 		.leftJoin(users, eq(encounters.doctor_id, users.id))
+		.leftJoin(terminologyMaster, eq(encounters.encounter_reason_id, terminologyMaster.id))
 		.where(whereClause)
 		.orderBy(desc(encounters.created_at))
 		.limit(limit)

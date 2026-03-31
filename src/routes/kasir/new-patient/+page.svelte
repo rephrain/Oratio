@@ -783,7 +783,7 @@
                 <div>
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Keluhan Utama (Encounter Reason)</label
+                        >Alasan Kunjungan</label
                     >
                     <div class="flex flex-col gap-3">
                         <select

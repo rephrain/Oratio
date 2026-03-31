@@ -70,6 +70,8 @@
 	// Patient context
 	let patientInfo = null;
 	let patientHistory = [];
+	let patientMedicalBackground = null;
+	let loadingMedical = false;
 	let showSidebar = true;
 
 	// Tooth detail modal
@@ -174,13 +176,27 @@
 
 	async function loadPatientContext(patientId) {
 		try {
-			const res = await fetch(
+			// Load past encounters
+			const encRes = await fetch(
 				`/api/encounters?patient_id=${patientId}&limit=20`,
 			);
-			const data = await res.json();
-			patientHistory = (data.data || []).filter(
-				(e) => e.encounter?.id !== encounterId,
-			);
+			if (encRes.ok) {
+				const encData = await encRes.json();
+				patientHistory = (encData.data || []).filter(
+					(e) => e.encounter?.id !== encounterId,
+				);
+			}
+
+			// Load medical background
+			loadingMedical = true;
+			try {
+				const bgRes = await fetch(`/api/patients/${patientId}/medical-background`);
+				if (bgRes.ok) patientMedicalBackground = await bgRes.json();
+			} catch (e) {
+				console.error(e);
+			} finally {
+				loadingMedical = false;
+			}
 		} catch {}
 	}
 
@@ -1130,19 +1146,85 @@
 									</div>
 									<div>
 										<strong>Gender:</strong>
-										{encounter.patient_gender === "male"
+										{encounter.patient_gender === "male" || encounter.patient_gender === "L"
 											? "L"
 											: "P"}
 									</div>
 									<div>
 										<strong>Gol Darah:</strong>
 										{encounter.patient_blood_type ||
-											"-"}{encounter.patient_rhesus || ""}
+											"-"}{encounter.patient_rhesus === "Positive" ? "+" : encounter.patient_rhesus === "Negative" ? "-" : ""}
 									</div>
 									{#if encounter.patient_pregnancy_status}
 										<div class="text-danger font-bold">
 											⚠️ Hamil
 										</div>
+									{/if}
+								</div>
+
+								<!-- Chief Complaint / Encounter Reason -->
+								{#if encounter.encounter?.encounter_reason_display || encounter.encounter?.subjective || encounter.encounter?.reason_type}
+									<div class="bg-blue-50 border border-blue-100 p-3 rounded-lg mb-4">
+										<p class="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-1">Alasan Kunjungan</p>
+										<p class="text-sm font-semibold text-blue-900 leading-tight">
+											{encounter.encounter_reason_display || encounter.encounter?.subjective || encounter.encounter?.reason_type}
+										</p>
+									</div>
+								{/if}
+
+								<!-- Medical Background Section -->
+								<div class="mb-6">
+									<h4 class="font-semibold text-sm mb-3">Latar Belakang Medis</h4>
+									
+									{#if loadingMedical}
+										<div class="py-4 flex justify-center"><div class="spinner spinner-sm"></div></div>
+									{:else if patientMedicalBackground}
+										<!-- Allergies -->
+										{#if patientMedicalBackground.allergies?.length > 0}
+											{#each patientMedicalBackground.allergies as allergy}
+												<div class="bg-red-50 border border-red-200 p-2 rounded-lg mb-2 flex gap-2">
+													<span class="material-symbols-outlined text-red-500 text-sm font-bold">warning</span>
+													<div class="text-xs">
+														<p class="font-bold text-red-900 leading-tight">{allergy.substance || allergy.reaction_display || 'Alergi'}</p>
+														{#if allergy.reaction}
+															<p class="text-red-700 mt-0.5">{allergy.reaction}</p>
+														{/if}
+													</div>
+												</div>
+											{/each}
+										{/if}
+
+										<!-- Diseases -->
+										{#if patientMedicalBackground.diseases?.length > 0}
+											{#each patientMedicalBackground.diseases as disease}
+												<div class="bg-amber-50 border border-amber-200 p-2 rounded-lg mb-2 flex gap-2">
+													<span class="material-symbols-outlined text-amber-500 text-sm">history_edu</span>
+													<div class="text-xs">
+														<p class="font-bold text-amber-900 leading-tight">{disease.disease || 'Riwayat'}</p>
+														<p class="text-amber-700 text-[10px] uppercase font-bold mt-0.5">{disease.type}</p>
+													</div>
+												</div>
+											{/each}
+										{/if}
+
+										<!-- Medications -->
+										{#if patientMedicalBackground.medications?.length > 0}
+											{#each patientMedicalBackground.medications as med}
+												<div class="bg-emerald-50 border border-emerald-200 p-2 rounded-lg mb-2 flex gap-2">
+													<span class="material-symbols-outlined text-emerald-500 text-sm">medication</span>
+													<div class="text-xs">
+														<p class="font-bold text-emerald-900 leading-tight">{med.product_name || med.medication}</p>
+														{#if med.dosage}
+															<p class="text-emerald-700 mt-0.5">{med.dosage}</p>
+														{/if}
+													</div>
+												</div>
+											{/each}
+										{/if}
+
+										{#if !patientMedicalBackground.allergies?.length && !patientMedicalBackground.diseases?.length && !patientMedicalBackground.medications?.length}
+											<p class="text-xs text-muted italic bg-slate-50 p-3 rounded-lg border border-dashed text-center">Tidak ada riwayat medis tercatat</p>
+										{/if}
 									{/if}
 								</div>
 							</div>

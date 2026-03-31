@@ -1,5 +1,5 @@
 import { j as json } from "../../../../chunks/index.js";
-const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || "https://snowstorm.ihtsdotools.org/fhir/ValueSet/$expand";
+const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || "https://r4.ontoserver.csiro.au/fhir/ValueSet/$expand";
 async function expandValueSet(eclUrl, filter, count = 10) {
   const params = new URLSearchParams({
     url: eclUrl,

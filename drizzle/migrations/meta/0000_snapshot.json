@@ -1,5 +1,5 @@
 {
-  "id": "a74f2c8c-8198-44ac-ae45-e622235fbe9a",
+  "id": "98db95fa-e691-476e-b6b1-ecc108878828",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -748,8 +748,8 @@
           "notNull": true,
           "default": "'Planned'"
         },
-        "keluhan_utama_id": {
-          "name": "keluhan_utama_id",
+        "encounter_reason_id": {
+          "name": "encounter_reason_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -876,12 +876,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "encounters_keluhan_utama_id_terminology_master_id_fk": {
-          "name": "encounters_keluhan_utama_id_terminology_master_id_fk",
+        "encounters_encounter_reason_id_terminology_master_id_fk": {
+          "name": "encounters_encounter_reason_id_terminology_master_id_fk",
           "tableFrom": "encounters",
           "tableTo": "terminology_master",
           "columnsFrom": [
-            "keluhan_utama_id"
+            "encounter_reason_id"
           ],
           "columnsTo": [
             "id"
@@ -1131,25 +1131,19 @@
         },
         "patient_id": {
           "name": "patient_id",
-          "type": "varchar(10)",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
         },
-        "substance_code": {
-          "name": "substance_code",
-          "type": "varchar(30)",
+        "substance_id": {
+          "name": "substance_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "substance_display": {
-          "name": "substance_display",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reaction_code": {
-          "name": "reaction_code",
-          "type": "varchar(30)",
+        "reaction": {
+          "name": "reaction",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1180,6 +1174,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "patient_allergy_substance_id_terminology_master_id_fk": {
+          "name": "patient_allergy_substance_id_terminology_master_id_fk",
+          "tableFrom": "patient_allergy",
+          "tableTo": "terminology_master",
+          "columnsFrom": [
+            "substance_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },

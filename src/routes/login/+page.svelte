@@ -99,7 +99,7 @@
 					>verified_user</span
 				>
 				<p class="text-sm font-medium text-primary/80">
-					Authorized Access Only • AES-256 Encryption
+					Authorized Access Only • Argon2id Encryption
 				</p>
 			</div>
 		</div>

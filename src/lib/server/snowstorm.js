@@ -1,7 +1,7 @@
 // Snowstorm FHIR ValueSet/$expand endpoint integration
 // Uses the FHIR API as specified in the original requirements
 
-const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || 'https://snowstorm.ihtsdotools.org/fhir/ValueSet/$expand';
+const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || 'https://r4.ontoserver.csiro.au/fhir/ValueSet/$expand';
 
 /**
  * Core FHIR ValueSet/$expand search
@@ -23,7 +23,7 @@ async function expandValueSet(ecl, filter, count = 10) {
 	// - %3Ffhir_vs%3Decl/  (Hardcoded encoded part)
 	// - The strictly encoded ECL string
 	// - The standard count and filter params
-	const queryString = `?url=http://snomed.info/sct?fhir_vs=ecl/${encodedEcl}&count=${count}&filter=${encodedFilter}`;
+	const queryString = `$expand?url=http://snomed.info/sct?fhir_vs=ecl/${encodedEcl}&count=${count}&filter=${encodedFilter}`;
 
 	const fullUrl = `${SNOWSTORM_FHIR_BASE}${queryString}`;
 

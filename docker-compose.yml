@@ -14,12 +14,14 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oratio"]
+      test: [ "CMD-SHELL", "pg_isready -U oratio" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   app:
+    env_file:
+      - .env
     build: .
     container_name: oratio-app
     restart: unless-stopped

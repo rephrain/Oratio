@@ -106,7 +106,7 @@ CREATE TABLE "encounters" (
 	"queue_number" integer,
 	"form_mode" "form_mode" DEFAULT 'SOAP',
 	"status" "encounter_status" DEFAULT 'Planned' NOT NULL,
-	"keluhan_utama_id" uuid,
+	"encounter_reason_id" uuid,
 	"reason_type" varchar(15),
 	"subjective" text,
 	"objective" text,
@@ -152,10 +152,9 @@ CREATE TABLE "odontogram_details" (
 --> statement-breakpoint
 CREATE TABLE "patient_allergy" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"patient_id" varchar(10) NOT NULL,
-	"substance_code" varchar(30),
-	"substance_display" text,
-	"reaction_code" varchar(30),
+	"patient_id" varchar(20) NOT NULL,
+	"substance_id" uuid,
+	"reaction" varchar(50),
 	"reaction_display" text,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
@@ -290,12 +289,13 @@ ALTER TABLE "encounter_referrals" ADD CONSTRAINT "encounter_referrals_encounter_
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_patient_id_patients_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_kasir_id_users_id_fk" FOREIGN KEY ("kasir_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_doctor_id_users_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "encounters" ADD CONSTRAINT "encounters_keluhan_utama_id_terminology_master_id_fk" FOREIGN KEY ("keluhan_utama_id") REFERENCES "public"."terminology_master"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_encounter_reason_id_terminology_master_id_fk" FOREIGN KEY ("encounter_reason_id") REFERENCES "public"."terminology_master"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "items" ADD CONSTRAINT "items_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_odontogram_id_encounter_odontograms_id_fk" FOREIGN KEY ("odontogram_id") REFERENCES "public"."encounter_odontograms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_icd10_id_terminology_master_id_fk" FOREIGN KEY ("icd10_id") REFERENCES "public"."terminology_master"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_icd9cm_id_terminology_master_id_fk" FOREIGN KEY ("icd9cm_id") REFERENCES "public"."terminology_master"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_allergy" ADD CONSTRAINT "patient_allergy_patient_id_patients_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "patient_allergy" ADD CONSTRAINT "patient_allergy_substance_id_terminology_master_id_fk" FOREIGN KEY ("substance_id") REFERENCES "public"."terminology_master"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_disease_history" ADD CONSTRAINT "patient_disease_history_patient_id_patients_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_disease_history" ADD CONSTRAINT "patient_disease_history_terminology_id_terminology_master_id_fk" FOREIGN KEY ("terminology_id") REFERENCES "public"."terminology_master"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_medication" ADD CONSTRAINT "patient_medication_patient_id_patients_id_fk" FOREIGN KEY ("patient_id") REFERENCES "public"."patients"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

@@ -112,9 +112,24 @@
 		}
 	}
 
-	function startEncounter() {
+	async function startEncounter() {
 		if (selectedEncounterData?.encounter?.id) {
-			goto(`/dokter/${selectedEncounterData.encounter.id}`);
+			const id = selectedEncounterData.encounter.id;
+			const currentStatus = selectedEncounterData.encounter.status;
+
+			if (["Planned", "Arrived"].includes(currentStatus)) {
+				try {
+					await fetch(`/api/encounters/${id}`, {
+						method: "PUT",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ status: "In Progress" }),
+					});
+				} catch (err) {
+					console.error("Failed to update status:", err);
+				}
+			}
+
+			goto(`/dokter/${id}`);
 		}
 	}
 
@@ -146,6 +161,49 @@
 			format: (_, r) => formatElapsedTime(r.encounter?.created_at),
 		},
 	];
+
+	$: selectedStatusConfig = (() => {
+		const status = selectedEncounterData?.encounter?.status;
+		const map = {
+			"In Progress": {
+				badge: "bg-blue-500",
+				bg: "from-blue-100 to-blue-50",
+				text: "text-blue-600",
+			},
+			Arrived: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Planned: {
+				badge: "bg-amber-400",
+				bg: "from-amber-100 to-amber-50",
+				text: "text-amber-600",
+			},
+			"On Hold": {
+				badge: "bg-rose-400",
+				bg: "from-rose-100 to-rose-50",
+				text: "text-rose-600",
+			},
+			Discharged: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Completed: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+		};
+		return (
+			map[status] || {
+				badge: "bg-slate-400",
+				bg: "from-slate-100 to-slate-50",
+				text: "text-slate-600",
+			}
+		);
+	})();
 
 	onMount(() => {
 		loadEncounters();
@@ -246,7 +304,10 @@
 		</div>
 
 		<!-- 2. Patient Queue Section -->
-		<div class="mb-10">
+		<div
+			class="mb-10"
+			style="display: grid; grid-template-columns: minmax(0, 1fr);"
+		>
 			<div class="flex items-center justify-between mb-6">
 				<h3
 					class="text-lg font-bold text-blue-900 flex items-center gap-2"
@@ -258,8 +319,9 @@
 				</h3>
 				<span
 					class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md"
-					>{todayQueue.length + inProgress.length} IN QUEUE</span
 				>
+					{todayQueue.length + inProgress.length} IN QUEUE
+				</span>
 			</div>
 
 			{#if loading}
@@ -271,104 +333,162 @@
 				</div>
 			{:else}
 				<div
-					class="flex gap-6 overflow-x-auto pb-6 custom-scrollbar snap-x"
+					style="
+					overflow: hidden;
+					mask-image: linear-gradient(to right, black 80%, transparent 100%);
+					-webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+				"
 				>
-					{#each encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ) as row, index}
-						<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
-						<div
-							class="bg-white p-6 rounded-2xl shadow-sm border {selectedEncounterData
-								?.encounter?.id === row.encounter?.id
-								? 'border-primary ring-2 ring-blue-100'
-								: 'border-slate-100 hover:shadow-md'} transition-all cursor-pointer relative min-w-[340px] shrink-0 snap-start"
-							on:click={() => selectEncounter(row)}
-						>
-							<div class="flex justify-between items-start mb-4">
-								<div
-									class="w-14 h-14 rounded-xl {row.encounter
-										?.status === 'In Progress'
-										? 'bg-blue-50 text-blue-600'
-										: 'bg-slate-50 text-slate-400'} flex items-center justify-center font-bold text-xl"
-								>
-									{String(
-										row.encounter?.queue_number ||
-											index + 1,
-									).padStart(2, "0")}
-								</div>
-								<div
-									class="{row.encounter?.status ===
-									'In Progress'
-										? 'bg-blue-100 text-blue-700'
-										: 'bg-slate-100 text-slate-500'} px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight"
-								>
-									{row.encounter?.status || "Waiting"}
-								</div>
-							</div>
-							<div class="mb-6">
-								<div
-									class="text-xs text-slate-400 font-bold mb-1"
-								>
-									ENC-{String(row.encounter?.id).padStart(
-										5,
-										"0",
-									)}
-								</div>
-								<h4
-									class="text-xl font-bold text-slate-900 mb-2"
-								>
-									{row.patient_name}
-								</h4>
-								<p
-									class="text-sm text-slate-500 leading-relaxed line-clamp-2"
-								>
-									<span
-										class="font-bold text-slate-700 text-xs uppercase tracking-wider"
-										>{row.patient?.gender === "Male" ||
-										row.patient?.gender === "L"
-											? "Laki-laki"
-											: row.patient?.gender ===
-														"Female" ||
-												  row.patient?.gender === "P"
-												? "Perempuan"
-												: row.patient?.gender || "-"} • {calculateAge(
-											row.patient?.birth_date,
-										)}th</span
-									>
-									<br />
-									Keluhan: {row.encounter_reason_display ||
-										row.encounter?.subjective ||
-										row.encounter?.reason_type ||
-										"Menunggu pemeriksaan awal"}
-								</p>
-							</div>
+					<div
+						class="flex gap-6 pb-6 custom-scrollbar snap-x"
+						style="overflow-x: auto; overflow-y: visible;"
+					>
+						{#each encounters
+							.filter( (e) => ["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status), )
+							.sort((a, b) => {
+								const qA = a.encounter?.queue_number ?? Infinity;
+								const qB = b.encounter?.queue_number ?? Infinity;
+								if (qA !== qB) return qA - qB;
+								return new Date(a.encounter?.created_at) - new Date(b.encounter?.created_at);
+							}) as row, index}
+							<!-- Status color map -->
+							{@const statusConfig = {
+								"In Progress": {
+									banner: "bg-blue-500 text-white",
+									queueBg: "bg-blue-50 text-blue-600",
+									ring: "border-blue-400 ring-2 ring-blue-100",
+								},
+								Arrived: {
+									banner: "bg-emerald-500 text-white",
+									queueBg: "bg-emerald-50 text-emerald-600",
+									ring: "border-emerald-400 ring-2 ring-emerald-100",
+								},
+								Planned: {
+									banner: "bg-amber-400 text-white",
+									queueBg: "bg-amber-50 text-amber-600",
+									ring: "border-amber-400 ring-2 ring-amber-100",
+								},
+								"On Hold": {
+									banner: "bg-rose-400 text-white",
+									queueBg: "bg-rose-50 text-rose-500",
+									ring: "border-rose-400 ring-2 ring-rose-100",
+								},
+							}}
+							{@const config = statusConfig[
+								row.encounter?.status
+							] ?? {
+								banner: "bg-slate-400 text-white",
+								queueBg: "bg-slate-50 text-slate-400",
+								ring: "border-slate-300 ring-2 ring-slate-100",
+							}}
+
+							<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
 							<div
-								class="pt-4 border-t border-slate-50 flex justify-between items-center"
+								class="bg-white p-6 rounded-2xl shadow-sm border overflow-hidden transition-all cursor-pointer relative shrink-0 snap-start
+									{selectedEncounterData?.encounter?.id === row.encounter?.id
+									? config.ring
+									: 'border-slate-100 hover:shadow-md'}"
+								style="min-width: 340px; width: 340px;"
+								on:click={() => selectEncounter(row)}
 							>
-								<div class="flex items-center gap-2">
+								<!-- Status Banner (top-right ribbon) -->
+								<div class="absolute top-0 right-0">
 									<div
-										class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm"
+										class="relative w-28 h-28 overflow-hidden"
 									>
-										{row.patient_name
-											.substring(0, 2)
-											.toUpperCase()}
+										<div
+											class="absolute top-4 -right-7 w-36 text-center py-1 text-[10px] font-black uppercase tracking-widest shadow-sm rotate-45 {config.banner}"
+										>
+											{row.encounter?.status || "Waiting"}
+										</div>
 									</div>
 								</div>
-								<span
-									class="text-[10px] font-black text-slate-400 tracking-wider uppercase"
+
+								<div
+									class="flex justify-between items-start mb-4"
 								>
-									Wait Time: {formatElapsedTime(
-										row.encounter?.created_at,
-									)}
-								</span>
+									<div
+										class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl {config.queueBg}"
+									>
+										{String(
+											row.encounter?.queue_number ||
+												index + 1,
+										).padStart(2, "0")}
+									</div>
+								</div>
+
+								<div class="mb-6">
+									<div
+										class="text-xs text-slate-400 font-bold mb-1"
+									>
+										{String(row.encounter?.id).padStart(
+											5,
+											"0",
+										)}
+									</div>
+									<h4
+										class="text-xl font-bold text-slate-900 mb-2"
+									>
+										{row.patient_name}
+									</h4>
+									<p
+										class="text-sm text-slate-500 leading-relaxed line-clamp-2"
+									>
+										<span
+											class="font-bold text-slate-700 text-xs uppercase tracking-wider"
+										>
+											{row.patient?.gender === "Male" ||
+											row.patient?.gender === "L"
+												? "Laki-laki"
+												: row.patient?.gender ===
+															"Female" ||
+													  row.patient?.gender ===
+															"P"
+													? "Perempuan"
+													: row.patient?.gender ||
+														"-"} • {calculateAge(
+												row.patient?.birth_date,
+											)}th
+										</span>
+										<br />
+										Keluhan: {row.encounter_reason_display ||
+											row.encounter?.subjective ||
+											row.encounter?.reason_type ||
+											"Menunggu pemeriksaan awal"}
+									</p>
+								</div>
+
+								<div
+									class="pt-4 border-t border-slate-50 flex justify-between items-center"
+								>
+									<div class="flex items-center gap-2">
+										<div
+											class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm"
+										>
+											{row.patient_name
+												.substring(0, 2)
+												.toUpperCase()}
+										</div>
+									</div>
+									<span
+										class="text-[10px] font-black text-slate-400 tracking-wider uppercase"
+									>
+										Wait Time: {formatElapsedTime(
+											row.encounter?.created_at,
+										)}
+									</span>
+								</div>
 							</div>
-						</div>
-					{/each}
-					{#if encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ).length === 0}
-						<div
-							class="col-span-full py-8 text-center text-slate-400 text-sm font-medium"
-						>
-							Bagus! Tidak ada antrian pasien saat ini.
-						</div>
-					{/if}
+						{/each}
+
+						{#if encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ).length === 0}
+							<div
+								class="col-span-full py-8 text-center text-slate-400 text-sm font-medium"
+							>
+								Bagus! Tidak ada antrian pasien saat ini.
+							</div>
+						{/if}
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -489,23 +609,23 @@
 					<div class="flex flex-col items-center text-center">
 						<div class="relative mb-4">
 							<div
-								class="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-md bg-blue-100 flex items-center justify-center"
+								class="w-20 h-20 rounded-full ring-4 ring-white shadow-xl bg-gradient-to-br {selectedStatusConfig.bg} flex items-center justify-center transition-transform hover:scale-105 duration-300"
 							>
-								<span class="text-3xl font-black text-blue-500"
+								<span
+									class="text-3xl font-black {selectedStatusConfig.text} drop-shadow-sm"
 									>{selectedEncounterData.patient_name
 										.substring(0, 2)
 										.toUpperCase()}</span
 								>
 							</div>
-							<span
-								class="absolute bottom-0 right-0 w-5 h-5 bg-tertiary rounded-full border-2 border-white flex items-center justify-center"
+							<div
+								class="absolute -bottom-1 -right-1 w-7 h-7 {selectedStatusConfig.badge} rounded-full border-2 border-white shadow-lg flex items-center justify-center z-10"
 							>
-								<span
-									class="material-symbols-outlined text-white text-[12px]"
-									style="font-variation-settings: 'FILL' 1;"
-									>check</span
+								<span class="text-white text-[11px] font-black"
+									>{selectedEncounterData.encounter
+										?.queue_number || "-"}</span
 								>
-							</span>
+							</div>
 						</div>
 						<h3
 							class="text-lg font-bold text-slate-800 leading-tight"
@@ -700,17 +820,27 @@
 									</p>
 									{#if patientMedicalBackground.diseases?.length > 0}
 										{#each patientMedicalBackground.diseases as disease}
-											<div class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100">
-												<div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-													<span class="material-symbols-outlined text-[16px]">medical_information</span>
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100"
+											>
+												<div
+													class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[16px]"
+														>medical_information</span
+													>
 												</div>
 												<div>
 													<p
 														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
 													>
-														{disease.disease || "Condition"}
+														{disease.disease ||
+															"Condition"}
 													</p>
-													<p class="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none">
+													<p
+														class="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none"
+													>
 														{disease.type}
 													</p>
 												</div>
@@ -733,9 +863,16 @@
 									</p>
 									{#if patientMedicalBackground.medications?.length > 0}
 										{#each patientMedicalBackground.medications as med}
-											<div class="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">
-												<div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-													<span class="material-symbols-outlined text-[16px]">prescriptions</span>
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100"
+											>
+												<div
+													class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[16px]"
+														>prescriptions</span
+													>
 												</div>
 												<div>
 													<p
@@ -745,8 +882,11 @@
 															med.medication ||
 															"Unknown"}
 													</p>
-													<p class="text-[10px] font-medium text-slate-600 leading-tight">
-														{med.dosage_form || ""} {med.dosage || ""}
+													<p
+														class="text-[10px] font-medium text-slate-600 leading-tight"
+													>
+														{med.dosage_form || ""}
+														{med.dosage || ""}
 													</p>
 												</div>
 											</div>
@@ -806,7 +946,15 @@
 													{formatDate(
 														hist.encounter
 															?.created_at,
-													)} • {hist.encounter
+													)}
+													{#if hist.doctor_name}
+														• {hist.doctor_name}
+													{/if}
+												</p>
+												<p
+													class="text-[10px] text-slate-400 mt-0.5"
+												>
+													{hist.encounter
 														?.reason_type ||
 														hist.encounter?.status}
 												</p>

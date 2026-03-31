@@ -1530,7 +1530,8 @@ tbody tr:last-child td {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3); /* Gray-400 with opacity */
+  background: rgba(156, 163, 175, 0.3);
+  /* Gray-400 with opacity */
   border-radius: 10px;
 }
 

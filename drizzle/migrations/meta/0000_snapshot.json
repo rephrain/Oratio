@@ -1,5 +1,5 @@
 {
-  "id": "98db95fa-e691-476e-b6b1-ecc108878828",
+  "id": "2d216c97-6f99-4c36-8287-d1e3fb228a4f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -913,8 +913,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "doctor_id": {
+          "name": "doctor_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -961,12 +961,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "items_user_id_users_id_fk": {
-          "name": "items_user_id_users_id_fk",
+        "items_doctor_id_users_id_fk": {
+          "name": "items_doctor_id_users_id_fk",
           "tableFrom": "items",
           "tableTo": "users",
           "columnsFrom": [
-            "user_id"
+            "doctor_id"
           ],
           "columnsTo": [
             "id"
@@ -1749,8 +1749,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "doctor_id": {
-          "name": "doctor_id",
+        "user_id": {
+          "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1783,12 +1783,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "shifts_doctor_id_users_id_fk": {
-          "name": "shifts_doctor_id_users_id_fk",
+        "shifts_user_id_users_id_fk": {
+          "name": "shifts_user_id_users_id_fk",
           "tableFrom": "shifts",
           "tableTo": "users",
           "columnsFrom": [
-            "doctor_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -1899,19 +1899,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "version": {
-          "name": "version",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {},
@@ -1970,6 +1957,12 @@
         "doctor_code": {
           "name": "doctor_code",
           "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile_image_url": {
+          "name": "profile_image_url",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

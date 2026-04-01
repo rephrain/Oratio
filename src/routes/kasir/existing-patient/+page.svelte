@@ -15,8 +15,7 @@
 	let chiefComplaintDisplay = "";
 
 	async function loadDoctors() {
-		const today = new Date().getDay();
-		const res = await fetch(`/api/doctors?day=${today}`);
+		const res = await fetch(`/api/doctors?available=true`);
 		const data = await res.json();
 		doctors = data.doctors || [];
 	}

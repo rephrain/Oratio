@@ -91,8 +91,7 @@
 
     // ── Doctors ──────────────────────────────────────────────────────────────
     async function loadDoctors() {
-        const today = new Date().getDay();
-        const res = await fetch(`/api/doctors?day=${today}`);
+        const res = await fetch(`/api/doctors`);
         const data = await res.json();
         doctors = data.doctors || [];
     }

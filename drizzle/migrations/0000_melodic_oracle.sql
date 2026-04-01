@@ -125,7 +125,7 @@ CREATE TABLE "encounters" (
 CREATE TABLE "items" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
-	"user_id" uuid,
+	"doctor_id" uuid,
 	"price" numeric(12, 2) NOT NULL,
 	"item_group" varchar(50),
 	"denomination" varchar(50),
@@ -233,7 +233,7 @@ CREATE TABLE "payments" (
 --> statement-breakpoint
 CREATE TABLE "shifts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"doctor_id" uuid NOT NULL,
+	"user_id" uuid NOT NULL,
 	"day_of_week" integer NOT NULL,
 	"start_time" time NOT NULL,
 	"end_time" time NOT NULL,
@@ -254,8 +254,6 @@ CREATE TABLE "terminology_master" (
 	"system" "terminology_system" NOT NULL,
 	"code" varchar(30) NOT NULL,
 	"display" text NOT NULL,
-	"version" varchar(20),
-	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "uq_terminology_system_code" UNIQUE("system","code")
 );
 --> statement-breakpoint
@@ -266,6 +264,7 @@ CREATE TABLE "users" (
 	"password_hash" text NOT NULL,
 	"role" "role" NOT NULL,
 	"doctor_code" varchar(5),
+	"profile_image_url" text,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -290,7 +289,7 @@ ALTER TABLE "encounters" ADD CONSTRAINT "encounters_patient_id_patients_id_fk" F
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_kasir_id_users_id_fk" FOREIGN KEY ("kasir_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_doctor_id_users_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "encounters" ADD CONSTRAINT "encounters_encounter_reason_id_terminology_master_id_fk" FOREIGN KEY ("encounter_reason_id") REFERENCES "public"."terminology_master"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "items" ADD CONSTRAINT "items_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "items" ADD CONSTRAINT "items_doctor_id_users_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_odontogram_id_encounter_odontograms_id_fk" FOREIGN KEY ("odontogram_id") REFERENCES "public"."encounter_odontograms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_icd10_id_terminology_master_id_fk" FOREIGN KEY ("icd10_id") REFERENCES "public"."terminology_master"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "odontogram_details" ADD CONSTRAINT "odontogram_details_icd9cm_id_terminology_master_id_fk" FOREIGN KEY ("icd9cm_id") REFERENCES "public"."terminology_master"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -304,5 +303,5 @@ ALTER TABLE "patients" ADD CONSTRAINT "patients_kasir_id_users_id_fk" FOREIGN KE
 ALTER TABLE "payments" ADD CONSTRAINT "payments_encounter_id_encounters_id_fk" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_proof_document_id_documents_id_fk" FOREIGN KEY ("proof_document_id") REFERENCES "public"."documents"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_cashier_id_users_id_fk" FOREIGN KEY ("cashier_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "shifts" ADD CONSTRAINT "shifts_doctor_id_users_id_fk" FOREIGN KEY ("doctor_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "status_history" ADD CONSTRAINT "status_history_encounter_id_encounters_id_fk" FOREIGN KEY ("encounter_id") REFERENCES "public"."encounters"("id") ON DELETE cascade ON UPDATE no action;

@@ -27,6 +27,7 @@ export const users = pgTable('users', {
 	password_hash: text('password_hash').notNull(),
 	role: roleEnum('role').notNull(),
 	doctor_code: varchar('doctor_code', { length: 5 }).unique(),  // only for role='dokter'
+	profile_image_url: text('profile_image_url'),
 	is_active: boolean('is_active').default(true).notNull(),
 	created_at: timestamp('created_at').defaultNow().notNull(),
 	updated_at: timestamp('updated_at').defaultNow().notNull()
@@ -319,7 +320,7 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 export const items = pgTable('items', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
-	user_id: uuid('user_id').references(() => users.id),
+	doctor_id: uuid('doctor_id').references(() => users.id),
 	price: numeric('price', { precision: 12, scale: 2 }).notNull(),
 	item_group: varchar('item_group', { length: 50 }),
 	denomination: varchar('denomination', { length: 50 }),
@@ -395,7 +396,7 @@ export const authTokens = pgTable('auth_tokens', {
 // =============================================================
 export const shifts = pgTable('shifts', {
 	id: uuid('id').defaultRandom().primaryKey(),
-	doctor_id: uuid('doctor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	day_of_week: integer('day_of_week').notNull(),  // 0=Sunday, 6=Saturday
 	start_time: time('start_time').notNull(),
 	end_time: time('end_time').notNull(),
@@ -413,7 +414,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const shiftsRelations = relations(shifts, ({ one }) => ({
-	doctor: one(users, { fields: [shifts.doctor_id], references: [users.id] })
+	user: one(users, { fields: [shifts.user_id], references: [users.id] })
 }));
 
 export const patientsRelations = relations(patients, ({ many }) => ({

@@ -11,7 +11,7 @@
 	let encounters = [];
 	let loading = true;
 	let viewMode = "board"; // 'board' | 'table'
-	let filterDate = new Date().toISOString().split("T")[0];
+	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
 	let filterDoctor = "";
 	let refreshInterval;
 

@@ -1,3 +1,4 @@
+process.env.TZ = 'Asia/Jakarta';
 import { verifyToken } from '$lib/server/auth.js';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];

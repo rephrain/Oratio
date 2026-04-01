@@ -23,10 +23,10 @@ export async function GET({ url, locals }) {
 	let conditions = [];
 
 	if (dateFrom && dateTo) {
-		conditions.push(sql`DATE(${encounters.created_at}) >= ${dateFrom}`);
-		conditions.push(sql`DATE(${encounters.created_at}) <= ${dateTo}`);
+		conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') >= ${dateFrom}`);
+		conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') <= ${dateTo}`);
 	} else if (date) {
-		conditions.push(sql`DATE(${encounters.created_at}) = ${date}`);
+		conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = ${date}`);
 	}
 
 	if (doctorId) conditions.push(eq(encounters.doctor_id, doctorId));
@@ -83,7 +83,7 @@ export async function POST({ request, locals }) {
 	// Get next queue number for today
 	const [{ maxQueue }] = await db.select({
 		maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
-	}).from(encounters).where(sql`DATE(${encounters.created_at}) = CURRENT_DATE`);
+	}).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
 
 	const queueNumber = Number(maxQueue) + 1;
 

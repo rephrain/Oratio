@@ -1,5 +1,10 @@
-// SatuSehat API integration with staging/production URL switching
+import {
+	SATUSEHAT_CLIENT_ID,
+	SATUSEHAT_CLIENT_SECRET,
+	SATUSEHAT_ENV
+} from '$env/static/private';
 
+// SatuSehat API configuration
 const SATUSEHAT_CONFIG = {
 	staging: {
 		base_url: 'https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1',
@@ -19,17 +24,26 @@ let cachedToken = null;
 let tokenExpiry = 0;
 
 function getEnv() {
-	return process.env.SATUSEHAT_ENV || 'staging';
+	return SATUSEHAT_ENV || 'staging';
 }
 
 function getConfig() {
 	return SATUSEHAT_CONFIG[getEnv()] || SATUSEHAT_CONFIG.staging;
 }
 
+function validateEnv() {
+	if (!SATUSEHAT_CLIENT_ID || !SATUSEHAT_CLIENT_SECRET) {
+		throw new Error('SATUSEHAT env variables are missing');
+	}
+}
+
 export async function getToken() {
+	// Use cache if valid
 	if (cachedToken && Date.now() < tokenExpiry) {
 		return cachedToken;
 	}
+
+	validateEnv();
 
 	const config = getConfig();
 	const url = `${config.auth_url}?grant_type=client_credentials`;
@@ -39,16 +53,21 @@ export async function getToken() {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
-				client_id: process.env.SATUSEHAT_CLIENT_ID || '',
-				client_secret: process.env.SATUSEHAT_CLIENT_SECRET || ''
+				client_id: SATUSEHAT_CLIENT_ID,
+				client_secret: SATUSEHAT_CLIENT_SECRET
 			})
 		});
 
-		if (!res.ok) throw new Error(`SatuSehat auth failed: ${res.status}`);
+		if (!res.ok) {
+			const text = await res.text();
+			throw new Error(`SatuSehat auth failed: ${res.status} - ${text}`);
+		}
 
 		const data = await res.json();
+
 		cachedToken = data.access_token;
-		tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+		tokenExpiry = Date.now() + (data.expires_in - 60) * 1000; // buffer
+
 		return cachedToken;
 	} catch (error) {
 		console.error('SatuSehat token error:', error);
@@ -57,8 +76,7 @@ export async function getToken() {
 }
 
 /**
- * Search KFA products using the /kfa-v2/products/all endpoint
- * Handles both merk known (93xxxxxx) and merk unknown (92xxxxxx) scenarios
+ * Search KFA products
  */
 export async function searchKFA(keyword, page = 1, size = 10) {
 	const token = await getToken();
@@ -78,17 +96,25 @@ export async function searchKFA(keyword, page = 1, size = 10) {
 		}
 	});
 
-	if (!res.ok) throw new Error(`KFA search failed: ${res.status}`);
+	if (!res.ok) {
+		const text = await res.text();
+		throw new Error(`KFA search failed: ${res.status} - ${text}`);
+	}
 
 	const data = await res.json();
 	const items = data?.items?.data || [];
 
 	return items.map(item => {
-		// Scenario 1: Merk Known (93xxxxxx) — use item directly
-		// Scenario 2: Merk Unknown (92xxxxxx) — use product_template
 		const isUnknown = item.kfa_code?.startsWith('92');
-		const name = isUnknown ? item.prodct_template?.name : item.name;
-		const code = isUnknown ? item.prodct_template?.kfa_code : item.kfa_code;
+
+		const name = isUnknown
+			? item.product_template?.name
+			: item.name;
+
+		const code = isUnknown
+			? item.product_template?.kfa_code
+			: item.kfa_code;
+
 		return {
 			code,
 			display: name,
@@ -99,6 +125,7 @@ export async function searchKFA(keyword, page = 1, size = 10) {
 	});
 }
 
+// Base URL helper
 export function getBaseUrl() {
 	return getConfig().base_url;
 }

@@ -1,7 +1,8 @@
 export function formatDate(date, locale = 'id-ID') {
 	if (!date) return '-';
 	return new Date(date).toLocaleDateString(locale, {
-		year: 'numeric', month: 'long', day: 'numeric'
+		year: 'numeric', month: 'long', day: 'numeric',
+		timeZone: 'Asia/Jakarta'
 	});
 }
 
@@ -9,14 +10,16 @@ export function formatDateTime(date, locale = 'id-ID') {
 	if (!date) return '-';
 	return new Date(date).toLocaleDateString(locale, {
 		year: 'numeric', month: 'short', day: 'numeric',
-		hour: '2-digit', minute: '2-digit'
+		hour: '2-digit', minute: '2-digit',
+		timeZone: 'Asia/Jakarta'
 	});
 }
 
 export function formatTime(date) {
 	if (!date) return '-';
 	return new Date(date).toLocaleTimeString('id-ID', {
-		hour: '2-digit', minute: '2-digit'
+		hour: '2-digit', minute: '2-digit',
+		timeZone: 'Asia/Jakarta'
 	});
 }
 
@@ -52,7 +55,8 @@ export function generatePatientId(lastId) {
 }
 
 export function generateEncounterId(doctorCode, lastId) {
-	const now = new Date();
+	// Ensure we use Jakarta time for the ID prefix
+	const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 	const prefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${doctorCode}`;
 	if (!lastId || !lastId.startsWith(prefix)) {
 		return prefix + '000001';
@@ -62,7 +66,7 @@ export function generateEncounterId(doctorCode, lastId) {
 }
 
 export function getShiftCountdown(shifts) {
-	const now = new Date();
+	const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 	const dayOfWeek = now.getDay();
 	const currentTime = now.getHours() * 60 + now.getMinutes();
 

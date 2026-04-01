@@ -19,7 +19,7 @@
 	let doctorShifts = [];
 	let refreshInterval;
 	let shiftInterval;
-	let filterDate = new Date().toISOString().split("T")[0];
+	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
 
 	$: todayQueue = encounters.filter((e) =>
 		["Planned", "Arrived"].includes(e.encounter?.status),
@@ -72,7 +72,7 @@
 
 	function calculateAge(birthDate) {
 		if (!birthDate) return "-";
-		const today = new Date();
+		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 		const birth = new Date(birthDate);
 		let age = today.getFullYear() - birth.getFullYear();
 		const m = today.getMonth() - birth.getMonth();
@@ -239,8 +239,8 @@
 					class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2"
 				>
 					Session • {new Date(filterDate).toLocaleDateString(
-						"en-US",
-						{ weekday: "long", day: "numeric", month: "short" },
+						"id-ID",
+						{ weekday: "long", day: "numeric", month: "short", timeZone: "Asia/Jakarta" },
 					)}
 				</p>
 				<h2 class="text-4xl font-bold">

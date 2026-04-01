@@ -9,7 +9,7 @@
 	let encounters = [];
 	let loading = true;
 	let dateFrom = getMonthStart();
-	let dateTo = new Date().toISOString().split("T")[0];
+	let dateTo = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
 
 	// Chart instances
 	let volumeChart = null;
@@ -24,19 +24,20 @@
 	let completionCanvas;
 
 	function getMonthStart() {
-		const d = new Date();
+		const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 	}
 
 	// KPI values
 	$: patientsToday = encounters.filter((e) => {
-		const d = new Date(e.encounter?.created_at).toDateString();
-		return d === new Date().toDateString();
+		const d = new Date(e.encounter?.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+		return d === today;
 	}).length;
 
 	$: patientsThisWeek = encounters.filter((e) => {
 		const d = new Date(e.encounter?.created_at);
-		const now = new Date();
+		const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 		const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 		return d >= weekAgo;
 	}).length;

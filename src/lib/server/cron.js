@@ -7,7 +7,8 @@ import { eq, and, lt } from 'drizzle-orm';
 // - On Hold → Discontinued
 
 export async function runEndOfDayCron() {
-	const today = new Date();
+	// today in Jakarta timezone
+	const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 	today.setHours(0, 0, 0, 0);
 
 	try {
@@ -44,7 +45,7 @@ export async function runEndOfDayCron() {
 // Run cron at startup if enabled
 if (process.env.ENABLE_CRON === 'true') {
 	setInterval(async () => {
-		const now = new Date();
+		const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 		if (now.getHours() === 23 && now.getMinutes() < 5) {
 			await runEndOfDayCron();
 		}

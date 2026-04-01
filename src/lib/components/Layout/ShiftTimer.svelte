@@ -4,7 +4,7 @@
 
 	// Hardcoded fallback for UI demonstration.
 	// In reality, this would be fetched from the database / current session.
-	let shiftEnd = new Date();
+	let shiftEnd = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 	shiftEnd.setHours(17, 0, 0, 0); // Example: 5 PM
 
 	let hours = '00';
@@ -14,7 +14,7 @@
 	let interval;
 
 	function updateTimer() {
-		const now = new Date();
+		const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
 		const diffMs = shiftEnd - now;
 
 		if (diffMs <= 0) {

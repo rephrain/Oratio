@@ -40,9 +40,7 @@ export const terminologyMaster = pgTable('terminology_master', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	system: terminologySystemEnum('system').notNull(),
 	code: varchar('code', { length: 30 }).notNull(),
-	display: text('display').notNull(),
-	version: varchar('version', { length: 20 }),
-	created_at: timestamp('created_at').defaultNow().notNull()
+	display: text('display').notNull()
 }, (table) => ({
 	uniqueSystemCode: unique('uq_terminology_system_code').on(table.system, table.code)
 }));

@@ -451,10 +451,7 @@
 											)}th
 										</span>
 										<br />
-										Keluhan: {row.encounter_reason_display ||
-											row.encounter?.subjective ||
-											row.encounter?.reason_type ||
-											"Menunggu pemeriksaan awal"}
+										Alasan Kunjungan: {row.encounter_reason_display}
 									</p>
 								</div>
 
@@ -684,21 +681,34 @@
 								<span class="text-[11px] text-slate-500"
 									>Gender</span
 								>
-								<span
-									class="text-[11px] font-bold text-slate-800"
-									>{selectedEncounterData.patient?.gender ===
-										"Male" ||
-									selectedEncounterData.patient?.gender ===
-										"L"
-										? "Male"
-										: selectedEncounterData.patient
-													?.gender === "Female" ||
-											  selectedEncounterData.patient
-													?.gender === "P"
-											? "Female"
+								<div class="flex items-center gap-1">
+									{#if selectedEncounterData.patient?.gender === "Male" || selectedEncounterData.patient?.gender === "L"}
+										<span
+											class="material-symbols-outlined text-[14px] text-blue-500"
+											>male</span
+										>
+									{:else if selectedEncounterData.patient?.gender === "Female" || selectedEncounterData.patient?.gender === "P"}
+										<span
+											class="material-symbols-outlined text-[14px] text-pink-500"
+											>female</span
+										>
+									{/if}
+									<span
+										class="text-[11px] font-bold text-slate-800"
+										>{selectedEncounterData.patient
+											?.gender === "Male" ||
+										selectedEncounterData.patient
+											?.gender === "L"
+											? "Male"
 											: selectedEncounterData.patient
-													?.gender || "-"}</span
-								>
+														?.gender === "Female" ||
+												  selectedEncounterData.patient
+														?.gender === "P"
+												? "Female"
+												: selectedEncounterData.patient
+														?.gender || "-"}</span
+									>
+								</div>
 							</div>
 							<div class="flex justify-between items-start">
 								<span class="text-[11px] text-slate-500"
@@ -742,37 +752,78 @@
 							>
 							Medical Background
 						</h4>
-						<div class="grid grid-cols-2 gap-2 mb-4">
+						<div class="grid grid-cols-2 gap-3 mb-4">
+							<!-- Blood Type -->
 							<div
-								class="p-2 bg-slate-50 rounded-lg flex flex-col items-center"
+								class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
 							>
+								<div class="flex flex-col">
+									<span
+										class="text-[10px] text-blue-600 uppercase font-bold"
+									>
+										Blood Type
+									</span>
+
+									<div class="flex items-baseline gap-1">
+										<span
+											class="text-lg font-black text-blue-900"
+										>
+											{selectedEncounterData.patient
+												?.blood_type || "-"}
+										</span>
+										<span
+											class="text-sm font-bold text-blue-700"
+										>
+											{selectedEncounterData.patient
+												?.rhesus === "+"
+												? "+"
+												: selectedEncounterData.patient
+															?.rhesus === "-"
+													? "-"
+													: ""}
+										</span>
+									</div>
+								</div>
+
 								<span
-									class="text-[9px] text-slate-400 uppercase font-bold"
-									>Blood Type</span
+									class="material-symbols-outlined text-blue-400 shrink-0"
 								>
-								<span class="text-sm font-black text-slate-800">
-									{selectedEncounterData.patient
-										?.blood_type ||
-										"-"}{selectedEncounterData.patient
-										?.rhesus === "Positive"
-										? "+"
-										: selectedEncounterData.patient
-													?.rhesus === "Negative"
-											? "-"
-											: ""}
+									bloodtype
 								</span>
 							</div>
+
+							<!-- BP -->
 							<div
-								class="p-2 bg-slate-50 rounded-lg flex flex-col items-center"
+								class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
 							>
+								<!-- KEY: flex-1 instead of min-w-0 + truncate -->
+								<div class="flex flex-col flex-1">
+									<span
+										class="text-[10px] text-blue-600 uppercase font-bold"
+									>
+										BP
+									</span>
+
+									<div class="flex items-baseline gap-1">
+										<span
+											class="text-lg font-black text-blue-900"
+										>
+											{selectedEncounterData.encounter
+												?.tekanan_darah || "-"}
+										</span>
+										<span
+											class="text-[10px] font-bold text-blue-700"
+										>
+											mmHg
+										</span>
+									</div>
+								</div>
+
 								<span
-									class="text-[9px] text-slate-400 uppercase font-bold"
-									>BP</span
+									class="material-symbols-outlined text-blue-400 shrink-0"
 								>
-								<span class="text-sm font-black text-slate-800"
-									>{selectedEncounterData.encounter
-										?.tekanan_darah || "-"}</span
-								>
+									vital_signs
+								</span>
 							</div>
 						</div>
 
@@ -954,9 +1005,7 @@
 												<p
 													class="text-[10px] text-slate-400 mt-0.5"
 												>
-													{hist.encounter
-														?.reason_type ||
-														hist.encounter?.status}
+													{hist.encounter?.status}
 												</p>
 											</div>
 											<span

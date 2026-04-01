@@ -1,14 +1,39 @@
 <script>
     import { goto } from "$app/navigation";
     import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
-    import { ALLERGY_REACTIONS, BLOOD_TYPES } from "$lib/utils/constants.js";
+    import {
+        ALLERGY_REACTIONS,
+        BLOOD_TYPES,
+        COUNTRY_CALLING_CODES,
+    } from "$lib/utils/constants.js";
     import { validatePatientForm } from "$lib/utils/validators.js";
     import { addToast } from "$lib/stores/toast.js";
     import { onMount } from "svelte";
+    import { parsePhoneNumberFromString } from "libphonenumber-js";
+    import {
+        fetchProvinces,
+        fetchRegencies,
+        fetchDistricts,
+        fetchVillages,
+    } from "$lib/api/wilayah.js";
+    import {
+        provinces,
+        regencies,
+        districts,
+        villages,
+        loadingProvince,
+        loadingRegency,
+        loadingDistrict,
+        loadingVillage,
+    } from "$lib/stores/wilayah.js";
+    import { searchPlaces } from "$lib/api/geonames";
 
     let loading = false;
     let errors = {};
     let doctors = [];
+
+    let selectedCountryCode = "+62";
+    let inputPhoneNumber = "";
 
     let form = {
         nik: "",
@@ -42,6 +67,27 @@
     let diseaseHistory = [];
     let allergies = [];
     let medications = [];
+
+    let selectedProvinceCode = "";
+    let selectedRegencyCode = "";
+    let selectedDistrictCode = "";
+
+    let birthplaceSuggestions = [];
+    let showBirthplaceSuggestions = false;
+    let birthplaceDebounce;
+
+    let phoneValid = false;
+
+    $: form.handphone = inputPhoneNumber
+        ? `${selectedCountryCode} ${inputPhoneNumber.replace(/^0+/, "")}`
+        : "";
+
+    $: selectedCountryIsoCode = (() => {
+        const c = COUNTRY_CALLING_CODES.find(
+            (x) => x.dial_code === selectedCountryCode,
+        );
+        return c?.code?.toLowerCase() || "id";
+    })();
 
     // ── Doctors ──────────────────────────────────────────────────────────────
     async function loadDoctors() {
@@ -310,7 +356,132 @@
         }
     }
 
-    onMount(loadDoctors);
+    onMount(async () => {
+        loadDoctors();
+
+        loadingProvince.set(true);
+        try {
+            provinces.set(await fetchProvinces());
+        } finally {
+            loadingProvince.set(false); // ← always runs, even if fetch fails
+        }
+    });
+
+    async function onProvinceChange(e) {
+        selectedProvinceCode = e.target.value;
+        form.province =
+            $provinces.find((p) => p.code === selectedProvinceCode)?.name ?? "";
+        // Reset downstream
+        form.city = "";
+        form.district = "";
+        form.village = "";
+        selectedRegencyCode = "";
+        selectedDistrictCode = "";
+        regencies.set([]);
+        districts.set([]);
+        villages.set([]);
+
+        if (!selectedProvinceCode) return;
+        loadingRegency.set(true);
+        regencies.set(await fetchRegencies(selectedProvinceCode));
+        loadingRegency.set(false);
+
+        if (!selectedProvinceCode) return;
+        loadingRegency.set(true);
+        try {
+            regencies.set(await fetchRegencies(selectedProvinceCode));
+        } finally {
+            loadingRegency.set(false);
+        }
+    }
+
+    async function onRegencyChange(e) {
+        selectedRegencyCode = e.target.value;
+        form.city =
+            $regencies.find((r) => r.code === selectedRegencyCode)?.name ?? "";
+        form.district = "";
+        form.village = "";
+        selectedDistrictCode = "";
+        districts.set([]);
+        villages.set([]);
+
+        if (!selectedRegencyCode) return;
+        loadingDistrict.set(true);
+        districts.set(await fetchDistricts(selectedRegencyCode));
+        loadingDistrict.set(false);
+    }
+
+    async function onDistrictChange(e) {
+        selectedDistrictCode = e.target.value;
+        form.district =
+            $districts.find((d) => d.code === selectedDistrictCode)?.name ?? "";
+        form.village = "";
+        villages.set([]);
+
+        if (!selectedDistrictCode) return;
+        loadingVillage.set(true);
+        villages.set(await fetchVillages(selectedDistrictCode));
+        loadingVillage.set(false);
+    }
+
+    function onVillageChange(e) {
+        form.village =
+            $villages.find((v) => v.code === e.target.value)?.name ?? "";
+    }
+
+    function onBirthplaceInput(e) {
+        const val = e.target.value;
+        form.birthplace = val;
+        clearTimeout(birthplaceDebounce);
+        if (val.length < 2) {
+            birthplaceSuggestions = [];
+            showBirthplaceSuggestions = false;
+            return;
+        }
+        birthplaceDebounce = setTimeout(async () => {
+            birthplaceSuggestions = await searchPlaces(val);
+            showBirthplaceSuggestions = birthplaceSuggestions.length > 0;
+        }, 300);
+    }
+
+    function selectBirthplace(place) {
+        form.birthplace =
+            place.name +
+            (place.adminName1 ? `, ${place.adminName1}` : "") +
+            `, ${place.countryName}`;
+        birthplaceSuggestions = [];
+        showBirthplaceSuggestions = false;
+    }
+
+    function onBirthplaceBlur() {
+        setTimeout(() => {
+            showBirthplaceSuggestions = false;
+        }, 150);
+    }
+
+    function validatePhone() {
+        if (!inputPhoneNumber) {
+            errors.handphone = "Nomor handphone wajib diisi";
+            phoneValid = false;
+            return;
+        }
+        try {
+            const parsed = parsePhoneNumberFromString(
+                selectedCountryCode +
+                    inputPhoneNumber.replace(/[\s\-()+]/g, ""),
+            );
+            if (parsed?.isValid()) {
+                errors.handphone = "";
+                phoneValid = true;
+            } else {
+                errors.handphone = "Nomor handphone tidak valid";
+                phoneValid = false;
+            }
+        } catch {
+            errors.handphone = "Nomor handphone tidak valid";
+            phoneValid = false;
+        }
+    }
 </script>
 
 <svelte:head>
@@ -404,12 +575,46 @@
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Tempat Lahir</label
                     >
-                    <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
-                        placeholder="Kota/Kabupaten"
-                        type="text"
-                        bind:value={form.birthplace}
-                    />
+                    <div class="relative">
+                        <input
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm
+                                focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                            placeholder="Cari Kota/Kabupaten..."
+                            type="text"
+                            value={form.birthplace}
+                            on:input={onBirthplaceInput}
+                            on:blur={onBirthplaceBlur}
+                            autocomplete="off"
+                        />
+
+                        {#if showBirthplaceSuggestions}
+                            <ul
+                                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto py-1"
+                            >
+                                {#each birthplaceSuggestions as place}
+                                    <button
+                                        type="button"
+                                        class="w-full flex flex-col px-3 py-2 text-left hover:bg-slate-50 transition-colors cursor-pointer"
+                                        on:mousedown={() =>
+                                            selectBirthplace(place)}
+                                    >
+                                        <span
+                                            class="text-sm font-medium text-slate-700"
+                                            >{place.name}</span
+                                        >
+                                        <span class="text-xs text-slate-400">
+                                            {[
+                                                place.adminName1,
+                                                place.countryName,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(", ")}
+                                        </span>
+                                    </button>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
                 </div>
                 <div>
                     <label
@@ -500,51 +705,286 @@
                             >{errors.address}</span
                         >{/if}
                 </div>
+                <!-- Provinsi -->
                 <div class="col-span-2">
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Provinsi</label
                     >
-                    <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
-                        placeholder="Cari Provinsi..."
-                        type="text"
-                        bind:value={form.province}
-                    />
+                    <div class="relative">
+                        <select
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
+                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
+                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            on:change={onProvinceChange}
+                            disabled={$loadingProvince}
+                        >
+                            <option value=""
+                                >{$loadingProvince
+                                    ? "Memuat..."
+                                    : "Pilih Provinsi"}</option
+                            >
+                            {#each $provinces as p}
+                                <option
+                                    value={p.code}
+                                    selected={p.name === form.province}
+                                    >{p.name}</option
+                                >
+                            {/each}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
+                        >
+                            {#if $loadingProvince}
+                                <svg
+                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                </svg>
+                            {:else}
+                                <svg
+                                    class="w-3 h-3 text-slate-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            {/if}
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Kota/Kabupaten -->
                 <div class="col-span-2">
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Kota/Kabupaten</label
                     >
-                    <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
-                        placeholder="Cari Kota..."
-                        type="text"
-                        bind:value={form.city}
-                    />
+                    <div class="relative">
+                        <select
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
+                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
+                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            on:change={onRegencyChange}
+                            disabled={!selectedProvinceCode || $loadingRegency}
+                        >
+                            <option value="">
+                                {!selectedProvinceCode
+                                    ? "Pilih Provinsi dulu"
+                                    : $loadingRegency
+                                      ? "Memuat..."
+                                      : "Pilih Kota/Kabupaten"}
+                            </option>
+                            {#each $regencies as r}
+                                <option
+                                    value={r.code}
+                                    selected={r.name === form.city}
+                                    >{r.name}</option
+                                >
+                            {/each}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
+                        >
+                            {#if $loadingRegency}
+                                <svg
+                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                </svg>
+                            {:else}
+                                <svg
+                                    class="w-3 h-3 text-slate-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            {/if}
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Kecamatan -->
                 <div>
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Kecamatan</label
                     >
-                    <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
-                        type="text"
-                        bind:value={form.district}
-                    />
+                    <div class="relative">
+                        <select
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
+                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
+                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            on:change={onDistrictChange}
+                            disabled={!selectedRegencyCode || $loadingDistrict}
+                        >
+                            <option value="">
+                                {!selectedRegencyCode
+                                    ? "Pilih Kota dulu"
+                                    : $loadingDistrict
+                                      ? "Memuat..."
+                                      : "Pilih Kecamatan"}
+                            </option>
+                            {#each $districts as d}
+                                <option
+                                    value={d.code}
+                                    selected={d.name === form.district}
+                                    >{d.name}</option
+                                >
+                            {/each}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
+                        >
+                            {#if $loadingDistrict}
+                                <svg
+                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                </svg>
+                            {:else}
+                                <svg
+                                    class="w-3 h-3 text-slate-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            {/if}
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Kelurahan/Desa -->
                 <div>
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Kelurahan/Desa</label
                     >
-                    <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
-                        type="text"
-                        bind:value={form.village}
-                    />
+                    <div class="relative">
+                        <select
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
+                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
+                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            on:change={onVillageChange}
+                            disabled={!selectedDistrictCode || $loadingVillage}
+                        >
+                            <option value="">
+                                {!selectedDistrictCode
+                                    ? "Pilih Kecamatan dulu"
+                                    : $loadingVillage
+                                      ? "Memuat..."
+                                      : "Pilih Kelurahan/Desa"}
+                            </option>
+                            {#each $villages as v}
+                                <option
+                                    value={v.code}
+                                    selected={v.name === form.village}
+                                    >{v.name}</option
+                                >
+                            {/each}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
+                        >
+                            {#if $loadingVillage}
+                                <svg
+                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                </svg>
+                            {:else}
+                                <svg
+                                    class="w-3 h-3 text-slate-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            {/if}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-span-1">
                     <label
@@ -588,26 +1028,114 @@
                     <div>
                         <label
                             class="block text-sm font-semibold text-slate-700 mb-2"
-                            >Nomor Handphone</label
                         >
+                            Nomor Handphone
+                        </label>
                         <div class="flex">
-                            <span
-                                class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-200 bg-slate-100 text-slate-500 text-sm font-medium"
-                                >+62</span
+                            <!-- Country code select with transparent native overlay -->
+                            <div
+                                class="relative flex-shrink-0 w-28 bg-slate-50 hover:bg-slate-100 transition-colors border border-r-0 rounded-l-lg flex items-center px-3 {errors.handphone
+                                    ? 'border-red-400'
+                                    : 'border-slate-200'} focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary overflow-hidden"
                             >
+                                <!-- Visual Display -->
+                                <span
+                                    class="text-base leading-none mr-2 flex items-center"
+                                >
+                                    <span class="fi fi-{selectedCountryIsoCode}"
+                                    ></span>
+                                </span>
+                                <span
+                                    class="text-sm font-medium text-slate-700 tabular-nums"
+                                    >{selectedCountryCode}</span
+                                >
+
+                                <!-- Custom chevron -->
+                                <svg
+                                    class="w-3 h-3 text-slate-400 ml-auto"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+
+                                <!-- Invisible Select (Handles click & dropdown correctly) -->
+                                <select
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none outline-none"
+                                    bind:value={selectedCountryCode}
+                                    on:change={validatePhone}
+                                >
+                                    {#each COUNTRY_CALLING_CODES as country}
+                                        <option
+                                            value={country.dial_code}
+                                            title={country.name}
+                                        >
+                                            {country.name}
+                                            {country.dial_code}
+                                        </option>
+                                    {/each}
+                                </select>
+                            </div>
+
+                            <!-- Phone number input -->
                             <input
-                                class="flex-1 rounded-r-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.handphone
-                                    ? 'border-red-500 ring-red-500'
-                                    : ''}"
+                                class="flex-1 rounded-r-lg border px-3 py-2 text-sm
+                                    bg-slate-50 text-slate-800 placeholder:text-slate-400
+                                    focus:outline-none focus:ring-2 transition-all
+                                    {errors.handphone
+                                    ? 'border-red-400 focus:ring-red-200 focus:border-red-400'
+                                    : 'border-slate-200 focus:ring-primary/30 focus:border-primary'}"
                                 placeholder="812-xxxx-xxxx"
                                 type="text"
-                                bind:value={form.handphone}
+                                bind:value={inputPhoneNumber}
+                                on:input={validatePhone}
+                                on:blur={validatePhone}
                             />
                         </div>
-                        {#if errors.handphone}<span
-                                class="text-xs text-red-500 mt-1 block"
-                                >{errors.handphone}</span
-                            >{/if}
+
+                        <!-- Error state -->
+                        {#if errors.handphone}
+                            <span
+                                class="flex items-center gap-1 text-xs text-red-500 mt-1.5"
+                            >
+                                <svg
+                                    class="w-3.5 h-3.5 shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                                {errors.handphone}
+                            </span>
+                            <!-- Valid state -->
+                        {:else if phoneValid}
+                            <span
+                                class="flex items-center gap-1 text-xs text-emerald-600 mt-1.5"
+                            >
+                                <svg
+                                    class="w-3.5 h-3.5 shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                                Nomor valid
+                            </span>
+                        {/if}
                     </div>
                     <div>
                         <label

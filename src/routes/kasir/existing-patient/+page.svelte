@@ -10,8 +10,9 @@
 	
 	// Form state
 	let doctorId = "";
-	let chiefComplaint = "";
-	let serviceType = "reg";
+	let reasonType = "finding";
+	let chiefComplaintCode = "";
+	let chiefComplaintDisplay = "";
 
 	async function loadDoctors() {
 		const today = new Date().getDay();
@@ -40,7 +41,9 @@
 	function clearSelection() {
 		selectedPatient = null;
 		doctorId = "";
-		chiefComplaint = "";
+		reasonType = "finding";
+		chiefComplaintCode = "";
+		chiefComplaintDisplay = "";
 	}
 
 	async function handleSubmit() {
@@ -57,7 +60,9 @@
 				body: JSON.stringify({
 					patient_id: selectedPatient.id,
 					doctor_id: doctorId,
-					referral_source: chiefComplaint || null, 
+					reason_type: reasonType || "finding",
+					chief_complaint_code: chiefComplaintCode,
+					chief_complaint_display: chiefComplaintDisplay,
 				}),
 			});
 
@@ -78,6 +83,18 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function searchComplaint(term) {
+		const res = await fetch(
+			`/api/snowstorm?filter=${encodeURIComponent(term)}&type=reason_${reasonType}`,
+		);
+		const data = await res.json();
+		return (data.results || []).map((r) => ({
+			value: r.code,
+			label: r.display,
+			meta: { display: r.display, system: r.system ?? "SNOMED" },
+		}));
 	}
 
 	onMount(loadDoctors);
@@ -166,58 +183,66 @@
 				</h3>
 				
 				<div class="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 space-y-6">
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 						<!-- Doctor Selection -->
-						<div class="space-y-2">
-							<label for="doctor" class="text-sm font-semibold text-slate-700">Pilih Dokter <span class="text-red-500">*</span></label>
+						<div>
+							<label for="doctor" class="block text-sm font-semibold text-slate-700 mb-2">Pilih Dokter <span class="text-red-500">*</span></label>
 							<div class="relative">
 								<select 
 									id="doctor"
-									class="w-full py-3 pl-4 pr-10 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/10 appearance-none bg-slate-50 text-sm font-medium cursor-pointer"
+									class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all appearance-none cursor-pointer"
 									bind:value={doctorId}
 									required
 								>
-									<option value="" disabled selected>-- Pilih Dokter & Jadwal --</option>
+									<option value="" disabled selected>-- Pilih Dokter --</option>
 									{#each doctors as doc}
 										<option value={doc.id}>drg. {doc.name} (Available)</option>
 									{/each}
 								</select>
-								<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-									<span class="material-symbols-outlined text-slate-400">expand_more</span>
-								</div>
+								<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">stethoscope</span>
+								<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+							</div>
+							<div class="mt-2 flex items-center gap-1.5">
+								<div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+								<p class="text-[11px] font-bold text-emerald-600 uppercase tracking-tight">
+									{doctors.length} Doctors available for walk-in
+								</p>
 							</div>
 						</div>
 
-						<!-- Appointment Type -->
-						<div class="space-y-2">
-							<label for="service" class="text-sm font-semibold text-slate-700">Layanan</label>
-							<div class="relative">
-								<select 
-									id="service"
-									class="w-full py-3 pl-4 pr-10 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/10 appearance-none bg-slate-50 text-sm font-medium cursor-pointer"
-									bind:value={serviceType}
-								>
-									<option value="reg">Pemeriksaan Umum / Konsultasi</option>
-									<option value="per">Tindakan Periodonsia</option>
-									<option value="ortho">Tindakan Orthodonti (Behel)</option>
-								</select>
-								<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-									<span class="material-symbols-outlined text-slate-400">medical_services</span>
+						<!-- Alasan Kunjungan -->
+						<div>
+							<label class="block text-sm font-semibold text-slate-700 mb-2">Alasan Kunjungan</label>
+							<div class="flex flex-col gap-3">
+								<div class="relative">
+									<select 
+										class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all text-sm appearance-none cursor-pointer"
+										bind:value={reasonType}
+										on:change={() => {
+											chiefComplaintCode = "";
+											chiefComplaintDisplay = "";
+										}}
+									>
+										<option value="finding">Finding (Clinical Finding)</option>
+										<option value="procedure">Procedure</option>
+										<option value="situation">Situation</option>
+										<option value="event">Event</option>
+									</select>
+									<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+								</div>
+								
+								<div class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-3 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary">
+									<SearchableSelect
+										placeholder="Cari keluhan (SNOMED)..."
+										searchFn={searchComplaint}
+										bind:value={chiefComplaintCode}
+										on:select={(e) => {
+											chiefComplaintDisplay = e.detail.label;
+										}}
+									/>
 								</div>
 							</div>
 						</div>
-					</div>
-
-					<!-- Main Complaint -->
-					<div class="space-y-2">
-						<label for="complaint" class="text-sm font-semibold text-slate-700">Keluhan Utama</label>
-						<textarea 
-							id="complaint"
-							class="w-full p-4 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/10 bg-slate-50 text-sm placeholder:text-slate-400 resize-none" 
-							placeholder="Tuliskan keluhan pasien atau alasan kunjungan secara detail..." 
-							rows="4"
-							bind:value={chiefComplaint}
-						></textarea>
 					</div>
 
 					<div class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/10 rounded-xl">

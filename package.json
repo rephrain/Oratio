@@ -22,7 +22,9 @@
     "argon2": "^0.44.0",
     "chart.js": "^4.4.0",
     "drizzle-orm": "^0.45.1",
+    "flag-icons": "^7.5.0",
     "jose": "^5.2.0",
+    "libphonenumber-js": "^1.12.41",
     "papaparse": "^5.4.0",
     "pdfmake": "^0.2.0",
     "postgres": "^3.4.0"

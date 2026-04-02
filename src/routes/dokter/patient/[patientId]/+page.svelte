@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import { onMount } from "svelte";
 	import DataTable from "$lib/components/Tables/DataTable.svelte";
-	import { formatDate, formatCurrency } from "$lib/utils/formatters.js";
+	import { formatDate, formatCurrency, getWhatsAppUrl } from "$lib/utils/formatters.js";
 	import { STATUS_COLORS } from "$lib/utils/constants.js";
 
 	const patientId = $page.params.patientId;
@@ -103,11 +103,36 @@
 				</div>
 				<div>
 					<span class="text-sm text-muted">Telepon</span>
-					<p>{patient.handphone || "-"}</p>
+					<p>
+						{#if patient.handphone}
+							<a
+								href={getWhatsAppUrl(patient.handphone)}
+								target="_blank"
+								style="color: #10b981; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
+							>
+								<span class="material-symbols-outlined" style="font-size: 16px;">chat</span>
+								{patient.handphone}
+							</a>
+						{:else}
+							-
+						{/if}
+					</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Email</span>
-					<p>{patient.email || "-"}</p>
+					<p>
+						{#if patient.email}
+							<a
+								href="mailto:{patient.email}"
+								style="color: var(--primary, #10b981); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
+							>
+								<span class="material-symbols-outlined" style="font-size: 16px;">mail</span>
+								{patient.email}
+							</a>
+						{:else}
+							-
+						{/if}
+					</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Alamat</span>

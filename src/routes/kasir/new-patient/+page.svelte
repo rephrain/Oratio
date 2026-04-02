@@ -154,6 +154,7 @@
     let medicationSearchResults = [];
     let medicationSearchLoading = false;
     let medicationSearchIndex = -1; // which medication row triggered the search
+    let medicationMerkType = "known"; // 'known' or 'unknown'
 
     async function triggerMedicationSearch(i) {
         const term = medicationSearchTerm.trim();
@@ -162,7 +163,7 @@
         medicationSearchIndex = i;
         try {
             const res = await fetch(
-                `/api/kfa?query=${encodeURIComponent(term)}`,
+                `/api/kfa?query=${encodeURIComponent(term)}&merkType=${medicationMerkType}`,
             );
             const data = await res.json();
             medicationSearchResults = (data.results || []).map((r) => ({
@@ -1552,38 +1553,65 @@
                                 >
                             </div>
                         {:else}
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input
-                                    class="flex-1 h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
-                                    placeholder="Ketik nama obat..."
-                                    bind:value={medicationSearchTerm}
-                                    on:keydown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            triggerMedicationSearch(i);
-                                        }
-                                    }}
-                                />
-                                <button
-                                    type="button"
-                                    class="h-11 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-1 shrink-0 disabled:opacity-50"
-                                    disabled={medicationSearchLoading}
-                                    on:click={() => triggerMedicationSearch(i)}
+                            <div class="flex flex-col gap-3">
+                                <div
+                                    class="flex p-1 bg-slate-100 rounded-lg w-fit"
                                 >
-                                    {#if medicationSearchLoading && medicationSearchIndex === i}
-                                        <span
-                                            class="material-symbols-outlined text-sm animate-spin"
-                                            style="animation: spin 1s linear infinite;"
-                                            >refresh</span
-                                        >
-                                    {:else}
-                                        <span
-                                            class="material-symbols-outlined text-sm"
-                                            >search</span
-                                        >
-                                    {/if}
-                                    Cari KFA
-                                </button>
+                                    <button
+                                        type="button"
+                                        class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {medicationMerkType ===
+                                        'known'
+                                            ? 'bg-white text-primary shadow-sm'
+                                            : 'text-slate-500'}"
+                                        on:click={() =>
+                                            (medicationMerkType = "known")}
+                                        >MERK KNOWN</button
+                                    >
+                                    <button
+                                        type="button"
+                                        class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {medicationMerkType ===
+                                        'unknown'
+                                            ? 'bg-white text-primary shadow-sm'
+                                            : 'text-slate-500'}"
+                                        on:click={() =>
+                                            (medicationMerkType = "unknown")}
+                                        >MERK UNKNOWN</button
+                                    >
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input
+                                        class="flex-1 h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                        placeholder="Ketik nama obat..."
+                                        bind:value={medicationSearchTerm}
+                                        on:keydown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                triggerMedicationSearch(i);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        class="h-11 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-1 shrink-0 disabled:opacity-50"
+                                        disabled={medicationSearchLoading}
+                                        on:click={() =>
+                                            triggerMedicationSearch(i)}
+                                    >
+                                        {#if medicationSearchLoading && medicationSearchIndex === i}
+                                            <span
+                                                class="material-symbols-outlined text-sm animate-spin"
+                                                style="animation: spin 1s linear infinite;"
+                                                >refresh</span
+                                            >
+                                        {:else}
+                                            <span
+                                                class="material-symbols-outlined text-sm"
+                                                >search</span
+                                            >
+                                        {/if}
+                                        Cari KFA
+                                    </button>
+                                </div>
                             </div>
                             {#if medicationSearchIndex === i && medicationSearchResults.length > 0}
                                 <div

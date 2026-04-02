@@ -11,7 +11,8 @@ export async function GET({ url }) {
 	}
 
 	try {
-		const results = await searchKFA(query, page, size);
+		const merkType = url.searchParams.get('merkType');
+		const results = await searchKFA(query, page, size, merkType);
 		return json({ results });
 	} catch (error) {
 		console.error('KFA search error:', error);

@@ -208,8 +208,8 @@
 		});
 	}
 
-	async function searchMedication(term) {
-		const res = await fetch(`/api/kfa?query=${encodeURIComponent(term)}`);
+	async function searchMedication(term, merkType = 'known') {
+		const res = await fetch(`/api/kfa?query=${encodeURIComponent(term)}&merkType=${merkType}`);
 		const data = await res.json();
 		return (data.results || []).map((r) => ({
 			value: r.code,
@@ -227,6 +227,7 @@
 				dosage: "",
 				quantity: 1,
 				notes: "",
+				merk_type: "known",
 			},
 		];
 	}
@@ -912,38 +913,63 @@
 						>
 					</div>
 					{#each prescriptions as rx, i}
-						<div class="flex gap-3 items-end mt-2">
-							<div class="form-group" style="flex: 1;">
-								<input
-									aria-label="Nama obat"
-									class="form-input"
-									bind:value={rx.product_name}
-									placeholder="Nama obat"
-								/>
+						<div class="p-4 bg-slate-50 border border-slate-100 rounded-lg mt-3">
+							<div class="flex p-1 bg-slate-200/50 rounded-md w-fit mb-3">
+								<button 
+									type="button"
+									class="px-3 py-1 text-[10px] font-bold rounded transition-all {rx.merk_type === 'known' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+									on:click={() => {rx.merk_type = 'known'; prescriptions = [...prescriptions];}}
+								>MERK KNOWN (93)</button>
+								<button 
+									type="button"
+									class="px-3 py-1 text-[10px] font-bold rounded transition-all {rx.merk_type === 'unknown' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+									on:click={() => {rx.merk_type = 'unknown'; prescriptions = [...prescriptions];}}
+								>MERK UNKNOWN (92)</button>
 							</div>
-							<div class="form-group" style="flex: 0 0 120px;">
-								<input
-									aria-label="Dosis"
-									class="form-input"
-									bind:value={rx.dosage}
-									placeholder="Dosis"
-								/>
+
+							<div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+								<div class="md:col-span-6">
+									<SearchableSelect
+										searchFn={(term) => searchMedication(term, rx.merk_type)}
+										placeholder="Cari obat KFA..."
+										on:select={(e) => {
+											rx.kfa_code = e.detail.value;
+											rx.product_name = e.detail.label;
+											prescriptions = [...prescriptions];
+										}}
+									/>
+									{#if rx.product_name}
+										<div class="text-[11px] mt-1 text-primary font-bold">
+											✓ {rx.kfa_code} — {rx.product_name}
+										</div>
+									{/if}
+								</div>
+								<div class="md:col-span-3">
+									<input
+										aria-label="Dosis"
+										class="form-input"
+										bind:value={rx.dosage}
+										placeholder="Dosis (misal: 3x1)"
+									/>
+								</div>
+								<div class="md:col-span-2">
+									<input
+										aria-label="Kuantitas"
+										type="number"
+										class="form-input"
+										bind:value={rx.quantity}
+										placeholder="Qty"
+										min="1"
+									/>
+								</div>
+								<div class="md:col-span-1 flex justify-end">
+									<button
+										type="button"
+										class="btn btn-danger btn-sm btn-icon"
+										on:click={() => removePrescription(i)}>✕</button
+									>
+								</div>
 							</div>
-							<div class="form-group" style="flex: 0 0 80px;">
-								<input
-									aria-label="Kuantitas"
-									type="number"
-									class="form-input"
-									bind:value={rx.quantity}
-									placeholder="Qty"
-									min="1"
-								/>
-							</div>
-							<button
-								type="button"
-								class="btn btn-danger btn-sm btn-icon"
-								on:click={() => removePrescription(i)}>✕</button
-							>
 						</div>
 					{/each}
 				</div>

@@ -1,8 +1,8 @@
-import {
-	SATUSEHAT_CLIENT_ID,
-	SATUSEHAT_CLIENT_SECRET,
-	SATUSEHAT_ENV
-} from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const SATUSEHAT_CLIENT_ID = env.SATUSEHAT_CLIENT_ID;
+const SATUSEHAT_CLIENT_SECRET = env.SATUSEHAT_CLIENT_SECRET;
+const SATUSEHAT_ENV = env.SATUSEHAT_ENV;
 
 // SatuSehat API configuration
 const SATUSEHAT_CONFIG = {
@@ -78,7 +78,7 @@ export async function getToken() {
 /**
  * Search KFA products
  */
-export async function searchKFA(keyword, page = 1, size = 10) {
+export async function searchKFA(keyword, page = 1, size = 10, merkType = null) {
 	const token = await getToken();
 	const config = getConfig();
 
@@ -104,16 +104,45 @@ export async function searchKFA(keyword, page = 1, size = 10) {
 	const data = await res.json();
 	const items = data?.items?.data || [];
 
+	if (merkType === 'unknown') {
+		// Scenario 2: Unknown Brand (Generic) - Extract template info from products
+		const templates = items.map(item => {
+			const template = item.prodct_template || item.product_template;
+			if (!template) return null;
+			return {
+				code: template.kfa_code,
+				display: template.name,
+				product_name: template.name,
+				dosage_form: item.dosage_form?.name || '',
+				kfa_code: template.kfa_code
+			};
+		}).filter(t => t && String(t.kfa_code).startsWith('92'));
+
+		// Deduplicate results by KFA code
+		const seen = new Set();
+		return templates.filter(t => {
+			if (seen.has(t.kfa_code)) return false;
+			seen.add(t.kfa_code);
+			return true;
+		});
+	} else if (merkType === 'known') {
+		// Scenario 1: Known Brand (Branded) - Map root product fields
+		return items.map(item => ({
+			code: item.kfa_code,
+			display: item.name,
+			product_name: item.name,
+			dosage_form: item.dosage_form?.name || '',
+			kfa_code: item.kfa_code
+		})).filter(item => String(item.kfa_code).startsWith('93'));
+	}
+
+	// Default return if no merkType specified
 	return items.map(item => {
-		const isUnknown = item.kfa_code?.startsWith('92');
-
-		const name = isUnknown
-			? item.product_template?.name
-			: item.name;
-
-		const code = isUnknown
-			? item.product_template?.kfa_code
-			: item.kfa_code;
+		const isUnknown = String(item.kfa_code).startsWith('92');
+		const template = item.prodct_template || item.product_template;
+		
+		const name = isUnknown && template ? template.name : item.name;
+		const code = isUnknown && template ? template.kfa_code : item.kfa_code;
 
 		return {
 			code,

@@ -131,3 +131,14 @@ export function truncate(str, len = 50) {
 	if (!str) return '';
 	return str.length > len ? str.substring(0, len) + '...' : str;
 }
+
+export function getWhatsAppUrl(phone) {
+	if (!phone) return '#';
+	// Remove non-numeric characters
+	let cleaned = phone.replace(/\D/g, '');
+	// Standardize to international format (starting with 62 for Indonesia)
+	if (cleaned.startsWith('0')) {
+		cleaned = '62' + cleaned.substring(1);
+	}
+	return `https://wa.me/${cleaned}`;
+}

@@ -8,6 +8,7 @@
 		formatTime,
 		getShiftCountdown,
 		formatDate,
+		getWhatsAppUrl,
 	} from "$lib/utils/formatters.js";
 
 	export let data;
@@ -19,7 +20,11 @@
 	let doctorShifts = [];
 	let refreshInterval;
 	let shiftInterval;
-	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
+	let filterDate = new Date(
+		new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+	)
+		.toISOString()
+		.split("T")[0];
 
 	$: todayQueue = encounters.filter((e) =>
 		["Planned", "Arrived"].includes(e.encounter?.status),
@@ -72,7 +77,9 @@
 
 	function calculateAge(birthDate) {
 		if (!birthDate) return "-";
-		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+		const today = new Date(
+			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+		);
 		const birth = new Date(birthDate);
 		let age = today.getFullYear() - birth.getFullYear();
 		const m = today.getMonth() - birth.getMonth();
@@ -240,7 +247,12 @@
 				>
 					Session • {new Date(filterDate).toLocaleDateString(
 						"id-ID",
-						{ weekday: "long", day: "numeric", month: "short", timeZone: "Asia/Jakarta" },
+						{
+							weekday: "long",
+							day: "numeric",
+							month: "short",
+							timeZone: "Asia/Jakarta",
+						},
 					)}
 				</p>
 				<h2 class="text-4xl font-bold">
@@ -682,12 +694,12 @@
 									>Gender</span
 								>
 								<div class="flex items-center gap-1">
-									{#if selectedEncounterData.patient?.gender === "Male" || selectedEncounterData.patient?.gender === "L"}
+									{#if selectedEncounterData.patient?.gender === "Male" || selectedEncounterData.patient?.gender === "L" || selectedEncounterData.patient?.gender === "male"}
 										<span
 											class="material-symbols-outlined text-[14px] text-blue-500"
 											>male</span
 										>
-									{:else if selectedEncounterData.patient?.gender === "Female" || selectedEncounterData.patient?.gender === "P"}
+									{:else if selectedEncounterData.patient?.gender === "Female" || selectedEncounterData.patient?.gender === "P" || selectedEncounterData.patient?.gender === "female"}
 										<span
 											class="material-symbols-outlined text-[14px] text-pink-500"
 											>female</span
@@ -698,12 +710,16 @@
 										>{selectedEncounterData.patient
 											?.gender === "Male" ||
 										selectedEncounterData.patient
-											?.gender === "L"
+											?.gender === "L" ||
+										selectedEncounterData.patient
+											?.gender === "male"
 											? "Male"
 											: selectedEncounterData.patient
 														?.gender === "Female" ||
 												  selectedEncounterData.patient
-														?.gender === "P"
+														?.gender === "P" ||
+												  selectedEncounterData.patient
+														?.gender === "female"
 												? "Female"
 												: selectedEncounterData.patient
 														?.gender || "-"}</span
@@ -721,22 +737,29 @@
 								>
 							</div>
 							<div class="flex justify-between items-center">
-								<span class="text-[11px] text-slate-500"
-									>Contact</span
-								>
+								<span class="text-[11px] text-slate-500">Contact</span>
 								<div class="text-right">
 									{#if selectedEncounterData.patient?.email}
-										<span
-											class="text-[11px] font-bold text-primary block"
-											>{selectedEncounterData.patient
-												.email}</span
+										<a
+											href="mailto:{selectedEncounterData.patient.email}"
+											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
 										>
+											<span class="material-symbols-outlined text-[14px]">mail</span>
+											{selectedEncounterData.patient.email}
+										</a>
 									{/if}
-									<span
-										class="text-[11px] font-bold text-slate-800"
-										>{selectedEncounterData.patient
-											?.handphone || "-"}</span
-									>
+									{#if selectedEncounterData.patient?.handphone}
+										<a
+											href={getWhatsAppUrl(selectedEncounterData.patient.handphone)}
+											target="_blank"
+											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+										>
+											<span class="material-symbols-outlined text-[14px]">chat</span>
+											{selectedEncounterData.patient.handphone}
+										</a>
+									{:else}
+										<span class="text-[11px] font-bold text-slate-800">-</span>
+									{/if}
 								</div>
 							</div>
 						</div>
@@ -855,7 +878,7 @@
 												{allergy.substance ||
 													allergy.reaction_display ||
 													"Unknown"}
-												{#if allergy.reaction}- {allergy.reaction}{/if}
+												{#if allergy.reaction_display}- {allergy.reaction_display}{/if}
 											</p>
 										</div>
 									</div>

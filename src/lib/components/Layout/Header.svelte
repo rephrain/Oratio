@@ -8,7 +8,7 @@
 	let showProfileMenu = false;
 </script>
 
-<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 w-full" style="position: sticky; top: 0; z-index: 40;">
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 w-full" style="position: sticky; top: 0; z-index: 50;">
 	<div class="flex-1 max-w-xl">
 		<div class="relative group">
 			<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
@@ -47,7 +47,7 @@
 			</button>
 
 			{#if showProfileMenu}
-				<div class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50 origin-top-right transition-all">
+				<div class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-[60] origin-top-right transition-all">
 					<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors">
 						<span class="material-symbols-outlined text-[20px] text-slate-400">account_circle</span>
 						<span class="font-medium text-sm">My Profile</span>

@@ -17,6 +17,46 @@
 	let patientMedicalBackground = null;
 	let loadingMedical = false;
 
+	$: personalDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "personal",
+		) || [];
+	$: familyDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "family",
+		) || [];
+
+	const REASON_THEMES = {
+		finding: {
+			bg: "bg-blue-50/50",
+			border: "border-blue-100",
+			text: "text-blue-700",
+			icon: "search",
+			label: "Finding / Symptom",
+		},
+		procedure: {
+			bg: "bg-emerald-50/50",
+			border: "border-emerald-100",
+			text: "text-emerald-700",
+			icon: "medical_services",
+			label: "Procedure / Treatment",
+		},
+		situation: {
+			bg: "bg-amber-50/50",
+			border: "border-amber-100",
+			text: "text-amber-700",
+			icon: "check_circle",
+			label: "General Situation",
+		},
+		event: {
+			bg: "bg-rose-50/50",
+			border: "border-rose-100",
+			text: "text-rose-700",
+			icon: "notification_important",
+			label: "Accident / Event",
+		},
+	};
+
 	function calculateAge(birthDate) {
 		if (!birthDate) return "-";
 		const today = new Date(
@@ -314,21 +354,32 @@
 											href="mailto:{selectedPatient.email}"
 											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
 										>
-											<span class="material-symbols-outlined text-[14px]">mail</span>
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>mail</span
+											>
 											{selectedPatient.email}
 										</a>
 									{/if}
 									{#if selectedPatient.handphone}
 										<a
-											href={getWhatsAppUrl(selectedPatient.handphone)}
+											href={getWhatsAppUrl(
+												selectedPatient.handphone,
+											)}
 											target="_blank"
 											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
 										>
-											<span class="material-symbols-outlined text-[14px]">chat</span>
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>chat</span
+											>
 											{selectedPatient.handphone}
 										</a>
 									{:else}
-										<span class="text-[11px] font-bold text-slate-800">-</span>
+										<span
+											class="text-[11px] font-bold text-slate-800"
+											>-</span
+										>
 									{/if}
 								</div>
 							</div>
@@ -420,74 +471,161 @@
 								>
 							</div>
 						{:else if patientMedicalBackground}
-							<!-- Allergy Alerts -->
-							{#if patientMedicalBackground.allergies?.length > 0}
-								{#each patientMedicalBackground.allergies as allergy}
-									<div
-										class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-3 mb-4"
+							<!-- Allergy Section -->
+							<div
+								class="mt-8 border-t border-slate-100 pt-8 mb-8"
+							>
+								<h3
+									class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+								>
+									<span
+										class="material-symbols-outlined text-sm"
+										>medical_services</span
 									>
-										<span
-											class="material-symbols-outlined text-red-500 text-xl"
-											style="font-variation-settings: 'FILL' 1;"
-											>warning</span
-										>
-										<div>
-											<p
-												class="text-[10px] font-black text-red-700 uppercase"
-											>
-												Allergy Alert
-											</p>
-											<p
-												class="text-xs font-bold text-red-900 leading-tight"
-											>
-												{allergy.substance ||
-													allergy.reaction_display ||
-													"Unknown"}
-												{#if allergy.reaction_display}- {allergy.reaction_display}{/if}
-											</p>
-										</div>
-									</div>
-								{/each}
-							{/if}
+									Medical Background
+								</h3>
 
-							<div class="space-y-6">
-								<div class="space-y-2">
+								<p
+									class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
+								>
+									Allergies
+								</p>
+								{#if patientMedicalBackground.allergies?.length > 0}
+									<div class="space-y-3">
+										{#each patientMedicalBackground.allergies as allergy}
+											<div
+												class="bg-red-50 border border-red-100 p-3 rounded-xl flex items-start gap-3"
+											>
+												<span
+													class="material-symbols-outlined text-red-500 text-lg"
+													style="font-variation-settings: 'FILL' 1;"
+													>warning</span
+												>
+												<div>
+													<p
+														class="text-xs font-bold text-red-900 leading-tight"
+													>
+														{allergy.substance ||
+															"Unknown Substance"}
+													</p>
+													{#if allergy.reaction_display}
+														<p
+															class="text-[10px] font-medium text-red-700 leading-tight mt-0.5"
+														>
+															{allergy.reaction_display}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									</div>
+								{:else}
 									<p
-										class="text-[10px] text-slate-400 font-bold uppercase mb-2"
+										class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+									>
+										No allergies reported
+									</p>
+								{/if}
+							</div>
+
+							<div class="space-y-8">
+								<!-- Illness (Personal) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
 									>
 										Illness / History
 									</p>
-									{#if patientMedicalBackground.diseases?.length > 0}
-										{#each patientMedicalBackground.diseases as disease}
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-orange-400"
+										></span>
+										Illness (Personal)
+									</p>
+									{#if personalDiseases.length > 0}
+										{#each personalDiseases as disease}
 											<div
 												class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100"
 											>
 												<div
-													class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
+													class="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
 												>
 													<span
-														class="material-symbols-outlined text-[16px]"
-														>medical_information</span
+														class="material-symbols-outlined text-[14px]"
+														>person</span
 													>
 												</div>
 												<div>
 													<p
-														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
+														class="text-xs font-bold text-slate-800 leading-tight"
 													>
 														{disease.disease ||
 															"Condition"}
 													</p>
-													<p
-														class="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none"
-													>
-														{disease.type}
-													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
 												</div>
 											</div>
 										{/each}
 									{:else}
 										<p
-											class="text-[11px] font-medium text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200 text-center"
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+
+								<!-- Illness (Family) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-purple-400"
+										></span>
+										Illness (Family)
+									</p>
+									{#if familyDiseases.length > 0}
+										{#each familyDiseases as disease}
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-purple-50/50 border border-purple-100"
+											>
+												<div
+													class="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[14px]"
+														>family_history</span
+													>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight"
+													>
+														{disease.disease ||
+															"Condition"}
+													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
 										>
 											None reported
 										</p>

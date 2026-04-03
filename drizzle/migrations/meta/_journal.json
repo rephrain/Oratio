@@ -8,6 +8,13 @@
       "when": 1775093867353,
       "tag": "0000_tearful_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775196102254,
+      "tag": "0001_faulty_hairball",
+      "breakpoints": true
     }
   ]
 }

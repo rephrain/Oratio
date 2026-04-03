@@ -30,14 +30,20 @@
 		}
 
 		statusMsg = 'Shift Ends In';
-		// Calculate precise H:M:S from endTime
-		const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-		const [endH, endM] = result.endTime.split(':').map(Number);
-		const end = new Date(now);
-		end.setHours(endH, endM, 0, 0);
-
-		const diffMs = end - now;
-		if (diffMs <= 0) {
+		
+		// Get current time in Jakarta more robustly
+		const nowStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour12: false });
+		// Format: "MM/DD/YYYY, HH:mm:ss" or "YYYY-MM-DD, HH:mm:ss"
+		const timePart = nowStr.split(', ')[1];
+		const [nowH, nowM, nowS] = timePart.split(':').map(Number);
+		
+		const [endH, endM, endS = 0] = result.endTime.split(':').map(Number);
+		
+		let diffSeconds = (endH * 3600 + endM * 60 + endS) - (nowH * 3600 + nowM * 60 + nowS);
+		
+		if (diffSeconds < 0) {
+			// Handle midnight wrap if needed, though clinics usually don't have this
+			// But for now, if it's negative, we assume the shift ended
 			hours = '00';
 			mins = '00';
 			secs = '00';
@@ -45,18 +51,17 @@
 			return;
 		}
 
-		const totalSeconds = Math.floor(diffMs / 1000);
-		const h = Math.floor(totalSeconds / 3600);
-		const m = Math.floor((totalSeconds % 3600) / 60);
-		const s = totalSeconds % 60;
+		const h = Math.floor(diffSeconds / 3600);
+		const m = Math.floor((diffSeconds % 3600) / 60);
+		const s = diffSeconds % 60;
 
 		hours = h.toString().padStart(2, '0');
 		mins = m.toString().padStart(2, '0');
 		secs = s.toString().padStart(2, '0');
 
-		if (totalSeconds < 600) {
+		if (diffSeconds < 600) {
 			timerClass = 'text-red-400 font-bold';
-		} else if (totalSeconds < 1800) {
+		} else if (diffSeconds < 1800) {
 			timerClass = 'text-yellow-400';
 		} else {
 			timerClass = 'text-white';

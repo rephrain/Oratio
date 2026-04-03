@@ -66,9 +66,14 @@ export function generateEncounterId(doctorCode, lastId) {
 }
 
 export function getShiftCountdown(shifts) {
-	const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-	const dayOfWeek = now.getDay();
-	const currentTime = now.getHours() * 60 + now.getMinutes();
+	// Get current time in Jakarta more robustly
+	const nowStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour12: false });
+	const [datePart, timePart] = nowStr.split(', ');
+	const [nowH, nowM] = timePart.split(':').map(Number);
+	const currentTimeInMinutes = nowH * 60 + nowM;
+	
+	// getDay() is tricky with the toLocaleString hack, let's use a safer way
+	const dayOfWeek = new Date(datePart).getDay();
 
 	const todayShifts = shifts
 		.filter(s => s.day_of_week === dayOfWeek)
@@ -80,8 +85,8 @@ export function getShiftCountdown(shifts) {
 		const startMin = startH * 60 + startM;
 		const endMin = endH * 60 + endM;
 
-		if (currentTime >= startMin && currentTime < endMin) {
-			const remaining = endMin - currentTime;
+		if (currentTimeInMinutes >= startMin && currentTimeInMinutes < endMin) {
+			const remaining = endMin - currentTimeInMinutes;
 			const hours = Math.floor(remaining / 60);
 			const mins = remaining % 60;
 			return {
@@ -104,7 +109,7 @@ export function getShiftCountdown(shifts) {
 		const [startH, startM] = shift.start_time.split(':').map(Number);
 		const startMin = startH * 60 + startM;
 
-		if (shift.day_of_week > dayOfWeek || (shift.day_of_week === dayOfWeek && startMin > currentTime)) {
+		if (shift.day_of_week > dayOfWeek || (shift.day_of_week === dayOfWeek && startMin > currentTimeInMinutes)) {
 			const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 			return {
 				active: false,

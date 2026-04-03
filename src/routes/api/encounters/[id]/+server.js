@@ -5,7 +5,7 @@ import {
 	encounterPrescriptions,
 	encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
@@ -15,6 +15,9 @@ export async function GET({ params }) {
 		patient_nik: patients.nik,
 		patient_birth_date: patients.birth_date,
 		patient_gender: patients.gender,
+		patient_handphone: patients.handphone,
+		patient_address: patients.address,
+		patient_email: patients.email,
 		patient_blood_type: patients.blood_type,
 		patient_rhesus: patients.rhesus,
 		patient_pregnancy_status: patients.pregnancy_status,
@@ -115,10 +118,13 @@ export async function PUT({ params, request }) {
 			'Completed': 'Finished'
 		};
 
-		// End all open status_history entries
+		// End only open status_history entries (end_at IS NULL)
 		await db.update(statusHistory)
 			.set({ end_at: new Date() })
-			.where(eq(statusHistory.encounter_id, params.id));
+			.where(and(
+				eq(statusHistory.encounter_id, params.id),
+				sql`${statusHistory.end_at} IS NULL`
+			));
 
 		// Start new status history if applicable
 		const historyStatus = statusMap[body.status];
@@ -137,6 +143,21 @@ export async function PUT({ params, request }) {
 		.set(updateData)
 		.where(eq(encounters.id, params.id))
 		.returning();
+
+	// Update patient BP if provided
+	if (body.tekanan_darah !== undefined) {
+		const [enc] = await db.select({ patient_id: encounters.patient_id })
+			.from(encounters)
+			.where(eq(encounters.id, params.id))
+			.limit(1);
+		
+		if (enc?.patient_id) {
+			await db.update(patients)
+				.set({ tekanan_darah: body.tekanan_darah })
+				.where(eq(patients.id, enc.patient_id));
+		}
+	}
+
 	// Upsert prescriptions
 	if (body.prescriptions) {
 		await db.delete(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));

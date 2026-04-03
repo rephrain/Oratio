@@ -122,7 +122,7 @@
 			objective = data.encounter?.objective || "";
 			assessment = data.encounter?.assessment || "";
 			plan = data.encounter?.plan || "";
-			tekananDarah = data.encounter?.tekanan_darah || "";
+			tekananDarah = data.patient_tekanan_darah || "";
 			prescriptions = data.prescriptions || [];
 
 			if (data.odontograms?.length > 0) {

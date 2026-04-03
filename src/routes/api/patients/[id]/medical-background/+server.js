@@ -31,7 +31,6 @@ export async function GET({ params }) {
 
 		const medications = await db.select({
 			id: patientMedication.id,
-			product_name: patientMedication.product_name,
 			dosage_form: patientMedication.dosage_form,
 			dosage: patientMedication.dosage,
 			note: patientMedication.note,

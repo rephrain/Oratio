@@ -41,6 +41,7 @@
 			const res = await fetch(`/api/encounters?date=${filterDate}`);
 			const resp = await res.json();
 			encounters = resp.data || [];
+			loadStats(); // Reload stats whenever encounters reload
 		} catch (err) {
 			console.error(err);
 		} finally {
@@ -51,11 +52,9 @@
 	async function loadShifts() {
 		if (!user?.id) return;
 		try {
-			const res = await fetch(`/api/admin/doctor-shifts?limit=100`);
+			const res = await fetch('/api/auth/shifts');
 			const resp = await res.json();
-			doctorShifts = (resp.data || []).filter(
-				(s) => s.doctor_id === user.id,
-			);
+			doctorShifts = resp.data || [];
 			updateShift();
 		} catch {}
 	}
@@ -66,10 +65,67 @@
 
 	let selectedEncounterData = null;
 	let patientMedicalBackground = null;
+	$: personalDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "personal",
+		) || [];
+	$: familyDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "family",
+		) || [];
+
+	const REASON_THEMES = {
+		finding: {
+			bg: "bg-blue-50/50",
+			border: "border-blue-100",
+			text: "text-blue-700",
+			icon: "search",
+			label: "Finding / Symptom",
+		},
+		procedure: {
+			bg: "bg-emerald-50/50",
+			border: "border-emerald-100",
+			text: "text-emerald-700",
+			icon: "medical_services",
+			label: "Procedure / Treatment",
+		},
+		situation: {
+			bg: "bg-amber-50/50",
+			border: "border-amber-100",
+			text: "text-amber-700",
+			icon: "check_circle",
+			label: "General Situation",
+		},
+		event: {
+			bg: "bg-rose-50/50",
+			border: "border-rose-100",
+			text: "text-rose-700",
+			icon: "notification_important",
+			label: "Accident / Event",
+		},
+	};
 	let patientHistory = [];
 	let loadingMedical = false;
 	let expandedHistoryId = null;
 	let isSidebarOpen = true;
+
+	let stats = {
+		patientsToday: 0,
+		completedToday: 0,
+		avgWaitMinutes: 0,
+	};
+
+	async function loadStats() {
+		try {
+			const res = await fetch(`/api/dashboard/dokter/stats?date=${filterDate}`);
+			const resp = await res.json();
+			if (!resp.error) {
+				stats = resp;
+			}
+		} catch (err) {
+			console.error("Error loading stats:", err);
+		}
+	}
 
 	function toggleHistory(id) {
 		expandedHistoryId = expandedHistoryId === id ? null : id;
@@ -90,6 +146,10 @@
 	}
 
 	async function selectEncounter(row) {
+		if (selectedEncounterData?.encounter?.id === row?.encounter?.id) {
+			isSidebarOpen = !isSidebarOpen;
+			return;
+		}
 		selectedEncounterData = row;
 		patientMedicalBackground = null;
 		patientHistory = [];
@@ -212,6 +272,31 @@
 		);
 	})();
 
+	function changeDate(offset) {
+		const d = new Date(filterDate + 'T00:00:00');
+		d.setDate(d.getDate() + offset);
+		filterDate = d.toISOString().split('T')[0];
+		loading = true;
+		loadEncounters();
+	}
+
+	function goToToday() {
+		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split('T')[0];
+		if (filterDate !== today) {
+			filterDate = today;
+			loading = true;
+			loadEncounters();
+		}
+	}
+
+	function onDateInput(e) {
+		filterDate = e.target.value;
+		loading = true;
+		loadEncounters();
+	}
+
+	$: isToday = filterDate === new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split('T')[0];
+
 	onMount(() => {
 		loadEncounters();
 		loadShifts();
@@ -313,6 +398,123 @@
 			<div
 				class="absolute -left-16 -top-16 w-48 h-48 bg-blue-400/10 rounded-full blur-2xl"
 			></div>
+		</div>
+
+		<!-- Date Filter -->
+		<div class="flex items-center justify-between mb-6">
+			<div class="flex items-center gap-3">
+				<button
+					on:click={() => changeDate(-1)}
+					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+				>
+					<span class="material-symbols-outlined text-lg">chevron_left</span>
+				</button>
+				<div class="relative">
+					<input
+						type="date"
+						value={filterDate}
+						on:input={onDateInput}
+						class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+					/>
+				</div>
+				<button
+					on:click={() => changeDate(1)}
+					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+				>
+					<span class="material-symbols-outlined text-lg">chevron_right</span>
+				</button>
+				{#if !isToday}
+					<button
+						on:click={goToToday}
+						class="ml-1 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-all"
+					>
+						Today
+					</button>
+				{/if}
+			</div>
+			<p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+				{new Date(filterDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+			</p>
+		</div>
+
+		<!-- Queue Stats Overview -->
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+			<!-- Patients Today Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Patients Today
+					</p>
+					<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						{stats.patientsToday || 0}
+					</h3>
+				</div>
+				<div
+					class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>patient_list</span
+					>
+				</div>
+			</div>
+
+			<!-- Avg. Wait Time Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Avg. Wait Time
+					</p>
+					<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						{stats.avgWaitMinutes || 0}<span
+							class="text-sm font-bold text-slate-400 ml-1"
+							>m</span
+						>
+					</h3>
+				</div>
+				<div
+					class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>schedule</span
+					>
+				</div>
+			</div>
+
+			<!-- Completed Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Completed
+					</p>
+					<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						{stats.completedToday || 0}<span
+							class="text-sm font-bold text-slate-300 mx-1"
+							>/</span
+						><span class="text-xl text-slate-400"
+							>{stats.patientsToday || 0}</span
+						>
+					</h3>
+				</div>
+				<div
+					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>check_circle</span
+					>
+				</div>
+			</div>
 		</div>
 
 		<!-- 2. Patient Queue Section -->
@@ -595,7 +797,7 @@
 
 	<!-- Right Pinned Sidebar (Patient Context) -->
 	<aside
-		class="fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-slate-200 z-40 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out {isSidebarOpen &&
+		class="fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-slate-200 z-[40] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out {isSidebarOpen &&
 		selectedEncounterData
 			? 'translate-x-0'
 			: 'translate-x-full'}"
@@ -650,7 +852,72 @@
 				</div>
 
 				<!-- Context Sections -->
-				<div class="p-6 flex flex-col gap-8">
+				<div class="p-6 flex flex-col gap-8 pb-32">
+					<!-- Encounter Reason -->
+					{#if selectedEncounterData.encounter?.reason_type || selectedEncounterData.encounter_reason_display}
+						<section>
+							<h4
+								class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+							>
+								<span class="material-symbols-outlined text-sm"
+									>assignment</span
+								>
+								Encounter Reason
+							</h4>
+							<div
+								class="p-4 rounded-2xl border {REASON_THEMES[
+									selectedEncounterData.encounter?.reason_type
+								]?.bg || 'bg-slate-50'} {REASON_THEMES[
+									selectedEncounterData.encounter?.reason_type
+								]?.border || 'border-slate-200'}"
+							>
+								<div class="flex items-center gap-3">
+									<div
+										class="w-8 h-8 rounded-lg flex items-center justify-center {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.bg ||
+											'bg-white'} border {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.border ||
+											'border-slate-200'} {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.text || 'text-slate-600'}"
+									>
+										<span
+											class="material-symbols-outlined text-[18px]"
+											>{REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.icon || "info"}</span
+										>
+									</div>
+									<div>
+										<p
+											class="text-[9px] font-black uppercase tracking-widest {REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.text || 'text-slate-500'}"
+										>
+											{REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.label || "Visit Reason"}
+										</p>
+										<p
+											class="text-xs font-bold text-slate-800 leading-tight"
+										>
+											{selectedEncounterData.encounter_reason_display ||
+												"No detailed reason provided"}
+										</p>
+									</div>
+								</div>
+							</div>
+						</section>
+					{/if}
+
 					<!-- Identification Section -->
 					<section>
 						<h4
@@ -681,11 +948,11 @@
 								<span
 									class="text-[11px] font-bold text-slate-800"
 									>{formatDate(
-										selectedEncounterData.patient
-											?.birth_date,
+										selectedEncounterData.patient_birth_date ||
+											selectedEncounterData.patient?.birth_date,
 									) || "-"} ({calculateAge(
-										selectedEncounterData.patient
-											?.birth_date,
+										selectedEncounterData.patient_birth_date ||
+											selectedEncounterData.patient?.birth_date,
 									)}y)</span
 								>
 							</div>
@@ -699,7 +966,7 @@
 											class="material-symbols-outlined text-[14px] text-blue-500"
 											>male</span
 										>
-									{:else if selectedEncounterData.patient?.gender === "Female" || selectedEncounterData.patient?.gender === "P" || selectedEncounterData.patient?.gender === "female"}
+									{:else if (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "Female" || (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "P" || (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "female"}
 										<span
 											class="material-symbols-outlined text-[14px] text-pink-500"
 											>female</span
@@ -707,21 +974,28 @@
 									{/if}
 									<span
 										class="text-[11px] font-bold text-slate-800"
-										>{selectedEncounterData.patient
-											?.gender === "Male" ||
-										selectedEncounterData.patient
-											?.gender === "L" ||
-										selectedEncounterData.patient
-											?.gender === "male"
+										>{(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient?.gender) ===
+											"Male" ||
+										(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient?.gender) ===
+											"L" ||
+										(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient?.gender) ===
+											"male"
 											? "Male"
-											: selectedEncounterData.patient
-														?.gender === "Female" ||
-												  selectedEncounterData.patient
-														?.gender === "P" ||
-												  selectedEncounterData.patient
-														?.gender === "female"
+											: (selectedEncounterData.patient_gender ||
+													selectedEncounterData.patient
+														?.gender) === "Female" ||
+												  (selectedEncounterData.patient_gender ||
+														selectedEncounterData.patient
+															?.gender) === "P" ||
+												  (selectedEncounterData.patient_gender ||
+														selectedEncounterData.patient
+															?.gender) === "female"
 												? "Female"
-												: selectedEncounterData.patient
+												: selectedEncounterData.patient_gender ||
+												  selectedEncounterData.patient
 														?.gender || "-"}</span
 									>
 								</div>
@@ -731,34 +1005,56 @@
 									>Address</span
 								>
 								<span
-									class="text-[11px] font-bold text-slate-800 text-right w-40 leading-relaxed"
-									>{selectedEncounterData.patient?.address ||
+									class="text-[11px] font-bold text-slate-800 text-right w-30 leading-relaxed"
+									>{selectedEncounterData.patient_address ||
+										selectedEncounterData.patient?.address ||
 										"-"}</span
 								>
 							</div>
 							<div class="flex justify-between items-center">
-								<span class="text-[11px] text-slate-500">Contact</span>
+								<span class="text-[11px] text-slate-500"
+									>Contact</span
+								>
 								<div class="text-right">
-									{#if selectedEncounterData.patient?.email}
+									{#if selectedEncounterData.patient_email || selectedEncounterData.patient?.email}
 										<a
-											href="mailto:{selectedEncounterData.patient.email}"
+											href="mailto:{selectedEncounterData.patient_email ||
+												selectedEncounterData.patient
+													?.email}"
 											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
 										>
-											<span class="material-symbols-outlined text-[14px]">mail</span>
-											{selectedEncounterData.patient.email}
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>mail</span
+											>
+											{selectedEncounterData.patient_email ||
+												selectedEncounterData.patient
+													?.email}
 										</a>
 									{/if}
-									{#if selectedEncounterData.patient?.handphone}
+									{#if selectedEncounterData.patient_handphone || selectedEncounterData.patient?.handphone}
 										<a
-											href={getWhatsAppUrl(selectedEncounterData.patient.handphone)}
+											href={getWhatsAppUrl(
+												selectedEncounterData.patient_handphone ||
+													selectedEncounterData.patient
+														?.handphone,
+											)}
 											target="_blank"
 											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
 										>
-											<span class="material-symbols-outlined text-[14px]">chat</span>
-											{selectedEncounterData.patient.handphone}
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>chat</span
+											>
+											{selectedEncounterData.patient_handphone ||
+												selectedEncounterData.patient
+													?.handphone}
 										</a>
 									{:else}
-										<span class="text-[11px] font-bold text-slate-800">-</span>
+										<span
+											class="text-[11px] font-bold text-slate-800"
+											>-</span
+										>
 									{/if}
 								</div>
 							</div>
@@ -766,15 +1062,18 @@
 					</section>
 
 					<!-- Medical Background -->
-					<section>
-						<h4
-							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
-						>
-							<span class="material-symbols-outlined text-sm"
-								>medical_services</span
+					<section id="aside-medical-background">
+						<header class="flex items-center justify-between mb-4">
+							<h4
+								class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"
 							>
-							Medical Background
-						</h4>
+								<span class="material-symbols-outlined text-sm"
+									>medical_services</span
+								>
+								Medical Background
+							</h4>
+						</header>
+
 						<div class="grid grid-cols-2 gap-3 mb-4">
 							<!-- Blood Type -->
 							<div
@@ -791,17 +1090,14 @@
 										<span
 											class="text-lg font-black text-blue-900"
 										>
-											{selectedEncounterData.patient
-												?.blood_type || "-"}
+											{selectedEncounterData.patient_blood_type || selectedEncounterData.patient?.blood_type || "-"}
 										</span>
 										<span
 											class="text-sm font-bold text-blue-700"
 										>
-											{selectedEncounterData.patient
-												?.rhesus === "+"
+											{(selectedEncounterData.patient_rhesus || selectedEncounterData.patient?.rhesus) === "+"
 												? "+"
-												: selectedEncounterData.patient
-															?.rhesus === "-"
+												: (selectedEncounterData.patient_rhesus || selectedEncounterData.patient?.rhesus) === "-"
 													? "-"
 													: ""}
 										</span>
@@ -819,7 +1115,6 @@
 							<div
 								class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
 							>
-								<!-- KEY: flex-1 instead of min-w-0 + truncate -->
 								<div class="flex flex-col flex-1">
 									<span
 										class="text-[10px] text-blue-600 uppercase font-bold"
@@ -831,8 +1126,7 @@
 										<span
 											class="text-lg font-black text-blue-900"
 										>
-											{selectedEncounterData.encounter
-												?.tekanan_darah || "-"}
+											{selectedEncounterData.patient_tekanan_darah || selectedEncounterData.patient?.tekanan_darah || "-"}
 										</span>
 										<span
 											class="text-[10px] font-bold text-blue-700"
@@ -852,83 +1146,160 @@
 
 						{#if loadingMedical}
 							<div class="py-6 flex justify-center">
-								<div class="spinner spinner-sm"></div>
+								<span
+									class="material-symbols-outlined animate-spin text-primary"
+									>progress_activity</span
+								>
 							</div>
 						{:else if patientMedicalBackground}
-							<!-- Allergy Alerts -->
-							{#if patientMedicalBackground.allergies?.length > 0}
-								{#each patientMedicalBackground.allergies as allergy}
-									<div
-										class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-3 mb-4"
-									>
-										<span
-											class="material-symbols-outlined text-red-500 text-xl"
-											style="font-variation-settings: 'FILL' 1;"
-											>warning</span
-										>
-										<div>
-											<p
-												class="text-[10px] font-black text-red-700 uppercase"
+							<!-- Allergy Section -->
+							<div class="mb-8">
+								<p
+									class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
+								>
+									Allergies
+								</p>
+								{#if patientMedicalBackground.allergies?.length > 0}
+									<div class="space-y-3">
+										{#each patientMedicalBackground.allergies as allergy}
+											<div
+												class="bg-red-50 border border-red-100 p-3 rounded-xl flex items-start gap-3"
 											>
-												Allergy Alert
-											</p>
-											<p
-												class="text-xs font-bold text-red-900 leading-tight"
-											>
-												{allergy.substance ||
-													allergy.reaction_display ||
-													"Unknown"}
-												{#if allergy.reaction_display}- {allergy.reaction_display}{/if}
-											</p>
-										</div>
+												<span
+													class="material-symbols-outlined text-red-500 text-lg"
+													style="font-variation-settings: 'FILL' 1;"
+													>warning</span
+												>
+												<div>
+													<p
+														class="text-xs font-bold text-red-900 leading-tight"
+													>
+														{allergy.substance ||
+															"Unknown Substance"}
+													</p>
+													{#if allergy.reaction_display}
+														<p
+															class="text-[10px] font-medium text-red-700 leading-tight mt-0.5"
+														>
+															{allergy.reaction_display}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
 									</div>
-								{/each}
-							{/if}
-
-							<div class="space-y-6">
-								<div class="space-y-2">
+								{:else}
 									<p
-										class="text-[10px] text-slate-400 font-bold uppercase mb-2"
+										class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+									>
+										No allergies reported
+									</p>
+								{/if}
+							</div>
+
+							<div class="space-y-8">
+								<!-- Illness (Personal) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
 									>
 										Illness / History
 									</p>
-									{#if patientMedicalBackground.diseases?.length > 0}
-										{#each patientMedicalBackground.diseases as disease}
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-orange-400"
+										></span>
+										Illness (Personal)
+									</p>
+									{#if personalDiseases.length > 0}
+										{#each personalDiseases as disease}
 											<div
 												class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100"
 											>
 												<div
-													class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
+													class="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
 												>
 													<span
-														class="material-symbols-outlined text-[16px]"
-														>medical_information</span
+														class="material-symbols-outlined text-[14px]"
+														>person</span
 													>
 												</div>
 												<div>
 													<p
-														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
+														class="text-xs font-bold text-slate-800 leading-tight"
 													>
 														{disease.disease ||
 															"Condition"}
 													</p>
-													<p
-														class="text-[9px] font-black text-orange-500 uppercase tracking-widest leading-none"
-													>
-														{disease.type}
-													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
 												</div>
 											</div>
 										{/each}
 									{:else}
 										<p
-											class="text-[11px] font-medium text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200 text-center"
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
 										>
 											None reported
 										</p>
 									{/if}
 								</div>
 
+								<!-- Illness (Family) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-purple-400"
+										></span>
+										Illness (Family)
+									</p>
+									{#if familyDiseases.length > 0}
+										{#each familyDiseases as disease}
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-purple-50/50 border border-purple-100"
+											>
+												<div
+													class="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[14px]"
+														>family_history</span
+													>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight"
+													>
+														{disease.disease ||
+															"Condition"}
+													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
 								<div class="space-y-2">
 									<p
 										class="text-[10px] text-slate-400 font-bold uppercase mb-2"

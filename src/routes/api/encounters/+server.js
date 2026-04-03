@@ -123,6 +123,13 @@ export async function POST({ request, locals }) {
 		reason_type: body.reason_type || null
 	}).returning();
 
+	// Update patient BP if provided
+	if (body.tekanan_darah) {
+		await db.update(patients)
+			.set({ tekanan_darah: body.tekanan_darah })
+			.where(eq(patients.id, body.patient_id));
+	}
+
 	// Create initial status history
 	await db.insert(statusHistory).values({
 		encounter_id: encId,

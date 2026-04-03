@@ -1,8 +1,11 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { patients, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster } from '$lib/server/db/schema.js';
+import { patients, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster, documents } from '$lib/server/db/schema.js';
 import { eq, and, or, ilike, desc, sql } from 'drizzle-orm';
 import { generatePatientId } from '$lib/utils/formatters.js';
+import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
+import fs from 'fs';
+import path from 'path';
 
 // GET /api/patients - list/search
 export async function GET({ url }) {
@@ -176,6 +179,61 @@ export async function POST({ request, locals }) {
 				note: m.note || null
 			});
 		}
+	}
+
+	// ── Generate Patient Profile PDF & store in documents ────────────────
+	try {
+		// Normalize data for the PDF generator
+		const pdfAllergies = (body.allergies || []).filter(a => a.substance_display).map(a => ({
+			substance: a.substance_display,
+			reaction_display: a.reaction_display || a.reaction_code || null
+		}));
+		const pdfDiseases = (body.disease_history || []).filter(d => d.display).map(d => ({
+			type: d.type || 'personal',
+			disease: d.display,
+			code: d.code || null
+		}));
+		const pdfMedications = (body.medications || []).filter(m => m.product_name || m.display).map(m => ({
+			medication: m.product_name || m.display,
+			dosage_form: m.dosage_form || null,
+			dosage: m.dosage || null,
+			note: m.note || null
+		}));
+
+		const pdfBuffer = await generatePatientProfilePdf({
+			patient,
+			allergies: pdfAllergies,
+			diseases: pdfDiseases,
+			medications: pdfMedications
+		});
+
+		// Save PDF to disk
+		const uploadDir = path.resolve('data', 'uploads', 'patients', newId);
+		fs.mkdirSync(uploadDir, { recursive: true });
+		const fileName = `patient-profile-${newId}.pdf`;
+		const filePath = path.join(uploadDir, fileName);
+		fs.writeFileSync(filePath, pdfBuffer);
+
+		// Insert document record
+		const [doc] = await db.insert(documents).values({
+			patient_id: newId,
+			document_type: 'patient_profile',
+			file_name: fileName,
+			file_path: filePath,
+			mime_type: 'application/pdf',
+			file_size: pdfBuffer.length,
+			uploaded_by: locals?.user?.id || null
+		}).returning();
+
+		// Update patient with profile_document_id
+		await db.update(patients)
+			.set({ profile_document_id: doc.id })
+			.where(eq(patients.id, newId));
+
+		console.log(`[PDF] Patient profile PDF generated: ${filePath}`);
+	} catch (pdfErr) {
+		// Non-blocking: log error but don't fail the patient creation
+		console.error('[PDF] Failed to generate patient profile PDF:', pdfErr);
 	}
 
 	return json({ patient }, { status: 201 });

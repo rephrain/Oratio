@@ -45,10 +45,6 @@
 
 	// Prescriptions
 	let prescriptions = [];
-	// Diagnoses
-	let diagnoses = [];
-	// Procedures
-	let procedures = [];
 	// Referrals
 	let referrals = [];
 	// Odontogram
@@ -128,8 +124,6 @@
 			plan = data.encounter?.plan || "";
 			tekananDarah = data.encounter?.tekanan_darah || "";
 			prescriptions = data.prescriptions || [];
-			diagnoses = data.diagnoses || [];
-			procedures = data.procedures || [];
 
 			if (data.odontograms?.length > 0) {
 				odontogram = {
@@ -394,8 +388,6 @@
 				reason_category: reasonCategory,
 				tekanan_darah: tekananDarah,
 				prescriptions,
-				diagnoses,
-				procedures,
 				referrals,
 				encounter_items: encounterItems,
 			};
@@ -813,94 +805,6 @@
 						{/if}
 					</div>
 				{/if}
-
-				<!-- Diagnoses -->
-				<div class="card mb-6">
-					<div class="card-header">
-						<h3 class="card-title">🏥 Diagnosis (ICD-10)</h3>
-						<button
-							type="button"
-							class="btn btn-secondary btn-sm"
-							on:click={addDiagnosis}>+ Tambah</button
-						>
-					</div>
-					{#each diagnoses as d, i}
-						<div class="flex gap-3 items-end mt-2">
-							<div class="form-group" style="flex: 0 0 120px;">
-								<input
-									aria-label="Kode ICD-10"
-									class="form-input"
-									bind:value={d.code}
-									placeholder="Kode ICD-10"
-								/>
-							</div>
-							<div class="form-group" style="flex: 1;">
-								<input
-									aria-label="Deskripsi diagnosis"
-									class="form-input"
-									bind:value={d.display}
-									placeholder="Deskripsi diagnosis"
-								/>
-							</div>
-							<label class="flex items-center gap-1 text-sm">
-								<input
-									type="checkbox"
-									bind:checked={d.is_primary}
-								/> Primer
-							</label>
-							<button
-								type="button"
-								class="btn btn-danger btn-sm btn-icon"
-								on:click={() => removeDiagnosis(i)}>✕</button
-							>
-						</div>
-					{/each}
-				</div>
-
-				<!-- Procedures -->
-				<div class="card mb-6">
-					<div class="card-header">
-						<h3 class="card-title">⚕️ Tindakan (ICD-9-CM)</h3>
-						<button
-							type="button"
-							class="btn btn-secondary btn-sm"
-							on:click={addProcedure}>+ Tambah</button
-						>
-					</div>
-					{#each procedures as p, i}
-						<div class="flex gap-3 items-end mt-2">
-							<div class="form-group" style="flex: 0 0 120px;">
-								<input
-									aria-label="Kode Tindakan"
-									class="form-input"
-									bind:value={p.code}
-									placeholder="Kode"
-								/>
-							</div>
-							<div class="form-group" style="flex: 1;">
-								<input
-									aria-label="Deskripsi tindakan"
-									class="form-input"
-									bind:value={p.display}
-									placeholder="Deskripsi tindakan"
-								/>
-							</div>
-							<div class="form-group" style="flex: 0 0 80px;">
-								<input
-									aria-label="Nomor Gigi"
-									class="form-input"
-									bind:value={p.tooth_number}
-									placeholder="Gigi"
-								/>
-							</div>
-							<button
-								type="button"
-								class="btn btn-danger btn-sm btn-icon"
-								on:click={() => removeProcedure(i)}>✕</button
-							>
-						</div>
-					{/each}
-				</div>
 
 				<!-- Prescriptions -->
 				<div class="card mb-6">

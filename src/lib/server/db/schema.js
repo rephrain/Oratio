@@ -75,10 +75,6 @@ export const patients = pgTable('patients', {
 	// Personal info
 	marital_status: maritalStatusEnum('marital_status'),
 	citizenship: citizenshipEnum('citizenship').default('WNI'),
-	communication_language: varchar('communication_language', { length: 20 }),
-
-	// Default doctor assignment (soft ref to users.doctor_code)
-	doctor_code: varchar('doctor_code', { length: 5 }),
 
 	// Medical background (permanent)
 	blood_type: bloodTypeEnum('blood_type'),
@@ -134,8 +130,6 @@ export const patientMedication = pgTable('patient_medication', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	patient_id: varchar('patient_id', { length: 10 }).notNull().references(() => patients.id, { onDelete: 'cascade' }),
 	terminology_id: uuid('terminology_id').references(() => terminologyMaster.id),
-	kfa_code: varchar('kfa_code', { length: 30 }),
-	product_name: text('product_name'),
 	dosage_form: text('dosage_form'),
 	dosage: text('dosage'),
 	note: text('note'),
@@ -170,12 +164,7 @@ export const encounters = pgTable('encounters', {
 	keterangan: text('keterangan'),
 
 	// Referral in
-	referral_from_doctor_code: varchar('referral_from_doctor_code', { length: 5 }),
-	referral_note: text('referral_note'),
-	referral_source: varchar('referral_source', { length: 100 }),
-
-	// Per-encounter vitals
-	tekanan_darah: varchar('tekanan_darah', { length: 20 }),
+	encounter_referral_id: uuid('encounter_referral_id').references(() => encounterReferrals.id),
 
 	created_at: timestamp('created_at').defaultNow().notNull(),
 	updated_at: timestamp('updated_at').defaultNow().notNull()
@@ -211,38 +200,8 @@ export const statusHistory = pgTable('status_history', {
 	created_at: timestamp('created_at').defaultNow().notNull()
 });
 
-
 // =============================================================
-// 10. ENCOUNTER DIAGNOSES (ICD-10)
-// =============================================================
-export const encounterDiagnoses = pgTable('encounter_diagnoses', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	terminology_id: uuid('terminology_id').references(() => terminologyMaster.id),
-	code: varchar('code', { length: 50 }).notNull(),
-	display: varchar('display', { length: 255 }).notNull(),
-	is_primary: boolean('is_primary').default(false),
-	created_at: timestamp('created_at').defaultNow().notNull()
-});
-
-
-// =============================================================
-// 11. ENCOUNTER PROCEDURES (ICD-9-CM)
-// =============================================================
-export const encounterProcedures = pgTable('encounter_procedures', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	terminology_id: uuid('terminology_id').references(() => terminologyMaster.id),
-	code: varchar('code', { length: 50 }).notNull(),
-	display: varchar('display', { length: 255 }).notNull(),
-	tooth_number: varchar('tooth_number', { length: 5 }),
-	surface: varchar('surface', { length: 10 }),
-	created_at: timestamp('created_at').defaultNow().notNull()
-});
-
-
-// =============================================================
-// 12. ENCOUNTER ODONTOGRAMS (header)
+// 10. ENCOUNTER ODONTOGRAMS (header)
 // =============================================================
 export const encounterOdontograms = pgTable('encounter_odontograms', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -261,7 +220,7 @@ export const encounterOdontograms = pgTable('encounter_odontograms', {
 
 
 // =============================================================
-// 13. ODONTOGRAM DETAILS (per tooth per surface)
+// 11. ODONTOGRAM DETAILS (per tooth per surface)
 // =============================================================
 export const odontogramDetails = pgTable('odontogram_details', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -276,6 +235,7 @@ export const odontogramDetails = pgTable('odontogram_details', {
 	bahan_protesa: text('bahan_protesa'),
 
 	icd10_id: uuid('icd10_id').references(() => terminologyMaster.id, { onDelete: 'set null' }),
+	is_primary: boolean('is_primary').default(false), // for primary diagnosis (icd-10)
 	icd9cm_id: uuid('icd9cm_id').references(() => terminologyMaster.id, { onDelete: 'set null' }),
 
 	created_at: timestamp('created_at').defaultNow().notNull()
@@ -285,13 +245,12 @@ export const odontogramDetails = pgTable('odontogram_details', {
 
 
 // =============================================================
-// 14. ENCOUNTER PRESCRIPTIONS
+// 12. ENCOUNTER PRESCRIPTIONS
 // =============================================================
 export const encounterPrescriptions = pgTable('encounter_prescriptions', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	kfa_code: varchar('kfa_code', { length: 30 }),
-	product_name: text('product_name').notNull(),
+	terminology_id: uuid('terminology_id').references(() => terminologyMaster.id),
 	dosage_form: text('dosage_form'),
 	quantity: integer('quantity'),
 	instruction: text('instruction'),
@@ -300,7 +259,7 @@ export const encounterPrescriptions = pgTable('encounter_prescriptions', {
 
 
 // =============================================================
-// 15. ENCOUNTER REFERRALS
+// 13. ENCOUNTER REFERRALS
 // =============================================================
 export const encounterReferrals = pgTable('encounter_referrals', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -315,7 +274,7 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 
 
 // =============================================================
-// 16. MASTER ITEMS
+// 14. MASTER ITEMS
 // =============================================================
 export const items = pgTable('items', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -331,7 +290,7 @@ export const items = pgTable('items', {
 
 
 // =============================================================
-// 17. ENCOUNTER ITEMS (billing line items)
+// 15. ENCOUNTER ITEMS (billing line items)
 // =============================================================
 export const encounterItems = pgTable('encounter_items', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -347,7 +306,7 @@ export const encounterItems = pgTable('encounter_items', {
 
 
 // =============================================================
-// 18. PAYMENTS
+// 16. PAYMENTS
 // =============================================================
 export const payments = pgTable('payments', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -375,24 +334,7 @@ export const payments = pgTable('payments', {
 
 
 // =============================================================
-// 19. AUTH TOKENS
-// =============================================================
-export const authTokens = pgTable('auth_tokens', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-
-	app_token: text('app_token').notNull().unique(),
-	app_token_expires_at: timestamp('app_token_expires_at').notNull(),
-
-	satusehat_token: text('satusehat_token'),
-	satusehat_expires_at: timestamp('satusehat_expires_at'),
-
-	created_at: timestamp('created_at').defaultNow().notNull()
-});
-
-
-// =============================================================
-// 20. SHIFTS (for dokter and kasir)
+// 17. SHIFTS (for dokter and kasir)
 // =============================================================
 export const shifts = pgTable('shifts', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -409,15 +351,25 @@ export const shifts = pgTable('shifts', {
 // =============================================================
 export const usersRelations = relations(users, ({ many }) => ({
 	shifts: many(shifts),
-	encounters: many(encounters, { relationName: 'doctor_encounters' }),
-	authTokens: many(authTokens)
+	doctor_encounters: many(encounters, { relationName: 'doctor_to_encounters' }),
+	kasir_encounters: many(encounters, { relationName: 'kasir_to_encounters' }),
+	items: many(items),
+	uploaded_documents: many(documents),
+	processed_payments: many(payments)
 }));
 
-export const shiftsRelations = relations(shifts, ({ one }) => ({
-	user: one(users, { fields: [shifts.user_id], references: [users.id] })
+export const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
+	diseaseHistories: many(patientDiseaseHistory),
+	allergies: many(patientAllergy),
+	medications: many(patientMedication),
+	encounterReasons: many(encounters),
+	odontogramIcd10: many(odontogramDetails, { relationName: 'icd10_to_odontogram' }),
+	odontogramIcd9cm: many(odontogramDetails, { relationName: 'icd9cm_to_odontogram' }),
+	prescriptions: many(encounterPrescriptions)
 }));
 
-export const patientsRelations = relations(patients, ({ many }) => ({
+export const patientsRelations = relations(patients, ({ one, many }) => ({
+	kasir: one(users, { fields: [patients.kasir_id], references: [users.id] }),
 	diseaseHistory: many(patientDiseaseHistory),
 	allergies: many(patientAllergy),
 	medications: many(patientMedication),
@@ -425,18 +377,44 @@ export const patientsRelations = relations(patients, ({ many }) => ({
 	documents: many(documents)
 }));
 
+export const patientDiseaseHistoryRelations = relations(patientDiseaseHistory, ({ one }) => ({
+	patient: one(patients, { fields: [patientDiseaseHistory.patient_id], references: [patients.id] }),
+	terminology: one(terminologyMaster, { fields: [patientDiseaseHistory.terminology_id], references: [terminologyMaster.id] })
+}));
+
+export const patientAllergyRelations = relations(patientAllergy, ({ one }) => ({
+	patient: one(patients, { fields: [patientAllergy.patient_id], references: [patients.id] }),
+	substance: one(terminologyMaster, { fields: [patientAllergy.substance_id], references: [terminologyMaster.id] })
+}));
+
+export const patientMedicationRelations = relations(patientMedication, ({ one }) => ({
+	patient: one(patients, { fields: [patientMedication.patient_id], references: [patients.id] }),
+	terminology: one(terminologyMaster, { fields: [patientMedication.terminology_id], references: [terminologyMaster.id] })
+}));
+
 export const encountersRelations = relations(encounters, ({ one, many }) => ({
 	patient: one(patients, { fields: [encounters.patient_id], references: [patients.id] }),
-	doctor: one(users, { fields: [encounters.doctor_id], references: [users.id], relationName: 'doctor_encounters' }),
+	doctor: one(users, { fields: [encounters.doctor_id], references: [users.id], relationName: 'doctor_to_encounters' }),
+	kasir: one(users, { fields: [encounters.kasir_id], references: [users.id], relationName: 'kasir_to_encounters' }),
 	encounter_reason: one(terminologyMaster, { fields: [encounters.encounter_reason_id], references: [terminologyMaster.id] }),
+	referral_in: one(encounterReferrals, { fields: [encounters.encounter_referral_id], references: [encounterReferrals.id] }),
 	statusHistory: many(statusHistory),
 	odontograms: many(encounterOdontograms),
 	prescriptions: many(encounterPrescriptions),
 	referrals: many(encounterReferrals),
-	diagnoses: many(encounterDiagnoses),
-	procedures: many(encounterProcedures),
 	encounterItems: many(encounterItems),
-	documents: many(documents)
+	documents: many(documents),
+	payments: many(payments)
+}));
+
+export const documentsRelations = relations(documents, ({ one }) => ({
+	patient: one(patients, { fields: [documents.patient_id], references: [patients.id] }),
+	encounter: one(encounters, { fields: [documents.encounter_id], references: [encounters.id] }),
+	uploader: one(users, { fields: [documents.uploaded_by], references: [users.id] })
+}));
+
+export const statusHistoryRelations = relations(statusHistory, ({ one }) => ({
+	encounter: one(encounters, { fields: [statusHistory.encounter_id], references: [encounters.id] })
 }));
 
 export const encounterOdontogramsRelations = relations(encounterOdontograms, ({ one, many }) => ({
@@ -445,19 +423,36 @@ export const encounterOdontogramsRelations = relations(encounterOdontograms, ({ 
 }));
 
 export const odontogramDetailsRelations = relations(odontogramDetails, ({ one }) => ({
-	odontogram: one(encounterOdontograms, { fields: [odontogramDetails.odontogram_id], references: [encounterOdontograms.id] })
+	odontogram: one(encounterOdontograms, { fields: [odontogramDetails.odontogram_id], references: [encounterOdontograms.id] }),
+	icd10: one(terminologyMaster, { fields: [odontogramDetails.icd10_id], references: [terminologyMaster.id], relationName: 'icd10_to_odontogram' }),
+	icd9cm: one(terminologyMaster, { fields: [odontogramDetails.icd9cm_id], references: [terminologyMaster.id], relationName: 'icd9cm_to_odontogram' })
 }));
 
-export const patientDiseaseHistoryRelations = relations(patientDiseaseHistory, ({ one }) => ({
-	patient: one(patients, { fields: [patientDiseaseHistory.patient_id], references: [patients.id] }),
-	terminology: one(terminologyMaster, { fields: [patientDiseaseHistory.terminology_id], references: [terminologyMaster.id] })
+export const encounterPrescriptionsRelations = relations(encounterPrescriptions, ({ one }) => ({
+	encounter: one(encounters, { fields: [encounterPrescriptions.encounter_id], references: [encounters.id] }),
+	terminology: one(terminologyMaster, { fields: [encounterPrescriptions.terminology_id], references: [terminologyMaster.id] })
 }));
 
-export const patientMedicationRelations = relations(patientMedication, ({ one }) => ({
-	patient: one(patients, { fields: [patientMedication.patient_id], references: [patients.id] }),
-	terminology: one(terminologyMaster, { fields: [patientMedication.terminology_id], references: [terminologyMaster.id] })
+export const encounterReferralsRelations = relations(encounterReferrals, ({ one }) => ({
+	encounter: one(encounters, { fields: [encounterReferrals.encounter_id], references: [encounters.id] })
 }));
 
-export const authTokensRelations = relations(authTokens, ({ one }) => ({
-	user: one(users, { fields: [authTokens.user_id], references: [users.id] })
+export const itemsRelations = relations(items, ({ one, many }) => ({
+	doctor: one(users, { fields: [items.doctor_id], references: [users.id] }),
+	encounterItems: many(encounterItems)
+}));
+
+export const encounterItemsRelations = relations(encounterItems, ({ one }) => ({
+	encounter: one(encounters, { fields: [encounterItems.encounter_id], references: [encounters.id] }),
+	item: one(items, { fields: [encounterItems.item_id], references: [items.id] })
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+	encounter: one(encounters, { fields: [payments.encounter_id], references: [encounters.id] }),
+	proof_document: one(documents, { fields: [payments.proof_document_id], references: [documents.id] }),
+	cashier: one(users, { fields: [payments.cashier_id], references: [users.id] })
+}));
+
+export const shiftsRelations = relations(shifts, ({ one }) => ({
+	user: one(users, { fields: [shifts.user_id], references: [users.id] })
 }));

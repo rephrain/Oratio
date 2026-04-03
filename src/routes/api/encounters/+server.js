@@ -2,8 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
-	encounterPrescriptions, encounterReferrals, encounterDiagnoses,
-	encounterProcedures, encounterItems, patients, users, terminologyMaster
+	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq, and, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { generateEncounterId } from '$lib/utils/formatters.js';
@@ -121,11 +120,7 @@ export async function POST({ request, locals }) {
 		form_mode: body.form_mode || 'SOAP',
 		status: 'Planned',
 		encounter_reason_id: encounterReasonId,
-		reason_type: body.reason_type || null,
-		tekanan_darah: body.tekanan_darah || null,
-		referral_from_doctor_code: body.referral_from_doctor_code || null,
-		referral_note: body.referral_note || null,
-		referral_source: body.referral_source || null
+		reason_type: body.reason_type || null
 	}).returning();
 
 	// Create initial status history

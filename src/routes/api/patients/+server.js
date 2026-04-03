@@ -61,8 +61,6 @@ export async function POST({ request, locals }) {
 		email: body.email,
 		marital_status: body.marital_status || null,
 		citizenship: body.citizenship || 'WNI',
-		communication_language: body.communication_language || 'id',
-		doctor_code: body.doctor_code || null,
 		blood_type: body.blood_type,
 		rhesus: body.rhesus || null,
 		pregnancy_status: body.pregnancy_status || false,
@@ -173,8 +171,6 @@ export async function POST({ request, locals }) {
 			await db.insert(patientMedication).values({
 				patient_id: newId,
 				terminology_id: termId,
-				kfa_code: kfaCode,
-				product_name: productName,
 				dosage_form: dosageForm,
 				dosage: m.dosage || null,
 				note: m.note || null

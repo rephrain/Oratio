@@ -19,12 +19,9 @@ const schemaMap = {
 	odontogramDetails: schema.odontogramDetails,
 	encounterPrescriptions: schema.encounterPrescriptions,
 	encounterReferrals: schema.encounterReferrals,
-	encounterDiagnoses: schema.encounterDiagnoses,
-	encounterProcedures: schema.encounterProcedures,
 	items: schema.items,
 	encounterItems: schema.encounterItems,
-	payments: schema.payments,
-	authTokens: schema.authTokens
+	payments: schema.payments
 };
 
 // GET /api/admin/[table]

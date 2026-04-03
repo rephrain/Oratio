@@ -2,10 +2,10 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
-	encounterPrescriptions, encounterDiagnoses, encounterProcedures,
+	encounterPrescriptions,
 	encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
@@ -35,15 +35,6 @@ export async function GET({ params }) {
 		return json({ error: 'Encounter not found' }, { status: 404 });
 	}
 
-	const prescriptions = await db.select().from(encounterPrescriptions)
-		.where(eq(encounterPrescriptions.encounter_id, params.id));
-
-	const diagnoses = await db.select().from(encounterDiagnoses)
-		.where(eq(encounterDiagnoses.encounter_id, params.id));
-
-	const procedures = await db.select().from(encounterProcedures)
-		.where(eq(encounterProcedures.encounter_id, params.id));
-
 	const referrals = await db.select().from(encounterReferrals)
 		.where(eq(encounterReferrals.encounter_id, params.id));
 
@@ -64,9 +55,6 @@ export async function GET({ params }) {
 
 	return json({
 		...encounter,
-		prescriptions,
-		diagnoses,
-		procedures,
 		referrals,
 		items,
 		odontograms,
@@ -87,11 +75,7 @@ export async function PUT({ params, request }) {
 	if (body.resep !== undefined) updateData.resep = body.resep;
 	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
 	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
-	if (body.tekanan_darah !== undefined) updateData.tekanan_darah = body.tekanan_darah;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
-	if (body.referral_from_doctor_code !== undefined) updateData.referral_from_doctor_code = body.referral_from_doctor_code;
-	if (body.referral_note !== undefined) updateData.referral_note = body.referral_note;
-	if (body.referral_source !== undefined) updateData.referral_source = body.referral_source;
 
 	// Handle keluhan_utama FK update
 	if (body.keluhan_utama_code !== undefined) {
@@ -153,45 +137,41 @@ export async function PUT({ params, request }) {
 		.set(updateData)
 		.where(eq(encounters.id, params.id))
 		.returning();
-
 	// Upsert prescriptions
 	if (body.prescriptions) {
 		await db.delete(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));
 		for (const rx of body.prescriptions) {
+			const kfaCode = rx.kfa_code;
+			const productName = rx.product_name;
+
+			let termId = null;
+			if (kfaCode && productName) {
+				const [existing] = await db.select()
+					.from(terminologyMaster)
+					.where(and(
+						eq(terminologyMaster.code, kfaCode),
+						eq(terminologyMaster.system, 'KFA')
+					))
+					.limit(1);
+
+				if (existing) {
+					termId = existing.id;
+				} else {
+					const [inserted] = await db.insert(terminologyMaster).values({
+						code: kfaCode,
+						display: productName,
+						system: 'KFA'
+					}).returning();
+					termId = inserted.id;
+				}
+			}
+
 			await db.insert(encounterPrescriptions).values({
 				encounter_id: params.id,
-				kfa_code: rx.kfa_code,
-				product_name: rx.product_name,
-				dosage_form: rx.dosage_form,
-				quantity: rx.quantity,
-				instruction: rx.instruction
-			});
-		}
-	}
-
-	// Upsert diagnoses
-	if (body.diagnoses) {
-		await db.delete(encounterDiagnoses).where(eq(encounterDiagnoses.encounter_id, params.id));
-		for (const d of body.diagnoses) {
-			await db.insert(encounterDiagnoses).values({
-				encounter_id: params.id,
-				code: d.code,
-				display: d.display,
-				is_primary: d.is_primary || false
-			});
-		}
-	}
-
-	// Upsert procedures
-	if (body.procedures) {
-		await db.delete(encounterProcedures).where(eq(encounterProcedures.encounter_id, params.id));
-		for (const p of body.procedures) {
-			await db.insert(encounterProcedures).values({
-				encounter_id: params.id,
-				code: p.code,
-				display: p.display,
-				tooth_number: p.tooth_number,
-				surface: p.surface
+				terminology_id: termId,
+				dosage: rx.dosage,
+				quantity: rx.quantity || 1,
+				notes: rx.notes || ''
 			});
 		}
 	}

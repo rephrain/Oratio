@@ -145,12 +145,9 @@ export const ADMIN_TABLES = {
 	'odontogram-details': { label: 'Odontogram Details', schema: 'odontogramDetails' },
 	'encounter-prescriptions': { label: 'Encounter Prescriptions', schema: 'encounterPrescriptions' },
 	'encounter-referrals': { label: 'Encounter Referrals', schema: 'encounterReferrals' },
-	'encounter-diagnoses': { label: 'Encounter Diagnoses', schema: 'encounterDiagnoses' },
-	'encounter-procedures': { label: 'Encounter Procedures', schema: 'encounterProcedures' },
 	'items': { label: 'Items', schema: 'items' },
 	'encounter-items': { label: 'Encounter Items', schema: 'encounterItems' },
-	'payments': { label: 'Payments', schema: 'payments' },
-	'auth-tokens': { label: 'Auth Tokens', schema: 'authTokens' }
+	'payments': { label: 'Payments', schema: 'payments' }
 };
 
 // Doctor codes mapping (14 doctors from spec)

@@ -53,7 +53,6 @@
         email: "",
         marital_status: "S",
         citizenship: "WNI",
-        language: "id",
         blood_type: "",
         rhesus: "+",
         pregnancy_status: false,

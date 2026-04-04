@@ -1,4 +1,5 @@
 import { c as create_ssr_component, s as setContext, v as validate_component, m as missing_component } from "./ssr.js";
+import "./shared-server.js";
 let base = "";
 let assets = base;
 const initial = { base, assets };
@@ -8,12 +9,6 @@ function reset() {
 }
 function set_assets(path) {
   assets = initial.assets = path;
-}
-let public_env = {};
-function set_private_env(environment) {
-}
-function set_public_env(environment) {
-  public_env = environment;
 }
 function afterUpdate() {
 }
@@ -133,7 +128,78 @@ const options = {
   root: Root,
   service_worker: false,
   templates: {
-    app: ({ head, body, assets: assets2, nonce, env }) => '<!doctype html>\r\n<html lang="id">\r\n	<head>\r\n		<meta charset="utf-8" />\r\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\r\n		<meta name="description" content="Oratio Clinic – Sistem Rekam Medis Kedokteran Gigi" />\r\n		<link rel="preconnect" href="https://fonts.googleapis.com" />\r\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\r\n		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />\r\n		<title>Oratio Clinic</title>\r\n		' + head + '\r\n	</head>\r\n	<body data-sveltekit-preload-data="hover">\r\n		<div style="display: contents">' + body + "</div>\r\n	</body>\r\n</html>\r\n",
+    app: ({ head, body, assets: assets2, nonce, env }) => `<!doctype html>\r
+<html lang="id">\r
+\r
+<head>\r
+	<meta charset="utf-8" />\r
+	<meta name="viewport" content="width=device-width, initial-scale=1" />\r
+	<meta name="description" content="Oratio Clinic – Sistem Rekam Medis Kedokteran Gigi" />\r
+	<link rel="preconnect" href="https://fonts.googleapis.com" />\r
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\r
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"\r
+		rel="stylesheet" />\r
+	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"\r
+		rel="stylesheet" />\r
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"><\/script>\r
+	<script>\r
+		tailwind.config = {\r
+			darkMode: "class",\r
+			theme: {\r
+				extend: {\r
+					colors: {\r
+						"primary": "var(--tw-primary)",\r
+						"secondary": "var(--tw-secondary)",\r
+						"accent": "var(--tw-accent)",\r
+						"forest": "var(--tw-forest)",\r
+						"background-light": "var(--tw-bg-light)",\r
+						"background-dark": "var(--tw-bg-dark)",\r
+					},\r
+					fontFamily: {\r
+						"display": ["Inter", "sans-serif"]\r
+					},\r
+					borderRadius: {\r
+						"DEFAULT": "0.5rem",\r
+						"lg": "1rem",\r
+						"xl": "1.5rem",\r
+						"2xl": "2rem",\r
+						"full": "9999px"\r
+					},\r
+					keyframes: {\r
+						fadeInUp: {\r
+							'0%': { opacity: '0', transform: 'translateY(20px)' },\r
+							'100%': { opacity: '1', transform: 'translateY(0)' },\r
+						},\r
+						float: {\r
+							'0%, 100%': { transform: 'translate(0, 0)' },\r
+							'50%': { transform: 'translate(-20px, 20px)' },\r
+						},\r
+						floatReverse: {\r
+							'0%, 100%': { transform: 'translate(0, 0)' },\r
+							'50%': { transform: 'translate(20px, -20px)' },\r
+						}\r
+					},\r
+					animation: {\r
+						fadeInUp: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',\r
+						float: 'float 20s ease-in-out infinite',\r
+						floatReverse: 'floatReverse 25s ease-in-out infinite',\r
+					}\r
+				},\r
+			},\r
+		}\r
+	<\/script>\r
+	<style>\r
+		:root {\r
+			--tw-primary: #3b82f6;\r
+			--tw-secondary: #E0E0E0;\r
+			--tw-accent: #0ea5e9;\r
+			--tw-forest: #064E3B;\r
+			--tw-bg-light: #f8fafc;\r
+			--tw-bg-dark: #0f172a;\r
+		}\r
+	</style>\r
+	<title>Oratio Clinic</title>\r
+	` + head + '\r\n</head>\r\n\r\n<body data-sveltekit-preload-data="hover">\r\n	<div style="display: contents">' + body + "</div>\r\n</body>\r\n\r\n</html>",
     error: ({ status, message }) => '<!doctype html>\r\n<html lang="en">\r\n	<head>\r\n		<meta charset="utf-8" />\r\n		<title>' + message + `</title>\r
 \r
 		<style>\r
@@ -205,7 +271,7 @@ const options = {
 		<div class="error">\r
 			<span class="status">` + status + '</span>\r\n			<div class="message">\r\n				<h1>' + message + "</h1>\r\n			</div>\r\n		</div>\r\n	</body>\r\n</html>\r\n"
   },
-  version_hash: "ahu3hy"
+  version_hash: "1qwdxi6"
 };
 function get_hooks() {
   return import("./hooks.server.js");
@@ -213,12 +279,9 @@ function get_hooks() {
 export {
   assets as a,
   base as b,
-  set_public_env as c,
-  set_assets as d,
-  set_building as e,
+  set_building as c,
   get_hooks as g,
   options as o,
-  public_env as p,
   reset as r,
-  set_private_env as s
+  set_assets as s
 };

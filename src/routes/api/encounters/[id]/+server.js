@@ -9,61 +9,66 @@ import { eq, and, sql } from 'drizzle-orm';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
-	const [encounter] = await db.select({
-		encounter: encounters,
-		patient_name: patients.nama_lengkap,
-		patient_nik: patients.nik,
-		patient_birth_date: patients.birth_date,
-		patient_gender: patients.gender,
-		patient_handphone: patients.handphone,
-		patient_address: patients.address,
-		patient_email: patients.email,
-		patient_blood_type: patients.blood_type,
-		patient_rhesus: patients.rhesus,
-		patient_pregnancy_status: patients.pregnancy_status,
-		patient_tekanan_darah: patients.tekanan_darah,
-		doctor_name: users.name,
-		doctor_code: users.doctor_code,
-		keluhan_utama_code: terminologyMaster.code,
-		keluhan_utama_display: terminologyMaster.display
-	})
-		.from(encounters)
-		.leftJoin(patients, eq(encounters.patient_id, patients.id))
-		.leftJoin(users, eq(encounters.doctor_id, users.id))
-		.leftJoin(terminologyMaster, eq(encounters.keluhan_utama_id, terminologyMaster.id))
-		.where(eq(encounters.id, params.id))
-		.limit(1);
+	try {
+		const [encounter] = await db.select({
+			encounter: encounters,
+			patient_name: patients.nama_lengkap,
+			patient_nik: patients.nik,
+			patient_birth_date: patients.birth_date,
+			patient_gender: patients.gender,
+			patient_handphone: patients.handphone,
+			patient_address: patients.address,
+			patient_email: patients.email,
+			patient_blood_type: patients.blood_type,
+			patient_rhesus: patients.rhesus,
+			patient_pregnancy_status: patients.pregnancy_status,
+			patient_tekanan_darah: patients.tekanan_darah,
+			doctor_name: users.name,
+			doctor_code: users.doctor_code,
+			keluhan_utama_code: terminologyMaster.code,
+			keluhan_utama_display: terminologyMaster.display
+		})
+			.from(encounters)
+			.leftJoin(patients, eq(encounters.patient_id, patients.id))
+			.leftJoin(users, eq(encounters.doctor_id, users.id))
+			.leftJoin(terminologyMaster, eq(encounters.encounter_reason_id, terminologyMaster.id))
+			.where(eq(encounters.id, params.id))
+			.limit(1);
 
-	if (!encounter) {
-		return json({ error: 'Encounter not found' }, { status: 404 });
+		if (!encounter) {
+			return json({ error: 'Encounter not found' }, { status: 404 });
+		}
+
+		const referrals = await db.select().from(encounterReferrals)
+			.where(eq(encounterReferrals.encounter_id, params.id));
+
+		const items = await db.select().from(encounterItems)
+			.where(eq(encounterItems.encounter_id, params.id));
+
+		const odontograms = await db.select().from(encounterOdontograms)
+			.where(eq(encounterOdontograms.encounter_id, params.id));
+
+		let odontoDetails = [];
+		if (odontograms.length > 0) {
+			odontoDetails = await db.select().from(odontogramDetails)
+				.where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
+		}
+
+		const history = await db.select().from(statusHistory)
+			.where(eq(statusHistory.encounter_id, params.id));
+
+		return json({
+			...encounter,
+			referrals,
+			items,
+			odontograms,
+			odontogramDetails: odontoDetails,
+			statusHistory: history
+		});
+	} catch (err) {
+		console.error("GET /api/encounters error:", err);
+		return json({ message: 'Internal Error', error: String(err) }, { status: 500 });
 	}
-
-	const referrals = await db.select().from(encounterReferrals)
-		.where(eq(encounterReferrals.encounter_id, params.id));
-
-	const items = await db.select().from(encounterItems)
-		.where(eq(encounterItems.encounter_id, params.id));
-
-	const odontograms = await db.select().from(encounterOdontograms)
-		.where(eq(encounterOdontograms.encounter_id, params.id));
-
-	let odontoDetails = [];
-	if (odontograms.length > 0) {
-		odontoDetails = await db.select().from(odontogramDetails)
-			.where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
-	}
-
-	const history = await db.select().from(statusHistory)
-		.where(eq(statusHistory.encounter_id, params.id));
-
-	return json({
-		...encounter,
-		referrals,
-		items,
-		odontograms,
-		odontogramDetails: odontoDetails,
-		statusHistory: history
-	});
 }
 
 // PUT /api/encounters/[id] - update encounter (SOAP data + status)
@@ -150,7 +155,7 @@ export async function PUT({ params, request }) {
 			.from(encounters)
 			.where(eq(encounters.id, params.id))
 			.limit(1);
-		
+
 		if (enc?.patient_id) {
 			await db.update(patients)
 				.set({ tekanan_darah: body.tekanan_darah })

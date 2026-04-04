@@ -26,8 +26,9 @@
     "jose": "^5.2.0",
     "libphonenumber-js": "^1.12.41",
     "papaparse": "^5.4.0",
-    "pdfmake": "^0.2.0",
-    "postgres": "^3.4.0"
+    "pdfmake": "^0.3.7",
+    "postgres": "^3.4.0",
+    "puppeteer": "^24.40.0"
   },
   "type": "module"
 }

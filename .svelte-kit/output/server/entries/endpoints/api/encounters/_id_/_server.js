@@ -1,6 +1,6 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, g as encounters, p as patients, u as users, i as encounterPrescriptions, k as encounterDiagnoses, l as encounterProcedures, j as encounterReferrals, n as encounterItems, h as encounterOdontograms, o as odontogramDetails, s as statusHistory } from "../../../../../chunks/index3.js";
-import { eq } from "drizzle-orm";
+import { d as db, f as encounters, p as patients, u as users, t as terminologyMaster, j as encounterReferrals, l as encounterItems, h as encounterOdontograms, o as odontogramDetails, g as statusHistory, i as encounterPrescriptions } from "../../../../../chunks/index3.js";
+import { eq, and, sql } from "drizzle-orm";
 async function GET({ params }) {
   const [encounter] = await db.select({
     encounter: encounters,
@@ -8,18 +8,21 @@ async function GET({ params }) {
     patient_nik: patients.nik,
     patient_birth_date: patients.birth_date,
     patient_gender: patients.gender,
+    patient_handphone: patients.handphone,
+    patient_address: patients.address,
+    patient_email: patients.email,
     patient_blood_type: patients.blood_type,
     patient_rhesus: patients.rhesus,
     patient_pregnancy_status: patients.pregnancy_status,
+    patient_tekanan_darah: patients.tekanan_darah,
     doctor_name: users.name,
-    doctor_code: users.doctor_code
-  }).from(encounters).leftJoin(patients, eq(encounters.patient_id, patients.id)).leftJoin(users, eq(encounters.doctor_id, users.id)).where(eq(encounters.id, params.id)).limit(1);
+    doctor_code: users.doctor_code,
+    keluhan_utama_code: terminologyMaster.code,
+    keluhan_utama_display: terminologyMaster.display
+  }).from(encounters).leftJoin(patients, eq(encounters.patient_id, patients.id)).leftJoin(users, eq(encounters.doctor_id, users.id)).leftJoin(terminologyMaster, eq(encounters.keluhan_utama_id, terminologyMaster.id)).where(eq(encounters.id, params.id)).limit(1);
   if (!encounter) {
     return json({ error: "Encounter not found" }, { status: 404 });
   }
-  const prescriptions = await db.select().from(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));
-  const diagnoses = await db.select().from(encounterDiagnoses).where(eq(encounterDiagnoses.encounter_id, params.id));
-  const procedures = await db.select().from(encounterProcedures).where(eq(encounterProcedures.encounter_id, params.id));
   const referrals = await db.select().from(encounterReferrals).where(eq(encounterReferrals.encounter_id, params.id));
   const items = await db.select().from(encounterItems).where(eq(encounterItems.encounter_id, params.id));
   const odontograms = await db.select().from(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, params.id));
@@ -30,9 +33,6 @@ async function GET({ params }) {
   const history = await db.select().from(statusHistory).where(eq(statusHistory.encounter_id, params.id));
   return json({
     ...encounter,
-    prescriptions,
-    diagnoses,
-    procedures,
     referrals,
     items,
     odontograms,
@@ -55,64 +55,87 @@ async function PUT({ params, request }) {
     updateData.resep = body.resep;
   if (body.keterangan !== void 0)
     updateData.keterangan = body.keterangan;
-  if (body.reason_code !== void 0)
-    updateData.reason_code = body.reason_code;
-  if (body.reason_display !== void 0)
-    updateData.reason_display = body.reason_display;
-  if (body.reason_category !== void 0)
-    updateData.reason_category = body.reason_category;
-  if (body.tekanan_darah !== void 0)
-    updateData.tekanan_darah = body.tekanan_darah;
+  if (body.reason_type !== void 0)
+    updateData.reason_type = body.reason_type;
   if (body.form_mode !== void 0)
     updateData.form_mode = body.form_mode;
-  if (body.chief_complaint_code !== void 0)
-    updateData.chief_complaint_code = body.chief_complaint_code;
-  if (body.chief_complaint_display !== void 0)
-    updateData.chief_complaint_display = body.chief_complaint_display;
+  if (body.keluhan_utama_code !== void 0) {
+    if (body.keluhan_utama_code) {
+      const { and: andOp, eq: eqOp } = await import("drizzle-orm");
+      const [existing] = await db.select().from(terminologyMaster).where(andOp(
+        eqOp(terminologyMaster.code, body.keluhan_utama_code),
+        eqOp(terminologyMaster.system, "SNOMED")
+      )).limit(1);
+      if (existing) {
+        updateData.keluhan_utama_id = existing.id;
+      } else if (body.keluhan_utama_display) {
+        const [inserted] = await db.insert(terminologyMaster).values({
+          code: body.keluhan_utama_code,
+          display: body.keluhan_utama_display,
+          system: "SNOMED"
+        }).returning();
+        updateData.keluhan_utama_id = inserted.id;
+      }
+    } else {
+      updateData.keluhan_utama_id = null;
+    }
+  }
   if (body.status) {
     updateData.status = body.status;
-    await db.update(statusHistory).set({ end_time: /* @__PURE__ */ new Date() }).where(eq(statusHistory.encounter_id, params.id));
-    await db.insert(statusHistory).values({
-      encounter_id: params.id,
-      status: body.status,
-      start_time: /* @__PURE__ */ new Date()
-    });
+    const statusMap = {
+      "In Progress": "In Progress",
+      "Discharged": "Finished",
+      "Completed": "Finished"
+    };
+    await db.update(statusHistory).set({ end_at: /* @__PURE__ */ new Date() }).where(and(
+      eq(statusHistory.encounter_id, params.id),
+      sql`${statusHistory.end_at} IS NULL`
+    ));
+    const historyStatus = statusMap[body.status];
+    if (historyStatus) {
+      await db.insert(statusHistory).values({
+        encounter_id: params.id,
+        status: historyStatus,
+        start_at: /* @__PURE__ */ new Date()
+      });
+    }
   }
   updateData.updated_at = /* @__PURE__ */ new Date();
   const [updated] = await db.update(encounters).set(updateData).where(eq(encounters.id, params.id)).returning();
+  if (body.tekanan_darah !== void 0) {
+    const [enc] = await db.select({ patient_id: encounters.patient_id }).from(encounters).where(eq(encounters.id, params.id)).limit(1);
+    if (enc?.patient_id) {
+      await db.update(patients).set({ tekanan_darah: body.tekanan_darah }).where(eq(patients.id, enc.patient_id));
+    }
+  }
   if (body.prescriptions) {
     await db.delete(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));
     for (const rx of body.prescriptions) {
+      const kfaCode = rx.kfa_code;
+      const productName = rx.product_name;
+      let termId = null;
+      if (kfaCode && productName) {
+        const [existing] = await db.select().from(terminologyMaster).where(and(
+          eq(terminologyMaster.code, kfaCode),
+          eq(terminologyMaster.system, "KFA")
+        )).limit(1);
+        if (existing) {
+          termId = existing.id;
+        } else {
+          const [inserted] = await db.insert(terminologyMaster).values({
+            code: kfaCode,
+            display: productName,
+            system: "KFA"
+          }).returning();
+          termId = inserted.id;
+        }
+      }
       await db.insert(encounterPrescriptions).values({
         encounter_id: params.id,
-        kfa_code: rx.kfa_code,
-        product_name: rx.product_name,
+        terminology_id: termId,
         dosage: rx.dosage,
-        quantity: rx.quantity,
-        notes: rx.notes
-      });
-    }
-  }
-  if (body.diagnoses) {
-    await db.delete(encounterDiagnoses).where(eq(encounterDiagnoses.encounter_id, params.id));
-    for (const d of body.diagnoses) {
-      await db.insert(encounterDiagnoses).values({
-        encounter_id: params.id,
-        code: d.code,
-        display: d.display,
-        is_primary: d.is_primary || false
-      });
-    }
-  }
-  if (body.procedures) {
-    await db.delete(encounterProcedures).where(eq(encounterProcedures.encounter_id, params.id));
-    for (const p of body.procedures) {
-      await db.insert(encounterProcedures).values({
-        encounter_id: params.id,
-        code: p.code,
-        display: p.display,
-        tooth_number: p.tooth_number,
-        surface: p.surface
+        quantity: rx.quantity || 1,
+        notes: rx.notes || ""
       });
     }
   }
@@ -131,7 +154,7 @@ async function PUT({ params, request }) {
     await db.delete(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, params.id));
     const [odonto] = await db.insert(encounterOdontograms).values({
       encounter_id: params.id,
-      dentition: body.odontogram.dentition || "permanent",
+      dentition_type: body.odontogram.dentition_type || "Adult",
       occlusi: body.odontogram.occlusi,
       torus_palatinus: body.odontogram.torus_palatinus,
       torus_mandibularis: body.odontogram.torus_mandibularis,
@@ -150,10 +173,8 @@ async function PUT({ params, request }) {
           restorasi: d.restorasi,
           protesa: d.protesa,
           bahan_protesa: d.bahan_protesa,
-          diagnosis_code: d.diagnosis_code,
-          diagnosis_display: d.diagnosis_display,
-          procedure_code: d.procedure_code,
-          procedure_display: d.procedure_display
+          icd10_id: d.icd10_id || null,
+          icd9cm_id: d.icd9cm_id || null
         });
       }
     }
@@ -161,13 +182,13 @@ async function PUT({ params, request }) {
   if (body.encounter_items) {
     await db.delete(encounterItems).where(eq(encounterItems.encounter_id, params.id));
     for (const item of body.encounter_items) {
-      const subtotal = (item.quantity || 1) * parseFloat(item.price_at_time || 0);
+      const subtotal = (item.quantity || 1) * parseInt(item.price_at_time || 0);
       await db.insert(encounterItems).values({
         encounter_id: params.id,
         item_id: item.item_id,
         quantity: item.quantity || 1,
-        price_at_time: item.price_at_time,
-        subtotal: String(subtotal)
+        price_at_time: parseInt(item.price_at_time || 0),
+        subtotal
       });
     }
   }

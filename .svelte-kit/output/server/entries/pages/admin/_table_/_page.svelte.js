@@ -1,4 +1,4 @@
-import { c as create_ssr_component, d as createEventDispatcher, f as add_attribute, b as each, e as escape, a as subscribe, v as validate_component } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, f as createEventDispatcher, d as add_attribute, b as each, e as escape, a as subscribe, v as validate_component } from "../../../../chunks/ssr.js";
 import { p as page } from "../../../../chunks/stores.js";
 /* empty css                                                          */import { M as Modal } from "../../../../chunks/Modal.js";
 import { A as ADMIN_TABLES } from "../../../../chunks/constants.js";
@@ -114,7 +114,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         loadData();
       }
     }
-    $$rendered = `${$$result.head += `<!-- HEAD_svelte-3mjat5_START -->${$$result.title = `<title>${escape(tableConfig?.label || tableName)} — Admin — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-3mjat5_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><div><h1 class="page-title" style="margin: 0;">${escape(tableConfig?.label || tableName)}</h1> <p class="text-sm text-muted">${escape(total)} total records</p></div> <div class="flex gap-3"><a href="/admin" class="btn btn-secondary" data-svelte-h="svelte-yxrebi">← Dashboard</a> <button class="btn btn-primary" data-svelte-h="svelte-17kkdq">+ Tambah</button></div></div> ${validate_component(DataTable, "DataTable").$$render(
+    $$rendered = `${$$result.head += `<!-- HEAD_svelte-s1eqld_START -->${$$result.title = `<title>${escape(tableConfig?.label || tableName)} — Admin — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-s1eqld_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><div><h1 class="page-title" style="margin: 0;">${escape(tableConfig?.label || tableName)}</h1> <p class="text-sm text-muted">${escape(total)} total records</p></div> <div class="flex gap-3"><a href="/admin" class="btn btn-secondary" data-svelte-h="svelte-yxrebi">← Dashboard</a> <button class="btn btn-primary" data-svelte-h="svelte-wrkw91">+ Tambah</button></div></div> ${validate_component(DataTable, "DataTable").$$render(
       $$result,
       {
         data,
@@ -127,7 +127,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       {},
       {
         "row-extra": ({ row }) => {
-          return `<tr slot="row-extra"><td><div class="flex gap-1"><button class="btn btn-ghost btn-sm" data-svelte-h="svelte-10ij8xr">✏️</button> <button class="btn btn-ghost btn-sm" data-svelte-h="svelte-qp74na">🗑️</button></div></td></tr>`;
+          return `<tr slot="row-extra"><td><div class="flex gap-1"><button class="btn btn-ghost btn-sm" data-svelte-h="svelte-1at67s">✏️</button> <button class="btn btn-ghost btn-sm" data-svelte-h="svelte-18ut67d">🗑️</button></div></td></tr>`;
         }
       }
     )}</div>  ${validate_component(Modal, "Modal").$$render(
@@ -145,12 +145,12 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       },
       {
         footer: () => {
-          return `<div slot="footer"><button class="btn btn-secondary" data-svelte-h="svelte-1yu06z8">Batal</button> <button class="btn btn-primary" ${""}>${``} ${escape("Tambah")}</button></div>`;
+          return `<div slot="footer"><button class="btn btn-secondary" data-svelte-h="svelte-j1ki78">Batal</button> <button class="btn btn-primary" ${""}>${``} ${escape("Tambah")}</button></div>`;
         },
         default: () => {
           return `<div style="display: flex; flex-direction: column; gap: var(--space-4);">${each(columns, (col) => {
-            return `${col.key !== "id" || modalMode === "edit" ? `<div class="form-group"><label class="form-label">${escape(col.label)}</label> ${col.key === "id" ? `<input class="form-input"${add_attribute("value", editRecord[col.key] || "", 0)} disabled>` : `${col.key === "password" ? `<input type="password" class="form-input" placeholder="Enter password"${add_attribute("value", editRecord[col.key], 0)}>` : `${typeof editRecord[col.key] === "boolean" ? `<select class="form-select"><option${add_attribute("value", true, 0)} data-svelte-h="svelte-yhf7er">Yes</option><option${add_attribute("value", false, 0)} data-svelte-h="svelte-13pb1fa">No</option></select>` : `<input class="form-input"${add_attribute("value", editRecord[col.key], 0)}>`}`}`} </div>` : ``}`;
-          })} ${tableName === "users" && modalMode === "create" ? `<div class="form-group"><label class="form-label" data-svelte-h="svelte-jau4bd">Password</label> <input type="password" class="form-input" placeholder="Set password"${add_attribute("value", editRecord.password, 0)}></div>` : ``}</div>`;
+            return `${col.key !== "id" || modalMode === "edit" ? `<div class="form-group"><label class="form-label" for="${"inp-" + escape(col.key, true)}">${escape(col.label)}</label> ${col.key === "id" ? `<input id="${"inp-" + escape(col.key, true)}" class="form-input"${add_attribute("value", editRecord[col.key] || "", 0)} disabled>` : `${col.key === "password" ? `<input id="${"inp-" + escape(col.key, true)}" type="password" class="form-input" placeholder="Enter password"${add_attribute("value", editRecord[col.key], 0)}>` : `${typeof editRecord[col.key] === "boolean" ? `<select id="${"inp-" + escape(col.key, true)}" class="form-select"><option${add_attribute("value", true, 0)} data-svelte-h="svelte-yhf7er">Yes</option><option${add_attribute("value", false, 0)} data-svelte-h="svelte-13pb1fa">No</option></select>` : `<input id="${"inp-" + escape(col.key, true)}" class="form-input"${add_attribute("value", editRecord[col.key], 0)}>`}`}`} </div>` : ``}`;
+          })} ${tableName === "users" && modalMode === "create" ? `<div class="form-group"><label class="form-label" for="inp-new-password" data-svelte-h="svelte-f4ccgl">Password</label> <input id="inp-new-password" type="password" class="form-input" placeholder="Set password"${add_attribute("value", editRecord.password, 0)}></div>` : ``}</div>`;
         }
       }
     )}  ${validate_component(Modal, "Modal").$$render(
@@ -167,10 +167,11 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       },
       {
         footer: () => {
-          return `<div slot="footer"><button class="btn btn-secondary" data-svelte-h="svelte-1awoh2w">Batal</button> <button class="btn btn-danger" data-svelte-h="svelte-1n97oam">🗑️ Hapus</button></div>`;
+          return `<div slot="footer"><button class="btn btn-secondary" data-svelte-h="svelte-15obf4x">Batal</button> <button class="btn btn-danger" data-svelte-h="svelte-1n97oam">🗑️ Hapus</button></div>`;
         },
         default: () => {
-          return `<p data-svelte-h="svelte-143432o">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>`;
+          return `<p data-svelte-h="svelte-4vze1p">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat
+		dibatalkan.</p>`;
         }
       }
     )}`;

@@ -29,20 +29,21 @@
 	}
 </script>
 
-<div class="tooth-wrapper">
-	<div class="tooth-number font-medium">{number}</div>
+<div class="flex flex-col items-center gap-1.5 transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105">
+	<div class="text-[13px] font-bold text-slate-500 leading-none pb-0.5 pointer-events-none select-none">{number}</div>
 	
-	<div class="tooth-svg-container">
-		<svg width="40" height="40" viewBox="0 0 100 100" class="tooth-diagram">
+	<div class="relative cursor-pointer filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:drop-shadow-[0_3px_5px_rgba(0,0,0,0.1)] transition-all duration-200">
+		<svg width="42" height="42" viewBox="0 0 100 100" class="overflow-visible group">
 			<!-- Top Polygon -->
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<polygon 
 				points="0,0 100,0 75,25 25,25" 
 				fill={getFill(top, 'top')} 
-				stroke="#1e293b" 
-				stroke-width="2" 
-				class="surface"
+				stroke="#94a3b8" 
+				stroke-width="2.5" 
+				stroke-linejoin="round"
+				class="transition-all duration-200 hover:opacity-85 hover:stroke-primary"
 				on:click={() => handleSurfaceClick('top')}
 			/>
 			
@@ -52,9 +53,10 @@
 			<polygon 
 				points="100,0 100,100 75,75 75,25" 
 				fill={getFill(right, 'right')} 
-				stroke="#1e293b" 
-				stroke-width="2" 
-				class="surface"
+				stroke="#94a3b8" 
+				stroke-width="2.5" 
+				stroke-linejoin="round"
+				class="transition-all duration-200 hover:opacity-85 hover:stroke-primary"
 				on:click={() => handleSurfaceClick('right')}
 			/>
 			
@@ -64,9 +66,10 @@
 			<polygon 
 				points="0,100 100,100 75,75 25,75" 
 				fill={getFill(bottom, 'bottom')} 
-				stroke="#1e293b" 
-				stroke-width="2" 
-				class="surface"
+				stroke="#94a3b8" 
+				stroke-width="2.5" 
+				stroke-linejoin="round"
+				class="transition-all duration-200 hover:opacity-85 hover:stroke-primary"
 				on:click={() => handleSurfaceClick('bottom')}
 			/>
 			
@@ -76,9 +79,10 @@
 			<polygon 
 				points="0,0 0,100 25,75 25,25" 
 				fill={getFill(left, 'left')} 
-				stroke="#1e293b" 
-				stroke-width="2" 
-				class="surface"
+				stroke="#94a3b8" 
+				stroke-width="2.5" 
+				stroke-linejoin="round"
+				class="transition-all duration-200 hover:opacity-85 hover:stroke-primary"
 				on:click={() => handleSurfaceClick('left')}
 			/>
 			
@@ -88,53 +92,22 @@
 			<polygon 
 				points="25,25 75,25 75,75 25,75" 
 				fill={getFill(center, 'center')} 
-				stroke="#1e293b" 
-				stroke-width="2" 
-				class="surface center-surface"
+				stroke="#94a3b8" 
+				stroke-width="2.5" 
+				stroke-linejoin="round"
+				class="transition-all duration-200 hover:opacity-85 hover:stroke-primary z-10"
 				on:click={() => handleSurfaceClick('center')}
 			/>
 
 			{#if globalCondition === 'Extracted'}
 				<!-- Draw a large red X indicating extracted tooth -->
-				<line x1="0" y1="0" x2="100" y2="100" stroke="#EF4444" stroke-width="8" />
-				<line x1="100" y1="0" x2="0" y2="100" stroke="#EF4444" stroke-width="8" />
+				<line x1="0" y1="0" x2="100" y2="100" stroke="#EF4444" stroke-width="8" stroke-linecap="round" class="pointer-events-none" />
+				<line x1="100" y1="0" x2="0" y2="100" stroke="#EF4444" stroke-width="8" stroke-linecap="round" class="pointer-events-none" />
 			{/if}
 			{#if globalCondition === 'Missing'}
-				<circle cx="50" cy="50" r="45" fill="none" stroke="#64748B" stroke-width="6" stroke-dasharray="10 10" />
+				<!-- Gray out circle indicating missing tooth -->
+				<circle cx="50" cy="50" r="45" fill="rgba(148,163,184,0.1)" stroke="#94a3b8" stroke-width="6" stroke-dasharray="10 10" class="pointer-events-none" />
 			{/if}
 		</svg>
 	</div>
 </div>
-
-<style>
-	.tooth-wrapper {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 4px;
-	}
-
-	.tooth-number {
-		font-size: 13px;
-		color: var(--text-primary);
-		line-height: 1;
-	}
-
-	.tooth-diagram {
-		cursor: pointer;
-		filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-		transition: transform 0.1s ease;
-	}
-	
-	.tooth-diagram:hover {
-		transform: scale(1.05);
-	}
-
-	.surface {
-		transition: fill 0.2s ease, opacity 0.2s ease;
-	}
-
-	.surface:hover {
-		opacity: 0.8;
-	}
-</style>

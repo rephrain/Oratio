@@ -1,8 +1,9 @@
 import { j as json } from "../../../../chunks/index.js";
-import { u as users, d as db, a as doctorShifts } from "../../../../chunks/index3.js";
+import { u as users, d as db, s as shifts } from "../../../../chunks/index3.js";
 import { eq, and } from "drizzle-orm";
 async function GET({ url }) {
   const dayOfWeek = url.searchParams.get("day");
+  const available = url.searchParams.get("available") === "true";
   const activeOnly = url.searchParams.get("active") !== "false";
   let conditions = [eq(users.role, "dokter")];
   if (activeOnly)
@@ -13,14 +14,32 @@ async function GET({ url }) {
     doctor_code: users.doctor_code,
     is_active: users.is_active
   }).from(users).where(and(...conditions));
+  if (available) {
+    const now = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    const today = now.getDay();
+    const currentTime = now.toLocaleTimeString("en-GB", { hour12: false });
+    const activeShifts = await db.select().from(shifts).where(and(
+      eq(shifts.day_of_week, today),
+      sql`${shifts.start_time} <= ${currentTime}`,
+      sql`${shifts.end_time} > ${currentTime}`
+    ));
+    const activeUserIds = new Set(activeShifts.map((s) => s.user_id));
+    const filtered = doctors.filter((d) => activeUserIds.has(d.id));
+    return json({
+      doctors: filtered.map((d) => ({
+        ...d,
+        shifts: activeShifts.filter((s) => s.user_id === d.id)
+      }))
+    });
+  }
   if (dayOfWeek !== null && dayOfWeek !== void 0) {
-    const shifts = await db.select().from(doctorShifts).where(eq(doctorShifts.day_of_week, parseInt(dayOfWeek)));
-    const doctorIdsWithShifts = new Set(shifts.map((s) => s.doctor_id));
+    const shiftData = await db.select().from(shifts).where(eq(shifts.day_of_week, parseInt(dayOfWeek)));
+    const doctorIdsWithShifts = new Set(shiftData.map((s) => s.user_id));
     const filtered = doctors.filter((d) => doctorIdsWithShifts.has(d.id));
     return json({
       doctors: filtered.map((d) => ({
         ...d,
-        shifts: shifts.filter((s) => s.doctor_id === d.id)
+        shifts: shiftData.filter((s) => s.user_id === d.id)
       }))
     });
   }

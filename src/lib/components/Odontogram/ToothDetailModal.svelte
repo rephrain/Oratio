@@ -64,15 +64,15 @@
 </script>
 
 <Modal bind:show title="Pemeriksaan Gigi {toothNumber}" on:close>
-	<div class="mb-4">
-		<div class="badge badge-primary text-sm p-2 w-full justify-center">
-			Permukaan: <strong>{getClinicalSurfaceName(toothNumber, surface)}</strong>
+	<div class="mb-5">
+		<div class="bg-indigo-50 text-indigo-700 border border-indigo-100 font-medium text-sm py-2.5 px-4 rounded-xl w-full text-center shadow-sm">
+			Permukaan: <strong class="font-bold">{getClinicalSurfaceName(toothNumber, surface)}</strong>
 		</div>
 	</div>
 
-	<div class="form-group mb-4">
-		<label class="form-label" for="cond">Kondisi (Keadaan)</label>
-		<select id="cond" class="form-select" bind:value={condition}>
+	<div class="space-y-2 mb-4">
+		<label class="text-sm font-bold flex items-center gap-2 text-slate-700" for="cond">Kondisi (Keadaan)</label>
+		<select id="cond" class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white" bind:value={condition}>
 			{#each CONDITIONS as c}
 				<option value={c.value}>{c.label}</option>
 			{/each}
@@ -80,9 +80,9 @@
 	</div>
 
 	{#if condition === 'RESTORATION'}
-		<div class="form-group mb-4">
-			<label class="form-label" for="rest">Jenis Restorasi</label>
-			<select id="rest" class="form-select" bind:value={restoration}>
+		<div class="space-y-2 mb-4">
+			<label class="text-sm font-bold flex items-center gap-2 text-slate-700" for="rest">Jenis Restorasi</label>
+			<select id="rest" class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white" bind:value={restoration}>
 				<option value="">-- Pilih --</option>
 				<option value="Amalgam">Amalgam</option>
 				<option value="Composite">Komposit</option>
@@ -92,13 +92,18 @@
 		</div>
 	{/if}
 
-	<div class="form-group">
-		<label class="form-label" for="notes">Catatan & Tindakan (ICD-9-CM)</label>
-		<textarea id="notes" class="form-textarea" placeholder="Contoh: Tumpatan komposit kavitas kelas II..." bind:value={notes}></textarea>
+	<div class="space-y-2 mb-2">
+		<label class="text-sm font-bold flex items-center gap-2 text-slate-700" for="notes">Catatan & Tindakan (ICD-9-CM)</label>
+		<textarea id="notes" class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm h-28 placeholder:text-slate-300" placeholder="Contoh: Tumpatan komposit kavitas kelas II..." bind:value={notes}></textarea>
 	</div>
 
-	<div slot="footer">
-		<button class="btn btn-secondary" on:click={() => show = false}>Batal</button>
-		<button class="btn btn-primary" on:click={handleSave}>Simpan Perubahan</button>
+	<div slot="footer" class="flex justify-end gap-3 w-full">
+		<button class="px-5 py-2 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors text-slate-700 bg-white shadow-sm" on:click={() => show = false}>
+			Batal
+		</button>
+		<button class="px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all flex items-center gap-2" on:click={handleSave}>
+			<span class="material-symbols-outlined text-[18px]">save</span>
+			Simpan
+		</button>
 	</div>
 </Modal>

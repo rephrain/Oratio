@@ -101,7 +101,7 @@ export function generateSOAPPDF(encounter, patient, prescriptions, diagnoses, pr
 						stack: [
 							{ text: `No. Encounter: ${encounter.id}`, fontSize: 9 },
 							{ text: `Dokter: ${doctor?.name || '-'}`, fontSize: 9 },
-							{ text: `Tanggal: ${new Date(encounter.created_at).toLocaleDateString('id-ID')}`, fontSize: 9 }
+							{ text: `Tanggal: ${new Date(encounter.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}`, fontSize: 9 }
 						]
 					}
 				]
@@ -197,7 +197,7 @@ export function generateOdontogramPDF(encounter, patient, odontogram, details, d
 			{
 				columns: [
 					{ text: `Pasien: ${patient.nama_lengkap} (${patient.id})`, fontSize: 9 },
-					{ text: `Tanggal: ${new Date(encounter.created_at).toLocaleDateString('id-ID')}`, fontSize: 9, alignment: 'right' }
+					{ text: `Tanggal: ${new Date(encounter.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}`, fontSize: 9, alignment: 'right' }
 				]
 			},
 			{ canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }], margin: [0, 5, 0, 10] },

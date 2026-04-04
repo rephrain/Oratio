@@ -1,5 +1,5 @@
 import { j as json } from "../../../../chunks/index.js";
-import { d as db, p as patients, g as encounters, u as users, i as encounterPrescriptions, k as encounterDiagnoses, l as encounterProcedures, h as encounterOdontograms, o as odontogramDetails } from "../../../../chunks/index3.js";
+import { d as db, p as patients, a as patientDiseaseHistory, t as terminologyMaster, b as patientAllergy, c as patientMedication, f as encounters, u as users, i as encounterPrescriptions, h as encounterOdontograms, o as odontogramDetails } from "../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 import "pdfmake";
 import { resolve } from "path";
@@ -40,7 +40,7 @@ function generatePatientProfilePDF(patient, history, allergies, medications) {
       ...allergies && allergies.length > 0 ? allergies.map((a) => ({ text: `• ${a.substance_display || "-"} → ${a.reaction_display || "-"}`, margin: [10, 2] })) : [{ text: "Tidak ada alergi tercatat", italics: true, color: "#888" }],
       { text: " ", margin: [0, 10] },
       { text: "Riwayat Pengobatan", style: "subheader" },
-      ...medications && medications.length > 0 ? medications.map((m) => ({ text: `• ${m.display || "-"} — ${m.dosage || "-"}`, margin: [10, 2] })) : [{ text: "Tidak ada riwayat pengobatan tercatat", italics: true, color: "#888" }]
+      ...medications && medications.length > 0 ? medications.map((m) => ({ text: `• ${m.product_name || m.display || "-"} — ${m.dosage || "-"}`, margin: [10, 2] })) : [{ text: "Tidak ada riwayat pengobatan tercatat", italics: true, color: "#888" }]
     ],
     styles: {
       header: { fontSize: 16, bold: true, margin: [0, 0, 0, 4] },
@@ -101,7 +101,7 @@ function generateSOAPPDF(encounter, patient, prescriptions, diagnoses, procedure
       { text: " ", margin: [0, 10] },
       { text: "Resep Obat", style: "subheader" },
       ...prescriptions && prescriptions.length > 0 ? prescriptions.map((rx) => ({
-        text: `• ${rx.product_name} — ${rx.dosage || "-"} — Qty: ${rx.quantity || 0}${rx.notes ? ` (${rx.notes})` : ""}`,
+        text: `• ${rx.product_name} — ${rx.dosage_form || "-"} — Qty: ${rx.quantity || 0}${rx.instruction ? ` (${rx.instruction})` : ""}`,
         fontSize: 9,
         margin: [10, 2]
       })) : [{ text: "Tidak ada resep obat", italics: true, color: "#888" }],
@@ -169,12 +169,13 @@ function generateOdontogramPDF(encounter, patient, odontogram, details, doctor) 
         table: {
           widths: ["30%", "70%"],
           body: [
-            ["Dentition", odontogram?.dentition || "permanent"],
+            ["Dentition", odontogram?.dentition_type || "Adult"],
             ["Occlusi", odontogram?.occlusi || "-"],
-            ["Torus", odontogram?.torus || "-"],
+            ["Torus Palatinus", odontogram?.torus_palatinus || "-"],
+            ["Torus Mandibularis", odontogram?.torus_mandibularis || "-"],
             ["Palatum", odontogram?.palatum || "-"],
-            ["Diastema", odontogram?.diastema ? "Ya" : "Tidak"],
-            ["Anomali", odontogram?.anomali || "-"]
+            ["Diastema", odontogram?.diastema || "Tidak Ada"],
+            ["Gigi Anomali", odontogram?.gigi_anomali || "Tidak Ada"]
           ]
         },
         layout: "lightHorizontalLines"
@@ -218,7 +219,20 @@ async function GET({ url }) {
       const [patient] = await db.select().from(patients).where(eq(patients.id, patientId)).limit(1);
       if (!patient)
         return json({ error: "Patient not found" }, { status: 404 });
-      const docDef = generatePatientProfilePDF(patient, [], [], []);
+      const history = await db.select({
+        type: patientDiseaseHistory.type,
+        description: patientDiseaseHistory.description,
+        display: terminologyMaster.display
+      }).from(patientDiseaseHistory).leftJoin(terminologyMaster, eq(patientDiseaseHistory.terminology_id, terminologyMaster.id)).where(eq(patientDiseaseHistory.patient_id, patientId));
+      const allergies = await db.select({
+        substance_display: terminologyMaster.display,
+        reaction_display: patientAllergy.reaction_display
+      }).from(patientAllergy).leftJoin(terminologyMaster, eq(patientAllergy.substance_id, terminologyMaster.id)).where(eq(patientAllergy.patient_id, patientId));
+      const medications = await db.select({
+        product_name: terminologyMaster.display,
+        dosage: patientMedication.dosage
+      }).from(patientMedication).leftJoin(terminologyMaster, eq(patientMedication.terminology_id, terminologyMaster.id)).where(eq(patientMedication.patient_id, patientId));
+      const docDef = generatePatientProfilePDF(patient, history, allergies, medications);
       return json({ docDefinition: docDef });
     }
     if ((type === "soap" || type === "odontogram") && encounterId) {
@@ -227,15 +241,29 @@ async function GET({ url }) {
         return json({ error: "Encounter not found" }, { status: 404 });
       const [patient] = await db.select().from(patients).where(eq(patients.id, enc.patient_id)).limit(1);
       const [doctor] = await db.select().from(users).where(eq(users.id, enc.doctor_id)).limit(1);
-      const prescriptions = await db.select().from(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, encounterId));
-      const diagnoses = await db.select().from(encounterDiagnoses).where(eq(encounterDiagnoses.encounter_id, encounterId));
-      const procedures = await db.select().from(encounterProcedures).where(eq(encounterProcedures.encounter_id, encounterId));
+      const prescriptions = await db.select({
+        product_name: terminologyMaster.display,
+        dosage: encounterPrescriptions.dosage,
+        quantity: encounterPrescriptions.quantity,
+        notes: encounterPrescriptions.notes
+      }).from(encounterPrescriptions).leftJoin(terminologyMaster, eq(encounterPrescriptions.terminology_id, terminologyMaster.id)).where(eq(encounterPrescriptions.encounter_id, encounterId));
+      const odontograms = await db.select().from(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, encounterId));
+      let details = [];
+      if (odontograms.length > 0) {
+        details = await db.select().from(odontogramDetails).where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
+      }
+      const diagnoses = details.filter((d) => d.diagnosis_code).map((d) => ({
+        code: d.diagnosis_code,
+        display: d.diagnosis_display,
+        is_primary: false
+        // default
+      }));
+      const procedures = details.filter((d) => d.procedure_code).map((d) => ({
+        code: d.procedure_code,
+        display: d.procedure_display,
+        tooth_number: d.tooth_number
+      }));
       if (type === "odontogram") {
-        const odontograms = await db.select().from(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, encounterId));
-        let details = [];
-        if (odontograms.length > 0) {
-          details = await db.select().from(odontogramDetails).where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
-        }
         const docDef2 = generateOdontogramPDF(enc, patient, odontograms[0], details, doctor);
         return json({ docDefinition: docDef2 });
       }

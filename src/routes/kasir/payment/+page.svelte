@@ -50,7 +50,7 @@
 	$: netSales = totalSales - discountAmount;
 
 	async function loadDischargedEncounters() {
-		const today = new Date().toISOString().split("T")[0];
+		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
 		const res = await fetch(
 			`/api/encounters?date=${today}&status=Discharged`,
 		);
@@ -185,8 +185,8 @@
 					<div class="sm:col-span-2">
 						<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Encounter Date</p>
 						<p class="text-sm font-medium text-slate-600">
-							{new Date(encounterDetail.encounter?.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} • 
-							{new Date(encounterDetail.encounter?.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})} WIB
+							{new Date(encounterDetail.encounter?.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta'})} • 
+							{new Date(encounterDetail.encounter?.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta'})} WIB
 						</p>
 					</div>
 				</div>

@@ -10,7 +10,7 @@ import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
  * GET /api/patients/:id/pdf
  * Serves the stored patient profile PDF, or regenerates on the fly if missing.
  */
-export async function GET({ params }) {
+export async function GET({ params, url }) {
 	const { id } = params;
 
 	try {
@@ -62,7 +62,8 @@ export async function GET({ params }) {
 			.leftJoin(terminologyMaster, eq(patientMedication.terminology_id, terminologyMaster.id))
 			.where(eq(patientMedication.patient_id, id));
 
-		const pdfBuffer = await generatePatientProfilePdf({ patient, allergies, diseases, medications });
+		const origin = new URL(params.id ? `/api/patients/${id}/pdf` : '', url.origin).href;
+		const pdfBuffer = await generatePatientProfilePdf({ patient, allergies, diseases, medications, origin });
 
 		return new Response(pdfBuffer, {
 			status: 200,

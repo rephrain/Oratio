@@ -1,23 +1,20 @@
 <script>
-	import { isSidebarOpen } from '$lib/stores/layout.js';
+	import { isSidebarOpen, headerTitle, isPatientProfileOpen } from '$lib/stores/layout.js';
 	import { logout } from '$lib/stores/auth.js';
 
-	export let title = '';
 	export let user = null;
 
 	let showProfileMenu = false;
 </script>
 
 <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 w-full" style="position: sticky; top: 0; z-index: 50;">
-	<div class="flex-1 max-w-xl">
-		<div class="relative group">
-			<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
-			<input
-				class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm outline-none transition-all"
-				placeholder="Search by ID, NIK, or Patient Name..."
-				type="text"
-			/>
-		</div>
+	<div class="flex-1 max-w-2xl">
+		{#if $headerTitle}
+			<button class="text-left focus:outline-none hover:opacity-80 transition-opacity group cursor-pointer flex items-center gap-2" on:click={() => ($isPatientProfileOpen = !$isPatientProfileOpen)}>
+				<h1 class="text-lg font-bold text-slate-800 group-hover:text-primary transition-colors m-0 leading-none">{$headerTitle}</h1>
+				<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-sm">info</span>
+			</button>
+		{/if}
 	</div>
 	<div class="flex items-center gap-6">
 		<div class="flex items-center gap-4">

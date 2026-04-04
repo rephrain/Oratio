@@ -1,10 +1,10 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, u as users, a as doctorShifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, e as patientMedication, t as terminologyMaster, f as documents, g as encounters, s as statusHistory, h as encounterOdontograms, o as odontogramDetails, i as encounterPrescriptions, j as encounterReferrals, k as encounterDiagnoses, l as encounterProcedures, m as items, n as encounterItems, q as payments } from "../../../../../chunks/index3.js";
+import { d as db, u as users, s as shifts, p as patients, a as patientDiseaseHistory, b as patientAllergy, c as patientMedication, t as terminologyMaster, e as documents, f as encounters, g as statusHistory, h as encounterOdontograms, o as odontogramDetails, i as encounterPrescriptions, j as encounterReferrals, k as items, l as encounterItems, m as payments } from "../../../../../chunks/index3.js";
 import { sql, eq } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 const schemaMap = {
   users,
-  doctorShifts,
+  shifts,
   patients,
   patientDiseaseHistory,
   patientAllergy,
@@ -17,8 +17,6 @@ const schemaMap = {
   odontogramDetails,
   encounterPrescriptions,
   encounterReferrals,
-  encounterDiagnoses,
-  encounterProcedures,
   items,
   encounterItems,
   payments

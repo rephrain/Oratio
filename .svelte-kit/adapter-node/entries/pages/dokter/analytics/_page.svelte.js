@@ -1,25 +1,26 @@
-import { c as create_ssr_component, o as onDestroy, f as add_attribute } from "../../../../chunks/ssr.js";
+import { c as create_ssr_component, o as onDestroy, d as add_attribute } from "../../../../chunks/ssr.js";
 function getMonthStart() {
-  const d = /* @__PURE__ */ new Date();
+  const d = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { data } = $$props;
   let encounters = [];
   let dateFrom = getMonthStart();
-  let dateTo = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  let dateTo = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).toISOString().split("T")[0];
   onDestroy(() => {
   });
   if ($$props.data === void 0 && $$bindings.data && data !== void 0)
     $$bindings.data(data);
   data?.user;
   encounters.filter((e) => {
-    const d = new Date(e.encounter?.created_at).toDateString();
-    return d === (/* @__PURE__ */ new Date()).toDateString();
+    const d = new Date(e.encounter?.created_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" });
+    const today = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" });
+    return d === today;
   }).length;
   encounters.filter((e) => {
     const d = new Date(e.encounter?.created_at);
-    const now = /* @__PURE__ */ new Date();
+    const now = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1e3);
     return d >= weekAgo;
   }).length;
@@ -75,7 +76,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     });
     return Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 10);
   })();
-  return `${$$result.head += `<!-- HEAD_svelte-181ofbo_START -->${$$result.title = `<title>Analytics — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-181ofbo_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><h1 class="page-title" style="margin: 0;" data-svelte-h="svelte-10kqvz9">📊 Analytics &amp; Statistik</h1> <div class="flex gap-3 items-center"><input type="date" class="form-input" style="width: auto;"${add_attribute("value", dateFrom, 0)}> <span class="text-muted" data-svelte-h="svelte-1b6xofy">—</span> <input type="date" class="form-input" style="width: auto;"${add_attribute("value", dateTo, 0)}> <button class="btn btn-primary btn-sm" data-svelte-h="svelte-b52srn">Filter</button></div></div> ${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-h9r9zk"><div class="spinner spinner-lg" style="margin: 0 auto;"></div></div>`}</div>`;
+  return `${$$result.head += `<!-- HEAD_svelte-1a2wfng_START -->${$$result.title = `<title>Analytics — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-1a2wfng_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><h1 class="page-title" style="margin: 0;" data-svelte-h="svelte-10kqvz9">📊 Analytics &amp; Statistik</h1> <div class="flex gap-3 items-center"><input type="date" class="form-input" style="width: auto;"${add_attribute("value", dateFrom, 0)}> <span class="text-muted" data-svelte-h="svelte-1b6xofy">—</span> <input type="date" class="form-input" style="width: auto;"${add_attribute("value", dateTo, 0)}> <button class="btn btn-primary btn-sm" data-svelte-h="svelte-tqt8be">Filter</button></div></div> ${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-h9r9zk"><div class="spinner spinner-lg" style="margin: 0 auto;"></div></div>`}</div>`;
 });
 export {
   Page as default

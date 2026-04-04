@@ -112,6 +112,106 @@ export const TOOTH_SURFACES = [
 	{ key: 'D', label: 'Distal' }
 ];
 
+export const KEADAAN = [
+	"Gigi sehat, normal, tanpa kelainan",
+	"Gigi tidak ada/ tidak diketahui",
+	"Un-erupted",
+	"Partial erupted",
+	"Impacted visible",
+	"Anomali",
+	"Diastema",
+	"Atrisi",
+	"Abrasi",
+	"Caries/ Karies",
+	"Crown Fracture/ Fraktur Mahkota",
+	"Gigi Non-Vital",
+	"Sisa Akar",
+	"Gigi Hilang",
+	"tooth present",
+	"no information",
+	"erupting",
+	"Retained root",
+	"Parapulpal pin",
+	"Resorption",
+	"Denticle",
+	"Dilacerations",
+	"Root fracture",
+	"cavity",
+	"apical periodontitis",
+	"calculus",
+	"erosion",
+	"fluorosis",
+	"marginal periodontitis",
+	"perforation",
+	"Mesio version",
+	"Disto version",
+	"Vestibule version",
+	"Linguo version",
+	"Palato version",
+	"Mesiolinguo version",
+	"Mesiopalato version",
+	"Distolabioversion",
+	"Distovestibulo version",
+	"Distopalato version",
+	"splint"
+]
+
+export const BAHAN_RESTORASI = [
+	"Amalgam Filling",
+	"GIC/ Silika",
+	"Composite filling",
+	"Fissure Sealant",
+	"glass ionomer filling",
+	"ceramic filling",
+	"tooth coloured filling",
+	"unidentified filing",
+	"Acrilic",
+	"Full Metal",
+	"Non-precious metal",
+	"Gold Metal",
+	"Gold",
+	"Metal Porcelain",
+	"Root filling",
+	"Porcelain",
+	"Ceramic"
+]
+
+export const RESTORASI = [
+	"Full Metal Crown",
+	"Porcelain Crown",
+	"Metal Porcelain Crown",
+	"Gold Metal Crown",
+	"Root Canal Treatment / Perawatan Saluran Akar",
+	"Implan",
+	"Metal Bridge",
+	"Porcelain Bridge",
+	"Pontic",
+	"Gigi abutment",
+	"Inlay",
+	"Onlay",
+	"Crown",
+	"Bridge",
+	"Dental Veener",
+	"Dental Filling"
+]
+
+export const BAHAN_PROTESA = [
+	"Acrilic",
+	"Bahan Metal Protesa",
+	"Bahan Polycarbonat Protesa"
+]
+
+export const PROTESA = [
+	"Partial Denture",
+	"Full Denture",
+	"Clasp",
+	"Full upper denture",
+	"Partial lower denture",
+	"Partial upper denture",
+	"Hybrid lower denture",
+	"Hybrid upper denture"
+]
+
 // Odontogram dropdown options (per spec)
 export const OCCLUSI_OPTIONS = ['Normal Bite', 'Cross Bite', 'Steep Bite'];
 

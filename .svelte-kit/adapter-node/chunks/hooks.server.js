@@ -1,4 +1,5 @@
 import { verifyToken } from "./auth.js";
+process.env.TZ = "Asia/Jakarta";
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 const ROLE_PATHS = {
   admin: "/admin",

@@ -9,6 +9,8 @@
 	export let disabled = false;
 	export let searchFn = null; // async function for remote search
 	export let minChars = 2;
+	export let inputClass = "form-input";
+	export let wrapperClass = "form-group";
 
 	const dispatch = createEventDispatcher();
 	let searchTerm = '';
@@ -74,7 +76,7 @@
 	}
 </script>
 
-<div class="form-group">
+<div class={wrapperClass}>
 	{#if label}
 		<label class="form-label">
 			{label}
@@ -86,7 +88,7 @@
 		<input
 			bind:this={inputEl}
 			type="text"
-			class="form-input"
+			class={inputClass}
 			{placeholder}
 			{disabled}
 			bind:value={searchTerm}

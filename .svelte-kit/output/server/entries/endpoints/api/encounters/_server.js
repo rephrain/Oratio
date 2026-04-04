@@ -1,6 +1,6 @@
 import { j as json } from "../../../../chunks/index.js";
-import { g as encounters, d as db, p as patients, u as users, s as statusHistory } from "../../../../chunks/index3.js";
-import { gte, lte, eq, and, desc, sql } from "drizzle-orm";
+import { f as encounters, d as db, p as patients, u as users, t as terminologyMaster, g as statusHistory } from "../../../../chunks/index3.js";
+import { sql, eq, and, desc } from "drizzle-orm";
 import { g as generateEncounterId } from "../../../../chunks/formatters.js";
 async function GET({ url, locals }) {
   const date = url.searchParams.get("date");
@@ -14,19 +14,10 @@ async function GET({ url, locals }) {
   const offset = (page - 1) * limit;
   let conditions = [];
   if (dateFrom && dateTo) {
-    const start = new Date(dateFrom);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(dateTo);
-    end.setHours(23, 59, 59, 999);
-    conditions.push(gte(encounters.created_at, start));
-    conditions.push(lte(encounters.created_at, end));
+    conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') >= ${dateFrom}`);
+    conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') <= ${dateTo}`);
   } else if (date) {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
-    conditions.push(gte(encounters.created_at, start));
-    conditions.push(lte(encounters.created_at, end));
+    conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = ${date}`);
   }
   if (doctorId)
     conditions.push(eq(encounters.doctor_id, doctorId));
@@ -40,11 +31,13 @@ async function GET({ url, locals }) {
   const whereClause = conditions.length > 0 ? and(...conditions) : void 0;
   const data = await db.select({
     encounter: encounters,
+    patient: patients,
     patient_name: patients.nama_lengkap,
     patient_nik: patients.nik,
     doctor_name: users.name,
-    doctor_code: users.doctor_code
-  }).from(encounters).leftJoin(patients, eq(encounters.patient_id, patients.id)).leftJoin(users, eq(encounters.doctor_id, users.id)).where(whereClause).orderBy(desc(encounters.created_at)).limit(limit).offset(offset);
+    doctor_code: users.doctor_code,
+    encounter_reason_display: terminologyMaster.display
+  }).from(encounters).leftJoin(patients, eq(encounters.patient_id, patients.id)).leftJoin(users, eq(encounters.doctor_id, users.id)).leftJoin(terminologyMaster, eq(encounters.encounter_reason_id, terminologyMaster.id)).where(whereClause).orderBy(desc(encounters.created_at)).limit(limit).offset(offset);
   return json({ data });
 }
 async function POST({ request, locals }) {
@@ -55,28 +48,47 @@ async function POST({ request, locals }) {
   }
   const [lastEnc] = await db.select({ id: encounters.id }).from(encounters).where(eq(encounters.doctor_id, body.doctor_id)).orderBy(desc(encounters.id)).limit(1);
   const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
-  const today = /* @__PURE__ */ new Date();
-  today.setHours(0, 0, 0, 0);
   const [{ maxQueue }] = await db.select({
     maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
-  }).from(encounters).where(gte(encounters.created_at, today));
+  }).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
   const queueNumber = Number(maxQueue) + 1;
+  let encounterReasonId = null;
+  const complaintCode = body.chief_complaint_code;
+  const complaintDisplay = body.chief_complaint_display;
+  if (complaintCode && complaintDisplay) {
+    const [existing] = await db.select().from(terminologyMaster).where(and(
+      eq(terminologyMaster.code, complaintCode),
+      eq(terminologyMaster.system, "SNOMED")
+    )).limit(1);
+    if (existing) {
+      encounterReasonId = existing.id;
+    } else {
+      const [inserted] = await db.insert(terminologyMaster).values({
+        code: complaintCode,
+        display: complaintDisplay,
+        system: "SNOMED"
+      }).returning();
+      encounterReasonId = inserted.id;
+    }
+  }
   const [encounter] = await db.insert(encounters).values({
     id: encId,
     patient_id: body.patient_id,
+    kasir_id: locals?.user?.id || null,
     doctor_id: body.doctor_id,
     queue_number: queueNumber,
     form_mode: body.form_mode || "SOAP",
     status: "Planned",
-    chief_complaint_code: body.chief_complaint_code || null,
-    chief_complaint_display: body.chief_complaint_display || null,
-    tekanan_darah: body.tekanan_darah || null,
-    referral_source: body.referral_source || null
+    encounter_reason_id: encounterReasonId,
+    reason_type: body.reason_type || null
   }).returning();
+  if (body.tekanan_darah) {
+    await db.update(patients).set({ tekanan_darah: body.tekanan_darah }).where(eq(patients.id, body.patient_id));
+  }
   await db.insert(statusHistory).values({
     encounter_id: encId,
-    status: "Planned",
-    start_time: /* @__PURE__ */ new Date()
+    status: "Arrived",
+    start_at: /* @__PURE__ */ new Date()
   });
   return json({ encounter, queue_number: queueNumber }, { status: 201 });
 }

@@ -52,7 +52,7 @@
 	async function loadShifts() {
 		if (!user?.id) return;
 		try {
-			const res = await fetch('/api/auth/shifts');
+			const res = await fetch("/api/auth/shifts");
 			const resp = await res.json();
 			doctorShifts = resp.data || [];
 			updateShift();
@@ -117,7 +117,9 @@
 
 	async function loadStats() {
 		try {
-			const res = await fetch(`/api/dashboard/dokter/stats?date=${filterDate}`);
+			const res = await fetch(
+				`/api/dashboard/dokter/stats?date=${filterDate}`,
+			);
 			const resp = await res.json();
 			if (!resp.error) {
 				stats = resp;
@@ -273,15 +275,19 @@
 	})();
 
 	function changeDate(offset) {
-		const d = new Date(filterDate + 'T00:00:00');
+		const d = new Date(filterDate + "T00:00:00");
 		d.setDate(d.getDate() + offset);
-		filterDate = d.toISOString().split('T')[0];
+		filterDate = d.toISOString().split("T")[0];
 		loading = true;
 		loadEncounters();
 	}
 
 	function goToToday() {
-		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split('T')[0];
+		const today = new Date(
+			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+		)
+			.toISOString()
+			.split("T")[0];
 		if (filterDate !== today) {
 			filterDate = today;
 			loading = true;
@@ -295,7 +301,13 @@
 		loadEncounters();
 	}
 
-	$: isToday = filterDate === new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split('T')[0];
+	$: isToday =
+		filterDate ===
+		new Date(
+			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+		)
+			.toISOString()
+			.split("T")[0];
 
 	onMount(() => {
 		loadEncounters();
@@ -322,84 +334,6 @@
 			? 'mr-80'
 			: 'mr-0'} transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden custom-scrollbar p-6"
 	>
-		<!-- 1. Top Section (Blue Banner) -->
-		<div
-			class="bg-[#1E40AF] rounded-2xl p-8 mb-8 text-white shadow-xl flex items-center justify-between relative overflow-hidden"
-		>
-			<div class="relative z-10">
-				<p
-					class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2"
-				>
-					Session • {new Date(filterDate).toLocaleDateString(
-						"id-ID",
-						{
-							weekday: "long",
-							day: "numeric",
-							month: "short",
-							timeZone: "Asia/Jakarta",
-						},
-					)}
-				</p>
-				<h2 class="text-4xl font-bold">
-					{#if shiftInfo.active}
-						Shift ends in <span class="text-[#FACC15]"
-							>{shiftInfo.remaining}</span
-						>
-					{:else}
-						No Active Shift
-					{/if}
-				</h2>
-				<div class="mt-6 flex gap-4">
-					<div
-						class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
-					>
-						<span class="material-symbols-outlined text-lg"
-							>person</span
-						>
-						<span class="text-sm font-semibold"
-							>{completedToday.length} Patients Treated</span
-						>
-					</div>
-					<div
-						class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"
-					>
-						<span class="material-symbols-outlined text-lg"
-							>schedule</span
-						>
-						<span class="text-sm font-semibold"
-							>{todayQueue.length} Remaining</span
-						>
-					</div>
-				</div>
-			</div>
-			<div class="relative z-10 text-right">
-				<div class="text-6xl font-black text-white/10 mb-2">
-					STATION 04
-				</div>
-				<div
-					class="flex items-center justify-end gap-2 text-sm font-bold text-blue-100"
-				>
-					{#if shiftInfo.active}
-						<span
-							class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"
-						></span>
-						System Active
-					{:else}
-						<span class="w-2.5 h-2.5 bg-gray-400 rounded-full"
-						></span>
-						Offline
-					{/if}
-				</div>
-			</div>
-			<!-- Background Decoration -->
-			<div
-				class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"
-			></div>
-			<div
-				class="absolute -left-16 -top-16 w-48 h-48 bg-blue-400/10 rounded-full blur-2xl"
-			></div>
-		</div>
-
 		<!-- Date Filter -->
 		<div class="flex items-center justify-between mb-6">
 			<div class="flex items-center gap-3">
@@ -407,7 +341,9 @@
 					on:click={() => changeDate(-1)}
 					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
 				>
-					<span class="material-symbols-outlined text-lg">chevron_left</span>
+					<span class="material-symbols-outlined text-lg"
+						>chevron_left</span
+					>
 				</button>
 				<div class="relative">
 					<input
@@ -421,7 +357,9 @@
 					on:click={() => changeDate(1)}
 					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
 				>
-					<span class="material-symbols-outlined text-lg">chevron_right</span>
+					<span class="material-symbols-outlined text-lg"
+						>chevron_right</span
+					>
 				</button>
 				{#if !isToday}
 					<button
@@ -432,8 +370,18 @@
 					</button>
 				{/if}
 			</div>
-			<p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
-				{new Date(filterDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+			<p
+				class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+			>
+				{new Date(filterDate + "T00:00:00").toLocaleDateString(
+					"id-ID",
+					{
+						weekday: "long",
+						day: "numeric",
+						month: "long",
+						year: "numeric",
+					},
+				)}
 			</p>
 		</div>
 
@@ -949,10 +897,12 @@
 									class="text-[11px] font-bold text-slate-800"
 									>{formatDate(
 										selectedEncounterData.patient_birth_date ||
-											selectedEncounterData.patient?.birth_date,
+											selectedEncounterData.patient
+												?.birth_date,
 									) || "-"} ({calculateAge(
 										selectedEncounterData.patient_birth_date ||
-											selectedEncounterData.patient?.birth_date,
+											selectedEncounterData.patient
+												?.birth_date,
 									)}y)</span
 								>
 							</div>
@@ -975,28 +925,34 @@
 									<span
 										class="text-[11px] font-bold text-slate-800"
 										>{(selectedEncounterData.patient_gender ||
-											selectedEncounterData.patient?.gender) ===
-											"Male" ||
+											selectedEncounterData.patient
+												?.gender) === "Male" ||
 										(selectedEncounterData.patient_gender ||
-											selectedEncounterData.patient?.gender) ===
-											"L" ||
+											selectedEncounterData.patient
+												?.gender) === "L" ||
 										(selectedEncounterData.patient_gender ||
-											selectedEncounterData.patient?.gender) ===
-											"male"
+											selectedEncounterData.patient
+												?.gender) === "male"
 											? "Male"
 											: (selectedEncounterData.patient_gender ||
-													selectedEncounterData.patient
-														?.gender) === "Female" ||
+														selectedEncounterData
+															.patient
+															?.gender) ===
+														"Female" ||
 												  (selectedEncounterData.patient_gender ||
-														selectedEncounterData.patient
+														selectedEncounterData
+															.patient
 															?.gender) === "P" ||
 												  (selectedEncounterData.patient_gender ||
-														selectedEncounterData.patient
-															?.gender) === "female"
+														selectedEncounterData
+															.patient
+															?.gender) ===
+														"female"
 												? "Female"
 												: selectedEncounterData.patient_gender ||
-												  selectedEncounterData.patient
-														?.gender || "-"}</span
+													selectedEncounterData
+														.patient?.gender ||
+													"-"}</span
 									>
 								</div>
 							</div>
@@ -1007,7 +963,8 @@
 								<span
 									class="text-[11px] font-bold text-slate-800 text-right w-30 leading-relaxed"
 									>{selectedEncounterData.patient_address ||
-										selectedEncounterData.patient?.address ||
+										selectedEncounterData.patient
+											?.address ||
 										"-"}</span
 								>
 							</div>
@@ -1036,8 +993,8 @@
 										<a
 											href={getWhatsAppUrl(
 												selectedEncounterData.patient_handphone ||
-													selectedEncounterData.patient
-														?.handphone,
+													selectedEncounterData
+														.patient?.handphone,
 											)}
 											target="_blank"
 											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
@@ -1090,14 +1047,23 @@
 										<span
 											class="text-lg font-black text-blue-900"
 										>
-											{selectedEncounterData.patient_blood_type || selectedEncounterData.patient?.blood_type || "-"}
+											{selectedEncounterData.patient_blood_type ||
+												selectedEncounterData.patient
+													?.blood_type ||
+												"-"}
 										</span>
 										<span
 											class="text-sm font-bold text-blue-700"
 										>
-											{(selectedEncounterData.patient_rhesus || selectedEncounterData.patient?.rhesus) === "+"
+											{(selectedEncounterData.patient_rhesus ||
+												selectedEncounterData.patient
+													?.rhesus) === "+"
 												? "+"
-												: (selectedEncounterData.patient_rhesus || selectedEncounterData.patient?.rhesus) === "-"
+												: (selectedEncounterData.patient_rhesus ||
+															selectedEncounterData
+																.patient
+																?.rhesus) ===
+													  "-"
 													? "-"
 													: ""}
 										</span>
@@ -1126,7 +1092,10 @@
 										<span
 											class="text-lg font-black text-blue-900"
 										>
-											{selectedEncounterData.patient_tekanan_darah || selectedEncounterData.patient?.tekanan_darah || "-"}
+											{selectedEncounterData.patient_tekanan_darah ||
+												selectedEncounterData.patient
+													?.tekanan_darah ||
+												"-"}
 										</span>
 										<span
 											class="text-[10px] font-bold text-blue-700"

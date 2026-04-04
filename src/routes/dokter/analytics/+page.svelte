@@ -102,7 +102,7 @@
 		encounters.forEach((e) => {
 			const d = new Date(e.encounter?.created_at).toLocaleDateString(
 				"id-ID",
-				{ day: "2-digit", month: "short" },
+				{ day: "2-digit", month: "short", timeZone: "Asia/Jakarta" },
 			);
 			map[d] = (map[d] || 0) + 1;
 		});

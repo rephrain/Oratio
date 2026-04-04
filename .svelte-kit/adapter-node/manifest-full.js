@@ -7,10 +7,10 @@ function __memo(fn) {
 return {
 	appDir: "_app",
 	appPath: "_app",
-	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf"]),
-	mimeTypes: {".ttf":"font/ttf"},
+	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
+	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.cb61660f.js","app":"_app/immutable/entry/app.6664f161.js","imports":["_app/immutable/entry/start.cb61660f.js","_app/immutable/chunks/scheduler.3644534c.js","_app/immutable/chunks/singletons.440318f5.js","_app/immutable/chunks/index.6c73ec2d.js","_app/immutable/chunks/paths.7a655565.js","_app/immutable/entry/app.6664f161.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.3644534c.js","_app/immutable/chunks/index.89b48b24.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.7b6f6038.js","app":"_app/immutable/entry/app.329b4b19.js","imports":["_app/immutable/entry/start.7b6f6038.js","_app/immutable/chunks/scheduler.f04c06a7.js","_app/immutable/chunks/singletons.0009ad37.js","_app/immutable/chunks/index.2d48bea8.js","_app/immutable/entry/app.329b4b19.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.f04c06a7.js","_app/immutable/chunks/index.e1be8bf6.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -81,6 +81,27 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/auth/me/_server.js'))
 			},
 			{
+				id: "/api/auth/shifts",
+				pattern: /^\/api\/auth\/shifts\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/auth/shifts/_server.js'))
+			},
+			{
+				id: "/api/dashboard/dokter/stats",
+				pattern: /^\/api\/dashboard\/dokter\/stats\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/dokter/stats/_server.js'))
+			},
+			{
+				id: "/api/debug-tz",
+				pattern: /^\/api\/debug-tz\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/debug-tz/_server.js'))
+			},
+			{
 				id: "/api/doctors",
 				pattern: /^\/api\/doctors\/?$/,
 				params: [],
@@ -102,6 +123,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/encounters/_id_/_server.js'))
 			},
 			{
+				id: "/api/geonames",
+				pattern: /^\/api\/geonames\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/geonames/_server.js'))
+			},
+			{
 				id: "/api/kfa",
 				pattern: /^\/api\/kfa\/?$/,
 				params: [],
@@ -114,6 +142,20 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/patients/_server.js'))
+			},
+			{
+				id: "/api/patients/[id]/medical-background",
+				pattern: /^\/api\/patients\/([^/]+?)\/medical-background\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/patients/_id_/medical-background/_server.js'))
+			},
+			{
+				id: "/api/patients/[id]/pdf",
+				pattern: /^\/api\/patients\/([^/]+?)\/pdf\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/patients/_id_/pdf/_server.js'))
 			},
 			{
 				id: "/api/payments",
@@ -135,6 +177,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/snowstorm/_server.js'))
+			},
+			{
+				id: "/api/wilayah",
+				pattern: /^\/api\/wilayah\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/wilayah/_server.js'))
 			},
 			{
 				id: "/dokter",

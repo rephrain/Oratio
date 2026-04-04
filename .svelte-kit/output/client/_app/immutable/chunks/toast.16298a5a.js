@@ -1,1 +1,0 @@
-import{w as r}from"./index.6c73ec2d.js";const o=r([]);function u(t,a="success",s=4e3){const i=Date.now();o.update(e=>[...e,{id:i,message:t,type:a}]),setTimeout(()=>{o.update(e=>e.filter(d=>d.id!==i))},s)}function c(t){o.update(a=>a.filter(s=>s.id!==t))}export{u as a,c as r,o as t};

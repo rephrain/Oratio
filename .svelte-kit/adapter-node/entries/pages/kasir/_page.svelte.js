@@ -1,23 +1,30 @@
-import { c as create_ssr_component, o as onDestroy, f as add_attribute, e as escape } from "../../../chunks/ssr.js";
+import { c as create_ssr_component, o as onDestroy, e as escape, d as add_attribute } from "../../../chunks/ssr.js";
 /* empty css                                                       */import { Q as QUEUE_COLUMNS } from "../../../chunks/constants.js";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let waitingCount;
   let inProgressCount;
-  let dischargedCount;
   let completedCount;
   let encounters = [];
-  let filterDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  let filterDate = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).toISOString().split("T")[0];
   onDestroy(() => {
   });
   waitingCount = encounters.filter((e) => ["Planned", "Arrived"].includes(e.encounter?.status)).length;
   inProgressCount = encounters.filter((e) => e.encounter?.status === "In Progress").length;
-  dischargedCount = encounters.filter((e) => e.encounter?.status === "Discharged").length;
+  encounters.filter((e) => e.encounter?.status === "Discharged").length;
   completedCount = encounters.filter((e) => e.encounter?.status === "Completed").length;
   QUEUE_COLUMNS.map((col) => ({
     ...col,
     items: encounters.filter((e) => col.statuses.includes(e.encounter?.status))
   }));
-  return `${$$result.head += `<!-- HEAD_svelte-1jxjtsd_START -->${$$result.title = `<title>Antrian — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-1jxjtsd_END -->`, ""} <div><div class="flex items-center justify-between mb-6"><h1 class="page-title" style="margin: 0;" data-svelte-h="svelte-10035vj">Manajemen Antrian</h1> <div class="flex gap-3"><input type="date" class="form-input" style="width: auto;"${add_attribute("value", filterDate, 0)}> <div class="flex gap-1" style="background: var(--gray-100); border-radius: var(--radius-md); padding: 2px;"><button class="${["tab", "active"].join(" ").trim()}" data-svelte-h="svelte-epyxkx">Board</button> <button class="${["tab", ""].join(" ").trim()}" data-svelte-h="svelte-1v40pf7">Tabel</button></div></div></div>  <div class="summary-bar"><div class="summary-item"><span class="summary-dot" style="background: var(--warning);"></span> <strong>${escape(waitingCount)}</strong> menunggu</div> <div class="summary-item"><span class="summary-dot" style="background: var(--primary);"></span> <strong>${escape(inProgressCount)}</strong> dalam proses</div> <div class="summary-item"><span class="summary-dot" style="background: var(--success);"></span> <strong>${escape(dischargedCount)}</strong> selesai periksa</div> <div class="summary-item"><span class="summary-dot" style="background: var(--gray-400);"></span> <strong>${escape(completedCount)}</strong> selesai hari ini</div></div> ${`<div style="text-align: center; padding: var(--space-16);" data-svelte-h="svelte-1a8rdz6"><div class="spinner spinner-lg" style="margin: 0 auto;"></div> <p class="text-muted mt-4">Memuat antrian...</p></div>`}</div>`;
+  return `<div class="h-full flex flex-col"> <div class="flex gap-4 mb-8 shrink-0"><div class="flex-1 min-w-[200px] bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4"><div class="size-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center" data-svelte-h="svelte-vze8fv"><span class="material-symbols-outlined">hourglass_empty</span></div> <div><p class="text-2xl font-bold text-slate-900">${escape(waitingCount)}</p> <p class="text-xs font-medium text-slate-500 uppercase tracking-wide" data-svelte-h="svelte-tiyhxc">Waiting</p></div></div> <div class="flex-1 min-w-[200px] bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4"><div class="size-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center" data-svelte-h="svelte-hbuq94"><span class="material-symbols-outlined">vital_signs</span></div> <div><p class="text-2xl font-bold text-slate-900">${escape(inProgressCount)}</p> <p class="text-xs font-medium text-slate-500 uppercase tracking-wide" data-svelte-h="svelte-16fpaq3">In Progress</p></div></div> <div class="flex-1 min-w-[200px] bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4"><div class="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center" data-svelte-h="svelte-196f3h"><span class="material-symbols-outlined">task_alt</span></div> <div><p class="text-2xl font-bold text-slate-900">${escape(completedCount)}</p> <p class="text-xs font-medium text-slate-500 uppercase tracking-wide" data-svelte-h="svelte-1f5un39">Completed Today</p></div></div> <div class="flex-1 min-w-[200px] bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4"><div class="size-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center" data-svelte-h="svelte-17y1dwr"><span class="material-symbols-outlined">event</span></div> <div><p class="text-2xl font-bold text-slate-900">${escape(encounters.length)}</p> <p class="text-xs font-medium text-slate-500 uppercase tracking-wide" data-svelte-h="svelte-1r1d0bd">Total Appointments</p></div></div></div>  <div class="flex items-center justify-between mb-6 shrink-0"><div data-svelte-h="svelte-b3js33"><h2 class="text-xl font-bold text-slate-900">Queue Management</h2> <p class="text-sm text-slate-500">Manage real-time patient status and flow</p></div> <div class="flex items-center gap-4"><input type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary/20 outline-none"${add_attribute("value", filterDate, 0)}> <div class="bg-white p-1 rounded-lg border border-slate-200 flex"><button class="${"px-4 py-2 " + escape(
+    "bg-primary text-white shadow-sm",
+    true
+  ) + " rounded-lg text-sm font-medium flex items-center gap-2 transition-all"}"><span class="material-symbols-outlined text-sm" data-svelte-h="svelte-5pmu2p">view_kanban</span>
+					Queue Board</button> <button class="${"px-4 py-2 " + escape(
+    "text-slate-500 hover:text-slate-700",
+    true
+  ) + " rounded-lg text-sm font-medium flex items-center gap-2 transition-all"}"><span class="material-symbols-outlined text-sm" data-svelte-h="svelte-e839aa">format_list_bulleted</span>
+					Appointment List</button></div></div></div> ${`<div class="flex-1 flex flex-col items-center justify-center text-slate-400" data-svelte-h="svelte-19tk92h"><span class="material-symbols-outlined text-4xl animate-spin mb-2" style="animation: spin 1s linear infinite;">refresh</span> <p>Memuat antrian...</p></div>`} </div>`;
 });
 export {
   Page as default

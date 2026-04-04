@@ -1,4 +1,8 @@
 import { j as json } from "../../../../chunks/index.js";
+import { b as private_env } from "../../../../chunks/shared-server.js";
+const SATUSEHAT_CLIENT_ID = private_env.SATUSEHAT_CLIENT_ID;
+const SATUSEHAT_CLIENT_SECRET = private_env.SATUSEHAT_CLIENT_SECRET;
+const SATUSEHAT_ENV = private_env.SATUSEHAT_ENV;
 const SATUSEHAT_CONFIG = {
   staging: {
     base_url: "https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1",
@@ -16,15 +20,21 @@ const SATUSEHAT_CONFIG = {
 let cachedToken = null;
 let tokenExpiry = 0;
 function getEnv() {
-  return process.env.SATUSEHAT_ENV || "staging";
+  return SATUSEHAT_ENV || "staging";
 }
 function getConfig() {
   return SATUSEHAT_CONFIG[getEnv()] || SATUSEHAT_CONFIG.staging;
+}
+function validateEnv() {
+  if (!SATUSEHAT_CLIENT_ID || !SATUSEHAT_CLIENT_SECRET) {
+    throw new Error("SATUSEHAT env variables are missing");
+  }
 }
 async function getToken() {
   if (cachedToken && Date.now() < tokenExpiry) {
     return cachedToken;
   }
+  validateEnv();
   const config = getConfig();
   const url = `${config.auth_url}?grant_type=client_credentials`;
   try {
@@ -32,12 +42,14 @@ async function getToken() {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: process.env.SATUSEHAT_CLIENT_ID || "",
-        client_secret: process.env.SATUSEHAT_CLIENT_SECRET || ""
+        client_id: SATUSEHAT_CLIENT_ID,
+        client_secret: SATUSEHAT_CLIENT_SECRET
       })
     });
-    if (!res.ok)
-      throw new Error(`SatuSehat auth failed: ${res.status}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`SatuSehat auth failed: ${res.status} - ${text}`);
+    }
     const data = await res.json();
     cachedToken = data.access_token;
     tokenExpiry = Date.now() + (data.expires_in - 60) * 1e3;
@@ -47,7 +59,7 @@ async function getToken() {
     throw error;
   }
 }
-async function searchKFA(keyword, page = 1, size = 10) {
+async function searchKFA(keyword, page = 1, size = 10, merkType = null) {
   const token = await getToken();
   const config = getConfig();
   const params = new URLSearchParams({
@@ -62,15 +74,50 @@ async function searchKFA(keyword, page = 1, size = 10) {
       Accept: "application/json"
     }
   });
-  if (!res.ok)
-    throw new Error(`KFA search failed: ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`KFA search failed: ${res.status} - ${text}`);
+  }
   const data = await res.json();
   const items = data?.items?.data || [];
+  if (merkType === "unknown") {
+    const templates = items.map((item) => {
+      const template = item.prodct_template || item.product_template;
+      if (!template)
+        return null;
+      return {
+        code: template.kfa_code,
+        display: template.name,
+        product_name: template.name,
+        dosage_form: item.dosage_form?.name || "",
+        kfa_code: template.kfa_code
+      };
+    }).filter((t) => t && String(t.kfa_code).startsWith("92"));
+    const seen = /* @__PURE__ */ new Set();
+    return templates.filter((t) => {
+      if (seen.has(t.kfa_code))
+        return false;
+      seen.add(t.kfa_code);
+      return true;
+    });
+  } else if (merkType === "known") {
+    return items.map((item) => ({
+      code: item.kfa_code,
+      display: item.name,
+      product_name: item.name,
+      dosage_form: item.dosage_form?.name || "",
+      kfa_code: item.kfa_code
+    })).filter((item) => String(item.kfa_code).startsWith("93"));
+  }
   return items.map((item) => {
-    const isUnknown = item.kfa_code?.startsWith("92");
+    const isUnknown = String(item.kfa_code).startsWith("92");
+    const template = item.prodct_template || item.product_template;
+    const name = isUnknown && template ? template.name : item.name;
+    const code = isUnknown && template ? template.kfa_code : item.kfa_code;
     return {
-      code: isUnknown ? item.prodct_template?.kfa_code : item.kfa_code,
-      display: isUnknown ? item.prodct_template?.name : item.name,
+      code,
+      display: name,
+      product_name: name,
       dosage_form: item.dosage_form?.name || "",
       kfa_code: item.kfa_code
     };
@@ -84,7 +131,8 @@ async function GET({ url }) {
     return json({ results: [] });
   }
   try {
-    const results = await searchKFA(query, page, size);
+    const merkType = url.searchParams.get("merkType");
+    const results = await searchKFA(query, page, size, merkType);
     return json({ results });
   } catch (error) {
     console.error("KFA search error:", error);

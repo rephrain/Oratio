@@ -40,10 +40,10 @@
 	}
 </script>
 
-<div class="odontogram-board">
+<div class="min-w-[700px] max-w-4xl mx-auto py-8">
 	<!-- PERMANENT UPPER -->
-	<div class="arch-row">
-		<div class="quadrant quad-right">
+	<div class="flex justify-center mb-6">
+		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quadrant1 as num}
 				<ToothDiagram 
 					number={num} 
@@ -53,8 +53,8 @@
 				/>
 			{/each}
 		</div>
-		<div class="midline"></div>
-		<div class="quadrant quad-left">
+		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
+		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quadrant2 as num}
 				<ToothDiagram 
 					number={num} 
@@ -67,8 +67,8 @@
 	</div>
 
 	<!-- DECIDUOUS UPPER (Child) -->
-	<div class="arch-row child-arch mt-4">
-		<div class="quadrant quad-right justify-end">
+	<div class="flex justify-center mb-6 opacity-95 scale-90 transform origin-top">
+		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quad5 as num}
 				<ToothDiagram 
 					number={num} 
@@ -78,8 +78,8 @@
 				/>
 			{/each}
 		</div>
-		<div class="midline"></div>
-		<div class="quadrant quad-left justify-start">
+		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
+		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quad6 as num}
 				<ToothDiagram 
 					number={num} 
@@ -92,8 +92,8 @@
 	</div>
 
 	<!-- DECIDUOUS LOWER (Child) -->
-	<div class="arch-row child-arch mt-4">
-		<div class="quadrant quad-right justify-end">
+	<div class="flex justify-center mb-6 opacity-95 scale-90 transform origin-bottom">
+		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quad8 as num}
 				<ToothDiagram 
 					number={num} 
@@ -103,8 +103,8 @@
 				/>
 			{/each}
 		</div>
-		<div class="midline"></div>
-		<div class="quadrant quad-left justify-start">
+		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
+		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quad7 as num}
 				<ToothDiagram 
 					number={num} 
@@ -117,8 +117,8 @@
 	</div>
 
 	<!-- PERMANENT LOWER -->
-	<div class="arch-row mt-4">
-		<div class="quadrant quad-right">
+	<div class="flex justify-center">
+		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quadrant4 as num}
 				<ToothDiagram 
 					number={num} 
@@ -128,8 +128,8 @@
 				/>
 			{/each}
 		</div>
-		<div class="midline"></div>
-		<div class="quadrant quad-left">
+		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
+		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quadrant3 as num}
 				<ToothDiagram 
 					number={num} 
@@ -141,52 +141,3 @@
 		</div>
 	</div>
 </div>
-
-<style>
-	.odontogram-board {
-		background: var(--card-bg);
-		border-radius: var(--radius-lg);
-		padding: var(--space-6);
-		border: 1px solid var(--border-color);
-		box-shadow: var(--shadow-sm);
-		overflow-x: auto;
-		min-width: 800px;
-	}
-
-	.arch-row {
-		display: flex;
-		justify-content: center;
-		margin-bottom: var(--space-4);
-	}
-
-	.quadrant {
-		display: flex;
-		gap: 6px;
-		flex: 1;
-	}
-
-	.quad-right {
-		justify-content: flex-end;
-		padding-right: var(--space-4);
-	}
-
-	.quad-left {
-		justify-content: flex-start;
-		padding-left: var(--space-4);
-	}
-
-	.midline {
-		width: 4px;
-		background-color: var(--border-color);
-		opacity: 0.6;
-		margin: 0 var(--space-2);
-		border-radius: 2px;
-	}
-
-	.child-arch {
-		transform: scale(0.9);
-	}
-
-	.justify-end { justify-content: flex-end !important; }
-	.justify-start { justify-content: flex-start !important; }
-</style>

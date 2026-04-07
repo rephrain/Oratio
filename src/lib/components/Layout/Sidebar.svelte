@@ -36,6 +36,7 @@
 		dokter: [
 			{ href: "/dokter", icon: "📋", label: "Dashboard" },
 			{ href: "/dokter/analytics", icon: "📊", label: "Analytics" },
+			{ href: "/dokter/history", icon: "🕒", label: "History" },
 		],
 	};
 
@@ -217,6 +218,22 @@
 				>
 				{#if $isSidebarOpen}
 				<span class="font-medium text-sm whitespace-nowrap">Analytics</span>
+				{/if}
+			</a>
+			<a
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/dokter/history')
+					? 'bg-[#3B82F6]/20 border-l-4 border-[#3B82F6] !text-[#38BDF8] hover:!text-[#E0F2FE]'
+					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+				href="/dokter/history"
+				title="History"
+			>
+				<span
+					class="material-symbols-outlined {currentPath.startsWith('/dokter/history')
+						? ''
+						: 'opacity-70'}">history</span
+				>
+				{#if $isSidebarOpen}
+				<span class="font-medium text-sm whitespace-nowrap">History</span>
 				{/if}
 			</a>
 		</nav>

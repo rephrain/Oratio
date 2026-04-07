@@ -6,6 +6,7 @@ import {
 	encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
@@ -25,8 +26,8 @@ export async function GET({ params }) {
 			patient_tekanan_darah: patients.tekanan_darah,
 			doctor_name: users.name,
 			doctor_code: users.doctor_code,
-			keluhan_utama_code: terminologyMaster.code,
-			keluhan_utama_display: terminologyMaster.display
+			encounter_reason_code: terminologyMaster.code,
+			encounter_reason_display: terminologyMaster.display
 		})
 			.from(encounters)
 			.leftJoin(patients, eq(encounters.patient_id, patients.id))
@@ -48,10 +49,37 @@ export async function GET({ params }) {
 		const odontograms = await db.select().from(encounterOdontograms)
 			.where(eq(encounterOdontograms.encounter_id, params.id));
 
+		// Odontogram details — join terminology_master for ICD-10 and ICD-9-CM display names
 		let odontoDetails = [];
 		if (odontograms.length > 0) {
-			odontoDetails = await db.select().from(odontogramDetails)
+			const icd10Term = alias(terminologyMaster, 'icd10_term');
+			const icd9cmTerm = alias(terminologyMaster, 'icd9cm_term');
+
+			const rawDetails = await db.select({
+				id: odontogramDetails.id,
+				odontogram_id: odontogramDetails.odontogram_id,
+				tooth_number: odontogramDetails.tooth_number,
+				surface: odontogramDetails.surface,
+				keadaan: odontogramDetails.keadaan,
+				bahan_restorasi: odontogramDetails.bahan_restorasi,
+				restorasi: odontogramDetails.restorasi,
+				protesa: odontogramDetails.protesa,
+				bahan_protesa: odontogramDetails.bahan_protesa,
+				icd10_id: odontogramDetails.icd10_id,
+				is_primary: odontogramDetails.is_primary,
+				icd9cm_id: odontogramDetails.icd9cm_id,
+				icd10_code: icd10Term.code,
+				icd10_display: icd10Term.display,
+				icd9cm_code: icd9cmTerm.code,
+				icd9cm_display: icd9cmTerm.display,
+				created_at: odontogramDetails.created_at
+			})
+				.from(odontogramDetails)
+				.leftJoin(icd10Term, eq(odontogramDetails.icd10_id, icd10Term.id))
+				.leftJoin(icd9cmTerm, eq(odontogramDetails.icd9cm_id, icd9cmTerm.id))
 				.where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
+
+			odontoDetails = rawDetails;
 		}
 
 		const history = await db.select().from(statusHistory)
@@ -85,30 +113,29 @@ export async function PUT({ params, request }) {
 	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
 
-	// Handle keluhan_utama FK update
-	if (body.keluhan_utama_code !== undefined) {
-		if (body.keluhan_utama_code) {
-			const { and: andOp, eq: eqOp } = await import('drizzle-orm');
+	// Handle encounter_reason FK update
+	if (body.reason_code !== undefined) {
+		if (body.reason_code) {
 			const [existing] = await db.select()
 				.from(terminologyMaster)
-				.where(andOp(
-					eqOp(terminologyMaster.code, body.keluhan_utama_code),
-					eqOp(terminologyMaster.system, 'SNOMED')
+				.where(and(
+					eq(terminologyMaster.code, body.reason_code),
+					eq(terminologyMaster.system, 'SNOMED')
 				))
 				.limit(1);
 
 			if (existing) {
-				updateData.keluhan_utama_id = existing.id;
-			} else if (body.keluhan_utama_display) {
+				updateData.encounter_reason_id = existing.id;
+			} else if (body.reason_display) {
 				const [inserted] = await db.insert(terminologyMaster).values({
-					code: body.keluhan_utama_code,
-					display: body.keluhan_utama_display,
+					code: body.reason_code,
+					display: body.reason_display,
 					system: 'SNOMED'
 				}).returning();
-				updateData.keluhan_utama_id = inserted.id;
+				updateData.encounter_reason_id = inserted.id;
 			}
 		} else {
-			updateData.keluhan_utama_id = null;
+			updateData.encounter_reason_id = null;
 		}
 	}
 
@@ -195,9 +222,10 @@ export async function PUT({ params, request }) {
 			await db.insert(encounterPrescriptions).values({
 				encounter_id: params.id,
 				terminology_id: termId,
+				dosage_form: rx.dosage_form || null,
 				dosage: rx.dosage,
 				quantity: rx.quantity || 1,
-				notes: rx.notes || ''
+				instruction: rx.instruction || rx.notes || ''
 			});
 		}
 	}
@@ -231,17 +259,62 @@ export async function PUT({ params, request }) {
 
 		if (body.odontogram.details) {
 			for (const d of body.odontogram.details) {
+				// Resolve icd10_id from code if only code+display provided (no UUID)
+				let icd10Id = d.icd10_id || null;
+				if (!icd10Id && d.diagnosis_code) {
+					const [existing] = await db.select()
+						.from(terminologyMaster)
+						.where(and(
+							eq(terminologyMaster.code, d.diagnosis_code),
+							eq(terminologyMaster.system, 'ICD-10')
+						))
+						.limit(1);
+					if (existing) {
+						icd10Id = existing.id;
+					} else if (d.diagnosis_display) {
+						const [inserted] = await db.insert(terminologyMaster).values({
+							code: d.diagnosis_code,
+							display: d.diagnosis_display,
+							system: 'ICD-10'
+						}).returning();
+						icd10Id = inserted.id;
+					}
+				}
+
+				// Resolve icd9cm_id from code if only code+display provided (no UUID)
+				let icd9cmId = d.icd9cm_id || null;
+				if (!icd9cmId && d.procedure_code) {
+					const [existing] = await db.select()
+						.from(terminologyMaster)
+						.where(and(
+							eq(terminologyMaster.code, d.procedure_code),
+							eq(terminologyMaster.system, 'ICD-9-CM')
+						))
+						.limit(1);
+					if (existing) {
+						icd9cmId = existing.id;
+					} else if (d.procedure_display) {
+						const [inserted] = await db.insert(terminologyMaster).values({
+							code: d.procedure_code,
+							display: d.procedure_display,
+							system: 'ICD-9-CM'
+						}).returning();
+						icd9cmId = inserted.id;
+					}
+				}
+
 				await db.insert(odontogramDetails).values({
 					odontogram_id: odonto.id,
 					tooth_number: d.tooth_number,
-					surface: d.surface,
+					surface: d.surface || '',
 					keadaan: d.keadaan,
 					bahan_restorasi: d.bahan_restorasi,
 					restorasi: d.restorasi,
 					protesa: d.protesa,
 					bahan_protesa: d.bahan_protesa,
-					icd10_id: d.icd10_id || null,
-					icd9cm_id: d.icd9cm_id || null
+					icd10_id: icd10Id,
+					is_primary: d.is_primary || false,
+					icd9cm_id: icd9cmId
 				});
 			}
 		}

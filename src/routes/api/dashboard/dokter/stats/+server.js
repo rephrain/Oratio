@@ -60,14 +60,39 @@ export async function GET({ locals, url }) {
 			statusHistoryDateFilter
 		));
 
-		// avgMinutes can be null if no arrivals, or a string from Postgres
-		const avgWaitVal = avgWaitResult[0]?.avgMinutes;
-		const avgWaitMinutes = avgWaitVal ? Math.round(parseFloat(avgWaitVal)) : 0;
+		// 3. Average Treatment Time (status = 'In Progress') for the selected date
+		const avgTreatmentResult = await db.select({
+			avgMinutes: sql`AVG(
+				EXTRACT(EPOCH FROM (
+					${statusHistory.end_at} - ${statusHistory.start_at}
+				)) / 60
+			)`
+		})
+		.from(statusHistory)
+		.innerJoin(encounters, eq(statusHistory.encounter_id, encounters.id))
+		.where(and(
+			eq(encounters.doctor_id, doctorId),
+			eq(statusHistory.status, 'In Progress'),
+			sql`${statusHistory.end_at} IS NOT NULL`,
+			statusHistoryDateFilter
+		));
+
+		// Parse values: return '<1' if it's less than a minute but greater than 0
+		const parseTime = (val) => {
+			if (!val) return 0;
+			const num = parseFloat(val);
+			if (num > 0 && num < 1) return '<1';
+			return Math.round(num);
+		};
+
+		const avgWaitMinutes = parseTime(avgWaitResult[0]?.avgMinutes);
+		const avgTreatmentMinutes = parseTime(avgTreatmentResult[0]?.avgMinutes);
 
 		return json({
 			patientsToday: totalToday,
 			completedToday: Number(counts.completed || 0),
-			avgWaitMinutes: avgWaitMinutes > 0 ? avgWaitMinutes : 0
+			avgWaitMinutes,
+			avgTreatmentMinutes
 		});
 	} catch (error) {
 		console.error('Error in stats dashboard API:', error);

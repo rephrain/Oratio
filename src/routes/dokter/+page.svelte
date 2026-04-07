@@ -113,6 +113,7 @@
 		patientsToday: 0,
 		completedToday: 0,
 		avgWaitMinutes: 0,
+		avgTreatmentMinutes: 0,
 	};
 
 	async function loadStats() {
@@ -385,8 +386,7 @@
 			</p>
 		</div>
 
-		<!-- Queue Stats Overview -->
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
 			<!-- Patients Today Card -->
 			<div
 				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
@@ -422,6 +422,32 @@
 					</p>
 					<h3 class="text-3xl font-black text-blue-900 leading-tight">
 						{stats.avgWaitMinutes || 0}<span
+							class="text-sm font-bold text-slate-400 ml-1"
+							>m</span
+						>
+					</h3>
+				</div>
+				<div
+					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>hourglass_empty</span
+					>
+				</div>
+			</div>
+
+			<!-- Avg. Treatment Time Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Avg. Treatment Time
+					</p>
+					<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						{stats.avgTreatmentMinutes || 0}<span
 							class="text-sm font-bold text-slate-400 ml-1"
 							>m</span
 						>

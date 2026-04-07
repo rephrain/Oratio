@@ -20,6 +20,15 @@
 	let inputEl;
 	let debounceTimer;
 
+	let prevValue = value;
+	$: if (value !== prevValue) {
+		if (!value) {
+			searchTerm = '';
+			filteredOptions = [];
+		}
+		prevValue = value;
+	}
+
 	$: displayValue = value ? (options.find(o => o.value === value)?.label || value) : '';
 
 	async function handleInput() {

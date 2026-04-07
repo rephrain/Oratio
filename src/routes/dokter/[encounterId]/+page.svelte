@@ -44,7 +44,7 @@
 	let keterangan = "";
 	let tekananDarah = "";
 
-	// Reason (SOAP-WHO)
+	// Reason (SOAP_WHO)
 	let reasonCode = "";
 	let reasonDisplay = "";
 	let reasonCategory = "finding";
@@ -55,7 +55,7 @@
 	let referrals = [];
 	// Odontogram
 	let odontogram = {
-		dentition: "permanent",
+		dentition_type: "Adult",
 		occlusi: "",
 		torus_palatinus: "Tidak Ada",
 		torus_mandibularis: "Tidak Ada",
@@ -170,9 +170,17 @@
 			prescriptions = data.prescriptions || [];
 
 			if (data.odontograms?.length > 0) {
+				// Map loaded odontogram details to include display names for ICD-10/ICD-9-CM
+				const mappedDetails = (data.odontogramDetails || []).map(d => ({
+					...d,
+					diagnosis_code: d.icd10_code || d.diagnosis_code || '',
+					diagnosis_display: d.icd10_display || d.diagnosis_display || '',
+					procedure_code: d.icd9cm_code || d.procedure_code || '',
+					procedure_display: d.icd9cm_display || d.procedure_display || '',
+				}));
 				odontogram = {
 					...data.odontograms[0],
-					details: data.odontogramDetails || [],
+					details: mappedDetails,
 				};
 			}
 
@@ -418,7 +426,7 @@
 		}
 	}
 
-	// Reason search (SOAP-WHO)
+	// Reason search (SOAP_WHO)
 	async function searchReason(term) {
 		const res = await fetch(
 			`/api/snowstorm?term=${encodeURIComponent(term)}&type=reason_${reasonCategory}`,
@@ -436,6 +444,22 @@
 		);
 		const data = await res.json();
 		return data.results || [];
+	}
+
+	// Odontogram Reset
+	function resetOdontogram() {
+		if (confirm("Apakah anda yakin ingin mereset seluruh data odontogram?")) {
+			odontogram = {
+				dentition_type: "Adult",
+				occlusi: "",
+				torus_palatinus: "Tidak Ada",
+				torus_mandibularis: "Tidak Ada",
+				palatum: "",
+				diastema: "Tidak Ada",
+				gigi_anomali: "Tidak Ada",
+				details: [],
+			};
+		}
 	}
 
 	// Tooth click
@@ -524,7 +548,7 @@
 				encounter_items: encounterItems,
 			};
 
-			if (formMode === "SOAP-WHO") {
+			if (formMode === "SOAP_WHO") {
 				body.odontogram = odontogram;
 			}
 
@@ -1101,10 +1125,10 @@
 						>
 						<button
 							class="px-6 py-1.5 rounded-lg text-sm font-semibold transition-all {formMode ===
-							'SOAP-WHO'
+							'SOAP_WHO'
 								? 'bg-white shadow-sm text-primary'
 								: 'text-slate-500 hover:text-slate-700'}"
-							on:click={() => (formMode = "SOAP-WHO")}
+							on:click={() => (formMode = "SOAP_WHO")}
 							>SOAP-WHO</button
 						>
 					</div>
@@ -1190,19 +1214,24 @@
 					</div>
 				{/if}
 
-				<!-- Odontogram (only for SOAP-WHO) -->
-				{#if formMode === "SOAP-WHO"}
+				<!-- Odontogram (only for SOAP_WHO) -->
+				{#if formMode === "SOAP_WHO"}
 					<div
 						class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm mb-6"
 					>
-						<h3
-							class="text-base font-bold mb-6 flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-4"
-						>
-							<span class="material-symbols-outlined text-primary"
-								>dentistry</span
+						<div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+							<h3 class="text-base font-bold flex items-center gap-2 text-slate-800 m-0">
+								<span class="material-symbols-outlined text-primary">dentistry</span>
+								Odontogram (PDGI Standard)
+							</h3>
+							<button 
+								type="button"
+								class="text-[11px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition-colors flex items-center gap-1"
+								on:click={resetOdontogram}
 							>
-							Odontogram (PDGI Standard)
-						</h3>
+								<span class="material-symbols-outlined text-[14px]">refresh</span> Reset
+							</button>
+						</div>
 
 						<div class="w-full overflow-x-auto pb-4 mb-4">
 							<OdontogramChart
@@ -1512,6 +1541,7 @@
 									placeholder="Cari produk obat"
 									wrapperClass=""
 									inputClass="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
+									value={newRx.kfa_code}
 									on:select={(e) => {
 										newRx.kfa_code = e.detail.value;
 										newRx.product_name = e.detail.label;

@@ -1,0 +1,51 @@
+Listening on 0.0.0.0:3000
+DrizzleQueryError: Failed query: update "encounters" set "form_mode" = $1, "status" = $2, "encounter_reason_id" = $3, "subjective" = $4, "objective" = $5, "assessment" = $6, "plan" = $7, "resep" = $8, "keterangan" = $9, "updated_at" = $10 where "encounters"."id" = $11 returning "id", "patient_id", "kasir_id", "doctor_id", "queue_number", "form_mode", "status", "encounter_reason_id", "reason_type", "subjective", "objective", "assessment", "plan", "resep", "keterangan", "encounter_referral_id", "created_at", "updated_at"
+params: SOAP-WHO,Discharged,,,,,,,,2026-04-06T06:52:37.024Z,202604BS000012
+    at PostgresJsPreparedQuery.queryWithCache (file:///app/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/postgres-js/session.js:37:20
+    at async PUT (file:///app/build/server/chunks/_server-afb08705.js:133:21)
+    at async render_endpoint (file:///app/build/server/index.js:1617:20)
+    at async resolve2 (file:///app/build/server/index.js:4084:22)
+    at async respond (file:///app/build/server/index.js:3973:22)
+    at async Array.ssr (file:///app/build/handler.js:1221:3) {
+  query: 'update "encounters" set "form_mode" = $1, "status" = $2, "encounter_reason_id" = $3, "subjective" = $4, "objective" = $5, "assessment" = $6, "plan" = $7, "resep" = $8, "keterangan" = $9, "updated_at" = $10 where "encounters"."id" = $11 returning "id", "patient_id", "kasir_id", "doctor_id", "queue_number", "form_mode", "status", "encounter_reason_id", "reason_type", "subjective", "objective", "assessment", "plan", "resep", "keterangan", "encounter_referral_id", "created_at", "updated_at"',
+  params: [
+    'SOAP-WHO',
+    'Discharged',
+    null,
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '2026-04-06T06:52:37.024Z',
+    '202604BS000012'
+  ],
+  cause: PostgresError: invalid input value for enum form_mode: "SOAP-WHO"
+      at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:815:30)
+      at handle (file:///app/node_modules/postgres/src/connection.js:489:6)
+      at Socket.data (file:///app/node_modules/postgres/src/connection.js:324:9)
+      at Socket.emit (node:events:524:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:191:23) {
+    severity_local: 'ERROR',
+    severity: 'ERROR',
+    code: '22P02',
+    where: "unnamed portal parameter $1 = '...'",
+    file: 'enum.c',
+    line: '129',
+    routine: 'enum_in'
+  }
+}
+NotFound [Error]: Not found: /.well-known/appspecific/com.chrome.devtools.json
+    at resolve2 (file:///app/build/server/index.js:4148:18)
+    at resolve (file:///app/build/server/index.js:3975:34)
+    at Object.handle (file:///app/build/server/chunks/hooks.server-90033caf.js:61:10)
+    at async respond (file:///app/build/server/index.js:3973:22)
+    at async Array.ssr (file:///app/build/handler.js:1221:3) {
+  status: 404
+}

@@ -36,7 +36,7 @@
 					>
 					<input
 						class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm outline-none"
-						placeholder="Search by ID, NIK, or Patient Name..."
+						placeholder="Search by Patient ID, or Patient Name..."
 						type="text"
 					/>
 				</div>

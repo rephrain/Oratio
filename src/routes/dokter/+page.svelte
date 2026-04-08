@@ -907,11 +907,11 @@
 								class="flex justify-between items-center group"
 							>
 								<span class="text-[11px] text-slate-500"
-									>NIK</span
+									>Patient ID</span
 								>
 								<span
 									class="text-[11px] font-bold text-slate-800"
-									>{selectedEncounterData.patient_nik ||
+									>{selectedEncounterData.encounter?.patient_id ||
 										"-"}</span
 								>
 							</div>

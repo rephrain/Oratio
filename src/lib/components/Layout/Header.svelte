@@ -7,7 +7,10 @@
 	let showProfileMenu = false;
 </script>
 
-<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 w-full" style="position: sticky; top: 0; z-index: 50;">
+<header 
+	class="top-header transition-all duration-300" 
+	style="padding-left: {$isSidebarOpen ? 'calc(260px + var(--space-8))' : 'calc(80px + var(--space-8))'}; padding-right: var(--space-8);"
+>
 	<div class="flex-1 max-w-2xl">
 		{#if $headerTitle}
 			<button class="text-left focus:outline-none hover:opacity-80 transition-opacity group cursor-pointer flex items-center gap-2" on:click={() => ($isPatientProfileOpen = !$isPatientProfileOpen)}>

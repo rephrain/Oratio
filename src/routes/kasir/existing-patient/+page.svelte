@@ -85,7 +85,7 @@
 		return (data.data || []).map((p) => ({
 			value: p.id,
 			label: p.nama_lengkap, // Changed to just string for UI aesthetics
-			sublabel: `NIK: ${p.nik || "-"} • ID: ${p.id}`,
+			sublabel: `ID: ${p.id || "-"}`,
 			patient: p,
 		}));
 	}
@@ -213,7 +213,7 @@
 				</div>
 				<div class="relative w-full">
 					<SearchableSelect
-						placeholder="Masukkan No. Rekam Medis, NIK, atau Nama Pasien..."
+						placeholder="Masukkan No. Rekam Medis, Patient ID, atau Nama Pasien..."
 						searchFn={searchPatient}
 						on:select={handlePatientSelect}
 						on:clear={clearSelection}
@@ -282,11 +282,11 @@
 								class="flex justify-between items-center group"
 							>
 								<span class="text-[11px] text-slate-500"
-									>NIK</span
+									>Patient ID</span
 								>
 								<span
 									class="text-[11px] font-bold text-slate-800"
-									>{selectedPatient.nik || "-"}</span
+									>{selectedPatient.id || "-"}</span
 								>
 							</div>
 							<div class="flex justify-between items-center">

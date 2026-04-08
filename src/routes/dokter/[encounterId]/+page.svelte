@@ -749,10 +749,10 @@
 										class="flex justify-between items-center group"
 									>
 										<span class="text-[11px] text-slate-500"
-											>NIK</span
+											>Patient ID</span
 										><span
 											class="text-[11px] font-bold text-slate-800"
-											>{encounter.patient_nik ||
+											>{encounter.encounter?.patient_id ||
 												"-"}</span
 										>
 									</div>

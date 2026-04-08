@@ -22,17 +22,8 @@
 	$: filteredTableEncounters = encounters.filter((e) => {
 		if (tableDoctorFilter && e.doctor_name !== tableDoctorFilter)
 			return false;
-		if (tableStatusFilter) {
-			if (
-				tableStatusFilter === "Arrived" &&
-				!["Planned", "Arrived"].includes(e.encounter?.status)
-			)
-				return false;
-			else if (
-				tableStatusFilter !== "Arrived" &&
-				e.encounter?.status !== tableStatusFilter
-			)
-				return false;
+		if (tableStatusFilter && e.encounter?.status !== tableStatusFilter) {
+			return false;
 		}
 		return true;
 	});
@@ -93,9 +84,9 @@
 			format: (_, row) => row.patient_name || "-",
 		},
 		{
-			key: "nik",
-			label: "NIK",
-			format: (_, row) => row.patient_nik || "-",
+			key: "patient_id",
+			label: "Patient ID",
+			format: (_, row) => row.patient?.id || "-",
 		},
 		{
 			key: "doctor",
@@ -492,10 +483,13 @@
 						class="text-sm py-1.5 pl-3 pr-8 border-slate-200 rounded-md bg-slate-50 focus:ring-primary focus:border-primary outline-none"
 					>
 						<option value="">All Status</option>
-						<option value="Arrived">Waiting</option>
+						<option value="Planned">Planned</option>
 						<option value="In Progress">In Progress</option>
+						<option value="On Hold">On Hold</option>
 						<option value="Discharged">Discharged</option>
 						<option value="Completed">Completed</option>
+						<option value="Cancelled">Cancelled</option>
+						<option value="Discontinued">Discontinued</option>
 					</select>
 				</div>
 				<div class="ml-auto">
@@ -530,7 +524,7 @@
 								>
 								<th
 									class="px-6 py-4 font-semibold text-slate-700"
-									>NIK</th
+									>Patient ID</th
 								>
 								<th
 									class="px-6 py-4 font-semibold text-slate-700"
@@ -568,9 +562,9 @@
 										{row.patient_name || "-"}
 									</td>
 									<td
-										class="px-6 py-4 text-slate-500 font-mono"
+										class="px-6 py-4 text-slate-500 font-mono text-xs"
 									>
-										{row.patient_nik || "-"}
+										{row.patient?.id || "-"}
 									</td>
 									<td class="px-6 py-4 text-slate-600">
 										{row.doctor_name

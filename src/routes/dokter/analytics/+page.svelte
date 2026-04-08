@@ -66,8 +66,17 @@
 				m3.setMonth(m3.getMonth() - 3);
 				dateFrom = m3.toISOString().split("T")[0];
 				break;
+			case "6months":
+				const m6 = new Date(now);
+				m6.setMonth(m6.getMonth() - 6);
+				dateFrom = m6.toISOString().split("T")[0];
+				break;
 			case "year":
 				dateFrom = `${now.getFullYear()}-01-01`;
+				break;
+			case "all":
+				dateFrom = "";
+				dateTo = "";
 				break;
 		}
 		loadData();
@@ -816,7 +825,15 @@
 	<div class="analytics-header">
 		<div class="analytics-controls-wrapper">
 			<div class="quick-ranges">
-				{#each [["today", "Hari Ini"], ["week", "7 Hari"], ["month", "Bulan Ini"], ["3months", "3 Bulan"], ["year", "Tahun Ini"]] as [key, label]}
+				{#each [
+					["today", "Hari Ini"], 
+					["week", "7 Hari"], 
+					["month", "Bulan Ini"], 
+					["3months", "3 Bulan"], 
+					["6months", "6 Bulan"], 
+					["year", "Tahun Ini"],
+					["all", "Semua"]
+				] as [key, label]}
 					<button
 						class="range-btn"
 						class:active={quickRange === key}

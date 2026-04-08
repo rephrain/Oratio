@@ -84,8 +84,8 @@
 					<p class="font-semibold">{patient.nama_lengkap}</p>
 				</div>
 				<div>
-					<span class="text-sm text-muted">NIK</span>
-					<p>{patient.nik || "-"}</p>
+					<span class="text-sm text-muted">Patient ID</span>
+					<p>{patient.id || "-"}</p>
 				</div>
 				<div>
 					<span class="text-sm text-muted">Tanggal Lahir</span>

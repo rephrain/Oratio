@@ -516,7 +516,7 @@
                 <div class="col-span-full md:col-span-1">
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
-                        >NIK (National ID) <span class="text-red-500">*</span
+                        >Patient ID (National ID) <span class="text-red-500">*</span
                         ></label
                     >
                     <input

@@ -723,7 +723,7 @@ tbody tr:last-child td {
   top: 0;
   left: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 60;
   transition: all var(--transition-slow);
 }
 
@@ -859,6 +859,7 @@ tbody tr:last-child td {
   flex: 1;
   margin-left: 260px;
   min-height: 100vh;
+  padding-top: 4rem; /* Offset for fixed header */
   transition: margin-left var(--transition-slow);
 }
 
@@ -873,9 +874,13 @@ tbody tr:last-child td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 40;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 50;
+  height: 4rem; /* Match h-16 in Header.svelte */
 }
 
 .page-content {

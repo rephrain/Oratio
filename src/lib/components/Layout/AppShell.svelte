@@ -10,8 +10,8 @@
 
 <div class="app-shell role-{role}" class:sidebar-collapsed={!$isSidebarOpen}>
 	<Sidebar {role} {user} />
+	<Header {title} {user} />
 	<div class="main-content">
-		<Header {title} {user} />
 		<div class="page-content">
 			<slot />
 		</div>

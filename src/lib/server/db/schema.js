@@ -83,7 +83,7 @@ export const patients = pgTable('patients', {
 	tekanan_darah: varchar('tekanan_darah', { length: 20 }),  // e.g. "120/80"
 
 	// Profile document FK
-	profile_document_id: uuid('profile_document_id'),
+	profile_document_id: uuid('profile_document_id').references(() => documents.id),
 
 	// Audit
 	kasir_id: uuid('kasir_id').references(() => users.id),
@@ -165,6 +165,11 @@ export const encounters = pgTable('encounters', {
 
 	// Referral in
 	encounter_referral_id: uuid('encounter_referral_id').references(() => encounterReferrals.id),
+
+	photo_document_id: uuid('photo_document_id').references(() => documents.id),
+
+	// SOAP document
+	soap_document_id: uuid('soap_document_id').references(() => documents.id),
 
 	created_at: timestamp('created_at').defaultNow().notNull(),
 	updated_at: timestamp('updated_at').defaultNow().notNull()
@@ -252,6 +257,7 @@ export const encounterPrescriptions = pgTable('encounter_prescriptions', {
 	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
 	terminology_id: uuid('terminology_id').references(() => terminologyMaster.id),
 	dosage_form: text('dosage_form'),
+	dosage: text('dosage'),
 	quantity: integer('quantity'),
 	instruction: text('instruction'),
 	created_at: timestamp('created_at').defaultNow().notNull()

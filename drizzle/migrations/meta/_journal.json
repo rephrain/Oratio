@@ -15,6 +15,13 @@
       "when": 1775196102254,
       "tag": "0001_faulty_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775832883062,
+      "tag": "0002_ambitious_captain_britain",
+      "breakpoints": true
     }
   ]
 }

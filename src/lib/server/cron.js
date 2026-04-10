@@ -1,10 +1,10 @@
 import { db } from '$lib/server/db/index.js';
 import { encounters } from '$lib/server/db/schema.js';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, lt, inArray } from 'drizzle-orm';
 
 // End-of-day cleanup:
 // - Planned (no doctor interaction) → Cancelled
-// - On Hold → Discontinued
+// - In Progress or On Hold → Discontinued
 
 export async function runEndOfDayCron() {
 	// today in Jakarta timezone
@@ -23,12 +23,12 @@ export async function runEndOfDayCron() {
 			)
 			.returning();
 
-		// Discontinue all On Hold encounters from before today
+		// Discontinue all In Progress or On Hold encounters from before today
 		const discontinued = await db.update(encounters)
 			.set({ status: 'Discontinued', updated_at: new Date() })
 			.where(
 				and(
-					eq(encounters.status, 'On Hold'),
+					inArray(encounters.status, ['In Progress', 'On Hold']),
 					lt(encounters.created_at, today)
 				)
 			)
@@ -46,7 +46,8 @@ export async function runEndOfDayCron() {
 if (process.env.ENABLE_CRON === 'true') {
 	setInterval(async () => {
 		const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-		if (now.getHours() === 23 && now.getMinutes() < 5) {
+		// Run at the beginning of the day (00:00 - 00:05)
+		if (now.getHours() === 0 && now.getMinutes() < 5) {
 			await runEndOfDayCron();
 		}
 	}, 5 * 60 * 1000);

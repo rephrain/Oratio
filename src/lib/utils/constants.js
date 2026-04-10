@@ -41,7 +41,7 @@ export const STATUS_COLORS = {
 // Queue board columns
 export const QUEUE_COLUMNS = [
 	{ key: 'waiting', label: 'Menunggu', statuses: ['Planned'] },
-	{ key: 'inprogress', label: 'Dalam Proses', statuses: ['In Progress'] },
+	{ key: 'inprogress', label: 'Dalam Proses', statuses: ['In Progress', 'On Hold'] },
 	{ key: 'discharged', label: 'Selesai Pemeriksaan', statuses: ['Discharged'] },
 	{ key: 'completed', label: 'Selesai', statuses: ['Completed'] }
 ];

@@ -32,8 +32,8 @@
 	$: waitingCount = encounters.filter((e) =>
 		["Planned", "Arrived"].includes(e.encounter?.status),
 	).length;
-	$: inProgressCount = encounters.filter(
-		(e) => e.encounter?.status === "In Progress",
+	$: inProgressCount = encounters.filter((e) =>
+		["In Progress", "On Hold"].includes(e.encounter?.status),
 	).length;
 	$: dischargedCount = encounters.filter(
 		(e) => e.encounter?.status === "Discharged",
@@ -322,23 +322,41 @@
 									</div>
 								</div>
 							{:else if colLower.includes("progress") || colLower.includes("proses")}
-								<!-- In Progress Card -->
+								<!-- In Progress / On Hold Card -->
 								<div
-									class="bg-white p-4 rounded-lg border-2 border-primary/20 shadow-sm bg-primary/[0.02]"
+									class="p-4 rounded-lg border-2 shadow-sm transition-all {item
+										.encounter.status === 'On Hold'
+										? 'bg-amber-50/50 border-amber-400/30'
+										: 'bg-primary/[0.02] border-primary/20'}"
 								>
 									<div
 										class="flex justify-between items-start mb-3"
 									>
 										<span
-											class="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold uppercase"
+											class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {item
+												.encounter.status === 'On Hold'
+												? 'bg-amber-100 text-amber-700'
+												: 'bg-primary/10 text-primary'}"
 											>Queue #{item.encounter
 												.queue_number || "-"}</span
 										>
-										<span
-											class="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full italic animate-pulse"
-										>
-											Treatment...
-										</span>
+										{#if item.encounter.status === "On Hold"}
+											<span
+												class="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full"
+											>
+												<span
+													class="material-symbols-outlined text-[12px]"
+													>pause_circle</span
+												>
+												Paused
+											</span>
+										{:else}
+											<span
+												class="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full italic animate-pulse"
+											>
+												Treatment...
+											</span>
+										{/if}
 									</div>
 									<h4 class="font-bold text-slate-900 mb-1">
 										{item.patient_name || "-"}
@@ -356,7 +374,10 @@
 										class="w-full bg-slate-100 h-1 rounded-full overflow-hidden"
 									>
 										<div
-											class="bg-primary h-full w-[65%]"
+											class="h-full {item.encounter
+												.status === 'On Hold'
+												? 'bg-amber-400'
+												: 'bg-primary'} w-[65%]"
 										></div>
 									</div>
 								</div>
@@ -581,6 +602,11 @@
 											<span
 												class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[11px] font-bold uppercase tracking-wider"
 												>In Progress</span
+											>
+										{:else if status === "On Hold"}
+											<span
+												class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[11px] font-bold uppercase tracking-wider"
+												>On Hold</span
 											>
 										{:else if status === "Discharged"}
 											<span

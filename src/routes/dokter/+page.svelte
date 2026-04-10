@@ -666,7 +666,7 @@
 							</div>
 						{/each}
 
-						{#if encounters.filter( (e) => ["Arrived", "Planned", "In Progress"].includes(e.encounter?.status), ).length === 0}
+						{#if encounters.filter( (e) => ["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status), ).length === 0}
 							<div
 								class="col-span-full py-8 text-center text-slate-400 text-sm font-medium"
 							>
@@ -911,8 +911,8 @@
 								>
 								<span
 									class="text-[11px] font-bold text-slate-800"
-									>{selectedEncounterData.encounter?.patient_id ||
-										"-"}</span
+									>{selectedEncounterData.encounter
+										?.patient_id || "-"}</span
 								>
 							</div>
 							<div class="flex justify-between items-center">
@@ -1450,7 +1450,27 @@
 														{hist.encounter.plan}
 													</div>
 												{/if}
-												{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.objective && !hist.encounter?.plan}
+												{#if hist.encounter?.resep}
+													<div>
+														<strong
+															class="text-blue-900 font-black"
+															>R:</strong
+														>
+														{hist.encounter.resep}
+													</div>
+												{/if}
+												{#if hist.encounter?.keterangan}
+													<div
+														class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800"
+													>
+														<strong
+															class="font-black"
+															>Ket:</strong
+														>
+														{hist.encounter.keterangan}
+													</div>
+												{/if}
+												{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.objective && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}
 													<div
 														class="italic text-slate-400"
 													>

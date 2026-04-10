@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import { onMount, onDestroy } from "svelte";
 	import { goto } from "$app/navigation";
-	import { headerTitle, isPatientProfileOpen } from "$lib/stores/layout.js";
+	import { headerTitle, isPatientProfileOpen, isSidebarHidden } from "$lib/stores/layout.js";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import Modal from "$lib/components/UI/Modal.svelte";
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
@@ -48,6 +48,8 @@
 	let reasonCode = "";
 	let reasonDisplay = "";
 	let reasonCategory = "finding";
+	let newReasonCode = "";
+	let newReasonDisplay = "";
 
 	// Prescriptions
 	let prescriptions = [];
@@ -76,6 +78,11 @@
 	let loadingMedical = false;
 	let showSidebar = true;
 	let doctorsList = [];
+
+	$: if (encounter?.patient_name && encounter?.encounter?.patient_id) {
+		const title = `${encounter.patient_name} (${encounter.encounter.patient_id})`;
+		headerTitle.set(title);
+	}
 
 	$: personalDiseases =
 		patientMedicalBackground?.diseases?.filter(
@@ -171,13 +178,17 @@
 
 			if (data.odontograms?.length > 0) {
 				// Map loaded odontogram details to include display names for ICD-10/ICD-9-CM
-				const mappedDetails = (data.odontogramDetails || []).map(d => ({
-					...d,
-					diagnosis_code: d.icd10_code || d.diagnosis_code || '',
-					diagnosis_display: d.icd10_display || d.diagnosis_display || '',
-					procedure_code: d.icd9cm_code || d.procedure_code || '',
-					procedure_display: d.icd9cm_display || d.procedure_display || '',
-				}));
+				const mappedDetails = (data.odontogramDetails || []).map(
+					(d) => ({
+						...d,
+						diagnosis_code: d.icd10_code || d.diagnosis_code || "",
+						diagnosis_display:
+							d.icd10_display || d.diagnosis_display || "",
+						procedure_code: d.icd9cm_code || d.procedure_code || "",
+						procedure_display:
+							d.icd9cm_display || d.procedure_display || "",
+					}),
+				);
 				odontogram = {
 					...data.odontograms[0],
 					details: mappedDetails,
@@ -188,17 +199,13 @@
 			referrals = data.referrals || [];
 			resep = data.encounter?.resep || "";
 			keterangan = data.encounter?.keterangan || "";
-			reasonCode = data.encounter?.reason_code || "";
-			reasonDisplay = data.encounter?.reason_display || "";
-			reasonCategory = data.encounter?.reason_category || "finding";
+			reasonCode = data.encounter_reason_code || "";
+			reasonDisplay = data.encounter_reason_display || "";
+			reasonCategory = data.encounter?.reason_type || "finding";
+			newReasonCode = "";
+			newReasonDisplay = "";
 
-			$: if (
-				encounter?.patient_name &&
-				encounter?.encounter?.patient_id
-			) {
-				const title = `${encounter.patient_name} (${encounter.encounter.patient_id})`;
-				headerTitle.set(title);
-			}
+
 
 			console.log("encounter:", encounter);
 
@@ -438,6 +445,17 @@
 		}));
 	}
 
+	async function searchClinicalFinding(term) {
+		const res = await fetch(
+			`/api/snowstorm?filter=${encodeURIComponent(term)}&type=reason_finding`,
+		);
+		const data = await res.json();
+		return (data.results || []).map((r) => ({
+			value: r.code,
+			label: r.display,
+		}));
+	}
+
 	async function searchTerminology(term, system) {
 		const res = await fetch(
 			`/api/terminologies?term=${encodeURIComponent(term)}&system=${encodeURIComponent(system)}`,
@@ -448,7 +466,9 @@
 
 	// Odontogram Reset
 	function resetOdontogram() {
-		if (confirm("Apakah anda yakin ingin mereset seluruh data odontogram?")) {
+		if (
+			confirm("Apakah anda yakin ingin mereset seluruh data odontogram?")
+		) {
 			odontogram = {
 				dentition_type: "Adult",
 				occlusi: "",
@@ -539,9 +559,18 @@
 				plan,
 				resep,
 				keterangan,
-				reason_code: reasonCode,
-				reason_display: reasonDisplay,
-				reason_category: reasonCategory,
+				reason_code:
+					formMode === "SOAP_WHO" && newReasonCode
+						? newReasonCode
+						: reasonCode,
+				reason_display:
+					formMode === "SOAP_WHO" && newReasonCode
+						? newReasonDisplay
+						: reasonDisplay,
+				reason_type:
+					formMode === "SOAP_WHO" && newReasonCode
+						? "finding"
+						: reasonCategory,
 				tekanan_darah: tekananDarah,
 				prescriptions,
 				referrals,
@@ -554,6 +583,8 @@
 
 			if (discharge) {
 				body.status = "Discharged";
+			} else {
+				body.status = "On Hold";
 			}
 
 			const res = await fetch(`/api/encounters/${encounterId}`, {
@@ -566,10 +597,10 @@
 				addToast(
 					discharge
 						? "Encounter selesai & discharged"
-						: "Data disimpan",
-					"success",
+						: "Encounter ditahan (On Hold)",
+					discharge ? "success" : "warning",
 				);
-				if (discharge) goto("/dokter");
+				goto("/dokter");
 			} else {
 				const err = await res.json();
 				addToast(err.error || "Gagal menyimpan", "error");
@@ -589,12 +620,14 @@
 	}
 
 	onMount(() => {
+		isSidebarHidden.set(true);
 		loadEncounter();
 		loadDoctors();
 	});
 
 	onDestroy(() => {
 		headerTitle.set(null);
+		isSidebarHidden.set(false);
 	});
 </script>
 
@@ -1141,14 +1174,6 @@
 							{#if saving}<span class="spinner spinner-sm mr-2"
 								></span>{/if}Save Draft
 						</button>
-						<button
-							class="px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
-							disabled={saving}
-							on:click={() => saveForm(true)}
-						>
-							{#if saving}<span class="spinner spinner-sm mr-2"
-								></span>{/if}Submit Encounter
-						</button>
 					</div>
 				</div>
 
@@ -1216,20 +1241,76 @@
 
 				<!-- Odontogram (only for SOAP_WHO) -->
 				{#if formMode === "SOAP_WHO"}
+					<!-- Encounter Reason Form -->
 					<div
 						class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm mb-6"
 					>
-						<div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
-							<h3 class="text-base font-bold flex items-center gap-2 text-slate-800 m-0">
-								<span class="material-symbols-outlined text-primary">dentistry</span>
+						<h3
+							class="text-base font-bold flex items-center gap-2 text-slate-800 m-0 mb-4 pb-4 border-b border-slate-50"
+						>
+							<span class="material-symbols-outlined text-primary"
+								>search</span
+							>
+							Keluhan Utama
+						</h3>
+						<div class="max-w-xl">
+							<label
+								class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1"
+								>Cari Keluhan Utama</label
+							>
+							<div
+								class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-3 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary"
+							>
+								<SearchableSelect
+									placeholder="Cari keluhan (SNOMED)..."
+									searchFn={searchClinicalFinding}
+									bind:value={newReasonCode}
+									on:select={(e) => {
+										newReasonDisplay = e.detail.label;
+									}}
+								/>
+							</div>
+							{#if !newReasonCode && reasonDisplay}
+								<p
+									class="mt-3 text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1.5"
+								>
+									<span
+										class="material-symbols-outlined text-xs"
+										>info</span
+									>
+									Current:
+									<span class="text-slate-600 font-bold"
+										>{reasonDisplay}</span
+									>
+								</p>
+							{/if}
+						</div>
+					</div>
+
+					<div
+						class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm mb-6"
+					>
+						<div
+							class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6"
+						>
+							<h3
+								class="text-base font-bold flex items-center gap-2 text-slate-800 m-0"
+							>
+								<span
+									class="material-symbols-outlined text-primary"
+									>dentistry</span
+								>
 								Odontogram (PDGI Standard)
 							</h3>
-							<button 
+							<button
 								type="button"
 								class="text-[11px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition-colors flex items-center gap-1"
 								on:click={resetOdontogram}
 							>
-								<span class="material-symbols-outlined text-[14px]">refresh</span> Reset
+								<span
+									class="material-symbols-outlined text-[14px]"
+									>refresh</span
+								> Reset
 							</button>
 						</div>
 
@@ -1928,7 +2009,19 @@
 					</div>
 				</section>
 
-				<!-- (Actions moved to top) -->
+				<!-- End of Sections -->
+				<div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+					<button
+						class="px-8 py-3 bg-primary text-white rounded-xl text-base font-bold shadow-lg shadow-primary/25 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+						disabled={saving}
+						on:click={() => saveForm(true)}
+					>
+						{#if saving}<span class="spinner spinner-sm mr-2"></span>{/if}
+						<span class="material-symbols-outlined text-[20px]">check_circle</span>
+						Submit & Selesaikan Encounter
+					</button>
+				</div>
+				<!-- (Actions moved to bottom) -->
 			</div>
 
 			<!-- Patient Context Sidebar -->
@@ -2115,9 +2208,28 @@
 																class="font-bold text-slate-700"
 																>P</span
 															>: {hist.encounter
-																.plan}.
+																.plan}.<br />
 														{/if}
-														{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.plan}
+														{#if hist.encounter?.resep}
+															<span
+																class="font-bold text-slate-700"
+																>R</span
+															>: {hist.encounter
+																.resep}.<br />
+														{/if}
+														{#if hist.encounter?.keterangan}
+															<div
+																class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800 text-[11px]"
+															>
+																<span
+																	class="font-black"
+																	>Ket</span
+																>: {hist
+																	.encounter
+																	.keterangan}
+															</div>
+														{/if}
+														{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}
 															<span
 																class="italic opacity-70"
 																>Belum ada

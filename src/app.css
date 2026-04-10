@@ -867,6 +867,14 @@ tbody tr:last-child td {
   margin-left: 80px;
 }
 
+.sidebar-hidden .sidebar {
+  display: none;
+}
+
+.sidebar-hidden .main-content {
+  margin-left: 0;
+}
+
 .top-header {
   background: white;
   border-bottom: 1px solid var(--border-color);

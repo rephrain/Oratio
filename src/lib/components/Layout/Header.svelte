@@ -1,5 +1,5 @@
 <script>
-	import { isSidebarOpen, headerTitle, isPatientProfileOpen } from '$lib/stores/layout.js';
+	import { isSidebarOpen, isSidebarHidden, headerTitle, isPatientProfileOpen } from '$lib/stores/layout.js';
 	import { logout } from '$lib/stores/auth.js';
 
 	export let user = null;
@@ -9,7 +9,7 @@
 
 <header 
 	class="top-header transition-all duration-300" 
-	style="padding-left: {$isSidebarOpen ? 'calc(260px + var(--space-8))' : 'calc(80px + var(--space-8))'}; padding-right: var(--space-8);"
+	style="padding-left: {$isSidebarHidden ? 'var(--space-8)' : ($isSidebarOpen ? 'calc(260px + var(--space-8))' : 'calc(80px + var(--space-8))')}; padding-right: var(--space-8);"
 >
 	<div class="flex-1 max-w-2xl">
 		{#if $headerTitle}

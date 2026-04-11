@@ -97,6 +97,21 @@ export async function GET({ params }) {
 				eq(documents.document_type, 'clinical_photo')
 			));
 
+		const prescriptions = await db.select({
+			id: encounterPrescriptions.id,
+			terminology_id: encounterPrescriptions.terminology_id,
+			kfa_code: terminologyMaster.code,
+			product_name: terminologyMaster.display,
+			dosage_form: encounterPrescriptions.dosage_form,
+			dosage: encounterPrescriptions.dosage,
+			quantity: encounterPrescriptions.quantity,
+			instruction: encounterPrescriptions.instruction,
+			created_at: encounterPrescriptions.created_at
+		})
+			.from(encounterPrescriptions)
+			.leftJoin(terminologyMaster, eq(encounterPrescriptions.terminology_id, terminologyMaster.id))
+			.where(eq(encounterPrescriptions.encounter_id, params.id));
+
 		return json({
 			...encounter,
 			referrals,
@@ -104,7 +119,8 @@ export async function GET({ params }) {
 			odontograms,
 			odontogramDetails: odontoDetails,
 			statusHistory: history,
-			clinical_photos: clinicalPhotos
+			clinical_photos: clinicalPhotos,
+			prescriptions
 		});
 	} catch (err) {
 		console.error("GET /api/encounters error:", err);
@@ -182,6 +198,21 @@ export async function PUT({ params, request }) {
 				start_at: new Date()
 			});
 		}
+	}
+
+	// Auto-generate resep string from prescriptions if provided
+	if (body.prescriptions && Array.isArray(body.prescriptions)) {
+		const resepString = body.prescriptions
+			.map((rx, i) => {
+				const name = rx.product_name || 'Obat';
+				const form = rx.dosage_form ? `(${rx.dosage_form})` : '';
+				const dosage = rx.dosage ? ` - ${rx.dosage}` : '';
+				const qty = rx.quantity ? `, Qty: ${rx.quantity}` : '';
+				const instruction = rx.instruction || rx.notes ? `. ${rx.instruction || rx.notes}` : '';
+				return `${i + 1}. ${name} ${form}${dosage}${qty}${instruction}`;
+			})
+			.join('\n');
+		updateData.resep = resepString;
 	}
 
 	updateData.updated_at = new Date();

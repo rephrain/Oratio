@@ -123,7 +123,7 @@
 				<ToothDiagram 
 					number={num} 
 					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
-					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
+					selectedSurface={isSelected(num, selectedSurfaceArea)}
 					on:surfaceClick={handleSurfaceClick}
 				/>
 			{/each}
@@ -134,7 +134,7 @@
 				<ToothDiagram 
 					number={num} 
 					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
-					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
+					selectedSurface={isSelected(num, selectedSurfaceArea)}
 					on:surfaceClick={handleSurfaceClick}
 				/>
 			{/each}

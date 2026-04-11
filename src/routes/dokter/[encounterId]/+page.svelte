@@ -251,24 +251,81 @@
 		procedure_display: "",
 	};
 
-	// Reactive map: Convert array of details to visual OdontogramChart format
+	let selectedSurfaceArea = "";
+
+	function getClinicalSurfaceName(surfaceKey, toothNum) {
+		const quad = String(toothNum)[0];
+		const isUpper = ['1', '2', '5', '6'].includes(quad);
+		const isRightSideOfMouth = ['1', '4', '5', '8'].includes(quad);
+		const isAnterior = ['1', '2', '3'].includes(String(toothNum)[1]); 
+
+		if (surfaceKey === 'center') return isAnterior ? 'I' : 'O';
+		if (surfaceKey === 'top') return isUpper ? 'V' : 'L';
+		if (surfaceKey === 'bottom') return isUpper ? 'P' : 'V';
+		if (surfaceKey === 'left') return isRightSideOfMouth ? 'D' : 'M';
+		if (surfaceKey === 'right') return isRightSideOfMouth ? 'M' : 'D';
+		return "";
+	}
+
+	function parseSurfaces(surfaceStr, toothNum) {
+		let s = (surfaceStr || "").toUpperCase().trim();
+		if (s === '') return ['center'];
+		if (['TOP', 'BOTTOM', 'LEFT', 'RIGHT', 'CENTER'].includes(s)) return [s.toLowerCase()];
+
+		const quad = String(toothNum)[0];
+		const isUpper = ['1', '2', '5', '6'].includes(quad);
+		const isRightSideOfMouth = ['1', '4', '5', '8'].includes(quad);
+
+		let result = [];
+		if (s.includes('O') || s.includes('I')) result.push('center');
+		if (s.includes('M')) result.push(isRightSideOfMouth ? 'right' : 'left');
+		if (s.includes('D')) result.push(isRightSideOfMouth ? 'left' : 'right');
+		if (s.includes('V') || s.includes('B') || s.includes('F') || s.includes('LA')) result.push(isUpper ? 'top' : 'bottom');
+		if (s.includes('P') || (s.includes('L') && !s.includes('LA'))) result.push(isUpper ? 'bottom' : 'top');
+
+		if (result.length === 0) return ['center']; 
+		return result;
+	}
+
 	$: mappedOdontogramData = (odontogram.details || []).reduce((acc, d) => {
 		if (!acc[d.tooth_number]) acc[d.tooth_number] = {};
-		// For simplicity in this integration, map the first recorded surface as "center"
-		// A full implementation would parse d.surface ("O","M","D") into top/bottom/left/right/center
+		
 		let color = "#10B981"; // Default green
-		if (d.keadaan && d.keadaan.toUpperCase().includes("CARIES"))
-			color = "#EF4444";
+		if (d.keadaan && d.keadaan.toUpperCase().includes("CARIES")) color = "#ffffff";
 		else if (d.keadaan === "MISSING") color = "#9CA3AF";
+		else if (d.keadaan === "Gigi sehat, normal, tanpa kelainan") color = "#ffffff";
 
-		acc[d.tooth_number].center = {
+		const mappedData = {
 			condition: d.keadaan,
 			color,
 			restoration: d.restorasi,
+			bahan_restorasi: d.bahan_restorasi,
+			protesa: d.protesa,
 		};
-		if (d.keadaan === "EXTRACTED") acc[d.tooth_number].global = "Extracted";
-		else if (d.keadaan === "MISSING")
+		
+		const keys = parseSurfaces(d.surface, d.tooth_number);
+		keys.forEach(k => {
+			if (!acc[d.tooth_number][k]) acc[d.tooth_number][k] = mappedData;
+		});
+		if (d.keadaan === "EXTRACTED" || d.keadaan === "Gigi Hilang") acc[d.tooth_number].global = "Missing";
+		else if (d.keadaan === "MISSING" || d.restorasi === "Pontic" || d.protesa === "Partial Denture" || d.protesa === "Full Denture")
 			acc[d.tooth_number].global = "Missing";
+		else if (d.keadaan === "Gigi Non-Vital")
+			acc[d.tooth_number].global = "Non-Vital";
+		else if (d.restorasi === "Root Canal Treatment / Perawatan Saluran Akar")
+			acc[d.tooth_number].global = "RCT";
+		else if (d.keadaan === "Gigi tidak ada/ tidak diketahui")
+			acc[d.tooth_number].global = "NON";
+		else if (d.keadaan === "Un-erupted")
+			acc[d.tooth_number].global = "UNE";
+		else if (d.keadaan === "Partial erupted")
+			acc[d.tooth_number].global = "PRE";
+		else if (d.keadaan === "Anomali")
+			acc[d.tooth_number].global = "ANO";
+		else if (d.keadaan && d.keadaan.includes("Fracture") || d.keadaan === "Root fracture")
+			acc[d.tooth_number].global = "Fracture";
+		else if (d.keadaan === "Sisa Akar" || d.keadaan === "Retained root")
+			acc[d.tooth_number].global = "Sisa Akar";
 		return acc;
 	}, {});
 
@@ -389,6 +446,7 @@
 		dosage_form: "",
 		dosage: "",
 		quantity: 1,
+		instruction: "",
 		merk_type: "known",
 	};
 
@@ -421,6 +479,7 @@
 			dosage_form: "",
 			dosage: "",
 			quantity: 1,
+			instruction: "",
 			merk_type: "known",
 		};
 	}
@@ -599,7 +658,10 @@
 	}
 
 	// Tooth click
-	function handleToothClick(toothNum, event) {
+	function handleToothClick(toothNum, selectedObjOrSurface, maybeEvent) {
+		let surfaceArea = typeof selectedObjOrSurface === 'string' ? selectedObjOrSurface : '';
+		let event = maybeEvent || selectedObjOrSurface;
+
 		if (event.shiftKey) {
 			if (selectedTeeth.has(toothNum)) {
 				selectedTeeth.delete(toothNum);
@@ -609,14 +671,22 @@
 			selectedTeeth = new Set(selectedTeeth);
 		} else {
 			selectedTooth = toothNum;
-			const existing = odontogram.details.find(
-				(d) => d.tooth_number === toothNum,
+			selectedSurfaceArea = surfaceArea;
+			
+			// Find existing detail with this exact surface, or default to general match
+			const clinicalSurface = getClinicalSurfaceName(surfaceArea, toothNum);
+			let existing = odontogram.details.find(
+				(d) => d.tooth_number === toothNum && d.surface === clinicalSurface
 			);
+			if (!existing) {
+				existing = odontogram.details.find((d) => d.tooth_number === toothNum && !d.surface);
+			}
+
 			toothDetail = existing
-				? { ...existing }
+				? { ...existing, surface: existing.surface || clinicalSurface }
 				: {
 						tooth_number: toothNum,
-						surface: "",
+						surface: clinicalSurface || "",
 						keadaan: "",
 						bahan_restorasi: "",
 						restorasi: "",
@@ -1504,8 +1574,10 @@
 						<div class="w-full overflow-x-auto pb-4 mb-4">
 							<OdontogramChart
 								odontogramData={mappedOdontogramData}
+								{selectedTooth}
+								{selectedSurfaceArea}
 								on:toothClick={(e) =>
-									handleToothClick(e.detail.tooth, {
+									handleToothClick(e.detail.tooth, e.detail.surface, {
 										shiftKey: e.detail.shiftKey,
 									})}
 							/>
@@ -1755,148 +1827,168 @@
 							</div>
 						{/if}
 					</div>
-				{/if}
-
-				<!-- Prescriptions Section -->
+				{/if}				<!-- Prescriptions Section -->
 				<section
-					class="rounded-2xl p-6 border border-primary/10 mb-6"
-					style="background-color: rgba(60, 60, 246, 0.05);"
+					class="rounded-3xl p-8 border border-primary/10 mb-8 overflow-hidden relative"
+					style="background: linear-gradient(135deg, rgba(60, 60, 246, 0.03) 0%, rgba(60, 60, 246, 0.08) 100%);"
 				>
-					<h3
-						class="text-base font-bold mb-4 flex items-center gap-2"
-					>
-						<span class="material-symbols-outlined text-primary"
-							>pill</span
-						>
-						Prescriptions (KFA)
-					</h3>
-					<div class="space-y-3">
-						<div class="grid grid-cols-12 gap-3 items-end">
-							<div class="col-span-5">
-								<div class="flex justify-between mb-1">
-									<label
-										class="text-xs font-bold text-slate-500 block"
-										>Product Name</label
-									>
-									<div
-										class="flex p-1 bg-slate-100 rounded-lg w-fit"
-									>
+					<div class="flex items-center justify-between mb-6">
+						<h3 class="text-lg font-bold flex items-center gap-3 text-slate-800">
+							<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+								<span class="material-symbols-outlined text-[24px]">pill</span>
+							</div>
+							Prescriptions (KFA)
+						</h3>
+						{#if prescriptions.length > 0}
+							<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">
+								{prescriptions.length} Item(s)
+							</span>
+						{/if}
+					</div>
+
+					<div class="space-y-6">
+						<!-- Input Grid Row 1 -->
+						<div class="grid grid-cols-12 gap-4 items-end">
+							<div class="col-span-12 lg:col-span-6">
+								<div class="flex justify-between items-center mb-2 px-1">
+									<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Name</label>
+									<div class="flex p-0.5 bg-slate-200/50 rounded-lg w-fit">
 										<button
 											type="button"
-											class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {newRx.merk_type ===
-											'known'
-												? 'bg-white text-primary shadow-sm'
-												: 'text-slate-500 hover:text-slate-700'}"
-											on:click={() => {
-												newRx.merk_type = "known";
-											}}>MERK KNOWN</button
-										>
+											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type === 'known' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+											on:click={() => { newRx.merk_type = "known"; }}
+										>MERK KNOWN</button>
 										<button
 											type="button"
-											class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {newRx.merk_type ===
-											'unknown'
-												? 'bg-white text-primary shadow-sm'
-												: 'text-slate-500 hover:text-slate-700'}"
-											on:click={() => {
-												newRx.merk_type = "unknown";
-											}}>MERK UNKNOWN</button
-										>
+											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type === 'unknown' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+											on:click={() => { newRx.merk_type = "unknown"; }}
+										>MERK UNKNOWN</button>
 									</div>
 								</div>
 								<SearchableSelect
-									searchFn={(term) =>
-										searchMedication(term, newRx.merk_type)}
-									placeholder="Cari produk obat"
-									wrapperClass=""
-									inputClass="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
+									searchFn={(term) => searchMedication(term, newRx.merk_type)}
+									placeholder="Cari produk obat (KFA)..."
+									wrapperClass="w-full"
+									inputClass="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm transition-all"
 									value={newRx.kfa_code}
 									on:select={(e) => {
 										newRx.kfa_code = e.detail.value;
 										newRx.product_name = e.detail.label;
-										newRx.dosage_form =
-											e.detail.dosage_form || "";
+										newRx.dosage_form = e.detail.dosage_form || "";
 									}}
 								/>
 							</div>
-							<div class="col-span-4">
-								<label
-									class="text-xs font-bold text-slate-500 mb-1 block"
-									>Dosage</label
-								>
-								<div class="flex items-center gap-2">
+							<div class="col-span-12 md:col-span-8 lg:col-span-4">
+								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Dosage</label>
+								<div class="relative flex items-center">
 									<input
-										class="flex-1 rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
-										placeholder="3 x 1, pc"
+										class="w-full py-3 pl-4 pr-20 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm"
+										placeholder="e.g. 3 x 1, pc"
 										type="text"
 										bind:value={newRx.dosage}
 									/>
 									{#if newRx.dosage_form}
-										<span
-											class="text-sm font-semibold text-slate-400 whitespace-nowrap"
-										>
+										<div class="absolute right-3 px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 border border-slate-200">
 											{newRx.dosage_form}
-										</span>
+										</div>
 									{/if}
 								</div>
 							</div>
-							<div class="col-span-2">
-								<label
-									class="text-xs font-bold text-slate-500 mb-1 block"
-									>Qty</label
-								>
+							<div class="col-span-12 md:col-span-4 lg:col-span-2">
+								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Quantity</label>
 								<input
-									class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
+									class="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm font-bold text-center focus:ring-primary focus:border-primary shadow-sm"
 									type="number"
 									bind:value={newRx.quantity}
 								/>
 							</div>
-							<div class="col-span-1">
-								<label class="text-[0px] block mb-1 opacity-0"
-									>-</label
-								>
+						</div>
+
+						<!-- Input Grid Row 2 (Instruction) -->
+						<div class="grid grid-cols-12 gap-4 items-end">
+							<div class="col-span-12 md:col-span-11">
+								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Special Instruction</label>
+								<div class="relative flex items-center">
+									<span class="material-symbols-outlined absolute left-4 text-slate-300 text-[18px]">info</span>
+									<input
+										class="w-full py-3 pl-10 pr-4 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm placeholder:text-slate-300"
+										placeholder="e.g. Sesudah makan / Habiskan obat / Jika demam saja"
+										type="text"
+										bind:value={newRx.instruction}
+									/>
+								</div>
+							</div>
+							<div class="col-span-12 md:col-span-1">
 								<button
 									type="button"
-									class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors"
+									class="w-full aspect-square md:aspect-auto md:h-[46px] flex items-center justify-center rounded-2xl bg-primary text-white hover:brightness-110 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 group"
 									on:click={addPrescription}
+									title="Tambah Resep"
 								>
-									<span
-										class="material-symbols-outlined text-[20px]"
-										>add</span
-									>
+									<span class="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform">add</span>
 								</button>
 							</div>
 						</div>
 
+						<!-- Separator -->
+						{#if prescriptions.length > 0}
+							<div class="h-px bg-slate-100 my-2"></div>
+						{/if}
+
 						<!-- Added Item Chips -->
-						{#each prescriptions as rx, i}
-							<div
-								class="flex items-center gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm"
-							>
-								<span
-									class="material-symbols-outlined text-slate-400"
-									>medication</span
-								>
-								<div class="flex-1">
-									<p class="text-sm font-bold">
-										{rx.product_name}
-									</p>
-									<p class="text-xs text-slate-500">
-										{rx.dosage_form} | Dosage: {rx.dosage ||
-											"-"} | Qty: {rx.quantity}
-										| KFA: {rx.kfa_code}
-									</p>
-								</div>
-								<button
-									type="button"
-									class="text-slate-400 hover:text-red-500 transition-colors"
-									on:click={() => removePrescription(i)}
-								>
-									<span class="material-symbols-outlined"
-										>delete</span
+						<div class="grid grid-cols-1 gap-4">
+							{#each prescriptions as rx, i}
+								<div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-primary/20 hover:shadow-md transition-all group flex items-start gap-4">
+									<div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+										<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">medication</span>
+									</div>
+									<div class="flex-1 min-w-0 pt-1">
+										<h4 class="text-sm font-bold text-slate-800 mb-1 truncate" title={rx.product_name}>
+											{rx.product_name}
+										</h4>
+										<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+											<div class="flex items-center gap-1.5">
+												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Dosage</span>
+												<span class="text-xs font-bold text-slate-600">{rx.dosage || "-"}</span>
+											</div>
+											<div class="flex items-center gap-1.5">
+												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Qty</span>
+												<span class="text-xs font-bold text-slate-600">{rx.quantity} <span class="text-slate-400 font-medium">{rx.dosage_form}</span></span>
+											</div>
+											<div class="flex items-center gap-1.5">
+												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">KFA</span>
+												<span class="text-xs font-medium text-slate-400 font-mono">{rx.kfa_code}</span>
+											</div>
+										</div>
+										{#if rx.instruction}
+											<div class="mt-3 p-2 px-3 bg-primary/5 rounded-xl border border-primary/10 inline-flex items-center gap-2">
+												<span class="material-symbols-outlined text-primary text-[16px]">info</span>
+												<p class="text-[11px] font-bold text-primary italic leading-none">
+													{rx.instruction}
+												</p>
+											</div>
+										{/if}
+									</div>
+									<button
+										type="button"
+										class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0 mt-1"
+										on:click={() => removePrescription(i)}
+										title="Hapus"
 									>
-								</button>
-							</div>
-						{/each}
+										<span class="material-symbols-outlined text-[20px]">delete</span>
+									</button>
+								</div>
+							{/each}
+
+							{#if prescriptions.length === 0}
+								<div class="py-8 flex flex-col items-center justify-center bg-white/40 rounded-3xl border-2 border-dashed border-slate-100">
+									<div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mb-3">
+										<span class="material-symbols-outlined text-3xl">medication</span>
+									</div>
+									<p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Belum ada resep ditambahkan</p>
+								</div>
+							{/if}
+						</div>
 					</div>
 				</section>
 

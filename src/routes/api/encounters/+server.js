@@ -4,7 +4,8 @@ import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
 	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
-import { eq, and, desc, sql, gte, lte, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { generateEncounterId } from '$lib/utils/formatters.js';
 
 // GET /api/encounters
@@ -39,18 +40,24 @@ export async function GET({ url, locals }) {
 
 	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+	const doctors = alias(users, 'doctors');
+	const kasirs = alias(users, 'kasirs');
+
 	const data = await db.select({
 		encounter: encounters,
 		patient: patients,
 		patient_name: patients.nama_lengkap,
 		patient_nik: patients.nik,
-		doctor_name: users.name,
-		doctor_code: users.doctor_code,
+		doctor_name: doctors.name,
+		doctor_code: doctors.doctor_code,
+		kasir_name: kasirs.name,
+		kasir_profile_image: kasirs.profile_image_url,
 		encounter_reason_display: terminologyMaster.display
 	})
 		.from(encounters)
 		.leftJoin(patients, eq(encounters.patient_id, patients.id))
-		.leftJoin(users, eq(encounters.doctor_id, users.id))
+		.leftJoin(doctors, eq(encounters.doctor_id, doctors.id))
+		.leftJoin(kasirs, eq(encounters.kasir_id, kasirs.id))
 		.leftJoin(terminologyMaster, eq(encounters.encounter_reason_id, terminologyMaster.id))
 		.where(whereClause)
 		.orderBy(desc(encounters.created_at))

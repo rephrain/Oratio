@@ -197,6 +197,43 @@
 		},
 	};
 
+	$: selectedStatusConfig = (() => {
+		const status = encounter?.encounter?.status;
+		const map = {
+			"In Progress": {
+				badge: "bg-blue-500",
+				bg: "from-blue-100 to-blue-50",
+				text: "text-blue-600",
+			},
+			Arrived: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Planned: {
+				badge: "bg-amber-400",
+				bg: "from-amber-100 to-amber-50",
+				text: "text-amber-600",
+			},
+			"On Hold": {
+				badge: "bg-rose-400",
+				bg: "from-rose-100 to-rose-50",
+				text: "text-rose-600",
+			},
+			Discharged: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Completed: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+		};
+		return map[status] || map["In Progress"];
+	})();
+
 	// Tooth detail modal
 	let showToothModal = false;
 	let selectedTooth = null;
@@ -812,17 +849,17 @@
 							<div class="flex flex-col items-center text-center">
 								<div class="relative mb-4">
 									<div
-										class="w-20 h-20 rounded-full ring-4 ring-white shadow-lg bg-gradient-to-br bg-blue-500 text-white flex items-center justify-center transition-transform hover:scale-105 duration-300"
+										class="w-20 h-20 rounded-full ring-4 ring-white shadow-lg bg-gradient-to-br {selectedStatusConfig.bg} flex items-center justify-center transition-transform hover:scale-105 duration-300"
 									>
 										<span
-											class="text-3xl font-black drop-shadow-sm"
+											class="text-3xl font-black {selectedStatusConfig.text} drop-shadow-sm"
 											>{encounter.patient_name
 												.substring(0, 2)
 												.toUpperCase()}</span
 										>
 									</div>
 									<div
-										class="absolute -bottom-1 -right-1 w-7 h-7 bg-amber-400 rounded-full border-2 border-white shadow flex items-center justify-center z-10"
+										class="absolute -bottom-1 -right-1 w-7 h-7 {selectedStatusConfig.badge} rounded-full border-2 border-white shadow flex items-center justify-center z-10"
 									>
 										<span
 											class="text-white text-[11px] font-black"
@@ -839,8 +876,7 @@
 								<p
 									class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest"
 								>
-									MR ID: {encounter.encounter?.patient_id ||
-										"-"}
+									ID Tindakan: {encounter.encounter?.id || "-"}
 								</p>
 							</div>
 						</div>

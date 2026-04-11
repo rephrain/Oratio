@@ -1,8 +1,8 @@
 <script>
 	import { page } from "$app/stores";
 	import { onMount } from "svelte";
-	import DataTable from "$lib/components/Tables/DataTable.svelte";
-	import Modal from "$lib/components/UI/Modal.svelte";
+	import AdminDataTable from "$lib/components/Tables/AdminDataTable.svelte";
+	import AdminModal from "$lib/components/UI/AdminModal.svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import { addToast } from "$lib/stores/toast.js";
 
@@ -310,23 +310,27 @@
 	<title>{tableConfig?.label || tableName} — Admin — Oratio Clinic</title>
 </svelte:head>
 
-<div>
-	<div class="flex items-center justify-between mb-6">
+<div class="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+	<div class="flex items-end justify-between">
 		<div>
-			<h1 class="page-title" style="margin: 0;">
+			<h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
 				{tableConfig?.label || tableName}
 			</h1>
-			<p class="text-sm text-muted">{total} total records</p>
+			<p class="text-slate-500 font-medium">{total} total records in database</p>
 		</div>
 		<div class="flex gap-3">
-			<a href="/admin" class="btn btn-secondary">← Dashboard</a>
-			<button class="btn btn-primary" on:click={openCreate}
-				>+ Tambah</button
-			>
+			<a href="/admin" class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+				<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+				Dashboard
+			</a>
+			<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all" on:click={openCreate}>
+				<span class="material-symbols-outlined text-[18px]">add</span>
+				Tambah
+			</button>
 		</div>
 	</div>
 
-	<DataTable
+	<AdminDataTable
 		{data}
 		{columns}
 		{total}
@@ -341,44 +345,45 @@
 		on:rowclick={(e) => openEdit(e.detail.row)}
 	>
 		<tr slot="row-extra" let:row>
-			<td>
-				<div class="flex gap-1">
+			<td class="px-6 py-4">
+				<div class="flex items-center gap-2 justify-end">
 					<button
-						class="btn btn-ghost btn-sm"
+						class="p-2 text-slate-400 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors flex items-center focus:outline-none"
 						on:click|stopPropagation={() => openEdit(row)}
-						>✏️</button
+						title="Edit"
 					>
+						<span class="material-symbols-outlined text-[20px]">edit</span>
+					</button>
 					<button
-						class="btn btn-ghost btn-sm"
+						class="p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors flex items-center focus:outline-none"
 						on:click|stopPropagation={() => confirmDelete(row.id)}
-						>🗑️</button
+						title="Hapus"
 					>
+						<span class="material-symbols-outlined text-[20px]">delete</span>
+					</button>
 				</div>
 			</td>
 		</tr>
-	</DataTable>
+	</AdminDataTable>
 </div>
 
 <!-- Create/Edit Modal -->
-<Modal
+<AdminModal
 	bind:show={showModal}
 	title="{modalMode === 'create' ? 'Tambah' : 'Edit'} {tableConfig?.label ||
 		''}"
 	size="lg"
 >
-	<div class="admin-form">
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 		{#each getModalFields(modalMode) as field (field.key)}
 			{@const isDisabled =
 				field.readOnly ||
 				(field.editReadOnly && modalMode === "edit")}
-			<div
-				class="form-group"
-				class:form-group-full={field.type === "textarea"}
-			>
-				<label class="form-label" for="inp-{field.key}">
+			<div class="flex flex-col gap-1.5 {field.type === 'textarea' ? 'sm:col-span-2' : ''}">
+				<label class="text-sm font-bold text-slate-700 dark:text-slate-300" for="inp-{field.key}">
 					{field.label}
 					{#if field.required && !isDisabled}
-						<span class="required-mark">*</span>
+						<span class="text-red-500">*</span>
 					{/if}
 				</label>
 
@@ -386,7 +391,7 @@
 					<!-- Read-only fields -->
 					<input
 						id="inp-{field.key}"
-						class="form-input"
+						class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed w-full"
 						value={editRecord[field.key] ?? ""}
 						disabled
 					/>
@@ -394,7 +399,7 @@
 					<!-- Select / Enum fields -->
 					<select
 						id="inp-{field.key}"
-						class="form-select"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						value={editRecord[field.key] ?? ""}
 						on:change={(e) => handleSelectChange(field, e)}
 					>
@@ -407,16 +412,16 @@
 					</select>
 				{:else if field.type === "boolean"}
 					<!-- Boolean toggle -->
-					<div class="toggle-container">
-						<label class="toggle-label">
+					<div class="py-2 flex items-center pr-4">
+						<label class="relative inline-flex items-center cursor-pointer">
 							<input
 								type="checkbox"
 								id="inp-{field.key}"
 								bind:checked={editRecord[field.key]}
-								class="toggle-checkbox"
+								class="sr-only peer"
 							/>
-							<span class="toggle-switch"></span>
-							<span class="toggle-text">
+							<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/10 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary"></div>
+							<span class="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400">
 								{editRecord[field.key] ? "Ya" : "Tidak"}
 							</span>
 						</label>
@@ -425,7 +430,7 @@
 					<!-- Textarea -->
 					<textarea
 						id="inp-{field.key}"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white resize-none"
 						rows="3"
 						bind:value={editRecord[field.key]}
 						placeholder={field.placeholder || ""}
@@ -435,7 +440,7 @@
 					<input
 						id="inp-{field.key}"
 						type="password"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 						placeholder="Enter password"
 					/>
@@ -444,7 +449,7 @@
 					<input
 						id="inp-{field.key}"
 						type="date"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 					/>
 				{:else if field.type === "time"}
@@ -452,7 +457,7 @@
 					<input
 						id="inp-{field.key}"
 						type="time"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 					/>
 				{:else if field.type === "datetime"}
@@ -460,7 +465,7 @@
 					<input
 						id="inp-{field.key}"
 						type="datetime-local"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 					/>
 				{:else if field.type === "number"}
@@ -468,7 +473,7 @@
 					<input
 						id="inp-{field.key}"
 						type="number"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 						step="any"
 					/>
@@ -477,7 +482,7 @@
 					<input
 						id="inp-{field.key}"
 						type="email"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 						placeholder={field.placeholder || "email@example.com"}
 					/>
@@ -485,7 +490,7 @@
 					<!-- Foreign key lookup select -->
 					<select
 						id="inp-{field.key}"
-						class="form-select"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						value={editRecord[field.key] ?? ""}
 						on:change={(e) => {
 							editRecord[field.key] =
@@ -508,7 +513,7 @@
 					<input
 						id="inp-{field.key}"
 						type="text"
-						class="form-input"
+						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
 						bind:value={editRecord[field.key]}
 						maxlength={field.maxLength || undefined}
 						placeholder={field.placeholder || ""}
@@ -519,95 +524,40 @@
 	</div>
 
 	<div slot="footer">
-		<button class="btn btn-secondary" on:click={() => (showModal = false)}
-			>Batal</button
-		>
-		<button class="btn btn-primary" on:click={handleSave} disabled={saving}>
-			{#if saving}<span class="spinner"></span>{/if}
+		<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-bold text-sm transition-colors" on:click={() => (showModal = false)}>
+			Batal
+		</button>
+		<button class="px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" on:click={handleSave} disabled={saving}>
+			{#if saving}
+				<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+			{/if}
 			{modalMode === "create" ? "Tambah" : "Simpan"}
 		</button>
 	</div>
-</Modal>
+</AdminModal>
 
 <!-- Delete Confirmation -->
-<Modal bind:show={showDeleteConfirm} title="Konfirmasi Hapus">
-	<p>
-		Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat
-		dibatalkan.
-	</p>
-	<div slot="footer">
-		<button
-			class="btn btn-secondary"
-			on:click={() => (showDeleteConfirm = false)}>Batal</button
-		>
-		<button class="btn btn-danger" on:click={handleDelete}
-			>🗑️ Hapus</button
-		>
+<AdminModal bind:show={showDeleteConfirm} title="Konfirmasi Hapus">
+	<div class="flex items-start gap-4">
+		<div class="size-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+			<span class="material-symbols-outlined text-red-600">warning</span>
+		</div>
+		<div>
+			<h4 class="text-lg font-bold text-slate-900 mb-1">Hapus Data?</h4>
+			<p class="text-slate-500 text-sm">
+				Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat
+				dibatalkan dan semua data yang terhubung dapat ikut terhapus atau kehilangan relasi.
+			</p>
+		</div>
 	</div>
-</Modal>
-
-<style>
-	.admin-form {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-4);
-	}
-	.admin-form .form-group-full {
-		grid-column: 1 / -1;
-	}
-	.required-mark {
-		color: var(--danger, #e53e3e);
-		font-weight: 700;
-	}
-	.toggle-container {
-		padding: var(--space-2) 0;
-	}
-	.toggle-label {
-		display: flex;
-		align-items: center;
-		gap: var(--space-3);
-		cursor: pointer;
-		user-select: none;
-	}
-	.toggle-checkbox {
-		display: none;
-	}
-	.toggle-switch {
-		position: relative;
-		width: 44px;
-		height: 24px;
-		background: var(--border-color, #cbd5e0);
-		border-radius: 12px;
-		transition: background var(--transition-fast, 0.2s);
-		flex-shrink: 0;
-	}
-	.toggle-switch::after {
-		content: "";
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 20px;
-		height: 20px;
-		background: white;
-		border-radius: 50%;
-		transition: transform var(--transition-fast, 0.2s);
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-	}
-	.toggle-checkbox:checked + .toggle-switch {
-		background: var(--primary, #4299e1);
-	}
-	.toggle-checkbox:checked + .toggle-switch::after {
-		transform: translateX(20px);
-	}
-	.toggle-text {
-		font-size: var(--text-sm, 0.875rem);
-		color: var(--text-secondary, #718096);
-		font-weight: 500;
-	}
-
-	@media (max-width: 640px) {
-		.admin-form {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>
+	
+	<div slot="footer">
+		<button class="px-4 py-2 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold text-sm transition-colors" on:click={() => (showDeleteConfirm = false)}>
+			Batal
+		</button>
+		<button class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2" on:click={handleDelete}>
+			<span class="material-symbols-outlined text-[18px]">delete</span>
+			Ya, Hapus
+		</button>
+	</div>
+</AdminModal>

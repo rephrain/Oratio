@@ -27,7 +27,7 @@
 		.split("T")[0];
 
 	$: todayQueue = encounters.filter((e) =>
-		["Planned", "Arrived"].includes(e.encounter?.status),
+		["Planned", "Arrived", "On Hold"].includes(e.encounter?.status),
 	);
 	$: inProgress = encounters.filter(
 		(e) => e.encounter?.status === "In Progress",
@@ -104,10 +104,12 @@
 			label: "Accident / Event",
 		},
 	};
+	let isSidebarOpen = true;
 	let patientHistory = [];
 	let loadingMedical = false;
 	let expandedHistoryId = null;
-	let isSidebarOpen = true;
+	let referrals = [];
+	let loadingReferrals = false;
 
 	let stats = {
 		patientsToday: 0,
@@ -127,6 +129,19 @@
 			}
 		} catch (err) {
 			console.error("Error loading stats:", err);
+		}
+	}
+
+	async function loadReferrals() {
+		loadingReferrals = true;
+		try {
+			const res = await fetch("/api/dashboard/dokter/referrals");
+			const resp = await res.json();
+			referrals = resp.data || [];
+		} catch (err) {
+			console.error("Error loading referrals:", err);
+		} finally {
+			loadingReferrals = false;
 		}
 	}
 
@@ -313,6 +328,7 @@
 	onMount(() => {
 		loadEncounters();
 		loadShifts();
+		loadReferrals();
 		refreshInterval = setInterval(loadEncounters, 30000);
 		shiftInterval = setInterval(updateShift, 60000);
 	});
@@ -648,12 +664,31 @@
 								>
 									<div class="flex items-center gap-2">
 										<div
-											class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm"
+											class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden shadow-sm"
 										>
-											{row.patient_name
-												.substring(0, 2)
-												.toUpperCase()}
+											{#if row.kasir_profile_image}
+												<img
+													src={row.kasir_profile_image}
+													alt={row.kasir_name}
+													class="w-full h-full object-cover"
+												/>
+											{:else}
+												<span
+													class="text-[10px] font-bold text-slate-400"
+												>
+													{row.kasir_name
+														? row.kasir_name
+																.substring(0, 2)
+																.toUpperCase()
+														: "??"}
+												</span>
+											{/if}
 										</div>
+										<span
+											class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+										>
+											{row.kasir_name || "System"}
+										</span>
 									</div>
 									<span
 										class="text-[10px] font-black text-slate-400 tracking-wider uppercase"
@@ -719,50 +754,88 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-50">
-						<!-- Mock Referral Data -->
-						<tr
-							class="hover:bg-slate-50 transition-colors cursor-pointer group"
-						>
-							<td class="px-6 py-5">
-								<div class="flex items-center gap-3">
+						{#if loadingReferrals}
+							<tr>
+								<td colspan="4" class="px-6 py-10 text-center">
 									<div
-										class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm"
+										class="spinner spinner-sm"
+										style="margin: 0 auto;"
+									></div>
+									<p class="text-[10px] text-slate-400 mt-2">
+										Loading referrals...
+									</p>
+								</td>
+							</tr>
+						{:else if referrals.length > 0}
+							{#each referrals as ref}
+								<tr
+									class="hover:bg-slate-50 transition-colors cursor-pointer group"
+								>
+									<td class="px-6 py-5">
+										<div class="flex items-center gap-3">
+											<div
+												class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm overflow-hidden"
+											>
+												{#if ref.sender_profile_image}
+													<img
+														src={ref.sender_profile_image}
+														alt={ref.sender_name}
+														class="w-full h-full object-cover"
+													/>
+												{:else}
+													{ref.sender_name
+														.substring(0, 2)
+														.toUpperCase()}
+												{/if}
+											</div>
+											<div>
+												<div
+													class="text-sm font-bold text-slate-900"
+												>
+													{ref.sender_name}
+												</div>
+												<div
+													class="text-[10px] text-slate-400"
+												>
+													Sender Doctor
+												</div>
+											</div>
+										</div>
+									</td>
+									<td
+										class="px-6 py-5 text-xs text-slate-600 font-medium"
 									>
-										ST
-									</div>
-									<div>
+										{formatDate(ref.referral_date)}
+									</td>
+									<td class="px-6 py-5">
 										<div
 											class="text-sm font-bold text-slate-900"
 										>
-											Dr. Sarah Thompson
+											{ref.patient_name}
 										</div>
 										<div class="text-[10px] text-slate-400">
-											Cardiology Unit
+											ID: {ref.patient_id}
 										</div>
-									</div>
-								</div>
-							</td>
-							<td
-								class="px-6 py-5 text-xs text-slate-600 font-medium"
-								>Oct 23, 2024</td
-							>
-							<td class="px-6 py-5">
-								<div class="text-sm font-bold text-slate-900">
-									David Miller
-								</div>
-								<div class="text-[10px] text-slate-400">
-									ID: 8829-X
-								</div>
-							</td>
-							<td class="px-6 py-5">
-								<p
-									class="text-sm text-slate-500 line-clamp-1 italic"
+									</td>
+									<td class="px-6 py-5">
+										<p
+											class="text-sm text-slate-500 line-clamp-1 italic"
+										>
+											"{ref.note || "No note"}"
+										</p>
+									</td>
+								</tr>
+							{/each}
+						{:else}
+							<tr>
+								<td
+									colspan="4"
+									class="px-6 py-10 text-center text-slate-400 text-sm font-medium"
 								>
-									"Pre-op clearance for periodontal surgery.
-									Patient has history of hypertension."
-								</p>
-							</td>
-						</tr>
+									Tidak ada rujukan masuk saat ini.
+								</td>
+							</tr>
+						{/if}
 					</tbody>
 				</table>
 			</div>
@@ -820,7 +893,8 @@
 						<p
 							class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest"
 						>
-							MR ID: {selectedEncounterData.patient?.id || "-"}
+							ID Tindakan: {selectedEncounterData.encounter?.id ||
+								"-"}
 						</p>
 					</div>
 				</div>
@@ -1467,7 +1541,8 @@
 															class="font-black"
 															>Ket:</strong
 														>
-														{hist.encounter.keterangan}
+														{hist.encounter
+															.keterangan}
 													</div>
 												{/if}
 												{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.objective && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}

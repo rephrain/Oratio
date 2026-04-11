@@ -39,6 +39,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
     volumes:
       - uploads:/app/uploads
     depends_on:

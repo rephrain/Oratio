@@ -112,6 +112,7 @@ export async function PUT({ params, request }) {
 	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
 	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
+	if (body.photo_document_id !== undefined) updateData.photo_document_id = body.photo_document_id;
 
 	// Handle encounter_reason FK update
 	if (body.reason_code !== undefined) {

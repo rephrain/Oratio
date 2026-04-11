@@ -2,7 +2,11 @@
 	import { page } from "$app/stores";
 	import { onMount, onDestroy } from "svelte";
 	import { goto } from "$app/navigation";
-	import { headerTitle, isPatientProfileOpen, isSidebarHidden } from "$lib/stores/layout.js";
+	import {
+		headerTitle,
+		isPatientProfileOpen,
+		isSidebarHidden,
+	} from "$lib/stores/layout.js";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import Modal from "$lib/components/UI/Modal.svelte";
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
@@ -43,6 +47,8 @@
 	let resep = "";
 	let keterangan = "";
 	let tekananDarah = "";
+	let photoDocumentId = null;
+	let uploadingPhoto = false;
 
 	// Reason (SOAP_WHO)
 	let reasonCode = "";
@@ -121,6 +127,73 @@
 			text: "text-rose-700",
 			icon: "notification_important",
 			label: "Accident / Event",
+		},
+	};
+
+	const STATUS_THEMES = {
+		Planned: {
+			bg: "bg-blue-50/50",
+			border: "border-blue-100/50",
+			text: "text-blue-700",
+			badge: "bg-blue-100/50 text-blue-700",
+			dot: "bg-blue-500",
+			icon: "calendar_today",
+		},
+		"In Progress": {
+			bg: "bg-indigo-50/50",
+			border: "border-indigo-100/50",
+			text: "text-indigo-700",
+			badge: "bg-indigo-100/50 text-indigo-700",
+			dot: "bg-indigo-500",
+			icon: "pending",
+		},
+		"On Hold": {
+			bg: "bg-amber-50/50",
+			border: "border-amber-100/50",
+			text: "text-amber-700",
+			badge: "bg-amber-100/50 text-amber-700",
+			dot: "bg-amber-500",
+			icon: "pause_circle",
+		},
+		Discharged: {
+			bg: "bg-emerald-50/50",
+			border: "border-emerald-100/50",
+			text: "text-emerald-700",
+			badge: "bg-emerald-100/50 text-emerald-700",
+			dot: "bg-emerald-500",
+			icon: "check_circle",
+		},
+		Completed: {
+			bg: "bg-green-50/50",
+			border: "border-green-100/50",
+			text: "text-green-700",
+			badge: "bg-green-100/50 text-green-700",
+			dot: "bg-green-500",
+			icon: "task_alt",
+		},
+		Cancelled: {
+			bg: "bg-rose-50/50",
+			border: "border-rose-100/50",
+			text: "text-rose-700",
+			badge: "bg-rose-100/50 text-rose-700",
+			dot: "bg-rose-500",
+			icon: "cancel",
+		},
+		Discontinued: {
+			bg: "bg-slate-50/50",
+			border: "border-slate-100/50",
+			text: "text-slate-700",
+			badge: "bg-slate-100/50 text-slate-700",
+			dot: "bg-slate-500",
+			icon: "stop_circle",
+		},
+		default: {
+			bg: "bg-slate-50/50",
+			border: "border-slate-100/50",
+			text: "text-slate-600",
+			badge: "bg-slate-100/50 text-slate-600",
+			dot: "bg-slate-400",
+			icon: "help",
 		},
 	};
 
@@ -204,8 +277,7 @@
 			reasonCategory = data.encounter?.reason_type || "finding";
 			newReasonCode = "";
 			newReasonDisplay = "";
-
-
+			photoDocumentId = data.encounter?.photo_document_id || null;
 
 			console.log("encounter:", encounter);
 
@@ -273,6 +345,16 @@
 		});
 	}
 
+	// Prescription management
+	let newRx = {
+		kfa_code: "",
+		product_name: "",
+		dosage_form: "",
+		dosage: "",
+		quantity: 1,
+		merk_type: "known",
+	};
+
 	async function searchMedication(term, merkType = "known") {
 		const res = await fetch(
 			`/api/kfa?query=${encodeURIComponent(term)}&merkType=${merkType}`,
@@ -281,21 +363,17 @@
 		return (data.results || []).map((r) => ({
 			value: r.code,
 			label: r.display,
+			dosage_form: r.dosage_form,
 		}));
 	}
-
-	// Prescription management
-	let newRx = {
-		kfa_code: "",
-		product_name: "",
-		dosage: "",
-		quantity: 1,
-		merk_type: "known",
-	};
 
 	function addPrescription() {
 		if (!newRx.kfa_code || !newRx.product_name) {
 			addToast("Silakan pilih produk obat", "warning");
+			return;
+		}
+		if (!newRx.dosage_form) {
+			addToast("Silakan pilih sediaan obat (dosage form)", "warning");
 			return;
 		}
 		prescriptions = [...prescriptions, { ...newRx }];
@@ -303,6 +381,7 @@
 		newRx = {
 			kfa_code: "",
 			product_name: "",
+			dosage_form: "",
 			dosage: "",
 			quantity: 1,
 			merk_type: "known",
@@ -572,6 +651,7 @@
 						? "finding"
 						: reasonCategory,
 				tekanan_darah: tekananDarah,
+				photo_document_id: photoDocumentId,
 				prescriptions,
 				referrals,
 				encounter_items: encounterItems,
@@ -610,6 +690,72 @@
 		} finally {
 			saving = false;
 		}
+	}
+
+	async function handlePhotoUpload(event) {
+		const file = event.target.files[0];
+		if (!file) return;
+
+		uploadingPhoto = true;
+		const formData = new FormData();
+		formData.append("file", file);
+		formData.append("patient_id", encounter?.encounter?.patient_id);
+		formData.append("encounter_id", encounterId);
+		formData.append("document_type", "clinical_photo");
+
+		try {
+			const res = await fetch("/api/documents", {
+				method: "POST",
+				body: formData,
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				photoDocumentId = data.id;
+				addToast("Foto berhasil diunggah", "success");
+				// Auto-save to link the photo to encounter immediately
+				await fetch(`/api/encounters/${encounterId}`, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						photo_document_id: photoDocumentId,
+					}),
+				});
+			} else {
+				// Attempt to read the error message from the server
+				let errorMessage = "Gagal mengunggah foto";
+				try {
+					const errorData = await res.json();
+					console.error("Server Error Details:", errorData);
+					errorMessage =
+						errorData.message ||
+						`Error ${res.status}: ${errorMessage}`;
+				} catch (parseErr) {
+					console.error(
+						"Could not parse error response. Status:",
+						res.status,
+					);
+				}
+
+				throw new Error(errorMessage);
+			}
+		} catch (err) {
+			console.error(err);
+			addToast("Gagal mengunggah foto", "error");
+		} finally {
+			uploadingPhoto = false;
+		}
+	}
+
+	function deletePhoto() {
+		photoDocumentId = null;
+		// Persist the deletion immediately
+		fetch(`/api/encounters/${encounterId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ photo_document_id: null }),
+		});
+		addToast("Foto dihapus", "success");
 	}
 
 	// Close without submit → On Hold
@@ -1585,7 +1731,7 @@
 					</h3>
 					<div class="space-y-3">
 						<div class="grid grid-cols-12 gap-3 items-end">
-							<div class="col-span-6">
+							<div class="col-span-5">
 								<div class="flex justify-between mb-1">
 									<label
 										class="text-xs font-bold text-slate-500 block"
@@ -1626,20 +1772,31 @@
 									on:select={(e) => {
 										newRx.kfa_code = e.detail.value;
 										newRx.product_name = e.detail.label;
+										newRx.dosage_form =
+											e.detail.dosage_form || "";
 									}}
 								/>
 							</div>
-							<div class="col-span-3">
+							<div class="col-span-4">
 								<label
 									class="text-xs font-bold text-slate-500 mb-1 block"
 									>Dosage</label
 								>
-								<input
-									class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
-									placeholder="3 x 1, pc"
-									type="text"
-									bind:value={newRx.dosage}
-								/>
+								<div class="flex items-center gap-2">
+									<input
+										class="flex-1 rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
+										placeholder="3 x 1, pc"
+										type="text"
+										bind:value={newRx.dosage}
+									/>
+									{#if newRx.dosage_form}
+										<span
+											class="text-sm font-semibold text-slate-400 whitespace-nowrap"
+										>
+											{newRx.dosage_form}
+										</span>
+									{/if}
+								</div>
 							</div>
 							<div class="col-span-2">
 								<label
@@ -1683,7 +1840,8 @@
 										{rx.product_name}
 									</p>
 									<p class="text-xs text-slate-500">
-										Dosage: {rx.dosage || "-"} | Qty: {rx.quantity}
+										{rx.dosage_form} | Dosage: {rx.dosage ||
+											"-"} | Qty: {rx.quantity}
 										| KFA: {rx.kfa_code}
 									</p>
 								</div>
@@ -2009,15 +2167,214 @@
 					</div>
 				</section>
 
+				<!-- Clinical Photo Section -->
+				<div
+					class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm mb-10 overflow-hidden relative"
+				>
+					<div
+						class="flex items-center justify-between mb-8 pb-6 border-b border-slate-100"
+					>
+						<h3
+							class="text-lg font-bold flex items-center gap-3 text-slate-800 m-0"
+						>
+							<div
+								class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+							>
+								<span
+									class="material-symbols-outlined text-[24px]"
+									>add_a_photo</span
+								>
+							</div>
+							Clinical Documentation Photo
+						</h3>
+						{#if photoDocumentId}
+							<span
+								class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest"
+								>Saved</span
+							>
+						{/if}
+					</div>
+
+					<div
+						class="flex flex-col md:flex-row items-center md:items-start gap-10"
+					>
+						<!-- Preview/Upload Area -->
+						<div
+							class="w-64 h-64 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center overflow-hidden relative group transition-all duration-300 hover:border-primary/40 hover:bg-slate-50 shadow-inner"
+						>
+							{#if photoDocumentId}
+								<img
+									src="/api/documents/{photoDocumentId}"
+									alt="Clinical"
+									class="w-full h-full object-cover"
+								/>
+								<div
+									class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3"
+								>
+									<button
+										type="button"
+										class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors flex items-center justify-center"
+										on:click={deletePhoto}
+										title="Hapus Foto"
+									>
+										<span
+											class="material-symbols-outlined text-[20px]"
+											>delete</span
+										>
+									</button>
+									<p
+										class="text-[10px] font-bold text-white uppercase tracking-widest"
+									>
+										Hapus Foto
+									</p>
+								</div>
+							{:else if uploadingPhoto}
+								<div
+									class="flex flex-col items-center justify-center gap-3"
+								>
+									<span
+										class="spinner spinner-lg text-primary scale-125"
+									></span>
+									<span
+										class="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse"
+										>Uploading...</span
+									>
+								</div>
+							{:else}
+								<label
+									class="w-full h-full flex flex-col items-center justify-center cursor-pointer gap-4 group/label"
+								>
+									<div
+										class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 group-hover/label:bg-primary/10 group-hover/label:text-primary transition-all duration-300"
+									>
+										<span
+											class="material-symbols-outlined text-4xl"
+											>cloud_upload</span
+										>
+									</div>
+									<div class="text-center">
+										<p
+											class="text-xs font-bold text-slate-500 group-hover/label:text-primary transition-colors"
+										>
+											Select clinical image
+										</p>
+										<p
+											class="text-[10px] text-slate-400 mt-1"
+										>
+											PNG, JPG up to 10MB
+										</p>
+									</div>
+									<input
+										id="clinical_photo_input"
+										type="file"
+										class="hidden"
+										accept="image/*"
+										on:change={handlePhotoUpload}
+									/>
+								</label>
+							{/if}
+						</div>
+
+						<div class="flex-1 flex flex-col h-64 justify-between">
+							<div class="space-y-6">
+								<div
+									class="bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 relative overflow-hidden"
+								>
+									<div
+										class="absolute top-0 right-0 p-2 opacity-10"
+									>
+										<span
+											class="material-symbols-outlined text-4xl text-blue-700"
+											>info</span
+										>
+									</div>
+									<p
+										class="text-xs text-blue-700 font-medium leading-relaxed"
+									>
+										<span
+											class="font-bold text-blue-800 block mb-1"
+											>PENTING:</span
+										>
+										Dokumentasi visual sangat membantu dalam
+										diagnosa dan pemantauan perkembangan kasus
+										pasien. Foto yang diunggah akan secara otomatis
+										terlampir pada resume medis PDF dan terenkripsi
+										aman.
+									</p>
+								</div>
+
+								<div class="grid grid-cols-2 gap-4">
+									<div
+										class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
+									>
+										<p
+											class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
+										>
+											Status
+										</p>
+										<p
+											class="text-xs font-bold {photoDocumentId
+												? 'text-emerald-600'
+												: 'text-slate-500'}"
+										>
+											{photoDocumentId
+												? "Sudah Terlampir"
+												: "Belum Ada Foto"}
+										</p>
+									</div>
+									<div
+										class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
+									>
+										<p
+											class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
+										>
+											Tipe Dokumen
+										</p>
+										<p
+											class="text-xs font-bold text-slate-700"
+										>
+											Foto Klinis
+										</p>
+									</div>
+								</div>
+							</div>
+
+							{#if !photoDocumentId}
+								<button
+									type="button"
+									class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-white rounded-2xl text-sm font-black shadow-lg shadow-primary/20 hover:bg-emerald-600 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+									on:click={() =>
+										document
+											.getElementById(
+												"clinical_photo_input",
+											)
+											?.click()}
+								>
+									<span
+										class="material-symbols-outlined text-[20px]"
+										>upload_file</span
+									>
+									UNGGAH FOTO KLINIS
+								</button>
+							{/if}
+						</div>
+					</div>
+				</div>
+
 				<!-- End of Sections -->
-				<div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+				<div
+					class="mt-8 pt-6 border-t border-slate-100 flex justify-end"
+				>
 					<button
 						class="px-8 py-3 bg-primary text-white rounded-xl text-base font-bold shadow-lg shadow-primary/25 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
 						disabled={saving}
 						on:click={() => saveForm(true)}
 					>
-						{#if saving}<span class="spinner spinner-sm mr-2"></span>{/if}
-						<span class="material-symbols-outlined text-[20px]">check_circle</span>
+						{#if saving}<span class="spinner spinner-sm mr-2"
+							></span>{/if}
+						<span class="material-symbols-outlined text-[20px]"
+							>check_circle</span
+						>
 						Submit & Selesaikan Encounter
 					</button>
 				</div>
@@ -2062,59 +2419,84 @@
 									class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-slate-200"
 								>
 									{#each patientHistory as hist}
-										<div class="relative pl-12 group">
+										<div
+											class="relative pl-12 pb-10 last:pb-0 group"
+										>
+											<!-- Activity Indicator Dot -->
 											<div
-												class="absolute left-0 top-1 size-10 {hist
-													.encounter?.status ===
-													'Completed' ||
-												hist.encounter?.status ===
-													'Discharged'
-													? 'bg-primary/10 border-primary text-primary'
-													: 'bg-amber-50 border-amber-400 text-amber-600'} border-2 rounded-full flex items-center justify-center z-10 bg-white"
+												class="absolute left-0 top-1 size-10 rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10
+												{(STATUS_THEMES[hist.encounter?.status] || STATUS_THEMES.default).bg} 
+												{(STATUS_THEMES[hist.encounter?.status] || STATUS_THEMES.default).text}"
 											>
 												<span
-													class="material-symbols-outlined text-xl"
-													>{hist.encounter?.status ===
-														"Completed" ||
-													hist.encounter?.status ===
-														"Discharged"
-														? "event_available"
-														: "outbound"}</span
+													class="material-symbols-outlined text-lg"
 												>
+													{(
+														STATUS_THEMES[
+															hist.encounter
+																?.status
+														] ||
+														STATUS_THEMES.default
+													).icon}
+												</span>
 											</div>
+
+											<!-- Card Content -->
 											<div
-												class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+												class="bg-white rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
 											>
 												<div
-													class="flex justify-between items-center mb-4"
+													class="flex flex-col gap-4"
 												>
+													<!-- Header: Date & Status -->
 													<div
-														class="flex items-center gap-3"
+														class="flex flex-col gap-2"
 													>
-														<span
-															class="text-xs font-bold {hist
-																.encounter
-																?.status ===
-																'Completed' ||
-															hist.encounter
-																?.status ===
-																'Discharged'
-																? 'text-primary bg-primary/10'
-																: 'text-slate-500 bg-slate-100'} px-2 py-1 rounded"
+														<div
+															class="flex items-center justify-between"
 														>
-															{new Date(
-																hist.encounter?.created_at,
-															).toLocaleDateString(
-																"id-ID",
-																{
-																	month: "short",
-																	day: "numeric",
-																	year: "numeric",
-																},
-															)}
-														</span>
+															<span
+																class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full"
+															>
+																{new Date(
+																	hist.encounter?.created_at,
+																).toLocaleDateString(
+																	"id-ID",
+																	{
+																		month: "short",
+																		day: "numeric",
+																		year: "numeric",
+																	},
+																)}
+															</span>
+
+															<div
+																class="px-2.5 py-1 rounded-full text-[9px] font-bold flex items-center gap-1.5 {(
+																	STATUS_THEMES[
+																		hist
+																			.encounter
+																			?.status
+																	] ||
+																	STATUS_THEMES.default
+																).badge}"
+															>
+																<span
+																	class="size-1 rounded-full {(
+																		STATUS_THEMES[
+																			hist
+																				.encounter
+																				?.status
+																		] ||
+																		STATUS_THEMES.default
+																	).dot}"
+																></span>
+																{hist.encounter
+																	?.status ||
+																	"Unknown"}
+															</div>
+														</div>
 														<h4
-															class="text-base font-bold text-slate-900 line-clamp-1"
+															class="text-base font-bold text-slate-800 line-clamp-2 leading-snug"
 														>
 															{hist.encounter_reason_display ||
 																hist.encounter
@@ -2122,135 +2504,154 @@
 																"Kunjungan Pasien"}
 														</h4>
 													</div>
-												</div>
 
-												<div
-													class="flex flex-wrap gap-4 mb-5"
-												>
+													<!-- Provider Info -->
 													<div
-														class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100"
+														class="flex items-center gap-2.5 bg-slate-50 border border-slate-100 p-2.5 rounded-xl"
 													>
-														<p
-															class="text-[9px] text-slate-400 uppercase font-black mb-0.5"
-														>
-															Status
-														</p>
-														<p
-															class="text-xs font-bold {hist
-																.encounter
-																?.status ===
-																'Completed' ||
-															hist.encounter
-																?.status ===
-																'Discharged'
-																? 'text-emerald-600'
-																: 'text-amber-600'} flex items-center gap-1"
+														<div
+															class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm"
 														>
 															<span
-																class="size-1.5 rounded-full {hist
-																	.encounter
-																	?.status ===
-																	'Completed' ||
-																hist.encounter
-																	?.status ===
-																	'Discharged'
-																	? 'bg-emerald-500'
-																	: 'bg-amber-500'}"
-															></span>
-															{hist.encounter
-																?.status ||
-																"Unknown"}
-														</p>
+																class="material-symbols-outlined text-[18px]"
+																>stethoscope</span
+															>
+														</div>
+														<div>
+															<p
+																class="text-[9px] text-slate-400 uppercase font-black leading-none mb-0.5"
+															>
+																Primary Provider
+															</p>
+															<p
+																class="text-[11px] font-bold text-slate-700 leading-tight"
+															>
+																{hist.doctor_name ||
+																	"Dokter Oratio"}
+															</p>
+														</div>
 													</div>
-													<div
-														class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100"
-													>
-														<p
-															class="text-[9px] text-slate-400 uppercase font-black mb-0.5"
-														>
-															Provider
-														</p>
-														<p
-															class="text-xs font-semibold text-slate-700"
-														>
-															{hist.doctor_name ||
-																"Dokter Oratio"}
-														</p>
-													</div>
-												</div>
 
-												<div
-													class="relative bg-slate-50 p-4 rounded-lg border-l-4 border-primary/30"
-												>
-													<p
-														class="text-sm text-slate-600 leading-relaxed"
+													<!-- SOAP Summary Box -->
+													<div
+														class="relative bg-slate-50/50 p-4 rounded-xl border border-slate-100 border-l-4 border-primary/20"
 													>
-														<span
-															class="font-bold text-slate-800"
-															>SOAP Summary:</span
-														><br />
-														{#if hist.encounter?.subjective}
+														<div
+															class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5"
+														>
 															<span
-																class="font-bold text-slate-700"
-																>S</span
-															>: {hist.encounter
-																.subjective}.<br
-															/>{/if}
-														{#if hist.encounter?.assessment}
-															<span
-																class="font-bold text-slate-700"
-																>A</span
-															>: {hist.encounter
-																.assessment}.<br
-															/>{/if}
-														{#if hist.encounter?.plan}
-															<span
-																class="font-bold text-slate-700"
-																>P</span
-															>: {hist.encounter
-																.plan}.<br />
-														{/if}
-														{#if hist.encounter?.resep}
-															<span
-																class="font-bold text-slate-700"
-																>R</span
-															>: {hist.encounter
-																.resep}.<br />
-														{/if}
+																class="material-symbols-outlined text-xs"
+																>description</span
+															>
+															SOAP Summary
+														</div>
+
+														<div
+															class="text-xs text-slate-600 leading-relaxed space-y-2"
+														>
+															{#if hist.encounter?.subjective}
+																<div
+																	class="flex gap-2"
+																>
+																	<span
+																		class="font-black text-slate-800 min-w-4 text-center bg-slate-200/50 rounded h-fit px-1"
+																		>S</span
+																	>
+																	<span
+																		>{hist
+																			.encounter
+																			.subjective}</span
+																	>
+																</div>
+															{/if}
+															{#if hist.encounter?.assessment}
+																<div
+																	class="flex gap-2"
+																>
+																	<span
+																		class="font-black text-slate-800 min-w-4 text-center bg-slate-200/50 rounded h-fit px-1"
+																		>A</span
+																	>
+																	<span
+																		>{hist
+																			.encounter
+																			.assessment}</span
+																	>
+																</div>
+															{/if}
+															{#if hist.encounter?.plan}
+																<div
+																	class="flex gap-2"
+																>
+																	<span
+																		class="font-black text-slate-800 min-w-4 text-center bg-slate-200/50 rounded h-fit px-1"
+																		>P</span
+																	>
+																	<span
+																		>{hist
+																			.encounter
+																			.plan}</span
+																	>
+																</div>
+															{/if}
+															{#if hist.encounter?.resep}
+																<div
+																	class="flex gap-2"
+																>
+																	<span
+																		class="font-black text-slate-800 min-w-4 text-center bg-slate-200/50 rounded h-fit px-1"
+																		>R</span
+																	>
+																	<span
+																		class="italic text-slate-500 font-medium"
+																		>{hist
+																			.encounter
+																			.resep}</span
+																	>
+																</div>
+															{/if}
+
+															{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.plan && !hist.encounter?.resep}
+																<span
+																	class="italic text-slate-400 text-[11px]"
+																	>Belum ada
+																	catatan
+																	klinis
+																	(SOAP)
+																	tersimpan.</span
+																>
+															{/if}
+														</div>
+
 														{#if hist.encounter?.keterangan}
 															<div
-																class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800 text-[11px]"
+																class="mt-4 p-3 bg-amber-50/50 rounded-lg border border-amber-100/50 text-amber-800 text-[11px] italic leading-relaxed"
 															>
 																<span
-																	class="font-black"
-																	>Ket</span
-																>: {hist
-																	.encounter
+																	class="font-black not-italic block mb-1 text-[9px] uppercase tracking-widest text-amber-600/60"
+																	>Catatan
+																	Khusus</span
+																>
+																{hist.encounter
 																	.keterangan}
 															</div>
 														{/if}
-														{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}
-															<span
-																class="italic opacity-70"
-																>Belum ada
-																catatan SOAP
-																yang tersimpan.</span
-															>
-														{/if}
-													</p>
-													<button
-														class="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
-														on:click={() =>
-															window.open(
-																`/dokter/${hist.encounter?.id}`,
-																"_blank",
-															)}
-													>
-														BUKA ENCOUNTER <span
-															class="material-symbols-outlined text-xs"
-															>open_in_new</span
+
+														<button
+															class="mt-5 w-full py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-primary hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm group/btn"
+															on:click={() =>
+																window.open(
+																	`/dokter/${hist.encounter?.id}`,
+																	"_blank",
+																)}
 														>
-													</button>
+															LIHAT DETAIL PENUH
+															<span
+																class="material-symbols-outlined text-[14px] group-hover/btn:translate-x-1 transition-transform"
+																>arrow_right_alt</span
+															>
+														</button>
+													</div>
 												</div>
 											</div>
 										</div>

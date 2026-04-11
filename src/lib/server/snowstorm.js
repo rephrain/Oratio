@@ -58,10 +58,10 @@ export async function searchPersonalDiseaseHistory(term) {
 
 /**
  * Search family disease history
- * ECL: < 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No family history of clinical finding (situation)|
+ * ECL: < 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No history of clinical finding (situation)|
  */
 export async function searchFamilyDiseaseHistory(term) {
-	const eclUrl = '< 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No family history of clinical finding (situation)|';
+	const eclUrl = '< 416471007 |Family history of clinical finding (situation)| OR < 160266009 |No history of clinical finding (situation)|';
 	return expandValueSet(eclUrl, term);
 }
 

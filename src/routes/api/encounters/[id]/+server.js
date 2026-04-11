@@ -3,7 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms, odontogramDetails,
 	encounterPrescriptions,
-	encounterReferrals, encounterItems, patients, users, terminologyMaster
+	encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
 } from '$lib/server/db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -85,13 +85,26 @@ export async function GET({ params }) {
 		const history = await db.select().from(statusHistory)
 			.where(eq(statusHistory.encounter_id, params.id));
 
+		const clinicalPhotos = await db.select({
+			id: documents.id,
+			file_name: documents.file_name,
+			mime_type: documents.mime_type,
+			created_at: documents.created_at
+		})
+			.from(documents)
+			.where(and(
+				eq(documents.encounter_id, params.id),
+				eq(documents.document_type, 'clinical_photo')
+			));
+
 		return json({
 			...encounter,
 			referrals,
 			items,
 			odontograms,
 			odontogramDetails: odontoDetails,
-			statusHistory: history
+			statusHistory: history,
+			clinical_photos: clinicalPhotos
 		});
 	} catch (err) {
 		console.error("GET /api/encounters error:", err);
@@ -112,7 +125,8 @@ export async function PUT({ params, request }) {
 	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
 	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
 	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
-	if (body.photo_document_id !== undefined) updateData.photo_document_id = body.photo_document_id;
+	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
+	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
 
 	// Handle encounter_reason FK update
 	if (body.reason_code !== undefined) {

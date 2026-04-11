@@ -231,23 +231,284 @@ export const REASON_CATEGORIES = [
 
 // Admin table names mapped to schema keys
 export const ADMIN_TABLES = {
-	'users': { label: 'Users', schema: 'users' },
-	'shifts': { label: 'Shifts', schema: 'shifts' },
-	'patients': { label: 'Patients', schema: 'patients' },
-	'patient-disease-history': { label: 'Patient Disease History', schema: 'patientDiseaseHistory' },
-	'patient-allergy': { label: 'Patient Allergy', schema: 'patientAllergy' },
-	'patient-medication': { label: 'Patient Medication', schema: 'patientMedication' },
-	'terminology': { label: 'Terminology Master', schema: 'terminologyMaster' },
-	'documents': { label: 'Documents', schema: 'documents' },
-	'encounters': { label: 'Encounters', schema: 'encounters' },
-	'status-history': { label: 'Status History', schema: 'statusHistory' },
-	'encounter-odontograms': { label: 'Encounter Odontograms', schema: 'encounterOdontograms' },
-	'odontogram-details': { label: 'Odontogram Details', schema: 'odontogramDetails' },
-	'encounter-prescriptions': { label: 'Encounter Prescriptions', schema: 'encounterPrescriptions' },
-	'encounter-referrals': { label: 'Encounter Referrals', schema: 'encounterReferrals' },
-	'items': { label: 'Items', schema: 'items' },
-	'encounter-items': { label: 'Encounter Items', schema: 'encounterItems' },
-	'payments': { label: 'Payments', schema: 'payments' }
+	'users': {
+		label: 'Users',
+		schema: 'users',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'name', label: 'Name', type: 'text', required: true },
+			{ key: 'username', label: 'Username', type: 'text', required: true },
+			{ key: 'password', label: 'Password', type: 'password', createOnly: true },
+			{ key: 'role', label: 'Role', type: 'select', required: true, options: ['admin', 'kasir', 'dokter'] },
+			{ key: 'doctor_code', label: 'Doctor Code', type: 'text', maxLength: 5 },
+			{ key: 'profile_image_url', label: 'Profile Image URL', type: 'text' },
+			{ key: 'is_active', label: 'Is Active', type: 'boolean', defaultValue: true },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true },
+			{ key: 'updated_at', label: 'Updated At', type: 'datetime', readOnly: true }
+		]
+	},
+	'doctor-shifts': {
+		label: 'Doctor Shifts',
+		schema: 'shifts',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'user_id', label: 'User', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
+			{ key: 'day_of_week', label: 'Day of Week', type: 'select', required: true, options: [
+				{ value: 0, label: 'Minggu' }, { value: 1, label: 'Senin' }, { value: 2, label: 'Selasa' },
+				{ value: 3, label: 'Rabu' }, { value: 4, label: 'Kamis' }, { value: 5, label: 'Jumat' },
+				{ value: 6, label: 'Sabtu' }
+			]},
+			{ key: 'start_time', label: 'Start Time', type: 'time', required: true },
+			{ key: 'end_time', label: 'End Time', type: 'time', required: true },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'patients': {
+		label: 'Patients',
+		schema: 'patients',
+		fields: [
+			{ key: 'id', label: 'ID (O000001 format)', type: 'text', required: true, maxLength: 10, editReadOnly: true },
+			{ key: 'nik', label: 'NIK', type: 'text', maxLength: 20 },
+			{ key: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true },
+			{ key: 'birth_date', label: 'Tanggal Lahir', type: 'date', required: true },
+			{ key: 'birthplace', label: 'Tempat Lahir', type: 'text' },
+			{ key: 'gender', label: 'Jenis Kelamin', type: 'select', options: ['male', 'female'] },
+			{ key: 'nomor_kk', label: 'Nomor KK', type: 'text', maxLength: 20 },
+			{ key: 'address', label: 'Alamat', type: 'textarea' },
+			{ key: 'province', label: 'Provinsi', type: 'text' },
+			{ key: 'city', label: 'Kota', type: 'text' },
+			{ key: 'district', label: 'Kecamatan', type: 'text' },
+			{ key: 'village', label: 'Kelurahan', type: 'text' },
+			{ key: 'rt', label: 'RT', type: 'text', maxLength: 5 },
+			{ key: 'rw', label: 'RW', type: 'text', maxLength: 5 },
+			{ key: 'handphone', label: 'Handphone', type: 'text', maxLength: 20 },
+			{ key: 'email', label: 'Email', type: 'email' },
+			{ key: 'marital_status', label: 'Status Pernikahan', type: 'select', options: [
+				{ value: 'S', label: 'Single' }, { value: 'M', label: 'Married' },
+				{ value: 'W', label: 'Widowed' }, { value: 'D', label: 'Divorced' }
+			]},
+			{ key: 'citizenship', label: 'Kewarganegaraan', type: 'select', options: ['WNI', 'WNA'], defaultValue: 'WNI' },
+			{ key: 'blood_type', label: 'Golongan Darah', type: 'select', options: ['A', 'B', 'AB', 'O'] },
+			{ key: 'rhesus', label: 'Rhesus', type: 'select', options: ['+', '-'] },
+			{ key: 'pregnancy_status', label: 'Status Kehamilan', type: 'boolean', defaultValue: false },
+			{ key: 'tekanan_darah', label: 'Tekanan Darah', type: 'text', maxLength: 20, placeholder: '120/80' },
+			{ key: 'profile_document_id', label: 'Profile Document', type: 'fk', fkTable: 'documents', fkLabel: 'file_name' },
+			{ key: 'kasir_id', label: 'Kasir', type: 'fk', fkTable: 'users', fkLabel: 'name' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true },
+			{ key: 'updated_at', label: 'Updated At', type: 'datetime', readOnly: true }
+		]
+	},
+	'patient-disease-history': {
+		label: 'Patient Disease History',
+		schema: 'patientDiseaseHistory',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'patient_id', label: 'Patient', type: 'fk', required: true, fkTable: 'patients', fkLabel: 'nama_lengkap' },
+			{ key: 'terminology_id', label: 'Terminology', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'type', label: 'Type', type: 'select', required: true, options: ['personal', 'family'] },
+			{ key: 'description', label: 'Description', type: 'textarea' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'patient-allergy': {
+		label: 'Patient Allergy',
+		schema: 'patientAllergy',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'patient_id', label: 'Patient', type: 'fk', required: true, fkTable: 'patients', fkLabel: 'nama_lengkap' },
+			{ key: 'substance_id', label: 'Substance (Terminology)', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'reaction', label: 'Reaction Code', type: 'text', maxLength: 50 },
+			{ key: 'reaction_display', label: 'Reaction Display', type: 'text' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'patient-medication': {
+		label: 'Patient Medication',
+		schema: 'patientMedication',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'patient_id', label: 'Patient', type: 'fk', required: true, fkTable: 'patients', fkLabel: 'nama_lengkap' },
+			{ key: 'terminology_id', label: 'Medication (Terminology)', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'dosage_form', label: 'Dosage Form', type: 'text' },
+			{ key: 'dosage', label: 'Dosage', type: 'text' },
+			{ key: 'note', label: 'Note', type: 'textarea' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'terminology': {
+		label: 'Terminology Master',
+		schema: 'terminologyMaster',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'system', label: 'System', type: 'select', required: true, options: ['SNOMED', 'ICD-10', 'ICD-9-CM', 'KFA'] },
+			{ key: 'code', label: 'Code', type: 'text', required: true, maxLength: 30 },
+			{ key: 'display', label: 'Display', type: 'text', required: true }
+		]
+	},
+	'documents': {
+		label: 'Documents',
+		schema: 'documents',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'patient_id', label: 'Patient', type: 'fk', fkTable: 'patients', fkLabel: 'nama_lengkap' },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', maxLength: 30 },
+			{ key: 'document_type', label: 'Document Type', type: 'text', maxLength: 50 },
+			{ key: 'file_name', label: 'File Name', type: 'text', required: true },
+			{ key: 'file_path', label: 'File Path', type: 'text', required: true },
+			{ key: 'mime_type', label: 'MIME Type', type: 'text', maxLength: 100 },
+			{ key: 'file_size', label: 'File Size (bytes)', type: 'number' },
+			{ key: 'uploaded_by', label: 'Uploaded By', type: 'fk', fkTable: 'users', fkLabel: 'name' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'encounters': {
+		label: 'Encounters',
+		schema: 'encounters',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'text', required: true, maxLength: 30, editReadOnly: true },
+			{ key: 'patient_id', label: 'Patient', type: 'fk', required: true, fkTable: 'patients', fkLabel: 'nama_lengkap' },
+			{ key: 'kasir_id', label: 'Kasir', type: 'fk', fkTable: 'users', fkLabel: 'name' },
+			{ key: 'doctor_id', label: 'Doctor', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
+			{ key: 'queue_number', label: 'Queue Number', type: 'number' },
+			{ key: 'form_mode', label: 'Form Mode', type: 'select', options: ['SOAP', 'SOAP_WHO'], defaultValue: 'SOAP' },
+			{ key: 'status', label: 'Status', type: 'select', required: true, options: ['Planned', 'In Progress', 'On Hold', 'Discharged', 'Completed', 'Cancelled', 'Discontinued'], defaultValue: 'Planned' },
+			{ key: 'encounter_reason_id', label: 'Encounter Reason', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'reason_type', label: 'Reason Type', type: 'select', options: ['Finding', 'Procedure', 'Situation', 'Event'] },
+			{ key: 'subjective', label: 'Subjective', type: 'textarea' },
+			{ key: 'objective', label: 'Objective', type: 'textarea' },
+			{ key: 'assessment', label: 'Assessment', type: 'textarea' },
+			{ key: 'plan', label: 'Plan', type: 'textarea' },
+			{ key: 'resep', label: 'Resep', type: 'textarea' },
+			{ key: 'keterangan', label: 'Keterangan', type: 'textarea' },
+			{ key: 'encounter_referral_id', label: 'Referral In', type: 'fk', fkTable: 'encounter-referrals', fkLabel: 'id' },
+			{ key: 'soap_document_id', label: 'SOAP Document', type: 'fk', fkTable: 'documents', fkLabel: 'file_name' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true },
+			{ key: 'updated_at', label: 'Updated At', type: 'datetime', readOnly: true }
+		]
+	},
+	'status-history': {
+		label: 'Status History',
+		schema: 'statusHistory',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'status', label: 'Status', type: 'select', required: true, options: ['Arrived', 'In Progress', 'Finished'] },
+			{ key: 'start_at', label: 'Start At', type: 'datetime', required: true },
+			{ key: 'end_at', label: 'End At', type: 'datetime' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'encounter-odontograms': {
+		label: 'Encounter Odontograms',
+		schema: 'encounterOdontograms',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'dentition_type', label: 'Dentition Type', type: 'select', options: ['Adult', 'Child'] },
+			{ key: 'occlusi', label: 'Occlusi', type: 'select', options: ['Normal Bite', 'Cross Bite', 'Steep Bite'] },
+			{ key: 'torus_palatinus', label: 'Torus Palatinus', type: 'select', options: ['Tidak Ada', 'Kecil', 'Sedang', 'Besar', 'Multiple'] },
+			{ key: 'torus_mandibularis', label: 'Torus Mandibularis', type: 'select', options: ['Tidak Ada', 'Sisi Kiri', 'Sisi Kanan', 'Kedua Sisi'] },
+			{ key: 'palatum', label: 'Palatum', type: 'select', options: ['Dalam', 'Sedang', 'Rendah'] },
+			{ key: 'diastema', label: 'Diastema', type: 'text' },
+			{ key: 'gigi_anomali', label: 'Gigi Anomali', type: 'text' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-details': {
+		label: 'Odontogram Details',
+		schema: 'odontogramDetails',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'odontogram_id', label: 'Odontogram', type: 'text', required: true },
+			{ key: 'tooth_number', label: 'Tooth Number', type: 'text', required: true, maxLength: 5 },
+			{ key: 'surface', label: 'Surface', type: 'select', required: true, options: ['O', 'B', 'L', 'M', 'D'] },
+			{ key: 'keadaan', label: 'Keadaan', type: 'text' },
+			{ key: 'bahan_restorasi', label: 'Bahan Restorasi', type: 'text' },
+			{ key: 'restorasi', label: 'Restorasi', type: 'text' },
+			{ key: 'protesa', label: 'Protesa', type: 'text' },
+			{ key: 'bahan_protesa', label: 'Bahan Protesa', type: 'text' },
+			{ key: 'icd10_id', label: 'ICD-10', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'is_primary', label: 'Is Primary', type: 'boolean', defaultValue: false },
+			{ key: 'icd9cm_id', label: 'ICD-9-CM', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'encounter-prescriptions': {
+		label: 'Encounter Prescriptions',
+		schema: 'encounterPrescriptions',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'terminology_id', label: 'Medication (Terminology)', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'dosage_form', label: 'Dosage Form', type: 'text' },
+			{ key: 'dosage', label: 'Dosage', type: 'text' },
+			{ key: 'quantity', label: 'Quantity', type: 'number' },
+			{ key: 'instruction', label: 'Instruction', type: 'textarea' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'encounter-referrals': {
+		label: 'Encounter Referrals',
+		schema: 'encounterReferrals',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'doctor_code', label: 'Doctor Code', type: 'text', required: true, maxLength: 10 },
+			{ key: 'referral_date', label: 'Referral Date', type: 'date', required: true },
+			{ key: 'note', label: 'Note', type: 'textarea' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'items': {
+		label: 'Items',
+		schema: 'items',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'name', label: 'Name', type: 'text', required: true },
+			{ key: 'doctor_id', label: 'Doctor', type: 'fk', fkTable: 'users', fkLabel: 'name' },
+			{ key: 'price', label: 'Price', type: 'number', required: true },
+			{ key: 'item_group', label: 'Item Group', type: 'text', maxLength: 50 },
+			{ key: 'denomination', label: 'Denomination', type: 'text', maxLength: 50 },
+			{ key: 'is_active', label: 'Is Active', type: 'boolean', defaultValue: true },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true },
+			{ key: 'updated_at', label: 'Updated At', type: 'datetime', readOnly: true }
+		]
+	},
+	'encounter-items': {
+		label: 'Encounter Items',
+		schema: 'encounterItems',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'item_id', label: 'Item', type: 'fk', required: true, fkTable: 'items', fkLabel: 'name' },
+			{ key: 'quantity', label: 'Quantity', type: 'number', required: true, defaultValue: 1 },
+			{ key: 'price_at_time', label: 'Price at Time', type: 'number', required: true },
+			{ key: 'subtotal', label: 'Subtotal', type: 'number', required: true },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'payments': {
+		label: 'Payments',
+		schema: 'payments',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'payment_mode', label: 'Payment Mode', type: 'select', required: true, options: ['NORMAL', 'VOUCHER'], defaultValue: 'NORMAL' },
+			{ key: 'discount_percent', label: 'Discount %', type: 'number', defaultValue: 0 },
+			{ key: 'discount_amount', label: 'Discount Amount', type: 'number', defaultValue: 0 },
+			{ key: 'total_sales', label: 'Total Sales', type: 'number', required: true },
+			{ key: 'net_sales', label: 'Net Sales', type: 'number', required: true },
+			{ key: 'total_paid', label: 'Total Paid', type: 'number', required: true },
+			{ key: 'payment_type', label: 'Payment Type', type: 'text', required: true, maxLength: 50 },
+			{ key: 'card_number', label: 'Card Number', type: 'text', maxLength: 30 },
+			{ key: 'reference_number', label: 'Reference Number', type: 'text', maxLength: 50 },
+			{ key: 'note', label: 'Note', type: 'textarea' },
+			{ key: 'proof_document_id', label: 'Proof Document', type: 'fk', fkTable: 'documents', fkLabel: 'file_name' },
+			{ key: 'cashier_id', label: 'Cashier', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
+			{ key: 'paid_at', label: 'Paid At', type: 'datetime' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	}
 };
 
 // Doctor codes mapping (14 doctors from spec)

@@ -371,6 +371,118 @@ export async function GET({ url, locals }) {
 			ORDER BY date
 		`);
 
+		// 26. Payment method breakdown
+		const paymentMethodBreakdown = await db.execute(sql`
+			SELECT
+				COALESCE(p.payment_type, 'Unknown') AS payment_type,
+				COUNT(*)::int AS count,
+				COALESCE(SUM(p.net_sales), 0)::bigint AS total_amount
+			FROM encounters e
+			JOIN payments p ON p.encounter_id = e.id
+			${baseWhere}
+			GROUP BY p.payment_type
+			ORDER BY total_amount DESC
+		`);
+
+		// 27. Revenue by day of week
+		const revenueDow = await db.execute(sql`
+			SELECT
+				EXTRACT(DOW FROM e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')::int AS dow,
+				COALESCE(SUM(ei.subtotal), 0)::bigint AS revenue,
+				COUNT(DISTINCT e.id)::int AS encounter_count
+			FROM encounters e
+			JOIN encounter_items ei ON ei.encounter_id = e.id
+			${baseWhere}
+			GROUP BY dow
+			ORDER BY dow
+		`);
+
+		// 28. Discount usage stats
+		const [discountStats] = await db.execute(sql`
+			SELECT
+				COUNT(*) FILTER (WHERE p.discount_percent > 0 OR p.discount_amount > 0)::int AS discounted_count,
+				COUNT(*)::int AS total_payments,
+				COALESCE(SUM(p.discount_amount), 0)::bigint AS total_discount_amount,
+				ROUND(AVG(p.discount_percent::numeric) FILTER (WHERE p.discount_percent > 0), 1) AS avg_discount_percent,
+				COALESCE(SUM(p.total_sales), 0)::bigint AS gross_sales,
+				COALESCE(SUM(p.net_sales), 0)::bigint AS net_sales
+			FROM encounters e
+			JOIN payments p ON p.encounter_id = e.id
+			${baseWhere}
+		`);
+
+		// 29. Revenue per encounter distribution (bucketed)
+		const revenueDistribution = await db.execute(sql`
+			SELECT
+				CASE
+					WHEN encounter_total = 0 THEN 'Rp 0'
+					WHEN encounter_total < 50000 THEN '< 50rb'
+					WHEN encounter_total < 100000 THEN '50-100rb'
+					WHEN encounter_total < 200000 THEN '100-200rb'
+					WHEN encounter_total < 500000 THEN '200-500rb'
+					WHEN encounter_total < 1000000 THEN '500rb-1jt'
+					ELSE '> 1jt'
+				END AS bucket,
+				COUNT(*)::int AS count,
+				bucket_order
+			FROM (
+				SELECT
+					e.id,
+					COALESCE(SUM(ei.subtotal), 0) AS encounter_total,
+					CASE
+						WHEN COALESCE(SUM(ei.subtotal), 0) = 0 THEN 0
+						WHEN COALESCE(SUM(ei.subtotal), 0) < 50000 THEN 1
+						WHEN COALESCE(SUM(ei.subtotal), 0) < 100000 THEN 2
+						WHEN COALESCE(SUM(ei.subtotal), 0) < 200000 THEN 3
+						WHEN COALESCE(SUM(ei.subtotal), 0) < 500000 THEN 4
+						WHEN COALESCE(SUM(ei.subtotal), 0) < 1000000 THEN 5
+						ELSE 6
+					END AS bucket_order
+				FROM encounters e
+				JOIN encounter_items ei ON ei.encounter_id = e.id
+				${baseWhere}
+				GROUP BY e.id
+			) sub
+			GROUP BY bucket, bucket_order
+			ORDER BY bucket_order
+		`);
+
+		// 30. Monthly revenue comparison
+		const monthlyRevenue = await db.execute(sql`
+			SELECT
+				TO_CHAR(DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM') AS month,
+				TO_CHAR(DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta'), 'Mon YYYY') AS month_label,
+				COALESCE(SUM(ei.subtotal), 0)::bigint AS revenue,
+				COUNT(DISTINCT e.id)::int AS encounter_count
+			FROM encounters e
+			JOIN encounter_items ei ON ei.encounter_id = e.id
+			${baseWhere}
+			GROUP BY month, month_label
+			ORDER BY month
+		`);
+
+		// 31. Pareto patient revenue (top patients by revenue for 80/20 analysis)
+		const paretoPatientRevenue = await db.execute(sql`
+			SELECT
+				p.nama_lengkap AS patient_name,
+				sub.patient_id,
+				sub.total_revenue,
+				sub.visit_count
+			FROM (
+				SELECT
+					e.patient_id,
+					COALESCE(SUM(ei.subtotal), 0)::bigint AS total_revenue,
+					COUNT(DISTINCT e.id)::int AS visit_count
+				FROM encounters e
+				JOIN encounter_items ei ON ei.encounter_id = e.id
+				${baseWhere}
+				GROUP BY e.patient_id
+			) sub
+			JOIN patients p ON p.id = sub.patient_id
+			ORDER BY sub.total_revenue DESC
+			LIMIT 30
+		`);
+
 		return json({
 			overview: overview || {},
 			periodCounts: periodCounts || {},
@@ -391,6 +503,12 @@ export async function GET({ url, locals }) {
 			topItems,
 			revenueByGroup,
 			dailyRevenue,
+			paymentMethodBreakdown,
+			revenueDow,
+			discountStats: discountStats || {},
+			revenueDistribution,
+			monthlyRevenue,
+			paretoPatientRevenue,
 			referralStats,
 			referralOverview: referralOverview || {},
 			genderDist,

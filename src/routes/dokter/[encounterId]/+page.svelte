@@ -47,7 +47,7 @@
 	let resep = "";
 	let keterangan = "";
 	let tekananDarah = "";
-	let photoDocumentId = null;
+	let clinicalPhotos = [];
 	let uploadingPhoto = false;
 
 	// Reason (SOAP_WHO)
@@ -277,7 +277,7 @@
 			reasonCategory = data.encounter?.reason_type || "finding";
 			newReasonCode = "";
 			newReasonDisplay = "";
-			photoDocumentId = data.encounter?.photo_document_id || null;
+			clinicalPhotos = data.clinical_photos || [];
 
 			console.log("encounter:", encounter);
 
@@ -651,7 +651,6 @@
 						? "finding"
 						: reasonCategory,
 				tekanan_darah: tekananDarah,
-				photo_document_id: photoDocumentId,
 				prescriptions,
 				referrals,
 				encounter_items: encounterItems,
@@ -711,16 +710,13 @@
 
 			if (res.ok) {
 				const data = await res.json();
-				photoDocumentId = data.id;
+				// Add to local state
+				clinicalPhotos = [...clinicalPhotos, {
+					id: data.id,
+					file_name: data.fileName,
+					created_at: new Date().toISOString()
+				}];
 				addToast("Foto berhasil diunggah", "success");
-				// Auto-save to link the photo to encounter immediately
-				await fetch(`/api/encounters/${encounterId}`, {
-					method: "PUT",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						photo_document_id: photoDocumentId,
-					}),
-				});
 			} else {
 				// Attempt to read the error message from the server
 				let errorMessage = "Gagal mengunggah foto";
@@ -747,15 +743,24 @@
 		}
 	}
 
-	function deletePhoto() {
-		photoDocumentId = null;
-		// Persist the deletion immediately
-		fetch(`/api/encounters/${encounterId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ photo_document_id: null }),
-		});
-		addToast("Foto dihapus", "success");
+	async function deletePhoto(photoId) {
+		if (!confirm("Apakah Anda yakin ingin menghapus foto ini?")) return;
+
+		try {
+			const res = await fetch(`/api/documents/${photoId}`, {
+				method: "DELETE",
+			});
+
+			if (res.ok) {
+				clinicalPhotos = clinicalPhotos.filter((p) => p.id !== photoId);
+				addToast("Foto dihapus", "success");
+			} else {
+				addToast("Gagal menghapus foto", "error");
+			}
+		} catch (err) {
+			console.error(err);
+			addToast("Terjadi kesalahan saat menghapus foto", "error");
+		}
 	}
 
 	// Close without submit → On Hold
@@ -2185,87 +2190,80 @@
 									>add_a_photo</span
 								>
 							</div>
-							Clinical Documentation Photo
+							Clinical Documentation Photos
 						</h3>
-						{#if photoDocumentId}
+						{#if clinicalPhotos.length > 0}
 							<span
 								class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest"
-								>Saved</span
+								>{clinicalPhotos.length} Photo(s)</span
 							>
 						{/if}
 					</div>
 
-					<div
-						class="flex flex-col md:flex-row items-center md:items-start gap-10"
-					>
-						<!-- Preview/Upload Area -->
+					<div class="space-y-8">
+						<!-- Gallery Grid -->
 						<div
-							class="w-64 h-64 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center overflow-hidden relative group transition-all duration-300 hover:border-primary/40 hover:bg-slate-50 shadow-inner"
+							class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
 						>
-							{#if photoDocumentId}
-								<img
-									src="/api/documents/{photoDocumentId}"
-									alt="Clinical"
-									class="w-full h-full object-cover"
-								/>
+							{#each clinicalPhotos as photo (photo.id)}
 								<div
-									class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3"
+									class="aspect-square rounded-2xl border border-slate-200 bg-slate-50 relative group overflow-hidden transition-all hover:ring-4 hover:ring-primary/10 shadow-sm"
 								>
-									<button
-										type="button"
-										class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors flex items-center justify-center"
-										on:click={deletePhoto}
-										title="Hapus Foto"
+									<img
+										src="/api/documents/{photo.id}"
+										alt={photo.file_name}
+										class="w-full h-full object-cover"
+									/>
+									<div
+										class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
 									>
-										<span
-											class="material-symbols-outlined text-[20px]"
-											>delete</span
+										<button
+											type="button"
+											class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors flex items-center justify-center"
+											on:click={() => deletePhoto(photo.id)}
+											title="Hapus Foto"
 										>
-									</button>
-									<p
-										class="text-[10px] font-bold text-white uppercase tracking-widest"
-									>
-										Hapus Foto
-									</p>
+											<span
+												class="material-symbols-outlined text-[18px]"
+												>delete</span
+											>
+										</button>
+										<p
+											class="text-[9px] font-bold text-white uppercase tracking-widest"
+										>
+											Delete
+										</p>
+									</div>
 								</div>
-							{:else if uploadingPhoto}
+							{/each}
+
+							<!-- Upload Box -->
+							{#if uploadingPhoto}
 								<div
-									class="flex flex-col items-center justify-center gap-3"
+									class="aspect-square rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-3"
 								>
+									<span class="spinner spinner-md text-primary"></span>
 									<span
-										class="spinner spinner-lg text-primary scale-125"
-									></span>
-									<span
-										class="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse"
-										>Uploading...</span
+										class="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse"
+										>Uploading</span
 									>
 								</div>
 							{:else}
 								<label
-									class="w-full h-full flex flex-col items-center justify-center cursor-pointer gap-4 group/label"
+									class="aspect-square rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center cursor-pointer group hover:border-primary/40 hover:bg-slate-100/50 transition-all shadow-inner"
 								>
 									<div
-										class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 group-hover/label:bg-primary/10 group-hover/label:text-primary transition-all duration-300"
+										class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-primary transition-all duration-300"
 									>
-										<span
-											class="material-symbols-outlined text-4xl"
-											>cloud_upload</span
+										<span class="material-symbols-outlined text-3xl"
+											>add</span
 										>
 									</div>
-									<div class="text-center">
-										<p
-											class="text-xs font-bold text-slate-500 group-hover/label:text-primary transition-colors"
-										>
-											Select clinical image
-										</p>
-										<p
-											class="text-[10px] text-slate-400 mt-1"
-										>
-											PNG, JPG up to 10MB
-										</p>
-									</div>
+									<span
+										class="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest group-hover:text-primary transition-colors"
+										>Add Photo</span
+									>
 									<input
-										id="clinical_photo_input"
 										type="file"
 										class="hidden"
 										accept="image/*"
@@ -2275,88 +2273,59 @@
 							{/if}
 						</div>
 
-						<div class="flex-1 flex flex-col h-64 justify-between">
-							<div class="space-y-6">
-								<div
-									class="bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 relative overflow-hidden"
-								>
-									<div
-										class="absolute top-0 right-0 p-2 opacity-10"
+						<div
+							class="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-50"
+						>
+							<div
+								class="flex-1 bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 relative overflow-hidden"
+							>
+								<div class="absolute top-0 right-0 p-2 opacity-10">
+									<span
+										class="material-symbols-outlined text-4xl text-blue-700"
+										>info</span
 									>
-										<span
-											class="material-symbols-outlined text-4xl text-blue-700"
-											>info</span
-										>
-									</div>
-									<p
-										class="text-xs text-blue-700 font-medium leading-relaxed"
-									>
-										<span
-											class="font-bold text-blue-800 block mb-1"
-											>PENTING:</span
-										>
-										Dokumentasi visual sangat membantu dalam
-										diagnosa dan pemantauan perkembangan kasus
-										pasien. Foto yang diunggah akan secara otomatis
-										terlampir pada resume medis PDF dan terenkripsi
-										aman.
-									</p>
 								</div>
-
-								<div class="grid grid-cols-2 gap-4">
-									<div
-										class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
+								<p class="text-xs text-blue-700 font-medium leading-relaxed">
+									<span class="font-bold text-blue-800 block mb-1"
+										>DOKUMENTASI KLINIS:</span
 									>
-										<p
-											class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
-										>
-											Status
-										</p>
-										<p
-											class="text-xs font-bold {photoDocumentId
-												? 'text-emerald-600'
-												: 'text-slate-500'}"
-										>
-											{photoDocumentId
-												? "Sudah Terlampir"
-												: "Belum Ada Foto"}
-										</p>
-									</div>
-									<div
-										class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
-									>
-										<p
-											class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
-										>
-											Tipe Dokumen
-										</p>
-										<p
-											class="text-xs font-bold text-slate-700"
-										>
-											Foto Klinis
-										</p>
-									</div>
-								</div>
+									Dokumentasi visual sangat membantu dalam diagnosa dan
+									pemantauan perkembangan kasus pasien. Foto yang diunggah akan
+									secara otomatis terlampir pada resume medis PDF dan
+									terenkripsi aman.
+								</p>
 							</div>
 
-							{#if !photoDocumentId}
-								<button
-									type="button"
-									class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-white rounded-2xl text-sm font-black shadow-lg shadow-primary/20 hover:bg-emerald-600 hover:-translate-y-0.5 active:translate-y-0 transition-all"
-									on:click={() =>
-										document
-											.getElementById(
-												"clinical_photo_input",
-											)
-											?.click()}
+							<div class="grid grid-cols-2 gap-4 w-full md:w-auto md:min-w-[300px]">
+								<div
+									class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
 								>
-									<span
-										class="material-symbols-outlined text-[20px]"
-										>upload_file</span
+									<p
+										class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
 									>
-									UNGGAH FOTO KLINIS
-								</button>
-							{/if}
+										Status
+									</p>
+									<p
+										class="text-xs font-bold {clinicalPhotos.length > 0
+											? 'text-emerald-600'
+											: 'text-slate-500'}"
+									>
+										{clinicalPhotos.length > 0
+											? "Dokumen Terlampir"
+											: "Belum Ada Foto"}
+									</p>
+								</div>
+								<div
+									class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
+								>
+									<p
+										class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
+									>
+										Tipe Dokumen
+									</p>
+									<p class="text-xs font-bold text-slate-700">Foto Klinis</p>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

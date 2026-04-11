@@ -15,6 +15,17 @@
 	let dateTo = getTodayStr();
 	let quickRange = "month";
 
+	// View mode toggle: 'all' | 'clinical' | 'revenue'
+	let viewMode = "all";
+
+	// Re-render charts when view mode changes (canvas elements get recreated by {#if} blocks)
+	$: if (viewMode && analytics && !loading) {
+		// Use tick + setTimeout to wait for Svelte to re-mount canvas elements
+		import('svelte').then(({ tick }) => tick()).then(() => {
+			setTimeout(renderCharts, 80);
+		});
+	}
+
 	// Chart instances
 	let charts = {};
 	let canvasRefs = {};
@@ -783,6 +794,260 @@
 				},
 			});
 		}
+
+		// -- Payment Method Doughnut --
+		if (canvasRefs.paymentMethod && analytics.paymentMethodBreakdown?.length > 0) {
+			const pmColors = [C.success, C.primary, C.purple, C.orange, C.teal, C.pink, C.amber];
+			charts.paymentMethod = new Chart(canvasRefs.paymentMethod.getContext("2d"), {
+				type: "doughnut",
+				data: {
+					labels: analytics.paymentMethodBreakdown.map((d) => d.payment_type),
+					datasets: [{
+						data: analytics.paymentMethodBreakdown.map((d) => Number(d.total_amount)),
+						backgroundColor: pmColors.slice(0, analytics.paymentMethodBreakdown.length),
+						borderWidth: 2,
+						borderColor: "white",
+						hoverOffset: 8,
+					}],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: "72%",
+					plugins: {
+						legend: {
+							position: "bottom",
+							labels: { padding: 15, usePointStyle: true, pointStyle: "circle", font: { size: 11 } },
+						},
+						tooltip: {
+							callbacks: {
+								label: (ctx) => `${ctx.label}: ${formatCurrency(ctx.raw)}`,
+							},
+						},
+					},
+				},
+			});
+		}
+
+		// -- Revenue by Day of Week --
+		if (canvasRefs.revenueDow && analytics.revenueDow?.length > 0) {
+			const dowRevMap = {};
+			analytics.revenueDow.forEach((d) => (dowRevMap[d.dow] = Number(d.revenue)));
+			charts.revenueDow = new Chart(canvasRefs.revenueDow.getContext("2d"), {
+				type: "bar",
+				data: {
+					labels: DAYS_ID,
+					datasets: [{
+						label: "Revenue",
+						data: DAYS_ID.map((_, i) => dowRevMap[i] || 0),
+						backgroundColor: DAYS_ID.map((_, i) =>
+							i === 0 ? C.danger + "33" : C.success + "33",
+						),
+						borderColor: DAYS_ID.map((_, i) =>
+							i === 0 ? C.danger : C.success,
+						),
+						borderWidth: 2,
+						borderRadius: 8,
+						barPercentage: 0.55,
+						borderSkipped: false,
+					}],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: { legend: { display: false } },
+					scales: {
+						y: {
+							beginAtZero: true,
+							border: { display: false },
+							ticks: { padding: 8, callback: (v) => formatCurrency(v) },
+						},
+						x: {
+							grid: { display: false },
+							border: { display: false },
+							ticks: { padding: 8 },
+						},
+					},
+				},
+			});
+		}
+
+		// -- Revenue Distribution Bar --
+		if (canvasRefs.revenueDist && analytics.revenueDistribution?.length > 0) {
+			const distColors = [C.cyan, C.accent, C.primary, C.purple, C.indigo, C.warning, C.orange].map(c => c + "E6");
+			charts.revenueDist = new Chart(canvasRefs.revenueDist.getContext("2d"), {
+				type: "bar",
+				data: {
+					labels: analytics.revenueDistribution.map((d) => d.bucket),
+					datasets: [{
+						label: "Jumlah Visit",
+						data: analytics.revenueDistribution.map((d) => d.count),
+						backgroundColor: distColors.slice(0, analytics.revenueDistribution.length),
+						borderRadius: 8,
+						barPercentage: 0.65,
+						borderSkipped: false,
+					}],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: { legend: { display: false } },
+					scales: {
+						y: {
+							beginAtZero: true,
+							ticks: { stepSize: 1, padding: 8 },
+							border: { display: false },
+						},
+						x: {
+							grid: { display: false },
+							border: { display: false },
+							ticks: { padding: 8, font: { size: 10 } },
+						},
+					},
+				},
+			});
+		}
+
+		// -- Monthly Revenue Bar --
+		if (canvasRefs.monthlyRev && analytics.monthlyRevenue?.length > 0) {
+			const mCtx = canvasRefs.monthlyRev.getContext("2d");
+			const mGradient = mCtx.createLinearGradient(0, 0, 0, 260);
+			mGradient.addColorStop(0, C.emerald + "CC");
+			mGradient.addColorStop(1, C.emerald + "33");
+			charts.monthlyRev = new Chart(mCtx, {
+				type: "bar",
+				data: {
+					labels: analytics.monthlyRevenue.map((d) => d.month_label),
+					datasets: [{
+						label: "Revenue",
+						data: analytics.monthlyRevenue.map((d) => Number(d.revenue)),
+						backgroundColor: mGradient,
+						borderColor: C.emerald,
+						borderWidth: 2,
+						borderRadius: 10,
+						barPercentage: 0.6,
+						borderSkipped: false,
+					}],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							callbacks: {
+								label: (ctx) => `Revenue: ${formatCurrency(ctx.raw)}`,
+								afterLabel: (ctx) => `Encounters: ${analytics.monthlyRevenue[ctx.dataIndex]?.encounter_count || 0}`,
+							},
+						},
+					},
+					scales: {
+						y: {
+							beginAtZero: true,
+							border: { display: false },
+							ticks: { padding: 10, callback: (v) => formatCurrency(v) },
+						},
+						x: {
+							grid: { display: false },
+							border: { display: false },
+							ticks: { padding: 10 },
+						},
+					},
+				},
+			});
+		}
+
+		// -- Pareto Patient Revenue Chart (bar + line) --
+		if (canvasRefs.pareto && analytics.paretoPatientRevenue?.length > 0) {
+			const paretoData = analytics.paretoPatientRevenue;
+			const totalParetoRev = paretoData.reduce((s, d) => s + Number(d.total_revenue), 0);
+			let cumulative = 0;
+			const cumulativePct = paretoData.map((d) => {
+				cumulative += Number(d.total_revenue);
+				return Math.round((cumulative / totalParetoRev) * 100);
+			});
+			// Find the index where cumulative reaches 80%
+			const pareto80Idx = cumulativePct.findIndex((p) => p >= 80);
+			const paretoBarColors = paretoData.map((_, i) =>
+				i <= pareto80Idx ? C.success + "CC" : C.primary + "55"
+			);
+
+			charts.pareto = new Chart(canvasRefs.pareto.getContext("2d"), {
+				type: "bar",
+				data: {
+					labels: paretoData.map((d) => truncLabel(d.patient_name, 12)),
+					datasets: [
+						{
+							type: "bar",
+							label: "Revenue",
+							data: paretoData.map((d) => Number(d.total_revenue)),
+							backgroundColor: paretoBarColors,
+							borderRadius: 6,
+							barPercentage: 0.7,
+							borderSkipped: false,
+							yAxisID: "y",
+							order: 2,
+						},
+						{
+							type: "line",
+							label: "Kumulatif %",
+							data: cumulativePct,
+							borderColor: C.danger,
+							backgroundColor: C.danger + "22",
+							pointRadius: 3,
+							pointBackgroundColor: "white",
+							pointBorderColor: C.danger,
+							pointBorderWidth: 2,
+							borderWidth: 2.5,
+							tension: 0.3,
+							fill: false,
+							yAxisID: "y1",
+							order: 1,
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							position: "bottom",
+							labels: { padding: 12, usePointStyle: true, pointStyle: "circle", font: { size: 11 } },
+						},
+						tooltip: {
+							callbacks: {
+								label: (ctx) => {
+									if (ctx.dataset.yAxisID === "y1") return `Kumulatif: ${ctx.raw}%`;
+									return `Revenue: ${formatCurrency(ctx.raw)}`;
+								},
+							},
+						},
+						annotation: undefined,
+					},
+					scales: {
+						y: {
+							beginAtZero: true,
+							position: "left",
+							border: { display: false },
+							ticks: { padding: 8, callback: (v) => formatCurrency(v) },
+						},
+						y1: {
+							beginAtZero: true,
+							position: "right",
+							max: 100,
+							border: { display: false },
+							grid: { display: false },
+							ticks: { padding: 8, callback: (v) => v + "%" },
+						},
+						x: {
+							grid: { display: false },
+							border: { display: false },
+							ticks: { padding: 8, font: { size: 9 }, maxRotation: 45, minRotation: 30 },
+						},
+					},
+				},
+			});
+		}
 	}
 
 	function truncLabel(str, len = 30) {
@@ -825,15 +1090,7 @@
 	<div class="analytics-header">
 		<div class="analytics-controls-wrapper">
 			<div class="quick-ranges">
-				{#each [
-					["today", "Hari Ini"], 
-					["week", "7 Hari"], 
-					["month", "Bulan Ini"], 
-					["3months", "3 Bulan"], 
-					["6months", "6 Bulan"], 
-					["year", "Tahun Ini"],
-					["all", "Semua"]
-				] as [key, label]}
+				{#each [["today", "Hari Ini"], ["week", "7 Hari"], ["month", "Bulan Ini"], ["3months", "3 Bulan"], ["6months", "6 Bulan"], ["year", "Tahun Ini"], ["all", "Semua"]] as [key, label]}
 					<button
 						class="range-btn"
 						class:active={quickRange === key}
@@ -893,6 +1150,31 @@
 						></polygon></svg
 					>
 				</button>
+			</div>
+
+			<div class="view-toggle">
+				{#each [["all", "Semua", "M3 3v18h18M18 17V9M13 17V5M8 17v-3"], ["clinical", "Klinis", "M22 12h-4l-3 9L9 3l-3 9H2"], ["revenue", "Revenue", "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"]] as [key, label, icon]}
+					<button
+						class="view-btn"
+						class:active={viewMode === key}
+						on:click={() => (viewMode = key)}
+						title="Tampilkan {label}"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d={icon}></path>
+						</svg>
+						{label}
+					</button>
+				{/each}
 			</div>
 		</div>
 	</div>
@@ -1131,1020 +1413,1277 @@
 		</div>
 
 		<!-- Charts Row 1 : Volume + Status -->
-		<div class="chart-grid-2">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-blue">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><polyline
-									points="22 12 18 12 15 21 9 3 6 12 2 12"
-								></polyline></svg
-							>
-						</div>
-						<h3 class="chart-title">Volume Pasien Harian</h3>
-					</div>
-					<span class="chart-badge"
-						>{analytics.dailyVolume?.length || 0} hari</span
-					>
-				</div>
-				{#if analytics.dailyVolume?.length > 0}
-					<div class="chart-body" style="height: 240px;">
-						<canvas bind:this={canvasRefs.volume}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
-			</div>
-
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-emerald">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
-								></path><polyline points="22 4 12 14.01 9 11.01"
-								></polyline></svg
-							>
-						</div>
-						<h3 class="chart-title">Status Kunjungan</h3>
-					</div>
-					<span class="chart-badge"
-						>{analytics.overview?.completion_rate || 0}% selesai</span
-					>
-				</div>
-				{#if analytics.statusBreakdown}
-					<div
-						class="chart-body"
-						style="height: 240px; position: relative;"
-					>
-						<canvas bind:this={canvasRefs.status}></canvas>
-						<div class="doughnut-center">
-							<div class="doughnut-value">
-								{analytics.overview?.total_encounters || 0}
+		{#if viewMode !== "revenue"}
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-blue">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><polyline
+										points="22 12 18 12 15 21 9 3 6 12 2 12"
+									></polyline></svg
+								>
 							</div>
-							<div class="doughnut-label">Total</div>
+							<h3 class="chart-title">Volume Pasien Harian</h3>
 						</div>
+						<span class="chart-badge"
+							>{analytics.dailyVolume?.length || 0} hari</span
+						>
 					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Charts Row 2 : Peak Hours + Day of Week -->
-		<div class="chart-grid-2">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-purple">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><circle cx="12" cy="12" r="10"
-								></circle><polyline points="12 6 12 12 16 14"
-								></polyline></svg
-							>
+					{#if analytics.dailyVolume?.length > 0}
+						<div class="chart-body" style="height: 240px;">
+							<canvas bind:this={canvasRefs.volume}></canvas>
 						</div>
-						<h3 class="chart-title">Distribusi Jam Kunjungan</h3>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-emerald">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+									></path><polyline
+										points="22 4 12 14.01 9 11.01"
+									></polyline></svg
+								>
+							</div>
+							<h3 class="chart-title">Status Kunjungan</h3>
+						</div>
+						<span class="chart-badge"
+							>{analytics.overview?.completion_rate || 0}% selesai</span
+						>
+					</div>
+					{#if analytics.statusBreakdown}
+						<div
+							class="chart-body"
+							style="height: 240px; position: relative;"
+						>
+							<canvas bind:this={canvasRefs.status}></canvas>
+							<div class="doughnut-center">
+								<div class="doughnut-value">
+									{analytics.overview?.total_encounters || 0}
+								</div>
+								<div class="doughnut-label">Total</div>
+							</div>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Charts Row 2 : Peak Hours + Day of Week -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-purple">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><circle cx="12" cy="12" r="10"
+									></circle><polyline
+										points="12 6 12 12 16 14"
+									></polyline></svg
+								>
+							</div>
+							<h3 class="chart-title">
+								Distribusi Jam Kunjungan
+							</h3>
+						</div>
+						{#if analytics.hourlyDist?.length > 0}
+							{@const peak = analytics.hourlyDist.reduce(
+								(a, b) => (b.count > a.count ? b : a),
+								{ count: 0 },
+							)}
+							<span class="chart-badge"
+								>Puncak: {String(peak.hour).padStart(
+									2,
+									"0",
+								)}:00</span
+							>
+						{/if}
 					</div>
 					{#if analytics.hourlyDist?.length > 0}
-						{@const peak = analytics.hourlyDist.reduce(
-							(a, b) => (b.count > a.count ? b : a),
-							{ count: 0 },
-						)}
-						<span class="chart-badge"
-							>Puncak: {String(peak.hour).padStart(
-								2,
-								"0",
-							)}:00</span
-						>
+						<div class="chart-body" style="height: 220px;">
+							<canvas bind:this={canvasRefs.hourly}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
 					{/if}
 				</div>
-				{#if analytics.hourlyDist?.length > 0}
-					<div class="chart-body" style="height: 220px;">
-						<canvas bind:this={canvasRefs.hourly}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
-			</div>
 
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-orange">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><rect
-									x="3"
-									y="4"
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-orange">
+								<svg
 									width="18"
 									height="18"
-									rx="2"
-									ry="2"
-								></rect><line x1="16" y1="2" x2="16" y2="6"
-								></line><line x1="8" y1="2" x2="8" y2="6"
-								></line><line x1="3" y1="10" x2="21" y2="10"
-								></line></svg
-							>
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><rect
+										x="3"
+										y="4"
+										width="18"
+										height="18"
+										rx="2"
+										ry="2"
+									></rect><line x1="16" y1="2" x2="16" y2="6"
+									></line><line x1="8" y1="2" x2="8" y2="6"
+									></line><line x1="3" y1="10" x2="21" y2="10"
+									></line></svg
+								>
+							</div>
+							<h3 class="chart-title">Distribusi Hari</h3>
 						</div>
-						<h3 class="chart-title">Distribusi Hari</h3>
+						{#if analytics.dowDist?.length > 0}
+							{@const busiest = analytics.dowDist.reduce(
+								(a, b) => (b.count > a.count ? b : a),
+								{ count: 0 },
+							)}
+							<span class="chart-badge"
+								>Terbanyak: {DAYS_ID[busiest.dow]}</span
+							>
+						{/if}
 					</div>
 					{#if analytics.dowDist?.length > 0}
-						{@const busiest = analytics.dowDist.reduce(
-							(a, b) => (b.count > a.count ? b : a),
-							{ count: 0 },
-						)}
-						<span class="chart-badge"
-							>Terbanyak: {DAYS_ID[busiest.dow]}</span
-						>
+						<div class="chart-body" style="height: 220px;">
+							<canvas bind:this={canvasRefs.dow}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
 					{/if}
 				</div>
-				{#if analytics.dowDist?.length > 0}
-					<div class="chart-body" style="height: 220px;">
-						<canvas bind:this={canvasRefs.dow}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Charts Row 3 : Patient Demographics -->
-		<div class="chart-grid-2">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-pink">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-								></path><circle cx="9" cy="7" r="4"
-								></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"
-								></path><path d="M16 3.13a4 4 0 0 1 0 7.75"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Jenis Kelamin Pasien</h3>
-					</div>
-					{#if analytics.genderDist?.length > 0}
-						{@const totalGenders = analytics.genderDist.reduce(
-							(a, b) => a + Number(b.count),
-							0,
-						)}
-						<span class="chart-badge">{totalGenders} pasien</span>
-					{/if}
-				</div>
-				{#if analytics.genderDist?.length > 0}
-					{@const totalGendersCenter = analytics.genderDist.reduce(
-						(a, b) => a + Number(b.count),
-						0,
-					)}
-					<div
-						class="chart-body"
-						style="height: 220px; position: relative;"
-					>
-						<canvas bind:this={canvasRefs.gender}></canvas>
-						<div class="doughnut-center">
-							<div class="doughnut-value">
-								{totalGendersCenter}
-							</div>
-							<div class="doughnut-label">Total</div>
-						</div>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
 			</div>
 
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-cyan">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><rect
-									x="3"
-									y="4"
+			<!-- Charts Row 3 : Patient Demographics -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-pink">
+								<svg
 									width="18"
 									height="18"
-									rx="2"
-									ry="2"
-								></rect><line x1="16" y1="2" x2="16" y2="6"
-								></line><line x1="8" y1="2" x2="8" y2="6"
-								></line><line x1="3" y1="10" x2="21" y2="10"
-								></line></svg
-							>
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+									></path><circle cx="9" cy="7" r="4"
+									></circle><path
+										d="M23 21v-2a4 4 0 0 0-3-3.87"
+									></path><path d="M16 3.13a4 4 0 0 1 0 7.75"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Jenis Kelamin Pasien</h3>
 						</div>
-						<h3 class="chart-title">Distribusi Usia Pasien</h3>
+						{#if analytics.genderDist?.length > 0}
+							{@const totalGenders = analytics.genderDist.reduce(
+								(a, b) => a + Number(b.count),
+								0,
+							)}
+							<span class="chart-badge"
+								>{totalGenders} pasien</span
+							>
+						{/if}
+					</div>
+					{#if analytics.genderDist?.length > 0}
+						{@const totalGendersCenter =
+							analytics.genderDist.reduce(
+								(a, b) => a + Number(b.count),
+								0,
+							)}
+						<div
+							class="chart-body"
+							style="height: 220px; position: relative;"
+						>
+							<canvas bind:this={canvasRefs.gender}></canvas>
+							<div class="doughnut-center">
+								<div class="doughnut-value">
+									{totalGendersCenter}
+								</div>
+								<div class="doughnut-label">Total</div>
+							</div>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-cyan">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><rect
+										x="3"
+										y="4"
+										width="18"
+										height="18"
+										rx="2"
+										ry="2"
+									></rect><line x1="16" y1="2" x2="16" y2="6"
+									></line><line x1="8" y1="2" x2="8" y2="6"
+									></line><line x1="3" y1="10" x2="21" y2="10"
+									></line></svg
+								>
+							</div>
+							<h3 class="chart-title">Distribusi Usia Pasien</h3>
+						</div>
+						{#if analytics.ageDist?.length > 0}
+							{@const highestAge = analytics.ageDist.reduce(
+								(a, b) => (b.count > a.count ? b : a),
+								{ count: 0 },
+							)}
+							<span class="chart-badge"
+								>Terbanyak: {highestAge.age_group} thn</span
+							>
+						{/if}
 					</div>
 					{#if analytics.ageDist?.length > 0}
-						{@const highestAge = analytics.ageDist.reduce(
-							(a, b) => (b.count > a.count ? b : a),
-							{ count: 0 },
-						)}
-						<span class="chart-badge"
-							>Terbanyak: {highestAge.age_group} thn</span
-						>
+						<div class="chart-body" style="height: 220px;">
+							<canvas bind:this={canvasRefs.age}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
 					{/if}
 				</div>
-				{#if analytics.ageDist?.length > 0}
-					<div class="chart-body" style="height: 220px;">
-						<canvas bind:this={canvasRefs.age}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
 			</div>
-		</div>
 
-		<!-- Charts Row 4 : Diagnoses + Teeth -->
-		<div class="chart-grid-2">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-indigo">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-								></path><polyline points="14 2 14 8 20 8"
-								></polyline><path d="M12 18v-6"></path><path
-									d="M9 15h6"
-								></path></svg
-							>
+			<!-- Charts Row 4 : Diagnoses + Teeth -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-indigo">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+									></path><polyline points="14 2 14 8 20 8"
+									></polyline><path d="M12 18v-6"></path><path
+										d="M9 15h6"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">
+								Top 10 Diagnosis (ICD-10)
+							</h3>
 						</div>
-						<h3 class="chart-title">Top 10 Diagnosis (ICD-10)</h3>
+						{#if analytics.topDiagnoses?.length > 0}
+							<span class="chart-badge"
+								>Puncak: {analytics.topDiagnoses[0].count} kasus</span
+							>
+						{/if}
 					</div>
 					{#if analytics.topDiagnoses?.length > 0}
-						<span class="chart-badge"
-							>Puncak: {analytics.topDiagnoses[0].count} kasus</span
+						<div
+							class="chart-body"
+							style="height: {Math.max(
+								200,
+								analytics.topDiagnoses.length * 32,
+							)}px;"
 						>
+							<canvas bind:this={canvasRefs.diagnoses}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">
+							Tidak ada data diagnosis ICD-10
+						</div>
 					{/if}
 				</div>
-				{#if analytics.topDiagnoses?.length > 0}
-					<div
-						class="chart-body"
-						style="height: {Math.max(
-							200,
-							analytics.topDiagnoses.length * 32,
-						)}px;"
-					>
-						<canvas bind:this={canvasRefs.diagnoses}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">
-						Tidak ada data diagnosis ICD-10
-					</div>
-				{/if}
-			</div>
 
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-teal">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M12 2C7.5 2 4.5 5 4.5 9c0 3 2 4.5 3.5 6l1.5 5h5l1.5-5c1.5-1.5 3.5-3 3.5-6 0-4-3-7-7.5-7z"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">
-							Gigi Paling Sering Ditangani
-						</h3>
-					</div>
-					{#if analytics.odontogramStats}
-						<span class="chart-badge"
-							>{analytics.odontogramStats.total_tooth_records ||
-								0} record</span
-						>
-					{/if}
-				</div>
-				{#if analytics.topTeeth?.length > 0}
-					<div class="chart-body" style="height: 250px;">
-						<canvas bind:this={canvasRefs.teeth}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data odontogram</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Tables Row : Procedures + Conditions + Medications -->
-		<div class="chart-grid-3">
-			<!-- Top Procedures (ICD-9-CM) -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-purple">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M12 20h9"></path><path
-									d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Top Prosedur (ICD-9-CM)</h3>
-					</div>
-				</div>
-				{#if analytics.topProcedures?.length > 0}
-					<div class="table-scroll">
-						<table class="data-table">
-							<thead>
-								<tr
-									><th>Kode</th><th>Prosedur</th><th>Jml</th
-									></tr
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-teal">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M12 2C7.5 2 4.5 5 4.5 9c0 3 2 4.5 3.5 6l1.5 5h5l1.5-5c1.5-1.5 3.5-3 3.5-6 0-4-3-7-7.5-7z"
+									></path></svg
 								>
-							</thead>
-							<tbody>
-								{#each analytics.topProcedures as proc}
-									<tr>
-										<td
-											><span class="code-badge"
-												>{proc.code}</span
-											></td
-										>
-										<td class="text-sm"
-											>{truncLabel(proc.display, 40)}</td
-										>
-										<td
-											><span class="count-badge"
-												>{proc.count}</span
-											></td
-										>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data prosedur</div>
-				{/if}
-			</div>
-
-			<!-- Top Tooth Conditions -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-blue">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><circle cx="11" cy="11" r="8"></circle><line
-									x1="21"
-									y1="21"
-									x2="16.65"
-									y2="16.65"
-								></line></svg
-							>
+							</div>
+							<h3 class="chart-title">
+								Gigi Paling Sering Ditangani
+							</h3>
 						</div>
-						<h3 class="chart-title">Kondisi Gigi Terbanyak</h3>
-					</div>
-				</div>
-				{#if analytics.topConditions?.length > 0}
-					<div class="table-scroll">
-						<table class="data-table">
-							<thead>
-								<tr><th>#</th><th>Kondisi</th><th>Jml</th></tr>
-							</thead>
-							<tbody>
-								{#each analytics.topConditions as cond, i}
-									<tr>
-										<td class="text-muted">{i + 1}</td>
-										<td class="text-sm">{cond.condition}</td
-										>
-										<td
-											><span class="count-badge"
-												>{cond.count}</span
-											></td
-										>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data kondisi</div>
-				{/if}
-			</div>
-
-			<!-- Top Prescribed Medications -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-amber">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M10.5 20.5 4.5 14.5a3 3 0 0 1 0-4.24l7.07-7.07a3 3 0 0 1 4.24 0l6 6a3 3 0 0 1 0 4.24l-7.07 7.07a3 3 0 0 1-4.24 0z"
-								></path><line x1="12" y1="2" x2="12" y2="22"
-								></line></svg
+						{#if analytics.odontogramStats}
+							<span class="chart-badge"
+								>{analytics.odontogramStats
+									.total_tooth_records || 0} record</span
 							>
-						</div>
-						<h3 class="chart-title">Obat Terbanyak (KFA)</h3>
+						{/if}
 					</div>
-					{#if analytics.prescriptionStats}
-						<span class="chart-badge"
-							>{analytics.prescriptionStats.total_prescriptions ||
-								0} resep</span
-						>
+					{#if analytics.topTeeth?.length > 0}
+						<div class="chart-body" style="height: 250px;">
+							<canvas bind:this={canvasRefs.teeth}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data odontogram</div>
 					{/if}
 				</div>
-				{#if analytics.topMedications?.length > 0}
-					<div class="table-scroll">
-						<table class="data-table">
-							<thead>
-								<tr><th>Obat</th><th>Frek</th><th>Qty</th></tr>
-							</thead>
-							<tbody>
-								{#each analytics.topMedications as med}
-									<tr>
-										<td class="text-sm"
-											>{truncLabel(
-												med.medication,
-												35,
-											)}</td
-										>
-										<td
-											><span class="count-badge"
-												>{med.count}</span
-											></td
-										>
-										<td class="text-muted"
-											>{med.total_qty}</td
-										>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data resep</div>
-				{/if}
 			</div>
-		</div>
+
+			<!-- Tables Row : Procedures + Conditions + Medications -->
+			<div class="chart-grid-3">
+				<!-- Top Procedures (ICD-9-CM) -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-purple">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path d="M12 20h9"></path><path
+										d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Top Prosedur (ICD-9-CM)</h3>
+						</div>
+					</div>
+					{#if analytics.topProcedures?.length > 0}
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr
+										><th>Kode</th><th>Prosedur</th><th
+											>Jml</th
+										></tr
+									>
+								</thead>
+								<tbody>
+									{#each analytics.topProcedures as proc}
+										<tr>
+											<td
+												><span class="code-badge"
+													>{proc.code}</span
+												></td
+											>
+											<td class="text-sm"
+												>{truncLabel(
+													proc.display,
+													40,
+												)}</td
+											>
+											<td
+												><span class="count-badge"
+													>{proc.count}</span
+												></td
+											>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data prosedur</div>
+					{/if}
+				</div>
+
+				<!-- Top Tooth Conditions -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-blue">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><circle cx="11" cy="11" r="8"
+									></circle><line
+										x1="21"
+										y1="21"
+										x2="16.65"
+										y2="16.65"
+									></line></svg
+								>
+							</div>
+							<h3 class="chart-title">Kondisi Gigi Terbanyak</h3>
+						</div>
+					</div>
+					{#if analytics.topConditions?.length > 0}
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr
+										><th>#</th><th>Kondisi</th><th>Jml</th
+										></tr
+									>
+								</thead>
+								<tbody>
+									{#each analytics.topConditions as cond, i}
+										<tr>
+											<td class="text-muted">{i + 1}</td>
+											<td class="text-sm"
+												>{cond.condition}</td
+											>
+											<td
+												><span class="count-badge"
+													>{cond.count}</span
+												></td
+											>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data kondisi</div>
+					{/if}
+				</div>
+
+				<!-- Top Prescribed Medications -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-amber">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M10.5 20.5 4.5 14.5a3 3 0 0 1 0-4.24l7.07-7.07a3 3 0 0 1 4.24 0l6 6a3 3 0 0 1 0 4.24l-7.07 7.07a3 3 0 0 1-4.24 0z"
+									></path><line x1="12" y1="2" x2="12" y2="22"
+									></line></svg
+								>
+							</div>
+							<h3 class="chart-title">Obat Terbanyak (KFA)</h3>
+						</div>
+						{#if analytics.prescriptionStats}
+							<span class="chart-badge"
+								>{analytics.prescriptionStats
+									.total_prescriptions || 0} resep</span
+							>
+						{/if}
+					</div>
+					{#if analytics.topMedications?.length > 0}
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr
+										><th>Obat</th><th>Frek</th><th>Qty</th
+										></tr
+									>
+								</thead>
+								<tbody>
+									{#each analytics.topMedications as med}
+										<tr>
+											<td class="text-sm"
+												>{truncLabel(
+													med.medication,
+													35,
+												)}</td
+											>
+											<td
+												><span class="count-badge"
+													>{med.count}</span
+												></td
+											>
+											<td class="text-muted"
+												>{med.total_qty}</td
+											>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data resep</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
 
 		<!-- Revenue Trend Line Chart -->
-		<div class="chart-grid-2">
-			<div class="chart-card" style="grid-column: 1 / -1;">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-emerald">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><polyline
-									points="22 12 18 12 15 21 9 3 6 12 2 12"
-								></polyline></svg
-							>
+		{#if viewMode !== "clinical"}
+			<div class="chart-grid-2">
+				<div class="chart-card" style="grid-column: 1 / -1;">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-emerald">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><polyline
+										points="22 12 18 12 15 21 9 3 6 12 2 12"
+									></polyline></svg
+								>
+							</div>
+							<h3 class="chart-title">Tren Revenue Harian</h3>
 						</div>
-						<h3 class="chart-title">Tren Revenue Harian</h3>
+						{#if analytics.dailyRevenue?.length > 0}
+							{@const totalRev = analytics.dailyRevenue.reduce(
+								(a, b) => a + Number(b.revenue),
+								0,
+							)}
+							<span class="chart-badge"
+								>{formatCurrency(totalRev)} total</span
+							>
+						{/if}
 					</div>
 					{#if analytics.dailyRevenue?.length > 0}
-						{@const totalRev = analytics.dailyRevenue.reduce(
-							(a, b) => a + Number(b.revenue),
-							0,
-						)}
-						<span class="chart-badge"
-							>{formatCurrency(totalRev)} total</span
-						>
+						<div class="chart-body" style="height: 260px;">
+							<canvas bind:this={canvasRefs.revenueTrend}
+							></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">
+							Tidak ada data revenue harian
+						</div>
 					{/if}
 				</div>
-				{#if analytics.dailyRevenue?.length > 0}
-					<div class="chart-body" style="height: 260px;">
-						<canvas bind:this={canvasRefs.revenueTrend}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data revenue harian</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Revenue Section -->
-		<div class="chart-grid-2">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-emerald">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><line x1="12" y1="1" x2="12" y2="23"
-								></line><path
-									d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Top Tindakan (Revenue)</h3>
-					</div>
-					<span class="chart-badge"
-						>{formatCurrency(
-							Number(
-								analytics.revenueStats
-									?.avg_revenue_per_encounter || 0,
-							),
-						)}/visit</span
-					>
-				</div>
-				{#if analytics.topItems?.length > 0}
-					<div
-						class="chart-body"
-						style="height: {Math.max(
-							200,
-							analytics.topItems.length * 32,
-						)}px;"
-					>
-						<canvas bind:this={canvasRefs.items}></canvas>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data item</div>
-				{/if}
 			</div>
 
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-cyan">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M21.21 15.89A10 10 0 1 1 8 2.83"
-								></path><path d="M22 12A10 10 0 0 0 12 2v10z"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Revenue per Kategori</h3>
-					</div>
-					{#if analytics.revenueByGroup?.length > 0}
-						{@const topCategory = analytics.revenueByGroup.reduce(
-							(a, b) =>
-								Number(b.total_revenue) >
-								Number(a.total_revenue)
-									? b
-									: a,
-							{ total_revenue: 0, item_group: "" },
-						)}
-						<span class="chart-badge"
-							>Terbesar: {topCategory.item_group}</span
-						>
-					{/if}
-				</div>
-				{#if analytics.revenueByGroup?.length > 0}
-					<div
-						class="chart-body"
-						style="height: 250px; position: relative;"
-					>
-						<canvas bind:this={canvasRefs.revenueGroup}></canvas>
-						<div class="doughnut-center">
-							<div class="doughnut-value doughnut-value-sm">
-								{formatCurrency(
-									Number(
-										analytics.revenueStats?.total_revenue ||
-											0,
-									),
-								)}
-							</div>
-							<div class="doughnut-label">Total</div>
-						</div>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data kategori</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Bottom Section: Reasons + Referrals + Form Mode + Recent -->
-		<div class="chart-grid-2">
-			<!-- Visit Reasons -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-purple">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-								></path><polyline points="14 2 14 8 20 8"
-								></polyline><line x1="16" y1="13" x2="8" y2="13"
-								></line><line x1="16" y1="17" x2="8" y2="17"
-								></line><polyline points="10 9 9 9 8 9"
-								></polyline></svg
-							>
-						</div>
-						<h3 class="chart-title">Alasan Kunjungan (SNOMED)</h3>
-					</div>
-					{#if analytics.topReasons?.length > 0}
-						<span class="chart-badge"
-							>Puncak: {analytics.topReasons[0].count} kasus</span
-						>
-					{/if}
-				</div>
-
-				{#if analytics.reasonTypeDist?.length > 0}
-					<div class="reason-type-summary">
-						{#each analytics.reasonTypeDist as dist}
-							<div class="type-stat {dist.type.toLowerCase()}">
-								<span class="type-dot"></span>
-								<span class="type-text"
-									>{dist.type}:
-									<strong>{dist.count}</strong></span
+			<!-- Revenue Section -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-emerald">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><line x1="12" y1="1" x2="12" y2="23"
+									></line><path
+										d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+									></path></svg
 								>
 							</div>
-						{/each}
-					</div>
-				{/if}
-
-				{#if analytics.topReasons?.length > 0}
-					<div class="table-scroll">
-						<table class="data-table">
-							<thead>
-								<tr
-									><th>#</th><th>Tipe</th><th>Alasan</th><th
-										>Jml</th
-									></tr
-								>
-							</thead>
-							<tbody>
-								{#each analytics.topReasons as reason, i}
-									<tr>
-										<td class="text-muted">{i + 1}</td>
-										<td>
-											<span
-												class="type-badge {reason.type?.toLowerCase() ||
-													'finding'}"
-											>
-												{reason.type || "Finding"}
-											</span>
-										</td>
-										<td class="text-sm"
-											>{truncLabel(reason.reason, 45)}</td
-										>
-										<td
-											><span class="count-badge"
-												>{reason.count}</span
-											></td
-										>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="chart-empty">
-						Tidak ada data alasan kunjungan
-					</div>
-				{/if}
-			</div>
-
-			<!-- Referrals -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-indigo">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M17 2.1l4 4-4 4"></path><path
-									d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"
-								></path><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"
-								></path></svg
-							>
+							<h3 class="chart-title">Top Tindakan (Revenue)</h3>
 						</div>
-						<h3 class="chart-title">Rujukan per Dokter</h3>
-					</div>
-					<span class="chart-badge"
-						>{analytics.referralOverview?.total_referrals || 0} rujukan</span
-					>
-				</div>
-				{#if analytics.referralStats?.length > 0}
-					<div class="table-scroll">
-						<table class="data-table">
-							<thead>
-								<tr><th>Kode Dokter</th><th>Jumlah</th></tr>
-							</thead>
-							<tbody>
-								{#each analytics.referralStats as ref}
-									<tr>
-										<td
-											><span class="code-badge"
-												>{ref.doctor_code}</span
-											></td
-										>
-										<td
-											><span class="count-badge"
-												>{ref.count}</span
-											></td
-										>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data rujukan</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Form Mode + Prescription/Odontogram Stats + Recent Activity -->
-		<div class="chart-grid-3">
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-pink">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-								></path><path
-									d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Mode Form</h3>
-					</div>
-					<span class="chart-badge"
-						>Total: {analytics.overview?.total_encounters ||
-							0}</span
-					>
-				</div>
-				{#if analytics.formModeDist?.length > 0}
-					<div class="form-mode-list">
-						{#each analytics.formModeDist as fm}
-							<div class="form-mode-item">
-								<div class="form-mode-label">
-									{fm.form_mode}
-								</div>
-								<div class="form-mode-bar-wrap">
-									<div
-										class="form-mode-bar"
-										style="width: {(fm.count /
-											(analytics.overview
-												?.total_encounters || 1)) *
-											100}%;
-										       background: {fm.form_mode === 'SOAP' ? C.primary : C.purple};"
-									></div>
-								</div>
-								<div class="form-mode-count">{fm.count}</div>
-							</div>
-						{/each}
-					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada data</div>
-				{/if}
-			</div>
-
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-blue">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M3 3v18h18"></path><path d="M18 17v-9"
-								></path><path d="M13 17v-5"></path><path
-									d="M8 17v-3"
-								></path></svg
-							>
-						</div>
-						<h3 class="chart-title">Ringkasan Statistik</h3>
-					</div>
-				</div>
-				<div class="summary-stats">
-					<div class="summary-row">
-						<span>Rata-rata Resep/Visit</span>
-						<strong
-							>{analytics.prescriptionStats
-								?.avg_rx_per_encounter || 0}</strong
-						>
-					</div>
-					<div class="summary-row">
-						<span>Total Resep</span>
-						<strong
-							>{analytics.prescriptionStats
-								?.total_prescriptions || 0}</strong
-						>
-					</div>
-					<div class="summary-row">
-						<span>Encounters + Odontogram</span>
-						<strong
-							>{analytics.odontogramStats
-								?.encounters_with_odontogram || 0}</strong
-						>
-					</div>
-					<div class="summary-row">
-						<span>Gigi Ditangani (Unik)</span>
-						<strong
-							>{analytics.odontogramStats
-								?.distinct_teeth_treated || 0}</strong
-						>
-					</div>
-					<div class="summary-row">
-						<span>Encounters + Billing</span>
-						<strong
-							>{analytics.revenueStats?.encounters_with_items ||
-								0}</strong
-						>
-					</div>
-					<div class="summary-row">
-						<span>Rata-rata Revenue/Visit</span>
-						<strong
+						<span class="chart-badge"
 							>{formatCurrency(
 								Number(
 									analytics.revenueStats
 										?.avg_revenue_per_encounter || 0,
 								),
-							)}</strong
+							)}/visit</span
 						>
+					</div>
+					{#if analytics.topItems?.length > 0}
+						<div
+							class="chart-body"
+							style="height: {Math.max(
+								200,
+								analytics.topItems.length * 32,
+							)}px;"
+						>
+							<canvas bind:this={canvasRefs.items}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data item</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-cyan">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path d="M21.21 15.89A10 10 0 1 1 8 2.83"
+									></path><path
+										d="M22 12A10 10 0 0 0 12 2v10z"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Revenue per Kategori</h3>
+						</div>
+						{#if analytics.revenueByGroup?.length > 0}
+							{@const topCategory =
+								analytics.revenueByGroup.reduce(
+									(a, b) =>
+										Number(b.total_revenue) >
+										Number(a.total_revenue)
+											? b
+											: a,
+									{ total_revenue: 0, item_group: "" },
+								)}
+							<span class="chart-badge"
+								>Terbesar: {topCategory.item_group}</span
+							>
+						{/if}
+					</div>
+					{#if analytics.revenueByGroup?.length > 0}
+						<div
+							class="chart-body"
+							style="height: 250px; position: relative;"
+						>
+							<canvas bind:this={canvasRefs.revenueGroup}
+							></canvas>
+							<div class="doughnut-center">
+								<div class="doughnut-value doughnut-value-sm">
+									{formatCurrency(
+										Number(
+											analytics.revenueStats
+												?.total_revenue || 0,
+										),
+									)}
+								</div>
+								<div class="doughnut-label">Total</div>
+							</div>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data kategori</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Revenue KPI Mini Cards -->
+			<div class="kpi-grid kpi-grid-4">
+				<div class="kpi-card kpi-emerald">
+					<div class="kpi-icon-wrap">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+					</div>
+					<div class="kpi-content">
+						<div class="kpi-label">Avg Revenue/Visit</div>
+						<div class="kpi-value kpi-value-sm">{formatCurrency(Number(analytics.revenueStats?.avg_revenue_per_encounter || 0))}</div>
+					</div>
+				</div>
+				<div class="kpi-card kpi-blue">
+					<div class="kpi-icon-wrap">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+					</div>
+					<div class="kpi-content">
+						<div class="kpi-label">Visit + Billing</div>
+						<div class="kpi-value">{analytics.revenueStats?.encounters_with_items || 0}</div>
+					</div>
+				</div>
+				<div class="kpi-card kpi-orange">
+					<div class="kpi-icon-wrap">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+					</div>
+					<div class="kpi-content">
+						<div class="kpi-label">Total Diskon</div>
+						<div class="kpi-value kpi-value-sm">{formatCurrency(Number(analytics.discountStats?.total_discount_amount || 0))}</div>
+					</div>
+				</div>
+				<div class="kpi-card kpi-purple">
+					<div class="kpi-icon-wrap">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+					</div>
+					<div class="kpi-content">
+						<div class="kpi-label">Metode Bayar</div>
+						<div class="kpi-value kpi-value-sm">{analytics.paymentMethodBreakdown?.[0]?.payment_type || '-'}</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- Recent Activity -->
-			<div class="chart-card">
-				<div class="chart-header">
-					<div class="chart-title-wrap">
-						<div class="chart-icon-box bg-orange">
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><circle cx="12" cy="12" r="10"
-								></circle><polyline points="12 6 12 12 16 14"
-								></polyline></svg
-							>
+			<!-- Payment Method + Revenue by DOW -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-purple">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+							</div>
+							<h3 class="chart-title">Metode Pembayaran</h3>
 						</div>
-						<h3 class="chart-title">Aktivitas Terbaru</h3>
+						{#if analytics.paymentMethodBreakdown?.length > 0}
+							<span class="chart-badge">{analytics.paymentMethodBreakdown.length} metode</span>
+						{/if}
+					</div>
+					{#if analytics.paymentMethodBreakdown?.length > 0}
+						{@const totalPmt = analytics.paymentMethodBreakdown.reduce((s, d) => s + Number(d.total_amount), 0)}
+						<div class="chart-body" style="height: 240px; position: relative;">
+							<canvas bind:this={canvasRefs.paymentMethod}></canvas>
+							<div class="doughnut-center">
+								<div class="doughnut-value doughnut-value-sm">{formatCurrency(totalPmt)}</div>
+								<div class="doughnut-label">Total</div>
+							</div>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data pembayaran</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-emerald">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+							</div>
+							<h3 class="chart-title">Revenue per Hari</h3>
+						</div>
+						{#if analytics.revenueDow?.length > 0}
+							{@const topDowRev = analytics.revenueDow.reduce((a, b) => Number(b.revenue) > Number(a.revenue) ? b : a, { revenue: 0 })}
+							<span class="chart-badge">Terbanyak: {DAYS_ID[topDowRev.dow]}</span>
+						{/if}
+					</div>
+					{#if analytics.revenueDow?.length > 0}
+						<div class="chart-body" style="height: 240px;">
+							<canvas bind:this={canvasRefs.revenueDow}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Revenue Distribution + Monthly Revenue -->
+			<div class="chart-grid-2">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-indigo">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+							</div>
+							<h3 class="chart-title">Distribusi Revenue/Visit</h3>
+						</div>
+						{#if analytics.revenueDistribution?.length > 0}
+							{@const topBucket = analytics.revenueDistribution.reduce((a, b) => b.count > a.count ? b : a, { count: 0 })}
+							<span class="chart-badge">Terbanyak: {topBucket.bucket}</span>
+						{/if}
+					</div>
+					{#if analytics.revenueDistribution?.length > 0}
+						<div class="chart-body" style="height: 240px;">
+							<canvas bind:this={canvasRefs.revenueDist}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data distribusi</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-amber">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+							</div>
+							<h3 class="chart-title">Revenue Bulanan</h3>
+						</div>
+						{#if analytics.monthlyRevenue?.length > 0}
+							<span class="chart-badge">{analytics.monthlyRevenue.length} bulan</span>
+						{/if}
+					</div>
+					{#if analytics.monthlyRevenue?.length > 0}
+						<div class="chart-body" style="height: 240px;">
+							<canvas bind:this={canvasRefs.monthlyRev}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data bulanan</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Pareto Patient Revenue (full width) -->
+			<div class="chart-grid-2">
+				<div class="chart-card" style="grid-column: 1 / -1;">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-orange">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+							</div>
+							<h3 class="chart-title">Analisis Pareto Pasien (80/20)</h3>
+						</div>
+						{#if analytics.paretoPatientRevenue?.length > 0}
+							{@const totalParetoRev = analytics.paretoPatientRevenue.reduce((s, d) => s + Number(d.total_revenue), 0)}
+							{@const totalPatients = analytics.paretoPatientRevenue.length}
+							{@const top20Count = Math.max(1, Math.ceil(totalPatients * 0.2))}
+							{@const top20Rev = analytics.paretoPatientRevenue.slice(0, top20Count).reduce((s, d) => s + Number(d.total_revenue), 0)}
+							{@const top20Pct = totalParetoRev > 0 ? Math.round((top20Rev / totalParetoRev) * 100) : 0}
+							<span class="chart-badge">Top {top20Count} pasien ({Math.round(top20Count/totalPatients*100)}%) = {top20Pct}% revenue</span>
+						{/if}
+					</div>
+					{#if analytics.paretoPatientRevenue?.length > 0}
+						<div class="chart-body" style="height: 300px;">
+							<canvas bind:this={canvasRefs.pareto}></canvas>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data pasien</div>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Discount Summary Table -->
+			{#if analytics.discountStats?.total_payments > 0}
+			<div class="chart-grid-2">
+				<div class="chart-card" style="grid-column: 1 / -1;">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-orange">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+							</div>
+							<h3 class="chart-title">Ringkasan Diskon & Penjualan</h3>
+						</div>
+					</div>
+					<div class="summary-stats">
+						<div class="summary-row">
+							<span>Total Penjualan (Gross)</span>
+							<strong>{formatCurrency(Number(analytics.discountStats?.gross_sales || 0))}</strong>
+						</div>
+						<div class="summary-row">
+							<span>Total Diskon</span>
+							<strong style="color: var(--danger);">-{formatCurrency(Number(analytics.discountStats?.total_discount_amount || 0))}</strong>
+						</div>
+						<div class="summary-row">
+							<span>Penjualan Bersih (Net)</span>
+							<strong style="color: var(--success);">{formatCurrency(Number(analytics.discountStats?.net_sales || 0))}</strong>
+						</div>
+						<div class="summary-row">
+							<span>Transaksi dengan Diskon</span>
+							<strong>{analytics.discountStats?.discounted_count || 0} / {analytics.discountStats?.total_payments || 0}</strong>
+						</div>
+						{#if analytics.discountStats?.avg_discount_percent}
+						<div class="summary-row">
+							<span>Rata-rata Diskon</span>
+							<strong>{analytics.discountStats.avg_discount_percent}%</strong>
+						</div>
+						{/if}
 					</div>
 				</div>
-				{#if analytics.recentEncounters?.length > 0}
-					<div class="recent-list">
-						{#each analytics.recentEncounters as item}
-							<div class="recent-item">
-								<div
-									class="recent-dot"
-									style="background: {item.status ===
-										'Completed' ||
-									item.status === 'Discharged'
-										? C.success
-										: item.status === 'In Progress'
-											? C.primary
-											: item.status === 'Cancelled'
-												? C.danger
-												: C.accent};"
-								></div>
-								<div class="recent-info">
-									<div class="recent-name">
-										{item.patient_name || "-"}
-									</div>
-									<div class="recent-meta">
-										{fmtDate(item.created_at)} · {fmtTime(
-											item.created_at,
-										)}
-									</div>
-								</div>
-								<span
-									class="badge {STATUS_COLORS[item.status] ||
-										'badge-gray'} badge-sm"
-									>{item.status}</span
+			</div>
+			{/if}
+		{/if}
+
+		<!-- Bottom Section: Reasons + Referrals + Form Mode + Recent -->
+		{#if viewMode !== "revenue"}
+			<div class="chart-grid-2">
+				<!-- Visit Reasons -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-purple">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+									></path><polyline points="14 2 14 8 20 8"
+									></polyline><line
+										x1="16"
+										y1="13"
+										x2="8"
+										y2="13"
+									></line><line x1="16" y1="17" x2="8" y2="17"
+									></line><polyline points="10 9 9 9 8 9"
+									></polyline></svg
 								>
 							</div>
-						{/each}
+							<h3 class="chart-title">
+								Alasan Kunjungan (SNOMED)
+							</h3>
+						</div>
+						{#if analytics.topReasons?.length > 0}
+							<span class="chart-badge"
+								>Puncak: {analytics.topReasons[0].count} kasus</span
+							>
+						{/if}
 					</div>
-				{:else}
-					<div class="chart-empty">Tidak ada aktivitas</div>
-				{/if}
+
+					{#if analytics.reasonTypeDist?.length > 0}
+						<div class="reason-type-summary">
+							{#each analytics.reasonTypeDist as dist}
+								<div
+									class="type-stat {dist.type.toLowerCase()}"
+								>
+									<span class="type-dot"></span>
+									<span class="type-text"
+										>{dist.type}:
+										<strong>{dist.count}</strong></span
+									>
+								</div>
+							{/each}
+						</div>
+					{/if}
+
+					{#if analytics.topReasons?.length > 0}
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr
+										><th>#</th><th>Tipe</th><th>Alasan</th
+										><th>Jml</th></tr
+									>
+								</thead>
+								<tbody>
+									{#each analytics.topReasons as reason, i}
+										<tr>
+											<td class="text-muted">{i + 1}</td>
+											<td>
+												<span
+													class="type-badge {reason.type?.toLowerCase() ||
+														'finding'}"
+												>
+													{reason.type || "Finding"}
+												</span>
+											</td>
+											<td class="text-sm"
+												>{truncLabel(
+													reason.reason,
+													45,
+												)}</td
+											>
+											<td
+												><span class="count-badge"
+													>{reason.count}</span
+												></td
+											>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="chart-empty">
+							Tidak ada data alasan kunjungan
+						</div>
+					{/if}
+				</div>
+
+				<!-- Referrals -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-indigo">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path d="M17 2.1l4 4-4 4"></path><path
+										d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"
+									></path><path
+										d="M21 11.8v2a4 4 0 0 1-4 4H4.2"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Rujukan per Dokter</h3>
+						</div>
+						<span class="chart-badge"
+							>{analytics.referralOverview?.total_referrals || 0} rujukan</span
+						>
+					</div>
+					{#if analytics.referralStats?.length > 0}
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr><th>Kode Dokter</th><th>Jumlah</th></tr>
+								</thead>
+								<tbody>
+									{#each analytics.referralStats as ref}
+										<tr>
+											<td
+												><span class="code-badge"
+													>{ref.doctor_code}</span
+												></td
+											>
+											<td
+												><span class="count-badge"
+													>{ref.count}</span
+												></td
+											>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data rujukan</div>
+					{/if}
+				</div>
 			</div>
-		</div>
+
+			<!-- Form Mode + Prescription/Odontogram Stats + Recent Activity -->
+			<div class="chart-grid-3">
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-pink">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path
+										d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+									></path><path
+										d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Mode Form</h3>
+						</div>
+						<span class="chart-badge"
+							>Total: {analytics.overview?.total_encounters ||
+								0}</span
+						>
+					</div>
+					{#if analytics.formModeDist?.length > 0}
+						<div class="form-mode-list">
+							{#each analytics.formModeDist as fm}
+								<div class="form-mode-item">
+									<div class="form-mode-label">
+										{fm.form_mode}
+									</div>
+									<div class="form-mode-bar-wrap">
+										<div
+											class="form-mode-bar"
+											style="width: {(fm.count /
+												(analytics.overview
+													?.total_encounters || 1)) *
+												100}%;
+										       background: {fm.form_mode === 'SOAP' ? C.primary : C.purple};"
+										></div>
+									</div>
+									<div class="form-mode-count">
+										{fm.count}
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada data</div>
+					{/if}
+				</div>
+
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-blue">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><path d="M3 3v18h18"></path><path
+										d="M18 17v-9"
+									></path><path d="M13 17v-5"></path><path
+										d="M8 17v-3"
+									></path></svg
+								>
+							</div>
+							<h3 class="chart-title">Ringkasan Statistik</h3>
+						</div>
+					</div>
+					<div class="summary-stats">
+						<div class="summary-row">
+							<span>Rata-rata Resep/Visit</span>
+							<strong
+								>{analytics.prescriptionStats
+									?.avg_rx_per_encounter || 0}</strong
+							>
+						</div>
+						<div class="summary-row">
+							<span>Total Resep</span>
+							<strong
+								>{analytics.prescriptionStats
+									?.total_prescriptions || 0}</strong
+							>
+						</div>
+						<div class="summary-row">
+							<span>Encounters + Odontogram</span>
+							<strong
+								>{analytics.odontogramStats
+									?.encounters_with_odontogram || 0}</strong
+							>
+						</div>
+						<div class="summary-row">
+							<span>Gigi Ditangani (Unik)</span>
+							<strong
+								>{analytics.odontogramStats
+									?.distinct_teeth_treated || 0}</strong
+							>
+						</div>
+						<div class="summary-row">
+							<span>Encounters + Billing</span>
+							<strong
+								>{analytics.revenueStats
+									?.encounters_with_items || 0}</strong
+							>
+						</div>
+						<div class="summary-row">
+							<span>Rata-rata Revenue/Visit</span>
+							<strong
+								>{formatCurrency(
+									Number(
+										analytics.revenueStats
+											?.avg_revenue_per_encounter || 0,
+									),
+								)}</strong
+							>
+						</div>
+					</div>
+				</div>
+
+				<!-- Recent Activity -->
+				<div class="chart-card">
+					<div class="chart-header">
+						<div class="chart-title-wrap">
+							<div class="chart-icon-box bg-orange">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><circle cx="12" cy="12" r="10"
+									></circle><polyline
+										points="12 6 12 12 16 14"
+									></polyline></svg
+								>
+							</div>
+							<h3 class="chart-title">Aktivitas Terbaru</h3>
+						</div>
+					</div>
+					{#if analytics.recentEncounters?.length > 0}
+						<div class="recent-list">
+							{#each analytics.recentEncounters as item}
+								<div class="recent-item">
+									<div
+										class="recent-dot"
+										style="background: {item.status ===
+											'Completed' ||
+										item.status === 'Discharged'
+											? C.success
+											: item.status === 'In Progress'
+												? C.primary
+												: item.status === 'Cancelled'
+													? C.danger
+													: C.accent};"
+									></div>
+									<div class="recent-info">
+										<div class="recent-name">
+											{item.patient_name || "-"}
+										</div>
+										<div class="recent-meta">
+											{fmtDate(item.created_at)} · {fmtTime(
+												item.created_at,
+											)}
+										</div>
+									</div>
+									<span
+										class="badge {STATUS_COLORS[
+											item.status
+										] || 'badge-gray'} badge-sm"
+										>{item.status}</span
+									>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="chart-empty">Tidak ada aktivitas</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -2182,6 +2721,52 @@
 		border-radius: 10px;
 		padding: 4px;
 		border: 1px solid var(--gray-200);
+	}
+
+	.view-toggle {
+		display: flex;
+		background: var(--gray-50);
+		border-radius: 10px;
+		padding: 4px;
+		border: 1px solid var(--gray-200);
+		gap: 2px;
+	}
+
+	.view-btn {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 14px;
+		font-size: 0.8rem;
+		font-weight: 600;
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		background: transparent;
+		color: var(--text-secondary);
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		font-family: inherit;
+		white-space: nowrap;
+	}
+
+	.view-btn:hover {
+		color: var(--text-primary);
+		background: rgba(255, 255, 255, 0.5);
+	}
+
+	.view-btn.active {
+		background: white;
+		color: var(--primary);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	}
+
+	.view-btn svg {
+		flex-shrink: 0;
+		opacity: 0.7;
+	}
+
+	.view-btn.active svg {
+		opacity: 1;
 	}
 
 	.range-btn {

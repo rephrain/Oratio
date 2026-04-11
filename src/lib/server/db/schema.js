@@ -166,8 +166,6 @@ export const encounters = pgTable('encounters', {
 	// Referral in
 	encounter_referral_id: uuid('encounter_referral_id').references(() => encounterReferrals.id),
 
-	photo_document_id: uuid('photo_document_id').references(() => documents.id),
-
 	// SOAP document
 	soap_document_id: uuid('soap_document_id').references(() => documents.id),
 

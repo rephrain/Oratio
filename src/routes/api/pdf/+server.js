@@ -1,7 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { encounters, encounterPrescriptions, encounterOdontograms, odontogramDetails, patients, users, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster } from '$lib/server/db/schema.js';
+import {
+	encounters, encounterPrescriptions, encounterOdontograms,
+	odontogramTeeth, odontogramSurfaces, odontogramDiagnoses, odontogramProcedures,
+	patients, users, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster
+} from '$lib/server/db/schema.js';
 import { eq, and } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { generatePatientProfilePDF, generateSOAPPDF, generateOdontogramPDF } from '$lib/server/pdf.js';
 
 export async function GET({ url }) {
@@ -59,7 +64,49 @@ export async function GET({ url }) {
 			const odontograms = await db.select().from(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, encounterId));
 			let details = [];
 			if (odontograms.length > 0) {
-				details = await db.select().from(odontogramDetails).where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
+				const odontoId = odontograms[0].id;
+				const teeth = await db.select().from(odontogramTeeth)
+					.where(eq(odontogramTeeth.odontogram_id, odontoId));
+
+				for (const tooth of teeth) {
+					const surfaces = await db.select().from(odontogramSurfaces)
+						.where(eq(odontogramSurfaces.tooth_id, tooth.id));
+
+					const icd10Term = alias(terminologyMaster, 'icd10_term');
+					const toothDiagnoses = await db.select({
+						icd10_code: icd10Term.code,
+						icd10_display: icd10Term.display,
+						is_primary: odontogramDiagnoses.is_primary
+					}).from(odontogramDiagnoses)
+						.leftJoin(icd10Term, eq(odontogramDiagnoses.icd10_id, icd10Term.id))
+						.where(eq(odontogramDiagnoses.tooth_id, tooth.id));
+
+					const icd9cmTerm = alias(terminologyMaster, 'icd9cm_term');
+					const toothProcedures = await db.select({
+						icd9cm_code: icd9cmTerm.code,
+						icd9cm_display: icd9cmTerm.display
+					}).from(odontogramProcedures)
+						.leftJoin(icd9cmTerm, eq(odontogramProcedures.icd9cm_id, icd9cmTerm.id))
+						.where(eq(odontogramProcedures.tooth_id, tooth.id));
+
+					// Flatten: one detail per surface (or per tooth if no surfaces)
+					const surfaceList = surfaces.length > 0 ? surfaces : [{ surface: '', restorasi: null, bahan_restorasi: null }];
+					for (const s of surfaceList) {
+						details.push({
+							tooth_number: tooth.tooth_number,
+							surface: s.surface,
+							keadaan: tooth.keadaan,
+							restorasi: s.restorasi,
+							bahan_restorasi: s.bahan_restorasi,
+							protesa: tooth.protesa,
+							bahan_protesa: tooth.bahan_protesa,
+							diagnosis_code: toothDiagnoses[0]?.icd10_code || null,
+							diagnosis_display: toothDiagnoses[0]?.icd10_display || null,
+							procedure_code: toothProcedures[0]?.icd9cm_code || null,
+							procedure_display: toothProcedures[0]?.icd9cm_display || null,
+						});
+					}
+				}
 			}
 
 			// Aggregate findings for SOAP

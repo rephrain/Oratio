@@ -124,12 +124,13 @@ export async function GET({ url, locals }) {
 			ORDER BY count DESC
 		`);
 
-		// 9. Top ICD-10 diagnoses from odontogram_details
+		// 9. Top ICD-10 diagnoses from odontogram_teeth + odontogram_diagnoses
 		const topDiagnoses = await db.execute(sql`
 			SELECT tm.code, tm.display, COUNT(*)::int AS count
 			FROM encounters e
 			JOIN encounter_odontograms eo ON eo.encounter_id = e.id
-			JOIN odontogram_details od ON od.odontogram_id = eo.id
+			JOIN odontogram_teeth ot ON ot.odontogram_id = eo.id
+			JOIN odontogram_diagnoses od ON od.tooth_id = ot.id
 			JOIN terminology_master tm ON od.icd10_id = tm.id
 			${baseWhere}
 			GROUP BY tm.code, tm.display
@@ -137,13 +138,14 @@ export async function GET({ url, locals }) {
 			LIMIT 10
 		`);
 
-		// 10. Top ICD-9-CM procedures from odontogram_details
+		// 10. Top ICD-9-CM procedures from odontogram_teeth + odontogram_procedures
 		const topProcedures = await db.execute(sql`
 			SELECT tm.code, tm.display, COUNT(*)::int AS count
 			FROM encounters e
 			JOIN encounter_odontograms eo ON eo.encounter_id = e.id
-			JOIN odontogram_details od ON od.odontogram_id = eo.id
-			JOIN terminology_master tm ON od.icd9cm_id = tm.id
+			JOIN odontogram_teeth ot ON ot.odontogram_id = eo.id
+			JOIN odontogram_procedures op ON op.tooth_id = ot.id
+			JOIN terminology_master tm ON op.icd9cm_id = tm.id
 			${baseWhere}
 			GROUP BY tm.code, tm.display
 			ORDER BY count DESC
@@ -152,25 +154,25 @@ export async function GET({ url, locals }) {
 
 		// 11. Top tooth conditions (keadaan)
 		const topConditions = await db.execute(sql`
-			SELECT od.keadaan AS condition, COUNT(*)::int AS count
+			SELECT ot.keadaan AS condition, COUNT(*)::int AS count
 			FROM encounters e
 			JOIN encounter_odontograms eo ON eo.encounter_id = e.id
-			JOIN odontogram_details od ON od.odontogram_id = eo.id
+			JOIN odontogram_teeth ot ON ot.odontogram_id = eo.id
 			${baseWhere}
-			AND od.keadaan IS NOT NULL AND od.keadaan != ''
-			GROUP BY od.keadaan
+			AND ot.keadaan IS NOT NULL AND ot.keadaan != ''
+			GROUP BY ot.keadaan
 			ORDER BY count DESC
 			LIMIT 10
 		`);
 
 		// 12. Most treated teeth
 		const topTeeth = await db.execute(sql`
-			SELECT od.tooth_number, COUNT(*)::int AS count
+			SELECT ot.tooth_number, COUNT(*)::int AS count
 			FROM encounters e
 			JOIN encounter_odontograms eo ON eo.encounter_id = e.id
-			JOIN odontogram_details od ON od.odontogram_id = eo.id
+			JOIN odontogram_teeth ot ON ot.odontogram_id = eo.id
 			${baseWhere}
-			GROUP BY od.tooth_number
+			GROUP BY ot.tooth_number
 			ORDER BY count DESC
 			LIMIT 15
 		`);
@@ -337,11 +339,11 @@ export async function GET({ url, locals }) {
 		const [odontogramStats] = await db.execute(sql`
 			SELECT
 				COUNT(DISTINCT eo.encounter_id)::int AS encounters_with_odontogram,
-				COUNT(DISTINCT od.id)::int AS total_tooth_records,
-				COUNT(DISTINCT od.tooth_number)::int AS distinct_teeth_treated
+				COUNT(DISTINCT ot.id)::int AS total_tooth_records,
+				COUNT(DISTINCT ot.tooth_number)::int AS distinct_teeth_treated
 			FROM encounters e
 			JOIN encounter_odontograms eo ON eo.encounter_id = e.id
-			LEFT JOIN odontogram_details od ON od.odontogram_id = eo.id
+			LEFT JOIN odontogram_teeth ot ON ot.odontogram_id = eo.id
 			${baseWhere}
 		`);
 

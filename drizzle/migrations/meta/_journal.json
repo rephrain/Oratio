@@ -29,6 +29,13 @@
       "when": 1775898431952,
       "tag": "0003_boring_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775961558318,
+      "tag": "0004_tough_kronos",
+      "breakpoints": true
     }
   ]
 }

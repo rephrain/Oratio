@@ -11,6 +11,7 @@
 	import Modal from "$lib/components/UI/Modal.svelte";
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import OdontogramChart from "$lib/components/Odontogram/OdontogramChart.svelte";
+	import ToothDetailPanel from "$lib/components/Odontogram/ToothDetailPanel.svelte";
 	import {
 		PERMANENT_TEETH,
 		DECIDUOUS_TEETH,
@@ -239,19 +240,16 @@
 	let selectedTooth = null;
 	let toothDetail = {
 		tooth_number: "",
-		surface: "",
 		keadaan: "",
-		bahan_restorasi: "",
-		restorasi: "",
 		protesa: "",
 		bahan_protesa: "",
-		diagnosis_code: "",
-		diagnosis_display: "",
-		procedure_code: "",
-		procedure_display: "",
+		surfaces: [],
+		diagnoses: [],
+		procedures: [],
 	};
 
 	let selectedSurfaceArea = "";
+	let selectedTeeth = new Set();
 
 	function getClinicalSurfaceName(surfaceKey, toothNum) {
 		const quad = String(toothNum)[0];
@@ -260,8 +258,8 @@
 		const isAnterior = ['1', '2', '3'].includes(String(toothNum)[1]); 
 
 		if (surfaceKey === 'center') return isAnterior ? 'I' : 'O';
-		if (surfaceKey === 'top') return isUpper ? 'V' : 'L';
-		if (surfaceKey === 'bottom') return isUpper ? 'P' : 'V';
+		if (surfaceKey === 'top') return isUpper ? 'B' : 'L';
+		if (surfaceKey === 'bottom') return isUpper ? 'P' : 'B';
 		if (surfaceKey === 'left') return isRightSideOfMouth ? 'D' : 'M';
 		if (surfaceKey === 'right') return isRightSideOfMouth ? 'M' : 'D';
 		return "";
@@ -288,44 +286,60 @@
 	}
 
 	$: mappedOdontogramData = (odontogram.details || []).reduce((acc, d) => {
-		if (!acc[d.tooth_number]) acc[d.tooth_number] = {};
+		const tn = String(d.tooth_number);
+		if (!acc[tn]) acc[tn] = {};
 		
 		let color = "#10B981"; // Default green
 		if (d.keadaan && d.keadaan.toUpperCase().includes("CARIES")) color = "#ffffff";
 		else if (d.keadaan === "MISSING") color = "#9CA3AF";
 		else if (d.keadaan === "Gigi sehat, normal, tanpa kelainan") color = "#ffffff";
 
-		const mappedData = {
-			condition: d.keadaan,
-			color,
-			restoration: d.restorasi,
-			bahan_restorasi: d.bahan_restorasi,
-			protesa: d.protesa,
-		};
-		
-		const keys = parseSurfaces(d.surface, d.tooth_number);
-		keys.forEach(k => {
-			if (!acc[d.tooth_number][k]) acc[d.tooth_number][k] = mappedData;
-		});
-		if (d.keadaan === "EXTRACTED" || d.keadaan === "Gigi Hilang") acc[d.tooth_number].global = "Missing";
-		else if (d.keadaan === "MISSING" || d.restorasi === "Pontic" || d.protesa === "Partial Denture" || d.protesa === "Full Denture")
-			acc[d.tooth_number].global = "Missing";
+		if (d.keadaan === "EXTRACTED" || d.keadaan === "Gigi Hilang") acc[tn].global = "Missing";
+		else if (d.keadaan === "MISSING" || d.protesa === "Partial Denture" || d.protesa === "Full Denture")
+			acc[tn].global = "Missing";
 		else if (d.keadaan === "Gigi Non-Vital")
-			acc[d.tooth_number].global = "Non-Vital";
-		else if (d.restorasi === "Root Canal Treatment / Perawatan Saluran Akar")
-			acc[d.tooth_number].global = "RCT";
+			acc[tn].global = "Non-Vital";
 		else if (d.keadaan === "Gigi tidak ada/ tidak diketahui")
-			acc[d.tooth_number].global = "NON";
+			acc[tn].global = "NON";
 		else if (d.keadaan === "Un-erupted")
-			acc[d.tooth_number].global = "UNE";
+			acc[tn].global = "UNE";
 		else if (d.keadaan === "Partial erupted")
-			acc[d.tooth_number].global = "PRE";
+			acc[tn].global = "PRE";
 		else if (d.keadaan === "Anomali")
-			acc[d.tooth_number].global = "ANO";
-		else if (d.keadaan && d.keadaan.includes("Fracture") || d.keadaan === "Root fracture")
-			acc[d.tooth_number].global = "Fracture";
+			acc[tn].global = "ANO";
+		else if ((d.keadaan && d.keadaan.includes("Fracture")) || d.keadaan === "Root fracture")
+			acc[tn].global = "Fracture";
 		else if (d.keadaan === "Sisa Akar" || d.keadaan === "Retained root")
-			acc[d.tooth_number].global = "Sisa Akar";
+			acc[tn].global = "Sisa Akar";
+
+		if (d.surfaces && d.surfaces.length > 0) {
+			d.surfaces.forEach(s => {
+				const mappedData = {
+					condition: d.keadaan,
+					color,
+					restoration: s.restorasi,
+					bahan_restorasi: s.bahan_restorasi,
+					protesa: d.protesa,
+				};
+				const keys = parseSurfaces(s.surface, tn);
+				keys.forEach(k => {
+					if (!acc[tn][k]) acc[tn][k] = mappedData;
+				});
+
+				if (s.restorasi === "Root Canal Treatment / Perawatan Saluran Akar") {
+					acc[tn].global = "RCT";
+				} else if (s.restorasi === "Pontic") {
+					acc[tn].global = "Missing";
+				}
+			});
+		} else {
+			const mappedData = {
+				condition: d.keadaan, color,
+				restoration: null, bahan_restorasi: null, protesa: d.protesa
+			};
+			if (!acc[tn]["center"]) acc[tn]["center"] = mappedData;
+		}
+
 		return acc;
 	}, {});
 
@@ -344,21 +358,42 @@
 			prescriptions = data.prescriptions || [];
 
 			if (data.odontograms?.length > 0) {
-				// Map loaded odontogram details to include display names for ICD-10/ICD-9-CM
-				const mappedDetails = (data.odontogramDetails || []).map(
-					(d) => ({
-						...d,
-						diagnosis_code: d.icd10_code || d.diagnosis_code || "",
-						diagnosis_display:
-							d.icd10_display || d.diagnosis_display || "",
-						procedure_code: d.icd9cm_code || d.procedure_code || "",
-						procedure_display:
-							d.icd9cm_display || d.procedure_display || "",
-					}),
-				);
+				const grouped = {};
+				for (const d of (data.odontogramDetails || [])) {
+					if (!grouped[d.tooth_number]) {
+						grouped[d.tooth_number] = {
+							tooth_number: d.tooth_number,
+							keadaan: d.keadaan,
+							protesa: d.protesa,
+							bahan_protesa: d.bahan_protesa,
+							surfaces: [],
+							diagnoses: (d.all_diagnoses || []).map(diag => ({
+								icd10_id: diag.icd10_id,
+								diagnosis_code: diag.icd10_code,
+								diagnosis_display: diag.icd10_display,
+								is_primary: diag.is_primary
+							})),
+							procedures: (d.all_procedures || []).map(proc => ({
+								icd9cm_id: proc.icd9cm_id,
+								procedure_code: proc.icd9cm_code,
+								procedure_display: proc.icd9cm_display
+							}))
+						};
+					}
+					if (d.surface) {
+						if (!grouped[d.tooth_number].surfaces.find(s => s.surface === d.surface)) {
+							grouped[d.tooth_number].surfaces.push({
+								surface: d.surface,
+								restorasi: d.restorasi,
+								bahan_restorasi: d.bahan_restorasi
+							});
+						}
+					}
+				}
+				
 				odontogram = {
 					...data.odontograms[0],
-					details: mappedDetails,
+					details: Object.values(grouped),
 				};
 			}
 
@@ -659,63 +694,55 @@
 
 	// Tooth click
 	function handleToothClick(toothNum, selectedObjOrSurface, maybeEvent) {
+		const tn = String(toothNum); // Normalize to string — DB stores strings, chart uses integers
 		let surfaceArea = typeof selectedObjOrSurface === 'string' ? selectedObjOrSurface : '';
 		let event = maybeEvent || selectedObjOrSurface;
 
-		if (event.shiftKey) {
-			if (selectedTeeth.has(toothNum)) {
-				selectedTeeth.delete(toothNum);
+		if (event && event.shiftKey) {
+			if (selectedTeeth.has(tn)) {
+				selectedTeeth.delete(tn);
 			} else {
-				selectedTeeth.add(toothNum);
+				selectedTeeth.add(tn);
 			}
 			selectedTeeth = new Set(selectedTeeth);
 		} else {
-			selectedTooth = toothNum;
+			selectedTooth = tn;
 			selectedSurfaceArea = surfaceArea;
 			
-			// Find existing detail with this exact surface, or default to general match
-			const clinicalSurface = getClinicalSurfaceName(surfaceArea, toothNum);
-			let existing = odontogram.details.find(
-				(d) => d.tooth_number === toothNum && d.surface === clinicalSurface
-			);
-			if (!existing) {
-				existing = odontogram.details.find((d) => d.tooth_number === toothNum && !d.surface);
-			}
+			const clinicalSurface = getClinicalSurfaceName(surfaceArea, tn);
+			let existing = odontogram.details.find((d) => String(d.tooth_number) === tn);
 
-			toothDetail = existing
-				? { ...existing, surface: existing.surface || clinicalSurface }
-				: {
-						tooth_number: toothNum,
-						surface: clinicalSurface || "",
-						keadaan: "",
-						bahan_restorasi: "",
-						restorasi: "",
-						protesa: "",
-						bahan_protesa: "",
-						diagnosis_code: "",
-						diagnosis_display: "",
-						procedure_code: "",
-						procedure_display: "",
-					};
+			if (existing) {
+				toothDetail = JSON.parse(JSON.stringify(existing));
+			} else {
+				toothDetail = {
+					tooth_number: tn,
+					keadaan: "",
+					protesa: "",
+					bahan_protesa: "",
+					surfaces: clinicalSurface ? [{ surface: clinicalSurface, restorasi: "", bahan_restorasi: "" }] : [],
+					diagnoses: [],
+					procedures: [],
+				};
+			}
 			showToothModal = true;
 		}
 	}
 
-	function saveToothDetail() {
-		const idx = odontogram.details.findIndex(
-			(d) => d.tooth_number === toothDetail.tooth_number,
-		);
+	function saveToothDetail(event) {
+		const updatedTooth = event.detail; // from dispatch('save', t)
+		updatedTooth.tooth_number = String(updatedTooth.tooth_number); // Always string
+		const idx = odontogram.details.findIndex((d) => String(d.tooth_number) === updatedTooth.tooth_number);
 		if (idx >= 0) {
-			odontogram.details[idx] = { ...toothDetail };
+			odontogram.details[idx] = updatedTooth;
 		} else {
-			odontogram.details = [...odontogram.details, { ...toothDetail }];
+			odontogram.details = [...odontogram.details, updatedTooth];
 		}
 		odontogram = { ...odontogram };
-		showToothModal = false;
 	}
 
 	function hasCondition(toothNum) {
-		return odontogram.details.some((d) => d.tooth_number === toothNum);
+		return odontogram.details.some((d) => String(d.tooth_number) === String(toothNum));
 	}
 
 	// Render 5-surface tooth SVG (cross/diamond pattern per PDGI standard)
@@ -2794,225 +2821,11 @@
 	</button>
 {/if}
 
-<!-- Tooth Detail Modal -->
-<Modal
+<!-- Tooth Detail Panel -->
+<ToothDetailPanel
 	bind:show={showToothModal}
-	title="Detail Gigi #{toothDetail.tooth_number}"
-	size="lg"
->
-	<div class="space-y-6 pt-2">
-		<!-- Permukaan -->
-		<div class="space-y-2">
-			<label
-				class="text-sm font-bold flex items-center gap-2 text-slate-700"
-				>Permukaan</label
-			>
-			<div class="flex flex-wrap gap-2">
-				{#each TOOTH_SURFACES as s}
-					<label
-						class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors shadow-sm"
-					>
-						<input
-							type="checkbox"
-							class="text-primary focus:ring-primary rounded border-slate-300 w-4 h-4 cursor-pointer"
-							checked={toothDetail.surface?.includes(s.key)}
-							on:change={(e) => {
-								if (e.target.checked) {
-									toothDetail.surface =
-										(toothDetail.surface || "") + s.key;
-								} else {
-									toothDetail.surface =
-										toothDetail.surface?.replace(
-											s.key,
-											"",
-										) || "";
-								}
-							}}
-						/>
-						<span
-							><span class="text-primary mr-0.5">{s.key}</span>
-							({s.label})</span
-						>
-					</label>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Detail Kondisi 1 -->
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			<div class="space-y-1.5">
-				<label
-					class="text-xs font-bold text-slate-500 block"
-					for="td-keadaan">Keadaan</label
-				>
-				<select
-					id="td-keadaan"
-					class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white"
-					bind:value={toothDetail.keadaan}
-				>
-					<option value="">-- Pilih Keadaan --</option>
-					{#each KEADAAN as k}
-						<option value={k}>{k}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="space-y-1.5">
-				<label
-					class="text-xs font-bold text-slate-500 block"
-					for="td-bahan-restorasi">Bahan Restorasi</label
-				>
-				<select
-					id="td-bahan-restorasi"
-					class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white"
-					bind:value={toothDetail.bahan_restorasi}
-				>
-					<option value="">-- Pilih Bahan --</option>
-					{#each BAHAN_RESTORASI as br}
-						<option value={br}>{br}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="space-y-1.5">
-				<label
-					class="text-xs font-bold text-slate-500 block"
-					for="td-restorasi">Restorasi</label
-				>
-				<select
-					id="td-restorasi"
-					class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white"
-					bind:value={toothDetail.restorasi}
-				>
-					<option value="">-- Pilih Restorasi --</option>
-					{#each RESTORASI as r}
-						<option value={r}>{r}</option>
-					{/each}
-				</select>
-			</div>
-		</div>
-
-		<!-- Detail Kondisi 2 -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<div class="space-y-1.5">
-				<label
-					class="text-xs font-bold text-slate-500 block"
-					for="td-protesa">Protesa</label
-				>
-				<select
-					id="td-protesa"
-					class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white"
-					bind:value={toothDetail.protesa}
-				>
-					<option value="">-- Pilih Protesa --</option>
-					{#each PROTESA as p}
-						<option value={p}>{p}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="space-y-1.5">
-				<label
-					class="text-xs font-bold text-slate-500 block"
-					for="td-bahan-protesa">Bahan Protesa</label
-				>
-				<select
-					id="td-bahan-protesa"
-					class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary shadow-sm bg-white"
-					bind:value={toothDetail.bahan_protesa}
-				>
-					<option value="">-- Pilih Bahan --</option>
-					{#each BAHAN_PROTESA as bp}
-						<option value={bp}>{bp}</option>
-					{/each}
-				</select>
-			</div>
-		</div>
-
-		<!-- Codes -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<div
-				class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm"
-			>
-				<label
-					class="text-sm font-bold flex items-center gap-2 text-slate-700"
-				>
-					<span
-						class="material-symbols-outlined text-slate-400 text-[18px]"
-						>medical_information</span
-					> Diagnosa (ICD-10)
-				</label>
-				<SearchableSelect
-					searchFn={(term) => searchTerminology(term, "ICD-10")}
-					placeholder="Cari Diagnosa ICD-10"
-					label={toothDetail.diagnosis_display}
-					value={toothDetail.diagnosis_code}
-					on:select={(e) => {
-						toothDetail.diagnosis_code = e.detail.value;
-						toothDetail.diagnosis_display = e.detail.label;
-						toothDetail.icd10_id = e.detail.id;
-					}}
-					inputClass="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
-				/>
-				<div
-					class="text-[11px] text-slate-400 flex items-center gap-1 px-1"
-				>
-					<span class="font-bold text-primary"
-						>{toothDetail.diagnosis_code || "-"}</span
-					>
-					<span>|</span>
-					<span class="italic"
-						>{toothDetail.diagnosis_display ||
-							"Pilih diagnosa"}</span
-					>
-				</div>
-			</div>
-			<div
-				class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm"
-			>
-				<label
-					class="text-sm font-bold flex items-center gap-2 text-slate-700"
-				>
-					<span
-						class="material-symbols-outlined text-slate-400 text-[18px]"
-						>healing</span
-					> Tindakan (ICD-9-CM)
-				</label>
-				<SearchableSelect
-					searchFn={(term) => searchTerminology(term, "ICD-9-CM")}
-					placeholder="Cari Tindakan ICD-9-CM"
-					label={toothDetail.procedure_display}
-					value={toothDetail.procedure_code}
-					on:select={(e) => {
-						toothDetail.procedure_code = e.detail.value;
-						toothDetail.procedure_display = e.detail.label;
-						toothDetail.icd9cm_id = e.detail.id;
-					}}
-					inputClass="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
-				/>
-				<div
-					class="text-[11px] text-slate-400 flex items-center gap-1 px-1"
-				>
-					<span class="font-bold text-primary"
-						>{toothDetail.procedure_code || "-"}</span
-					>
-					<span>|</span>
-					<span class="italic"
-						>{toothDetail.procedure_display ||
-							"Pilih tindakan"}</span
-					>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div slot="footer" class="flex justify-end gap-3 w-full">
-		<button
-			class="px-5 py-2 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors text-slate-700 bg-white shadow-sm"
-			on:click={() => (showToothModal = false)}>Batal</button
-		>
-		<button
-			class="px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all flex items-center gap-2"
-			on:click={saveToothDetail}
-		>
-			<span class="material-symbols-outlined text-[18px]">save</span> Simpan
-		</button>
-	</div>
-</Modal>
+	initialData={toothDetail}
+	on:save={saveToothDetail}
+	searchIcd10Fn={(term) => searchTerminology(term, "ICD-10")}
+	searchIcd9Fn={(term) => searchTerminology(term, "ICD-9-CM")}
+/>

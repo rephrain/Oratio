@@ -32,7 +32,7 @@
 
 	// Helper to pluck data safely
 	function getT(num) {
-		return odontogramData[num] || {};
+		return odontogramData[String(num)] || {};
 	}
 
 	function isSelected(num, surface) {

@@ -414,22 +414,49 @@ export const ADMIN_TABLES = {
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
 		]
 	},
-	'odontogram-details': {
-		label: 'Odontogram Details',
-		schema: 'odontogramDetails',
+	'odontogram-teeth': {
+		label: 'Odontogram Teeth',
+		schema: 'odontogramTeeth',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
 			{ key: 'odontogram_id', label: 'Odontogram', type: 'text', required: true },
 			{ key: 'tooth_number', label: 'Tooth Number', type: 'text', required: true, maxLength: 5 },
-			{ key: 'surface', label: 'Surface', type: 'select', required: true, options: ['O', 'B', 'L', 'M', 'D'] },
 			{ key: 'keadaan', label: 'Keadaan', type: 'text' },
-			{ key: 'bahan_restorasi', label: 'Bahan Restorasi', type: 'text' },
-			{ key: 'restorasi', label: 'Restorasi', type: 'text' },
 			{ key: 'protesa', label: 'Protesa', type: 'text' },
 			{ key: 'bahan_protesa', label: 'Bahan Protesa', type: 'text' },
-			{ key: 'icd10_id', label: 'ICD-10', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-surfaces': {
+		label: 'Odontogram Surfaces',
+		schema: 'odontogramSurfaces',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'tooth_id', label: 'Tooth', type: 'text', required: true },
+			{ key: 'surface', label: 'Surface', type: 'select', required: true, options: ['O', 'B', 'L', 'M', 'D'] },
+			{ key: 'restorasi', label: 'Restorasi', type: 'text' },
+			{ key: 'bahan_restorasi', label: 'Bahan Restorasi', type: 'text' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-diagnoses': {
+		label: 'Odontogram Diagnoses',
+		schema: 'odontogramDiagnoses',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'tooth_id', label: 'Tooth', type: 'text', required: true },
+			{ key: 'icd10_id', label: 'ICD-10', type: 'fk', required: true, fkTable: 'terminology', fkLabel: 'display' },
 			{ key: 'is_primary', label: 'Is Primary', type: 'boolean', defaultValue: false },
-			{ key: 'icd9cm_id', label: 'ICD-9-CM', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-procedures': {
+		label: 'Odontogram Procedures',
+		schema: 'odontogramProcedures',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'tooth_id', label: 'Tooth', type: 'text', required: true },
+			{ key: 'icd9cm_id', label: 'ICD-9-CM', type: 'fk', required: true, fkTable: 'terminology', fkLabel: 'display' },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
 		]
 	},

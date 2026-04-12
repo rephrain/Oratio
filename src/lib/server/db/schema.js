@@ -225,25 +225,86 @@ export const encounterOdontograms = pgTable('encounter_odontograms', {
 // =============================================================
 // 11. ODONTOGRAM DETAILS (per tooth per surface)
 // =============================================================
-export const odontogramDetails = pgTable('odontogram_details', {
+// ─────────────────────────────────────────────
+// LEVEL 1 — Tooth
+// One row per tooth per odontogram
+// ─────────────────────────────────────────────
+export const odontogramTeeth = pgTable('odontogram_teeth', {
 	id: uuid('id').defaultRandom().primaryKey(),
-	odontogram_id: uuid('odontogram_id').notNull().references(() => encounterOdontograms.id, { onDelete: 'cascade' }),
+	odontogram_id: uuid('odontogram_id')
+		.notNull()
+		.references(() => encounterOdontograms.id, { onDelete: 'cascade' }),
 	tooth_number: varchar('tooth_number', { length: 5 }).notNull(),
-	surface: varchar('surface', { length: 5 }).notNull(),
 
+	// Tooth-level fields
 	keadaan: text('keadaan'),
-	bahan_restorasi: text('bahan_restorasi'),
-	restorasi: text('restorasi'),
 	protesa: text('protesa'),
 	bahan_protesa: text('bahan_protesa'),
 
-	icd10_id: uuid('icd10_id').references(() => terminologyMaster.id, { onDelete: 'set null' }),
-	is_primary: boolean('is_primary').default(false), // for primary diagnosis (icd-10)
-	icd9cm_id: uuid('icd9cm_id').references(() => terminologyMaster.id, { onDelete: 'set null' }),
-
-	created_at: timestamp('created_at').defaultNow().notNull()
+	created_at: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-	uniqueToothSurface: unique('uq_odontogram_tooth_surface').on(table.odontogram_id, table.tooth_number, table.surface)
+	uniqueTooth: unique('uq_odontogram_tooth')
+		.on(table.odontogram_id, table.tooth_number),
+}));
+
+// ─────────────────────────────────────────────
+// LEVEL 2 — Surface
+// One row per surface (O/B/L/M/D) per tooth
+// ─────────────────────────────────────────────
+export const odontogramSurfaces = pgTable('odontogram_surfaces', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	tooth_id: uuid('tooth_id')
+		.notNull()
+		.references(() => odontogramTeeth.id, { onDelete: 'cascade' }),
+	surface: varchar('surface', { length: 1 }).notNull(), // O | B | L | M | D
+
+	// Surface-level fields
+	restorasi: text('restorasi'),
+	bahan_restorasi: text('bahan_restorasi'),
+
+	created_at: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+	uniqueToothSurface: unique('uq_tooth_surface')
+		.on(table.tooth_id, table.surface),
+}));
+
+// ─────────────────────────────────────────────
+// LEVEL 3a — Diagnoses (ICD-10)
+// Many per tooth
+// ─────────────────────────────────────────────
+export const odontogramDiagnoses = pgTable('odontogram_diagnoses', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	tooth_id: uuid('tooth_id')
+		.notNull()
+		.references(() => odontogramTeeth.id, { onDelete: 'cascade' }),
+	icd10_id: uuid('icd10_id')
+		.notNull()
+		.references(() => terminologyMaster.id, { onDelete: 'cascade' }),
+	is_primary: boolean('is_primary').default(false).notNull(),
+
+	created_at: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+	uniqueToothDiagnosis: unique('uq_tooth_icd10')
+		.on(table.tooth_id, table.icd10_id),
+}));
+
+// ─────────────────────────────────────────────
+// LEVEL 3b — Procedures (ICD-9-CM)
+// Many per tooth
+// ─────────────────────────────────────────────
+export const odontogramProcedures = pgTable('odontogram_procedures', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	tooth_id: uuid('tooth_id')
+		.notNull()
+		.references(() => odontogramTeeth.id, { onDelete: 'cascade' }),
+	icd9cm_id: uuid('icd9cm_id')
+		.notNull()
+		.references(() => terminologyMaster.id, { onDelete: 'cascade' }),
+
+	created_at: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+	uniqueToothProcedure: unique('uq_tooth_icd9cm')
+		.on(table.tooth_id, table.icd9cm_id),
 }));
 
 
@@ -367,8 +428,8 @@ export const terminologyMasterRelations = relations(terminologyMaster, ({ many }
 	allergies: many(patientAllergy),
 	medications: many(patientMedication),
 	encounterReasons: many(encounters),
-	odontogramIcd10: many(odontogramDetails, { relationName: 'icd10_to_odontogram' }),
-	odontogramIcd9cm: many(odontogramDetails, { relationName: 'icd9cm_to_odontogram' }),
+	odontogramDiagnoses: many(odontogramDiagnoses, { relationName: 'icd10_to_odontogram' }),
+	odontogramProcedures: many(odontogramProcedures, { relationName: 'icd9cm_to_odontogram' }),
 	prescriptions: many(encounterPrescriptions)
 }));
 
@@ -423,13 +484,28 @@ export const statusHistoryRelations = relations(statusHistory, ({ one }) => ({
 
 export const encounterOdontogramsRelations = relations(encounterOdontograms, ({ one, many }) => ({
 	encounter: one(encounters, { fields: [encounterOdontograms.encounter_id], references: [encounters.id] }),
-	details: many(odontogramDetails)
+	teeth: many(odontogramTeeth)
 }));
 
-export const odontogramDetailsRelations = relations(odontogramDetails, ({ one }) => ({
-	odontogram: one(encounterOdontograms, { fields: [odontogramDetails.odontogram_id], references: [encounterOdontograms.id] }),
-	icd10: one(terminologyMaster, { fields: [odontogramDetails.icd10_id], references: [terminologyMaster.id], relationName: 'icd10_to_odontogram' }),
-	icd9cm: one(terminologyMaster, { fields: [odontogramDetails.icd9cm_id], references: [terminologyMaster.id], relationName: 'icd9cm_to_odontogram' })
+export const odontogramTeethRelations = relations(odontogramTeeth, ({ one, many }) => ({
+	odontogram: one(encounterOdontograms, { fields: [odontogramTeeth.odontogram_id], references: [encounterOdontograms.id] }),
+	surfaces: many(odontogramSurfaces),
+	diagnoses: many(odontogramDiagnoses),
+	procedures: many(odontogramProcedures)
+}));
+
+export const odontogramSurfacesRelations = relations(odontogramSurfaces, ({ one }) => ({
+	tooth: one(odontogramTeeth, { fields: [odontogramSurfaces.tooth_id], references: [odontogramTeeth.id] })
+}));
+
+export const odontogramDiagnosesRelations = relations(odontogramDiagnoses, ({ one }) => ({
+	tooth: one(odontogramTeeth, { fields: [odontogramDiagnoses.tooth_id], references: [odontogramTeeth.id] }),
+	icd10: one(terminologyMaster, { fields: [odontogramDiagnoses.icd10_id], references: [terminologyMaster.id], relationName: 'icd10_to_odontogram' })
+}));
+
+export const odontogramProceduresRelations = relations(odontogramProcedures, ({ one }) => ({
+	tooth: one(odontogramTeeth, { fields: [odontogramProcedures.tooth_id], references: [odontogramTeeth.id] }),
+	icd9cm: one(terminologyMaster, { fields: [odontogramProcedures.icd9cm_id], references: [terminologyMaster.id], relationName: 'icd9cm_to_odontogram' })
 }));
 
 export const encounterPrescriptionsRelations = relations(encounterPrescriptions, ({ one }) => ({

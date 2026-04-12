@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
-	encounters, statusHistory, encounterOdontograms, odontogramDetails,
+	encounters, statusHistory, encounterOdontograms,
 	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';

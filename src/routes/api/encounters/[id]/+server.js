@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
-	encounters, statusHistory, encounterOdontograms, odontogramDetails,
+	encounters, statusHistory, encounterOdontograms,
+	odontogramTeeth, odontogramSurfaces, odontogramDiagnoses, odontogramProcedures,
 	encounterPrescriptions,
 	encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
 } from '$lib/server/db/schema.js';
@@ -49,37 +50,100 @@ export async function GET({ params }) {
 		const odontograms = await db.select().from(encounterOdontograms)
 			.where(eq(encounterOdontograms.encounter_id, params.id));
 
-		// Odontogram details — join terminology_master for ICD-10 and ICD-9-CM display names
+		// Odontogram details — query new normalized tables and flatten for frontend compatibility
 		let odontoDetails = [];
 		if (odontograms.length > 0) {
-			const icd10Term = alias(terminologyMaster, 'icd10_term');
-			const icd9cmTerm = alias(terminologyMaster, 'icd9cm_term');
+			const odontoId = odontograms[0].id;
 
-			const rawDetails = await db.select({
-				id: odontogramDetails.id,
-				odontogram_id: odontogramDetails.odontogram_id,
-				tooth_number: odontogramDetails.tooth_number,
-				surface: odontogramDetails.surface,
-				keadaan: odontogramDetails.keadaan,
-				bahan_restorasi: odontogramDetails.bahan_restorasi,
-				restorasi: odontogramDetails.restorasi,
-				protesa: odontogramDetails.protesa,
-				bahan_protesa: odontogramDetails.bahan_protesa,
-				icd10_id: odontogramDetails.icd10_id,
-				is_primary: odontogramDetails.is_primary,
-				icd9cm_id: odontogramDetails.icd9cm_id,
-				icd10_code: icd10Term.code,
-				icd10_display: icd10Term.display,
-				icd9cm_code: icd9cmTerm.code,
-				icd9cm_display: icd9cmTerm.display,
-				created_at: odontogramDetails.created_at
-			})
-				.from(odontogramDetails)
-				.leftJoin(icd10Term, eq(odontogramDetails.icd10_id, icd10Term.id))
-				.leftJoin(icd9cmTerm, eq(odontogramDetails.icd9cm_id, icd9cmTerm.id))
-				.where(eq(odontogramDetails.odontogram_id, odontograms[0].id));
+			// Fetch teeth
+			const teeth = await db.select().from(odontogramTeeth)
+				.where(eq(odontogramTeeth.odontogram_id, odontoId));
 
-			odontoDetails = rawDetails;
+			for (const tooth of teeth) {
+				// Fetch surfaces for this tooth
+				const surfaces = await db.select().from(odontogramSurfaces)
+					.where(eq(odontogramSurfaces.tooth_id, tooth.id));
+
+				// Fetch diagnoses for this tooth (with terminology join)
+				const icd10Term = alias(terminologyMaster, 'icd10_term');
+				const diagnoses = await db.select({
+					id: odontogramDiagnoses.id,
+					icd10_id: odontogramDiagnoses.icd10_id,
+					is_primary: odontogramDiagnoses.is_primary,
+					icd10_code: icd10Term.code,
+					icd10_display: icd10Term.display
+				})
+					.from(odontogramDiagnoses)
+					.leftJoin(icd10Term, eq(odontogramDiagnoses.icd10_id, icd10Term.id))
+					.where(eq(odontogramDiagnoses.tooth_id, tooth.id));
+
+				// Fetch procedures for this tooth (with terminology join)
+				const icd9cmTerm = alias(terminologyMaster, 'icd9cm_term');
+				const procedures = await db.select({
+					id: odontogramProcedures.id,
+					icd9cm_id: odontogramProcedures.icd9cm_id,
+					icd9cm_code: icd9cmTerm.code,
+					icd9cm_display: icd9cmTerm.display
+				})
+					.from(odontogramProcedures)
+					.leftJoin(icd9cmTerm, eq(odontogramProcedures.icd9cm_id, icd9cmTerm.id))
+					.where(eq(odontogramProcedures.tooth_id, tooth.id));
+
+				// Flatten into legacy odontogramDetails format for frontend compatibility
+				const primaryDiag = diagnoses.find(d => d.is_primary) || diagnoses[0] || null;
+				const primaryProc = procedures[0] || null;
+
+				// Build one flat record per surface (or one record if no surfaces)
+				if (surfaces.length > 0) {
+					for (const surf of surfaces) {
+						odontoDetails.push({
+							id: surf.id,
+							odontogram_id: odontoId,
+							tooth_number: tooth.tooth_number,
+							surface: surf.surface,
+							keadaan: tooth.keadaan,
+							restorasi: surf.restorasi,
+							bahan_restorasi: surf.bahan_restorasi,
+							protesa: tooth.protesa,
+							bahan_protesa: tooth.bahan_protesa,
+							icd10_id: primaryDiag?.icd10_id || null,
+							is_primary: primaryDiag?.is_primary || false,
+							icd10_code: primaryDiag?.icd10_code || null,
+							icd10_display: primaryDiag?.icd10_display || null,
+							icd9cm_id: primaryProc?.icd9cm_id || null,
+							icd9cm_code: primaryProc?.icd9cm_code || null,
+							icd9cm_display: primaryProc?.icd9cm_display || null,
+							created_at: tooth.created_at,
+							// Include full arrays for advanced consumers
+							all_diagnoses: diagnoses,
+							all_procedures: procedures
+						});
+					}
+				} else {
+					// Tooth with no surface-level data
+					odontoDetails.push({
+						id: tooth.id,
+						odontogram_id: odontoId,
+						tooth_number: tooth.tooth_number,
+						surface: '',
+						keadaan: tooth.keadaan,
+						restorasi: null,
+						bahan_restorasi: null,
+						protesa: tooth.protesa,
+						bahan_protesa: tooth.bahan_protesa,
+						icd10_id: primaryDiag?.icd10_id || null,
+						is_primary: primaryDiag?.is_primary || false,
+						icd10_code: primaryDiag?.icd10_code || null,
+						icd10_display: primaryDiag?.icd10_display || null,
+						icd9cm_id: primaryProc?.icd9cm_id || null,
+						icd9cm_code: primaryProc?.icd9cm_code || null,
+						icd9cm_display: primaryProc?.icd9cm_display || null,
+						created_at: tooth.created_at,
+						all_diagnoses: diagnoses,
+						all_procedures: procedures
+					});
+				}
+			}
 		}
 
 		const history = await db.select().from(statusHistory)
@@ -349,19 +413,104 @@ export async function PUT({ params, request }) {
 					}
 				}
 
-				await db.insert(odontogramDetails).values({
+				// Insert into odontogramTeeth
+				const [tooth] = await db.insert(odontogramTeeth).values({
 					odontogram_id: odonto.id,
 					tooth_number: d.tooth_number,
-					surface: d.surface || '',
 					keadaan: d.keadaan,
-					bahan_restorasi: d.bahan_restorasi,
-					restorasi: d.restorasi,
 					protesa: d.protesa,
-					bahan_protesa: d.bahan_protesa,
-					icd10_id: icd10Id,
-					is_primary: d.is_primary || false,
-					icd9cm_id: icd9cmId
-				});
+					bahan_protesa: d.bahan_protesa
+				}).returning();
+
+				// --- SURFACES ---
+				if (Array.isArray(d.surfaces) && d.surfaces.length > 0) {
+					for (const s of d.surfaces) {
+						if (s.surface) {
+							await db.insert(odontogramSurfaces).values({
+								tooth_id: tooth.id,
+								surface: s.surface,
+								restorasi: s.restorasi,
+								bahan_restorasi: s.bahan_restorasi
+							});
+						}
+					}
+				} else if (d.surface) {
+					// Legacy fallback
+					await db.insert(odontogramSurfaces).values({
+						tooth_id: tooth.id,
+						surface: d.surface,
+						restorasi: d.restorasi,
+						bahan_restorasi: d.bahan_restorasi
+					});
+				}
+
+				// --- DIAGNOSES ---
+				if (Array.isArray(d.diagnoses) && d.diagnoses.length > 0) {
+					for (const diag of d.diagnoses) {
+						let tempIcd10Id = diag.icd10_id || null;
+						if (!tempIcd10Id && diag.diagnosis_code) {
+							const [existing] = await db.select()
+								.from(terminologyMaster)
+								.where(and(eq(terminologyMaster.code, diag.diagnosis_code), eq(terminologyMaster.system, 'ICD-10')))
+								.limit(1);
+							if (existing) {
+								tempIcd10Id = existing.id;
+							} else if (diag.diagnosis_display) {
+								const [inserted] = await db.insert(terminologyMaster).values({
+									code: diag.diagnosis_code, display: diag.diagnosis_display, system: 'ICD-10'
+								}).returning();
+								tempIcd10Id = inserted.id;
+							}
+						}
+						if (tempIcd10Id) {
+							await db.insert(odontogramDiagnoses).values({
+								tooth_id: tooth.id,
+								icd10_id: tempIcd10Id,
+								is_primary: diag.is_primary || false
+							});
+						}
+					}
+				} else if (icd10Id) {
+					// Legacy fallback
+					await db.insert(odontogramDiagnoses).values({
+						tooth_id: tooth.id,
+						icd10_id: icd10Id,
+						is_primary: d.is_primary || false
+					});
+				}
+
+				// --- PROCEDURES ---
+				if (Array.isArray(d.procedures) && d.procedures.length > 0) {
+					for (const proc of d.procedures) {
+						let tempIcd9cmId = proc.icd9cm_id || null;
+						if (!tempIcd9cmId && proc.procedure_code) {
+							const [existing] = await db.select()
+								.from(terminologyMaster)
+								.where(and(eq(terminologyMaster.code, proc.procedure_code), eq(terminologyMaster.system, 'ICD-9-CM')))
+								.limit(1);
+							if (existing) {
+								tempIcd9cmId = existing.id;
+							} else if (proc.procedure_display) {
+								const [inserted] = await db.insert(terminologyMaster).values({
+									code: proc.procedure_code, display: proc.procedure_display, system: 'ICD-9-CM'
+								}).returning();
+								tempIcd9cmId = inserted.id;
+							}
+						}
+						if (tempIcd9cmId) {
+							await db.insert(odontogramProcedures).values({
+								tooth_id: tooth.id,
+								icd9cm_id: tempIcd9cmId
+							});
+						}
+					}
+				} else if (icd9cmId) {
+					// Legacy fallback
+					await db.insert(odontogramProcedures).values({
+						tooth_id: tooth.id,
+						icd9cm_id: icd9cmId
+					});
+				}
 			}
 		}
 	}

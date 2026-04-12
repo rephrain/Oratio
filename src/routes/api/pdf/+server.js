@@ -2,7 +2,8 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, encounterPrescriptions, encounterOdontograms,
-	odontogramTeeth, odontogramSurfaces, odontogramDiagnoses, odontogramProcedures,
+	odontogramTeeth, odontogramSurfaces, odontogramRestorations, odontogramRestorationSurfaces,
+	odontogramDiagnoses, odontogramProcedures,
 	patients, users, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster
 } from '$lib/server/db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -72,6 +73,18 @@ export async function GET({ url }) {
 					const surfaces = await db.select().from(odontogramSurfaces)
 						.where(eq(odontogramSurfaces.tooth_id, tooth.id));
 
+					// Fetch restorations + build surface→restoration map
+					const restorations = await db.select().from(odontogramRestorations)
+						.where(eq(odontogramRestorations.tooth_id, tooth.id));
+					const surfRestMap = {};
+					for (const rest of restorations) {
+						const junctions = await db.select().from(odontogramRestorationSurfaces)
+							.where(eq(odontogramRestorationSurfaces.restoration_id, rest.id));
+						for (const j of junctions) {
+							surfRestMap[j.surface_id] = { restorasi: rest.restorasi, bahan_restorasi: rest.bahan_restorasi };
+						}
+					}
+
 					const icd10Term = alias(terminologyMaster, 'icd10_term');
 					const toothDiagnoses = await db.select({
 						icd10_code: icd10Term.code,
@@ -90,14 +103,31 @@ export async function GET({ url }) {
 						.where(eq(odontogramProcedures.tooth_id, tooth.id));
 
 					// Flatten: one detail per surface (or per tooth if no surfaces)
-					const surfaceList = surfaces.length > 0 ? surfaces : [{ surface: '', restorasi: null, bahan_restorasi: null }];
-					for (const s of surfaceList) {
+					if (surfaces.length > 0) {
+						for (const s of surfaces) {
+							const restData = surfRestMap[s.id] || {};
+							details.push({
+								tooth_number: tooth.tooth_number,
+								surface: s.surface,
+								keadaan: tooth.keadaan,
+								restorasi: restData.restorasi || null,
+								bahan_restorasi: restData.bahan_restorasi || null,
+								protesa: tooth.protesa,
+								bahan_protesa: tooth.bahan_protesa,
+								diagnosis_code: toothDiagnoses[0]?.icd10_code || null,
+								diagnosis_display: toothDiagnoses[0]?.icd10_display || null,
+								procedure_code: toothProcedures[0]?.icd9cm_code || null,
+								procedure_display: toothProcedures[0]?.icd9cm_display || null,
+							});
+						}
+					} else {
+						const firstRest = restorations[0] || null;
 						details.push({
 							tooth_number: tooth.tooth_number,
-							surface: s.surface,
+							surface: '',
 							keadaan: tooth.keadaan,
-							restorasi: s.restorasi,
-							bahan_restorasi: s.bahan_restorasi,
+							restorasi: firstRest?.restorasi || null,
+							bahan_restorasi: firstRest?.bahan_restorasi || null,
 							protesa: tooth.protesa,
 							bahan_protesa: tooth.bahan_protesa,
 							diagnosis_code: toothDiagnoses[0]?.icd10_code || null,

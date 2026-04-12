@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms,
-	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster
+	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
 } from '$lib/server/db/schema.js';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -33,8 +33,8 @@ export async function GET({ url, locals }) {
 	if (status) conditions.push(eq(encounters.status, status));
 	if (patientId) conditions.push(eq(encounters.patient_id, patientId));
 
-	// For dokter role, only show their own encounters
-	if (locals.user?.role === 'dokter') {
+	// For dokter role, only show their own encounters unless searching for a specific patient's history or a specific doctor's history
+	if (locals.user?.role === 'dokter' && !patientId && !doctorId) {
 		conditions.push(eq(encounters.doctor_id, locals.user.id));
 	}
 
@@ -64,7 +64,37 @@ export async function GET({ url, locals }) {
 		.limit(limit)
 		.offset(offset);
 
-	return json({ data });
+	const selectedEncounterIds = data.map(d => d.encounter.id);
+	
+	let allClinicalPhotos = [];
+	if (selectedEncounterIds.length > 0) {
+		allClinicalPhotos = await db.select({
+			id: documents.id,
+			encounter_id: documents.encounter_id,
+			file_name: documents.file_name,
+			mime_type: documents.mime_type
+		})
+		.from(documents)
+		.where(
+			and(
+				inArray(documents.encounter_id, selectedEncounterIds),
+				eq(documents.document_type, 'clinical_photo')
+			)
+		);
+	}
+	
+	const photoMap = {};
+	for (const photo of allClinicalPhotos) {
+		if (!photoMap[photo.encounter_id]) photoMap[photo.encounter_id] = [];
+		photoMap[photo.encounter_id].push(photo);
+	}
+	
+	const mergedData = data.map(d => ({
+		...d,
+		clinical_photos: photoMap[d.encounter.id] || []
+	}));
+
+	return json({ data: mergedData });
 }
 
 // POST /api/encounters - create encounter (auto-queue)

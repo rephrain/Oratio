@@ -247,9 +247,10 @@ export const odontogramTeeth = pgTable('odontogram_teeth', {
 		.on(table.odontogram_id, table.tooth_number),
 }));
 
+
 // ─────────────────────────────────────────────
-// LEVEL 2 — Surface
-// One row per surface (O/B/L/M/D) per tooth
+// LEVEL 2a — Surface (Geometric Layer)
+// One row per anatomical surface (O/B/L/M/D) per tooth
 // ─────────────────────────────────────────────
 export const odontogramSurfaces = pgTable('odontogram_surfaces', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -258,15 +259,47 @@ export const odontogramSurfaces = pgTable('odontogram_surfaces', {
 		.references(() => odontogramTeeth.id, { onDelete: 'cascade' }),
 	surface: varchar('surface', { length: 1 }).notNull(), // O | B | L | M | D
 
-	// Surface-level fields
-	restorasi: text('restorasi'),
-	bahan_restorasi: text('bahan_restorasi'),
-
 	created_at: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
 	uniqueToothSurface: unique('uq_tooth_surface')
 		.on(table.tooth_id, table.surface),
 }));
+
+// ─────────────────────────────────────────────
+// LEVEL 2b — Restoration (Clinical Entity)
+// One row per restoration event/procedure
+// ─────────────────────────────────────────────
+export const odontogramRestorations = pgTable('odontogram_restorations', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	tooth_id: uuid('tooth_id')
+		.notNull()
+		.references(() => odontogramTeeth.id, { onDelete: 'cascade' }),
+
+	restorasi: text('restorasi'),
+	bahan_restorasi: text('bahan_restorasi'),
+
+	created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─────────────────────────────────────────────
+// LEVEL 2c — Restoration ↔ Surface Mapping (Junction)
+// Many-to-many relationship between restorations and surfaces
+// ─────────────────────────────────────────────
+export const odontogramRestorationSurfaces = pgTable('odontogram_restoration_surfaces', {
+	id: uuid('id').defaultRandom().primaryKey(),
+
+	restoration_id: uuid('restoration_id')
+		.notNull()
+		.references(() => odontogramRestorations.id, { onDelete: 'cascade' }),
+
+	surface_id: uuid('surface_id')
+		.notNull()
+		.references(() => odontogramSurfaces.id, { onDelete: 'cascade' }),
+}, (table) => ({
+	uniqueRestorationSurface: unique('uq_restoration_surface')
+		.on(table.restoration_id, table.surface_id),
+}));
+
 
 // ─────────────────────────────────────────────
 // LEVEL 3a — Diagnoses (ICD-10)
@@ -490,12 +523,24 @@ export const encounterOdontogramsRelations = relations(encounterOdontograms, ({ 
 export const odontogramTeethRelations = relations(odontogramTeeth, ({ one, many }) => ({
 	odontogram: one(encounterOdontograms, { fields: [odontogramTeeth.odontogram_id], references: [encounterOdontograms.id] }),
 	surfaces: many(odontogramSurfaces),
+	restorations: many(odontogramRestorations),
 	diagnoses: many(odontogramDiagnoses),
 	procedures: many(odontogramProcedures)
 }));
 
-export const odontogramSurfacesRelations = relations(odontogramSurfaces, ({ one }) => ({
-	tooth: one(odontogramTeeth, { fields: [odontogramSurfaces.tooth_id], references: [odontogramTeeth.id] })
+export const odontogramSurfacesRelations = relations(odontogramSurfaces, ({ one, many }) => ({
+	tooth: one(odontogramTeeth, { fields: [odontogramSurfaces.tooth_id], references: [odontogramTeeth.id] }),
+	restorationSurfaces: many(odontogramRestorationSurfaces)
+}));
+
+export const odontogramRestorationsRelations = relations(odontogramRestorations, ({ one, many }) => ({
+	tooth: one(odontogramTeeth, { fields: [odontogramRestorations.tooth_id], references: [odontogramTeeth.id] }),
+	restorationSurfaces: many(odontogramRestorationSurfaces)
+}));
+
+export const odontogramRestorationSurfacesRelations = relations(odontogramRestorationSurfaces, ({ one }) => ({
+	restoration: one(odontogramRestorations, { fields: [odontogramRestorationSurfaces.restoration_id], references: [odontogramRestorations.id] }),
+	surface: one(odontogramSurfaces, { fields: [odontogramRestorationSurfaces.surface_id], references: [odontogramSurfaces.id] })
 }));
 
 export const odontogramDiagnosesRelations = relations(odontogramDiagnoses, ({ one }) => ({

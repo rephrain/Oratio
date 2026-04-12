@@ -413,9 +413,25 @@
 					>
 						Patients Today
 					</p>
-					<h3 class="text-3xl font-black text-blue-900 leading-tight">
-						{stats.patientsToday || 0}
-					</h3>
+					<div class="flex items-center gap-2 mt-1">
+						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+							{stats.patientsToday || 0}
+						</h3>
+						{#if stats.patientsTodayChange !== undefined}
+							{@const chg = stats.patientsTodayChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
+										{isPos ? 'trending_up' : 'trending_down'}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
 				</div>
 				<div
 					class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
@@ -436,12 +452,25 @@
 					>
 						Avg. Wait Time
 					</p>
-					<h3 class="text-3xl font-black text-blue-900 leading-tight">
-						{stats.avgWaitMinutes || 0}<span
-							class="text-sm font-bold text-slate-400 ml-1"
-							>m</span
-						>
-					</h3>
+					<div class="flex items-center gap-2 mt-1">
+						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+							{stats.avgWaitMinutes || 0}<span class="text-sm font-bold text-slate-400 ml-1">m</span>
+						</h3>
+						{#if stats.avgWaitMinutesChange !== undefined}
+							{@const chg = stats.avgWaitMinutesChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
+										{isPos ? 'trending_up' : 'trending_down'}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
 				</div>
 				<div
 					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
@@ -462,12 +491,25 @@
 					>
 						Avg. Treatment Time
 					</p>
-					<h3 class="text-3xl font-black text-blue-900 leading-tight">
-						{stats.avgTreatmentMinutes || 0}<span
-							class="text-sm font-bold text-slate-400 ml-1"
-							>m</span
-						>
-					</h3>
+					<div class="flex items-center gap-2 mt-1">
+						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+							{stats.avgTreatmentMinutes || 0}<span class="text-sm font-bold text-slate-400 ml-1">m</span>
+						</h3>
+						{#if stats.avgTreatmentMinutesChange !== undefined}
+							{@const chg = stats.avgTreatmentMinutesChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
+										{isPos ? 'trending_up' : 'trending_down'}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
 				</div>
 				<div
 					class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
@@ -488,14 +530,27 @@
 					>
 						Completed
 					</p>
-					<h3 class="text-3xl font-black text-blue-900 leading-tight">
-						{stats.completedToday || 0}<span
-							class="text-sm font-bold text-slate-300 mx-1"
-							>/</span
-						><span class="text-xl text-slate-400"
-							>{stats.patientsToday || 0}</span
-						>
-					</h3>
+					<div class="flex items-center gap-2 mt-1">
+						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+							{stats.completedToday || 0}
+							<span class="text-sm font-bold text-slate-300 mx-1">/</span>
+							<span class="text-xl text-slate-400">{stats.patientsToday || 0}</span>
+						</h3>
+						{#if stats.completedTodayChange !== undefined}
+							{@const chg = stats.completedTodayChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
+										{isPos ? 'trending_up' : 'trending_down'}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
 				</div>
 				<div
 					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"

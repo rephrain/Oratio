@@ -11,9 +11,9 @@
 
 	const dispatch = createEventDispatcher();
 
-	let t = { surfaces: [], diagnoses: [], procedures: [], protesa: '', bahan_protesa: '' };
-	let selectedSurfaces = []; 
+	let t = { restorations: [], diagnoses: [], procedures: [], protesa: '', bahan_protesa: '' };
 	let initializedFor = null;
+	let mapComponents = [];
 
 	// ── Clinical ↔ Positional surface name mapping ──
 	function getClinicalName(positional, toothNum) {
@@ -25,8 +25,8 @@
 		if (positional === 'center') return isAnterior ? 'I' : 'O';
 		if (positional === 'top') return isUpper ? 'B' : 'L';
 		if (positional === 'bottom') return isUpper ? 'P' : 'B';
-		if (positional === 'left') return isRightSideOfMouth ? 'M' : 'D';
-		if (positional === 'right') return isRightSideOfMouth ? 'D' : 'M';
+		if (positional === 'left') return isRightSideOfMouth ? 'D' : 'M';
+		if (positional === 'right') return isRightSideOfMouth ? 'M' : 'D';
 		return '';
 	}
 
@@ -38,8 +38,8 @@
 
 		const c = clinical.toUpperCase();
 		if (c === 'O' || c === 'I') return 'center';
-		if (c === 'M') return isRightSideOfMouth ? 'left' : 'right';
-		if (c === 'D') return isRightSideOfMouth ? 'right' : 'left';
+		if (c === 'M') return isRightSideOfMouth ? 'right' : 'left';
+		if (c === 'D') return isRightSideOfMouth ? 'left' : 'right';
 		if (c === 'B' || c === 'F' || c === 'LA' || c === 'V') {
 			return isUpper ? 'top' : 'bottom';
 		}
@@ -61,15 +61,14 @@
 
 	$: if (show && initialData && initialData.tooth_number !== initializedFor) {
 		const newT = JSON.parse(JSON.stringify(initialData));
-		if (!newT.surfaces) newT.surfaces = [];
+		if (!newT.restorations) newT.restorations = [];
 		if (!newT.diagnoses) newT.diagnoses = [];
 		if (!newT.procedures) newT.procedures = [];
 		if (!newT.protesa) newT.protesa = '';
 		if (!newT.bahan_protesa) newT.bahan_protesa = '';
 		
 		t = newT;
-		selectedSurfaces = t.surfaces.map(s => getPositionalName(s.surface, t.tooth_number));
-		isTerminal = ['Gigi Hilang', 'EXTRACTED', 'MISSING', 'Sisa Akar', 'Retained root'].includes(t.keadaan);
+		isTerminal = ['mis', 'rrx'].includes(t.keadaan);
 		initializedFor = t.tooth_number;
 	}
 
@@ -81,39 +80,50 @@
 
 	function handleKeadaanChange(e) {
 		t.keadaan = e.target.value;
-		isTerminal = ['Gigi Hilang', 'EXTRACTED', 'MISSING', 'Sisa Akar', 'Retained root'].includes(t.keadaan);
+		isTerminal = ['mis', 'rrx'].includes(t.keadaan);
 		if (isTerminal) {
-			t.surfaces = [];
-			selectedSurfaces = [];
+			t.restorations = [];
 		}
 	}
 
-	function handleSurfaceClick(e) {
+	function handleRestorationSurfaceClick(restorationIndex, e) {
 		if (isTerminal) return;
-		const positional = e.detail.surfaceArea; // 'top', 'bottom', etc.
-		const clinical = getClinicalName(positional, t.tooth_number); // 'O', 'M', etc.
+		const positional = e.detail.surfaceArea;
+		const clinical = getClinicalName(positional, t.tooth_number);
 
-		if (selectedSurfaces.includes(positional)) {
+		let r = t.restorations[restorationIndex];
+		if (!r.surfaces) r.surfaces = [];
+
+		if (r.surfaces.includes(clinical)) {
 			// Deselect
-			selectedSurfaces = selectedSurfaces.filter(s => s !== positional);
-			t.surfaces = t.surfaces.filter(s => s.surface !== clinical);
+			r.surfaces = r.surfaces.filter(s => s !== clinical);
 		} else {
 			// Select
-			selectedSurfaces = [...selectedSurfaces, positional];
-			t.surfaces = [...t.surfaces, { surface: clinical, restorasi: '', bahan_restorasi: '' }];
+			r.surfaces = [...r.surfaces, clinical];
 		}
 		t = t;
 	}
 
-	function selectAllSurfaces() {
+	function selectAllSurfaces(restorationIndex) {
 		if (isTerminal) return;
+		
+		if (mapComponents[restorationIndex]) {
+			mapComponents[restorationIndex].flashAll();
+		}
+
 		const allPositional = ['top', 'bottom', 'left', 'right', 'center'];
-		selectedSurfaces = [...allPositional];
 		const allClinical = allPositional.map(p => getClinicalName(p, t.tooth_number));
-		t.surfaces = allClinical.map(clinical => {
-			const existing = t.surfaces.find(s => s.surface === clinical);
-			return existing || { surface: clinical, restorasi: '', bahan_restorasi: '' };
-		});
+		t.restorations[restorationIndex].surfaces = allClinical;
+		t = t;
+	}
+
+	function createRestoration() {
+		t.restorations = [...t.restorations, { restorasi: '', bahan_restorasi: '', surfaces: [] }];
+		t = t;
+	}
+
+	function removeRestoration(i) {
+		t.restorations = t.restorations.filter((_, idx) => idx !== i);
 		t = t;
 	}
 
@@ -129,13 +139,13 @@
 	}
 
 	function handleRestorasiChange(i, val) {
-		t.surfaces[i].restorasi = val;
-		if (!val) t.surfaces[i].bahan_restorasi = '';
+		t.restorations[i].restorasi = val;
+		if (!val) t.restorations[i].bahan_restorasi = '';
 		t = t;
 	}
 
 	function handleBahanRestorasiChange(i, val) {
-		t.surfaces[i].bahan_restorasi = val;
+		t.restorations[i].bahan_restorasi = val;
 		t = t;
 	}
 
@@ -218,7 +228,7 @@
 						<select class="w-full rounded-xl border-slate-200 text-sm focus:border-primary shadow-sm {isTerminal ? 'bg-red-50 text-red-700 border-red-200 font-bold' : ''}" value={t.keadaan} on:change={handleKeadaanChange}>
 							<option value="">-- Pilih Keadaan --</option>
 							{#each KEADAAN as k}
-								<option value={k}>{k}</option>
+								<option value={k.key}>{k.label}</option>
 							{/each}
 						</select>
 					</div>
@@ -228,7 +238,7 @@
 							<select class="w-full rounded-xl border-slate-200 text-sm focus:border-primary shadow-sm" value={t.protesa} on:change={handleProtesaChange}>
 								<option value="">-- Tidak Ada --</option>
 								{#each PROTESA as k}
-									<option value={k}>{k}</option>
+									<option value={k.key}>{k.label}</option>
 								{/each}
 							</select>
 						</div>
@@ -237,7 +247,7 @@
 							<select class="w-full rounded-xl border-slate-200 text-sm focus:border-primary shadow-sm disabled:bg-slate-100 disabled:text-slate-400" value={t.bahan_protesa} on:change={handleBahanProtesaChange} disabled={!t.protesa}>
 								<option value="">-- Tidak Ada --</option>
 								{#each BAHAN_PROTESA as k}
-									<option value={k}>{k}</option>
+									<option value={k.key}>{k.label}</option>
 								{/each}
 							</select>
 						</div>
@@ -245,36 +255,66 @@
 				</div>
 			</section>
 
-			<!-- Level 2: Surfaces -->
 			{#if !isTerminal}
-			<section class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-6 lg:flex-row lg:items-start">
-				<div class="flex-shrink-0 w-full lg:w-[180px] flex flex-col items-center">
-					<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 w-full">Level 2: Permukaan</h3>
-					<SingleToothMap number={t.tooth_number} {selectedSurfaces} on:surfaceClick={handleSurfaceClick} />
-					<button class="mt-3 text-[10px] font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 w-full text-center" on:click={selectAllSurfaces}>PILIH SEMUA P.M.K</button>
+			<section class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+				<div class="flex items-center justify-between">
+					<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Level 2: Restorasi & Permukaan</h3>
+					<button class="text-xs font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 flex items-center gap-1" on:click={createRestoration}>
+						<span class="material-symbols-outlined text-[14px]">add</span> Tambah
+					</button>
 				</div>
-				<div class="flex-1 w-full space-y-3">
-					{#if t.surfaces.length === 0}
+				
+				<div class="space-y-4">
+					{#if t.restorations.length === 0}
 						<div class="border border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs font-bold p-4 text-center rounded-xl h-full flex items-center justify-center">
-							Pilih permukaan gigi (O, M, D, B, L) pada gambar untuk mengisi restorasi.
+							Belum ada restorasi untuk gigi ini. Klik "Tambah" untuk mencatat.
 						</div>
 					{:else}
-						{#each t.surfaces as surf, i (surf.surface)}
-							<div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-								<div class="text-[10px] font-black uppercase text-indigo-500 mb-2">Permukaan {getClinicalFullName(surf.surface)}</div>
-								<div class="space-y-2">
-									<select class="w-full text-xs rounded-lg border-indigo-200 focus:border-primary shadow-sm bg-white" value={t.surfaces[i].restorasi} on:change={(e) => handleRestorasiChange(i, e.target.value)}>
-										<option value="">-- Jenis Restorasi --</option>
-										{#each RESTORASI as r}
-											<option value={r}>{r}</option>
-										{/each}
-									</select>
-									<select class="w-full text-xs rounded-lg border-indigo-200 focus:border-primary shadow-sm bg-white disabled:opacity-60" value={t.surfaces[i].bahan_restorasi} on:change={(e) => handleBahanRestorasiChange(i, e.target.value)} disabled={!t.surfaces[i].restorasi}>
-										<option value="">-- Bahan Restorasi --</option>
-										{#each BAHAN_RESTORASI as r}
-											<option value={r}>{r}</option>
-										{/each}
-									</select>
+						{#each t.restorations as rest, i}
+							<div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col gap-4">
+								<div class="flex justify-between items-center border-b border-indigo-100 pb-2">
+									<div class="text-[11px] font-black uppercase text-indigo-500">Restorasi {i + 1}</div>
+									<button class="text-slate-400 hover:text-red-500" on:click={() => removeRestoration(i)}><span class="material-symbols-outlined text-[18px]">close</span></button>
+								</div>
+								
+								<div class="grid grid-cols-1 md:grid-cols-[1fr_120px] gap-6">
+									<div class="space-y-3">
+										<div>
+											<label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Jenis Restorasi</label>
+											<select class="w-full text-sm rounded-lg border-indigo-200 focus:border-primary shadow-sm bg-white" value={rest.restorasi} on:change={(e) => handleRestorasiChange(i, e.target.value)}>
+												<option value="">-- Pilih Jenis --</option>
+												{#each RESTORASI as r}
+													<option value={r.key}>{r.label}</option>
+												{/each}
+											</select>
+										</div>
+										<div>
+											<label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Bahan Restorasi</label>
+											<select class="w-full text-sm rounded-lg border-indigo-200 focus:border-primary shadow-sm bg-white disabled:opacity-60" value={rest.bahan_restorasi} on:change={(e) => handleBahanRestorasiChange(i, e.target.value)} disabled={!rest.restorasi}>
+												<option value="">-- Pilih Bahan --</option>
+												{#each BAHAN_RESTORASI as r}
+													<option value={r.key}>{r.label}</option>
+												{/each}
+											</select>
+										</div>
+									</div>
+
+									<div class="flex flex-col items-center shrink-0 border-l border-indigo-100 pl-4 py-1">
+										<label class="text-[10px] font-bold text-slate-500 uppercase block mb-2 text-center w-full">Permukaan</label>
+										<div class="scale-75 origin-top mb-[-15px]">
+											<SingleToothMap bind:this={mapComponents[i]} number={t.tooth_number} selectedSurfaces={rest.surfaces.map(s => getPositionalName(s, t.tooth_number))} on:surfaceClick={(e) => handleRestorationSurfaceClick(i, e)} />
+										</div>
+										<button class="mt-1 text-[9px] font-bold text-primary hover:bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 w-full text-center" on:click={() => selectAllSurfaces(i)}>PILIH SEMUA</button>
+
+										{#if rest.surfaces.length > 0}
+											<div class="mt-2 flex flex-wrap gap-1 justify-center">
+												{#each rest.surfaces as surf}
+													<!-- svelte-ignore a11y-click-events-have-key-events -->
+													<span role="button" tabindex="0" class="text-[9px] font-bold text-white bg-indigo-500 hover:bg-indigo-600 active:scale-90 active:bg-indigo-700 transition-all cursor-pointer px-1.5 py-0.5 rounded shadow-sm" on:click={() => handleRestorationSurfaceClick(i, { detail: { surfaceArea: getPositionalName(surf, t.tooth_number) }})} title="Hapus">{surf}</span>
+												{/each}
+											</div>
+										{/if}
+									</div>
 								</div>
 							</div>
 						{/each}

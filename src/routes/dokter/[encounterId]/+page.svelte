@@ -29,8 +29,15 @@
 		BAHAN_PROTESA,
 		PROTESA,
 	} from "$lib/utils/constants.js";
-	import { formatDate, getWhatsAppUrl } from "$lib/utils/formatters.js";
+	import { formatDate, getWhatsAppUrl, generateSOAPWHOText } from "$lib/utils/formatters.js";
 	import { addToast } from "$lib/stores/toast.js";
+
+	// Helper: look up a label from a key in {key, label}[] constants
+	function lookupLabel(list, key) {
+		if (!key) return '';
+		const found = list.find(item => item.key === key);
+		return found ? found.label : key; // fallback to raw key if not found
+	}
 
 	export let data;
 
@@ -243,7 +250,7 @@
 		keadaan: "",
 		protesa: "",
 		bahan_protesa: "",
-		surfaces: [],
+		restorations: [],
 		diagnoses: [],
 		procedures: [],
 	};
@@ -290,45 +297,51 @@
 		if (!acc[tn]) acc[tn] = {};
 		
 		let color = "#10B981"; // Default green
-		if (d.keadaan && d.keadaan.toUpperCase().includes("CARIES")) color = "#ffffff";
-		else if (d.keadaan === "MISSING") color = "#9CA3AF";
-		else if (d.keadaan === "Gigi sehat, normal, tanpa kelainan") color = "#ffffff";
+		if (d.keadaan === 'car' || d.keadaan === 'cav') color = "#ffffff";
+		else if (d.keadaan === 'mis') color = "#9CA3AF";
+		else if (d.keadaan === 'sou') color = "#ffffff";
 
-		if (d.keadaan === "EXTRACTED" || d.keadaan === "Gigi Hilang") acc[tn].global = "Missing";
-		else if (d.keadaan === "MISSING" || d.protesa === "Partial Denture" || d.protesa === "Full Denture")
+		if (d.keadaan === 'mis') acc[tn].global = "Missing";
+		else if (d.protesa === 'prd' || d.protesa === 'fld' || d.protesa === 'fud')
 			acc[tn].global = "Missing";
-		else if (d.keadaan === "Gigi Non-Vital")
+		else if (d.keadaan === 'nvt')
 			acc[tn].global = "Non-Vital";
-		else if (d.keadaan === "Gigi tidak ada/ tidak diketahui")
+		else if (d.keadaan === 'non')
 			acc[tn].global = "NON";
-		else if (d.keadaan === "Un-erupted")
+		else if (d.keadaan === 'une')
 			acc[tn].global = "UNE";
-		else if (d.keadaan === "Partial erupted")
+		else if (d.keadaan === 'pre')
 			acc[tn].global = "PRE";
-		else if (d.keadaan === "Anomali")
+		else if (d.keadaan === 'ano')
 			acc[tn].global = "ANO";
-		else if ((d.keadaan && d.keadaan.includes("Fracture")) || d.keadaan === "Root fracture")
+		else if (d.keadaan === 'cfr' || d.keadaan === 'frx')
 			acc[tn].global = "Fracture";
-		else if (d.keadaan === "Sisa Akar" || d.keadaan === "Retained root")
+		else if (d.keadaan === 'rrx')
 			acc[tn].global = "Sisa Akar";
 
-		if (d.surfaces && d.surfaces.length > 0) {
-			d.surfaces.forEach(s => {
+		if (d.restorations && d.restorations.length > 0) {
+			d.restorations.forEach(r => {
 				const mappedData = {
 					condition: d.keadaan,
 					color,
-					restoration: s.restorasi,
-					bahan_restorasi: s.bahan_restorasi,
+					restoration: r.restorasi,
+					bahan_restorasi: r.bahan_restorasi,
 					protesa: d.protesa,
 				};
-				const keys = parseSurfaces(s.surface, tn);
-				keys.forEach(k => {
-					if (!acc[tn][k]) acc[tn][k] = mappedData;
-				});
+				if (r.surfaces && r.surfaces.length > 0) {
+					r.surfaces.forEach(s => {
+						const keys = parseSurfaces(s, tn);
+						keys.forEach(k => {
+							if (!acc[tn][k]) acc[tn][k] = mappedData;
+						});
+					});
+				} else {
+					if (!acc[tn]["center"]) acc[tn]["center"] = mappedData;
+				}
 
-				if (s.restorasi === "Root Canal Treatment / Perawatan Saluran Akar") {
+				if (r.restorasi === 'rct') {
 					acc[tn].global = "RCT";
-				} else if (s.restorasi === "Pontic") {
+				} else if (r.restorasi === 'pon') {
 					acc[tn].global = "Missing";
 				}
 			});
@@ -366,7 +379,7 @@
 							keadaan: d.keadaan,
 							protesa: d.protesa,
 							bahan_protesa: d.bahan_protesa,
-							surfaces: [],
+							restorations: [],
 							diagnoses: (d.all_diagnoses || []).map(diag => ({
 								icd10_id: diag.icd10_id,
 								diagnosis_code: diag.icd10_code,
@@ -380,13 +393,18 @@
 							}))
 						};
 					}
-					if (d.surface) {
-						if (!grouped[d.tooth_number].surfaces.find(s => s.surface === d.surface)) {
-							grouped[d.tooth_number].surfaces.push({
-								surface: d.surface,
+					if (d.restorasi) {
+						let rest = grouped[d.tooth_number].restorations.find(r => r.restorasi === d.restorasi && r.bahan_restorasi === d.bahan_restorasi);
+						if (!rest) {
+							rest = {
 								restorasi: d.restorasi,
-								bahan_restorasi: d.bahan_restorasi
-							});
+								bahan_restorasi: d.bahan_restorasi,
+								surfaces: []
+							};
+							grouped[d.tooth_number].restorations.push(rest);
+						}
+						if (d.surface && !rest.surfaces.includes(d.surface)) {
+							rest.surfaces.push(d.surface);
 						}
 					}
 				}
@@ -446,9 +464,7 @@
 			);
 			if (encRes.ok) {
 				const encData = await encRes.json();
-				patientHistory = (encData.data || []).filter(
-					(e) => e.encounter?.id !== encounterId,
-				);
+				patientHistory = encData.data || [];
 			}
 
 			// Load medical background
@@ -720,7 +736,7 @@
 					keadaan: "",
 					protesa: "",
 					bahan_protesa: "",
-					surfaces: clinicalSurface ? [{ surface: clinicalSurface, restorasi: "", bahan_restorasi: "" }] : [],
+					restorations: clinicalSurface ? [{ restorasi: "", bahan_restorasi: "", surfaces: [clinicalSurface] }] : [],
 					diagnoses: [],
 					procedures: [],
 				};
@@ -764,12 +780,31 @@
 	async function saveForm(discharge = false) {
 		saving = true;
 		try {
+			// Auto-generate structured SOAP text for SOAP_WHO mode
+			let soapSubjective = subjective;
+			let soapObjective = objective;
+			let soapAssessment = assessment;
+			let soapPlan = plan;
+
+			if (formMode === "SOAP_WHO") {
+				const currentReasonDisplay = newReasonCode ? newReasonDisplay : reasonDisplay;
+				const soapText = generateSOAPWHOText({
+					reasonDisplay: currentReasonDisplay,
+					details: odontogram.details || [],
+					constants: { KEADAAN, RESTORASI, BAHAN_RESTORASI, PROTESA, BAHAN_PROTESA, TOOTH_SURFACES },
+				});
+				soapSubjective = soapText.subjective;
+				soapObjective = soapText.objective;
+				soapAssessment = soapText.assessment;
+				soapPlan = soapText.plan;
+			}
+
 			const body = {
 				form_mode: formMode,
-				subjective,
-				objective,
-				assessment,
-				plan,
+				subjective: soapSubjective,
+				objective: soapObjective,
+				assessment: soapAssessment,
+				plan: soapPlan,
 				resep,
 				keterangan,
 				reason_code:
@@ -1788,64 +1823,133 @@
 														</div>
 													</td>
 													<td class="px-4 py-3">
-														{#if d.surface}
-															<span
-																class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold"
-																>{d.surface}</span
-															>
-														{:else}
-															<span
-																class="text-slate-300"
-																>-</span
-															>
-														{/if}
-													</td>
-													<td class="px-4 py-3">
-														{#if d.keadaan}
-															{@const isBad =
-																d.keadaan ===
-																	"CARIES" ||
-																d.keadaan ===
-																	"EXTRACTED" ||
-																d.keadaan ===
-																	"MISSING"}
-															{@const isGood =
-																d.keadaan ===
-																	"SOUND" ||
-																d.keadaan ===
-																	"RESTORATION"}
-															<span
-																class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider
-																{isBad
-																	? 'bg-red-50 text-red-600 border border-red-100'
-																	: isGood
-																		? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-																		: 'bg-slate-100 text-slate-600 border border-slate-200'}"
-															>
-																{d.keadaan}
-															</span>
-														{:else}
-															<span
-																class="text-slate-300"
-																>-</span
-															>
-														{/if}
-													</td>
-													<td
-														class="px-4 py-3 font-medium text-slate-600"
-														>{d.restorasi ||
-															"-"}</td
-													>
-													<td
-														class="px-4 py-3 text-slate-600"
-														>{d.diagnosis_display ||
-															"-"}</td
-													>
-													<td
-														class="px-4 py-3 text-slate-600"
-														>{d.procedure_display ||
-															"-"}</td
-													>
+														{#if d.restorations && d.restorations.length > 0}
+															<div class="flex flex-wrap gap-1">
+																{#each [...new Set(d.restorations.flatMap((r) => r.surfaces))] as s}
+																	<span
+																		class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold border border-indigo-100"
+																		>{s}</span
+																	>
+																{/each}
+														</div>
+													{:else if d.surface}
+														<span
+															class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold"
+															>{d.surface}</span
+														>
+													{:else}
+														<span
+															class="text-slate-300"
+															>-</span
+														>
+													{/if}
+												</td>
+												<td class="px-4 py-3">
+													{#if d.keadaan}
+														{@const isBad =
+															d.keadaan ===
+																"car" ||
+															d.keadaan ===
+																"mis"}
+														{@const isGood =
+															d.keadaan ===
+																"sou"}
+														<span
+															class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider
+															{isBad
+																? 'bg-red-50 text-red-600 border border-red-100'
+																: isGood
+																	? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+																	: 'bg-slate-100 text-slate-600 border border-slate-200'}"
+														>
+															{lookupLabel(KEADAAN, d.keadaan)}
+														</span>
+													{:else}
+														<span
+															class="text-slate-300"
+															>-</span
+														>
+													{/if}
+												</td>
+												<td
+													class="px-4 py-3 font-medium text-slate-600"
+												>
+													{#if d.restorations && d.restorations.length > 0}
+														<ul
+															class="list-none p-0 m-0 space-y-1"
+														>
+															{#each d.restorations as r}
+																<li
+																	class="text-[11px] leading-tight flex flex-col"
+																>
+																	<span
+																		class="font-bold text-indigo-600"
+																		>{lookupLabel(RESTORASI, r.restorasi) ||
+																			"Restorasi"}</span
+																	>
+																	{#if r.bahan_restorasi}
+																		<span
+																			class="text-[9px] text-slate-400"
+																			>{lookupLabel(BAHAN_RESTORASI, r.bahan_restorasi)}</span
+																		>
+																	{/if}
+																</li>
+															{/each}
+														</ul>
+													{:else}
+														{d.restorasi ? lookupLabel(RESTORASI, d.restorasi) : "-"}
+													{/if}
+												</td>
+												<td
+													class="px-4 py-3 text-slate-600"
+												>
+													{#if d.diagnoses && d.diagnoses.length > 0}
+														<ul
+															class="list-none p-0 m-0 space-y-1"
+														>
+															{#each d.diagnoses as diag}
+																<li
+																	class="text-[11px] leading-tight"
+																>
+																	<span
+																		class="font-bold text-red-600"
+																		>{diag.diagnosis_code ||
+																			"ICD-10"}</span
+																	>
+																	- {diag.diagnosis_display}
+																</li>
+															{/each}
+														</ul>
+													{:else}
+														{d.diagnosis_display ||
+															"-"}
+													{/if}
+												</td>
+												<td
+													class="px-4 py-3 text-slate-600"
+												>
+													{#if d.procedures && d.procedures.length > 0}
+														<ul
+															class="list-none p-0 m-0 space-y-1"
+														>
+															{#each d.procedures as proc}
+																<li
+																	class="text-[11px] leading-tight"
+																>
+																	<span
+																		class="font-bold text-emerald-600"
+																		>{proc.procedure_code ||
+																			"ICD-9"}</span
+																	>
+																	- {proc.procedure_display}
+																</li>
+															{/each}
+														</ul>
+													{:else}
+														{d.procedure_display ||
+															"-"}
+													{/if}
+												</td>
 												</tr>
 											{/each}
 										</tbody>

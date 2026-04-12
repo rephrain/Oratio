@@ -22,6 +22,27 @@ export async function GET({ url, locals }) {
 	const doctorFilter = doctorId ? sql`AND e.doctor_id = ${doctorId}` : sql``;
 	const baseWhere = sql`WHERE 1=1 ${dateFilter} ${doctorFilter}`;
 
+	let prevDateFilter = sql``;
+	let prevBaseWhere = sql`WHERE 1=0`; // default to no matches if no dates provided
+	if (dateFrom && dateTo) {
+		const df = new Date(dateFrom + 'T00:00:00Z');
+		const dt = new Date(dateTo + 'T00:00:00Z');
+		const diffTime = Math.abs(dt - df);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+		
+		const prevDt = new Date(df);
+		prevDt.setDate(prevDt.getDate() - 1);
+		const prevDf = new Date(prevDt);
+		prevDf.setDate(prevDf.getDate() - diffDays + 1);
+
+		const prevDateFromStr = prevDf.toISOString().split('T')[0];
+		const prevDateToStr = prevDt.toISOString().split('T')[0];
+
+		prevDateFilter = sql`AND DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') >= ${prevDateFromStr}
+			   AND DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') <= ${prevDateToStr}`;
+		prevBaseWhere = sql`WHERE 1=1 ${prevDateFilter} ${doctorFilter}`;
+	}
+
 	try {
 		// 1. Overview KPIs
 		const [overview] = await db.execute(sql`
@@ -40,7 +61,6 @@ export async function GET({ url, locals }) {
 			${baseWhere}
 		`);
 
-		// 2. Today / this week counts
 		const [periodCounts] = await db.execute(sql`
 			SELECT
 				COUNT(*) FILTER (
@@ -48,8 +68,16 @@ export async function GET({ url, locals }) {
 					      = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date
 				)::int AS today_count,
 				COUNT(*) FILTER (
+					WHERE DATE(e.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')
+					      = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta' - INTERVAL '1 day')::date
+				)::int AS yesterday_count,
+				COUNT(*) FILTER (
 					WHERE e.created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta' - INTERVAL '7 days')
-				)::int AS week_count
+				)::int AS week_count,
+				COUNT(*) FILTER (
+					WHERE e.created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta' - INTERVAL '14 days')
+					AND e.created_at < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta' - INTERVAL '7 days')
+				)::int AS prev_week_count
 			FROM encounters e
 			WHERE 1=1 ${doctorFilter}
 		`);
@@ -485,6 +513,66 @@ export async function GET({ url, locals }) {
 			LIMIT 30
 		`);
 
+		// 32. Previous Period Aggregates Data
+		const [prevOverview] = await db.execute(sql`
+			SELECT
+				COUNT(*)::int AS total_encounters,
+				COUNT(DISTINCT e.patient_id)::int AS unique_patients,
+				CASE WHEN COUNT(*) > 0
+					THEN ROUND(COUNT(*) FILTER (WHERE e.status IN ('Completed','Discharged'))::numeric / COUNT(*) * 100, 1)
+					ELSE 0 END AS completion_rate
+			FROM encounters e
+			${prevBaseWhere}
+		`);
+
+		const [prevTimingStats] = await db.execute(sql`
+			SELECT
+				ROUND(AVG(wait_minutes) FILTER (WHERE wait_minutes > 0 AND wait_minutes < 300), 1) AS avg_wait_minutes,
+				ROUND(AVG(consult_minutes) FILTER (WHERE consult_minutes > 0 AND consult_minutes < 480), 1) AS avg_consult_minutes
+			FROM (
+				SELECT
+					e.id,
+					EXTRACT(EPOCH FROM (
+						MIN(sh.start_at) FILTER (WHERE sh.status = 'In Progress') -
+						MIN(sh.start_at) FILTER (WHERE sh.status = 'Arrived')
+					)) / 60 AS wait_minutes,
+					EXTRACT(EPOCH FROM (
+						MIN(sh.end_at) FILTER (WHERE sh.status = 'In Progress') -
+						MIN(sh.start_at) FILTER (WHERE sh.status = 'In Progress')
+					)) / 60 AS consult_minutes
+				FROM encounters e
+				JOIN status_history sh ON sh.encounter_id = e.id
+				${prevBaseWhere}
+				GROUP BY e.id
+			) sub
+		`);
+
+		const [prevRevenueStats] = await db.execute(sql`
+			SELECT
+				COALESCE(SUM(ei.subtotal), 0)::bigint AS total_revenue
+			FROM encounters e
+			JOIN encounter_items ei ON ei.encounter_id = e.id
+			${prevBaseWhere}
+		`);
+
+		const calcChange = (curr, prev) => {
+			const c = Number(curr || 0);
+			const p = Number(prev || 0);
+			if (p === 0) return c > 0 ? 100 : 0;
+			return Math.round(((c - p) / p) * 100);
+		};
+
+		const changes = {
+			today_count: calcChange(periodCounts?.today_count, periodCounts?.yesterday_count),
+			week_count: calcChange(periodCounts?.week_count, periodCounts?.prev_week_count),
+			total_encounters: dateFrom && dateTo ? calcChange(overview?.total_encounters, prevOverview?.total_encounters) : 0,
+			unique_patients: dateFrom && dateTo ? calcChange(overview?.unique_patients, prevOverview?.unique_patients) : 0,
+			completion_rate: dateFrom && dateTo ? calcChange(overview?.completion_rate, prevOverview?.completion_rate) : 0,
+			avg_wait_minutes: dateFrom && dateTo ? calcChange(timingStats?.avg_wait_minutes, prevTimingStats?.avg_wait_minutes) : 0,
+			avg_consult_minutes: dateFrom && dateTo ? calcChange(timingStats?.avg_consult_minutes, prevTimingStats?.avg_consult_minutes) : 0,
+			total_revenue: dateFrom && dateTo ? calcChange(revenueStats?.total_revenue, prevRevenueStats?.total_revenue) : 0
+		};
+
 		return json({
 			overview: overview || {},
 			periodCounts: periodCounts || {},
@@ -518,7 +606,8 @@ export async function GET({ url, locals }) {
 			patientRetention: patientRetention || {},
 			timingStats: timingStats || {},
 			odontogramStats: odontogramStats || {},
-			recentEncounters
+			recentEncounters,
+			changes
 		});
 	} catch (err) {
 		console.error('Analytics API error:', err);

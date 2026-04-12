@@ -2,7 +2,8 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms,
-	odontogramTeeth, odontogramSurfaces, odontogramDiagnoses, odontogramProcedures,
+	odontogramTeeth, odontogramSurfaces, odontogramRestorations, odontogramRestorationSurfaces,
+	odontogramDiagnoses, odontogramProcedures,
 	encounterPrescriptions,
 	encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
 } from '$lib/server/db/schema.js';
@@ -64,6 +65,23 @@ export async function GET({ params }) {
 				const surfaces = await db.select().from(odontogramSurfaces)
 					.where(eq(odontogramSurfaces.tooth_id, tooth.id));
 
+				// Fetch restorations for this tooth + their surface mappings
+				const restorations = await db.select().from(odontogramRestorations)
+					.where(eq(odontogramRestorations.tooth_id, tooth.id));
+
+				// Build surface→restoration map via junction table
+				const surfaceRestorationMap = {};
+				for (const rest of restorations) {
+					const junctions = await db.select().from(odontogramRestorationSurfaces)
+						.where(eq(odontogramRestorationSurfaces.restoration_id, rest.id));
+					for (const j of junctions) {
+						surfaceRestorationMap[j.surface_id] = {
+							restorasi: rest.restorasi,
+							bahan_restorasi: rest.bahan_restorasi
+						};
+					}
+				}
+
 				// Fetch diagnoses for this tooth (with terminology join)
 				const icd10Term = alias(terminologyMaster, 'icd10_term');
 				const diagnoses = await db.select({
@@ -96,14 +114,15 @@ export async function GET({ params }) {
 				// Build one flat record per surface (or one record if no surfaces)
 				if (surfaces.length > 0) {
 					for (const surf of surfaces) {
+						const restData = surfaceRestorationMap[surf.id] || {};
 						odontoDetails.push({
 							id: surf.id,
 							odontogram_id: odontoId,
 							tooth_number: tooth.tooth_number,
 							surface: surf.surface,
 							keadaan: tooth.keadaan,
-							restorasi: surf.restorasi,
-							bahan_restorasi: surf.bahan_restorasi,
+							restorasi: restData.restorasi || null,
+							bahan_restorasi: restData.bahan_restorasi || null,
 							protesa: tooth.protesa,
 							bahan_protesa: tooth.bahan_protesa,
 							icd10_id: primaryDiag?.icd10_id || null,
@@ -114,21 +133,21 @@ export async function GET({ params }) {
 							icd9cm_code: primaryProc?.icd9cm_code || null,
 							icd9cm_display: primaryProc?.icd9cm_display || null,
 							created_at: tooth.created_at,
-							// Include full arrays for advanced consumers
 							all_diagnoses: diagnoses,
 							all_procedures: procedures
 						});
 					}
 				} else {
-					// Tooth with no surface-level data
+					// Tooth with no surface-level data — check for restorations without surface linkage
+					const firstRest = restorations[0] || null;
 					odontoDetails.push({
 						id: tooth.id,
 						odontogram_id: odontoId,
 						tooth_number: tooth.tooth_number,
 						surface: '',
 						keadaan: tooth.keadaan,
-						restorasi: null,
-						bahan_restorasi: null,
+						restorasi: firstRest?.restorasi || null,
+						bahan_restorasi: firstRest?.bahan_restorasi || null,
 						protesa: tooth.protesa,
 						bahan_protesa: tooth.bahan_protesa,
 						icd10_id: primaryDiag?.icd10_id || null,
@@ -422,26 +441,46 @@ export async function PUT({ params, request }) {
 					bahan_protesa: d.bahan_protesa
 				}).returning();
 
-				// --- SURFACES ---
-				if (Array.isArray(d.surfaces) && d.surfaces.length > 0) {
-					for (const s of d.surfaces) {
-						if (s.surface) {
-							await db.insert(odontogramSurfaces).values({
+				// --- SURFACES AND RESTORATIONS ---
+				const insertedSurfaces = {}; // map: clinical surface letter -> inserted surface row id
+				if (Array.isArray(d.restorations) && d.restorations.length > 0) {
+					for (const restData of d.restorations) {
+						let restId = null;
+						// Only create Restoration if a valid `restorasi` string is selected
+						if (restData.restorasi) {
+							const [newRest] = await db.insert(odontogramRestorations).values({
 								tooth_id: tooth.id,
-								surface: s.surface,
-								restorasi: s.restorasi,
-								bahan_restorasi: s.bahan_restorasi
-							});
+								restorasi: restData.restorasi,
+								bahan_restorasi: restData.bahan_restorasi
+							}).returning();
+							restId = newRest.id;
+						}
+
+						if (Array.isArray(restData.surfaces) && restData.surfaces.length > 0) {
+							for (const s of restData.surfaces) {
+								if (!s) continue;
+								
+								let surfId = insertedSurfaces[s];
+								if (!surfId) {
+									// Insert the unique geometric surface for this tooth exactly once
+									const [surfRow] = await db.insert(odontogramSurfaces).values({
+										tooth_id: tooth.id,
+										surface: s
+									}).returning();
+									surfId = surfRow.id;
+									insertedSurfaces[s] = surfId;
+								}
+								
+								// Link via Junction Table
+								if (restId) {
+									await db.insert(odontogramRestorationSurfaces).values({
+										restoration_id: restId,
+										surface_id: surfId
+									});
+								}
+							}
 						}
 					}
-				} else if (d.surface) {
-					// Legacy fallback
-					await db.insert(odontogramSurfaces).values({
-						tooth_id: tooth.id,
-						surface: d.surface,
-						restorasi: d.restorasi,
-						bahan_restorasi: d.bahan_restorasi
-					});
 				}
 
 				// --- DIAGNOSES ---
@@ -515,17 +554,37 @@ export async function PUT({ params, request }) {
 		}
 	}
 
-	// Upsert encounter items
+	// Upsert encounter items (deduplicate by item_id to respect unique constraint)
 	if (body.encounter_items) {
 		await db.delete(encounterItems).where(eq(encounterItems.encounter_id, params.id));
+
+		// Merge duplicates: same item_id → sum quantities, keep price_at_time from first occurrence
+		const mergedItems = new Map();
 		for (const item of body.encounter_items) {
-			const subtotal = (item.quantity || 1) * parseInt(item.price_at_time || 0);
+			const key = item.item_id;
+			const qty = item.quantity || 1;
+			const price = parseInt(item.price_at_time || 0);
+			if (mergedItems.has(key)) {
+				const existing = mergedItems.get(key);
+				existing.quantity += qty;
+				existing.subtotal = existing.quantity * existing.price_at_time;
+			} else {
+				mergedItems.set(key, {
+					item_id: key,
+					quantity: qty,
+					price_at_time: price,
+					subtotal: qty * price
+				});
+			}
+		}
+
+		for (const item of mergedItems.values()) {
 			await db.insert(encounterItems).values({
 				encounter_id: params.id,
 				item_id: item.item_id,
-				quantity: item.quantity || 1,
-				price_at_time: parseInt(item.price_at_time || 0),
-				subtotal: subtotal
+				quantity: item.quantity,
+				price_at_time: item.price_at_time,
+				subtotal: item.subtotal
 			});
 		}
 	}

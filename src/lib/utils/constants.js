@@ -113,103 +113,103 @@ export const TOOTH_SURFACES = [
 ];
 
 export const KEADAAN = [
-	"Gigi sehat, normal, tanpa kelainan",
-	"Gigi tidak ada/ tidak diketahui",
-	"Un-erupted",
-	"Partial erupted",
-	"Impacted visible",
-	"Anomali",
-	"Diastema",
-	"Atrisi",
-	"Abrasi",
-	"Caries/ Karies",
-	"Crown Fracture/ Fraktur Mahkota",
-	"Gigi Non-Vital",
-	"Sisa Akar",
-	"Gigi Hilang",
-	"tooth present",
-	"no information",
-	"erupting",
-	"Retained root",
-	"Parapulpal pin",
-	"Resorption",
-	"Denticle",
-	"Dilacerations",
-	"Root fracture",
-	"cavity",
-	"apical periodontitis",
-	"calculus",
-	"erosion",
-	"fluorosis",
-	"marginal periodontitis",
-	"perforation",
-	"Mesio version",
-	"Disto version",
-	"Vestibule version",
-	"Linguo version",
-	"Palato version",
-	"Mesiolinguo version",
-	"Mesiopalato version",
-	"Distolabioversion",
-	"Distovestibulo version",
-	"Distopalato version",
-	"splint"
+	{ key: 'sou', label: "Gigi sehat, normal, tanpa kelainan" },
+	{ key: 'non', label: "Gigi tidak ada/ tidak diketahui" },
+	{ key: 'une', label: "Un-erupted" },
+	{ key: 'pre', label: "Partial erupted" },
+	{ key: 'imv', label: "Impacted visible" },
+	{ key: 'ano', label: "Anomali" },
+	{ key: 'dia', label: "Diastema" },
+	{ key: 'att', label: "Atrisi" },
+	{ key: 'abr', label: "Abrasi" },
+	{ key: 'car', label: "Caries/ Karies" },
+	{ key: 'cfr', label: "Crown Fracture/ Fraktur Mahkota" },
+	{ key: 'nvt', label: "Gigi Non-Vital" },
+	{ key: 'rrx', label: "Sisa Akar" },
+	{ key: 'mis', label: "Gigi Hilang" },
+	{ key: 'Pre', label: "tooth present" },
+	{ key: 'non', label: "no information" },
+	{ key: 'eru', label: "erupting" },
+	{ key: 'rrx', label: "Retained root" },
+	{ key: 'ppx', label: "Parapulpal pin" },
+	{ key: 'rex', label: "Resorption" },
+	{ key: 'dex', label: "Denticle" },
+	{ key: 'dix', label: "Dilacerations" },
+	{ key: 'frx', label: "Root fracture" },
+	{ key: 'cav', label: "cavity" },
+	{ key: 'app', label: "apical periodontitis" },
+	{ key: 'cal', label: "calculus" },
+	{ key: 'ero', label: "erosion" },
+	{ key: 'Flu', label: "fluorosis" },
+	{ key: 'map', label: "marginal periodontitis" },
+	{ key: 'pex', label: "perforation" },
+	{ key: 'M.ver', label: "Mesio version" },
+	{ key: 'D.ver', label: "Disto version" },
+	{ key: 'V.ver', label: "Vestibule version" },
+	{ key: 'L.ver', label: "Linguo version" },
+	{ key: 'P.ver', label: "Palato version" },
+	{ key: 'ML.ver', label: "Mesiolinguo version" },
+	{ key: 'MP.ver', label: "Mesiopalato version" },
+	{ key: 'DL.ver', label: "Distolabioversion" },
+	{ key: 'DV.ver', label: "Distovestibulo version" },
+	{ key: 'DP.ver', label: "Distopalato version" },
+	{ key: 'spl', label: "splint" }
 ]
 
 export const BAHAN_RESTORASI = [
-	"Amalgam Filling",
-	"GIC/ Silika",
-	"Composite filling",
-	"Fissure Sealant",
-	"glass ionomer filling",
-	"ceramic filling",
-	"tooth coloured filling",
-	"unidentified filing",
-	"Acrilic",
-	"Full Metal",
-	"Non-precious metal",
-	"Gold Metal",
-	"Gold",
-	"Metal Porcelain",
-	"Root filling",
-	"Porcelain",
-	"Ceramic"
+	{ key: 'amf', label: "Amalgam Filling" },
+	{ key: 'gif', label: "GIC/ Silika" },
+	{ key: 'cof', label: "Composite filling" },
+	{ key: 'fis', label: "Fissure Sealant" },
+	{ key: 'gif', label: "glass ionomer filling" },
+	{ key: 'cef', label: "ceramic filling" },
+	{ key: 'tcf', label: "tooth coloured filling" },
+	{ key: 'uif', label: "unidentified filing" },
+	{ key: 'acr', label: "Acrilic" },
+	{ key: 'Full Metal', label: "Full Metal" },
+	{ key: 'Non-precious metal', label: "Non-precious metal" },
+	{ key: 'Gold Metal', label: "Gold Metal" },
+	{ key: 'Gold', label: "Gold" },
+	{ key: 'Metal Porcelain', label: "Metal Porcelain" },
+	{ key: 'rfx', label: "Root filling" },
+	{ key: 'Porcelain', label: "Porcelain" },
+	{ key: 'Ceramic', label: "Ceramic" }
 ]
 
 export const RESTORASI = [
-	"Full Metal Crown",
-	"Porcelain Crown",
-	"Metal Porcelain Crown",
-	"Gold Metal Crown",
-	"Root Canal Treatment / Perawatan Saluran Akar",
-	"Implan",
-	"Metal Bridge",
-	"Porcelain Bridge",
-	"Pontic",
-	"Gigi abutment",
-	"Inlay",
-	"Onlay",
-	"Crown",
-	"Bridge",
-	"Dental Veener",
-	"Dental Filling"
+	{ key: 'fmc', label: "Full Metal Crown" },
+	{ key: 'poc', label: "Porcelain Crown" },
+	{ key: 'mpc', label: "Metal Porcelain Crown" },
+	{ key: 'gmc', label: "Gold Metal Crown" },
+	{ key: 'rct', label: "Root Canal Treatment / Perawatan Saluran Akar" },
+	{ key: 'ipx', label: "Implan" },
+	{ key: 'meb', label: "Metal Bridge" },
+	{ key: 'pob', label: "Porcelain Bridge" },
+	{ key: 'pon', label: "Pontic" },
+	{ key: 'abu', label: "Gigi abutment" },
+	{ key: 'inl', label: "Inlay" },
+	{ key: 'onl', label: "Onlay" },
+	{ key: 'Crown', label: "Crown" },
+	{ key: 'Bridge', label: "Bridge" },
+	{ key: 'Dental Veener', label: "Dental Veener" },
+	{ key: 'Dental Filling', label: "Dental Filling" }
 ]
 
 export const BAHAN_PROTESA = [
-	"Acrilic",
-	"Bahan Metal Protesa",
-	"Bahan Polycarbonat Protesa"
+	{ key: 'acr', label: "Acrilic" },
+	{ key: 'Bahan Metal Protesa', label: "Bahan Metal Protesa" },
+	{ key: 'Bahan Polycarbonat Protesa', label: "Bahan Polycarbonat Protesa" }
 ]
 
 export const PROTESA = [
-	"Partial Denture",
-	"Full Denture",
-	"Clasp",
-	"Full upper denture",
-	"Partial lower denture",
-	"Partial upper denture",
-	"Hybrid lower denture",
-	"Hybrid upper denture"
+	{ key: 'prd', label: "Partial Denture" },
+	{ key: 'fld', label: "Full Denture" },
+	{ key: 'cla', label: "Clasp" },
+	{ key: 'fud', label: "Full upper denture" },
+	{ key: 'pld', label: "Partial lower denture" },
+	{ key: 'pud', label: "Partial upper denture" },
+	{ key: 'hld', label: "Hybrid lower denture" },
+	{ key: 'hud', label: "Hybrid upper denture" }
 ]
 
 // Odontogram dropdown options (per spec)
@@ -253,11 +253,13 @@ export const ADMIN_TABLES = {
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
 			{ key: 'user_id', label: 'User', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
-			{ key: 'day_of_week', label: 'Day of Week', type: 'select', required: true, options: [
-				{ value: 0, label: 'Minggu' }, { value: 1, label: 'Senin' }, { value: 2, label: 'Selasa' },
-				{ value: 3, label: 'Rabu' }, { value: 4, label: 'Kamis' }, { value: 5, label: 'Jumat' },
-				{ value: 6, label: 'Sabtu' }
-			]},
+			{
+				key: 'day_of_week', label: 'Day of Week', type: 'select', required: true, options: [
+					{ value: 0, label: 'Minggu' }, { value: 1, label: 'Senin' }, { value: 2, label: 'Selasa' },
+					{ value: 3, label: 'Rabu' }, { value: 4, label: 'Kamis' }, { value: 5, label: 'Jumat' },
+					{ value: 6, label: 'Sabtu' }
+				]
+			},
 			{ key: 'start_time', label: 'Start Time', type: 'time', required: true },
 			{ key: 'end_time', label: 'End Time', type: 'time', required: true },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
@@ -283,10 +285,12 @@ export const ADMIN_TABLES = {
 			{ key: 'rw', label: 'RW', type: 'text', maxLength: 5 },
 			{ key: 'handphone', label: 'Handphone', type: 'text', maxLength: 20 },
 			{ key: 'email', label: 'Email', type: 'email' },
-			{ key: 'marital_status', label: 'Status Pernikahan', type: 'select', options: [
-				{ value: 'S', label: 'Single' }, { value: 'M', label: 'Married' },
-				{ value: 'W', label: 'Widowed' }, { value: 'D', label: 'Divorced' }
-			]},
+			{
+				key: 'marital_status', label: 'Status Pernikahan', type: 'select', options: [
+					{ value: 'S', label: 'Single' }, { value: 'M', label: 'Married' },
+					{ value: 'W', label: 'Widowed' }, { value: 'D', label: 'Divorced' }
+				]
+			},
 			{ key: 'citizenship', label: 'Kewarganegaraan', type: 'select', options: ['WNI', 'WNA'], defaultValue: 'WNI' },
 			{ key: 'blood_type', label: 'Golongan Darah', type: 'select', options: ['A', 'B', 'AB', 'O'] },
 			{ key: 'rhesus', label: 'Rhesus', type: 'select', options: ['+', '-'] },
@@ -434,9 +438,27 @@ export const ADMIN_TABLES = {
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
 			{ key: 'tooth_id', label: 'Tooth', type: 'text', required: true },
 			{ key: 'surface', label: 'Surface', type: 'select', required: true, options: ['O', 'B', 'L', 'M', 'D'] },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-restorations': {
+		label: 'Odontogram Restorations',
+		schema: 'odontogramRestorations',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'tooth_id', label: 'Tooth', type: 'text', required: true },
 			{ key: 'restorasi', label: 'Restorasi', type: 'text' },
 			{ key: 'bahan_restorasi', label: 'Bahan Restorasi', type: 'text' },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
+	'odontogram-restoration-surfaces': {
+		label: 'Restoration ↔ Surface Mapping',
+		schema: 'odontogramRestorationSurfaces',
+		fields: [
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'restoration_id', label: 'Restoration', type: 'text', required: true },
+			{ key: 'surface_id', label: 'Surface', type: 'text', required: true }
 		]
 	},
 	'odontogram-diagnoses': {

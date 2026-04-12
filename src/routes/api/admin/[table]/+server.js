@@ -18,6 +18,8 @@ const schemaMap = {
 	encounterOdontograms: schema.encounterOdontograms,
 	odontogramTeeth: schema.odontogramTeeth,
 	odontogramSurfaces: schema.odontogramSurfaces,
+	odontogramRestorations: schema.odontogramRestorations,
+	odontogramRestorationSurfaces: schema.odontogramRestorationSurfaces,
 	odontogramDiagnoses: schema.odontogramDiagnoses,
 	odontogramProcedures: schema.odontogramProcedures,
 	encounterPrescriptions: schema.encounterPrescriptions,

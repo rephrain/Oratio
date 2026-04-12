@@ -11,8 +11,17 @@
 	$: isAnterior = ['1', '2', '3'].includes(String(number).charAt(1));
 
 	function handleSurfaceClick(surfaceArea) {
+		clickedSurface = surfaceArea;
+		setTimeout(() => clickedSurface = null, 150);
 		dispatch('surfaceClick', { surfaceArea });
 	}
+
+	export function flashAll() {
+		clickedSurface = 'all';
+		setTimeout(() => clickedSurface = null, 150);
+	}
+
+	let clickedSurface = null;
 
 	function isSelected(pos) {
 		return selectedSurfaces.includes(pos);
@@ -23,8 +32,8 @@
 		if (pos === 'center') return isAnterior ? 'I' : 'O';
 		if (pos === 'top') return isLower ? 'L' : 'B'; // For upper, top is Buccal/Labial. For lower, top is Lingual
 		if (pos === 'bottom') return isLower ? 'B' : 'P'; // For lower, bottom is Buccal. For upper, bottom is Palatal
-		if (pos === 'left') return isRightSideOfMouth ? 'M' : 'D';
-		if (pos === 'right') return isRightSideOfMouth ? 'D' : 'M';
+		if (pos === 'left') return isRightSideOfMouth ? 'D' : 'M';
+		if (pos === 'right') return isRightSideOfMouth ? 'M' : 'D';
 		return '';
 	}
 
@@ -63,48 +72,65 @@
 		<!-- Top Polygon -->
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
-		<g on:click={() => handleSurfaceClick('top')} class="cursor-pointer">
+		<g on:click={() => handleSurfaceClick('top')} class="cursor-pointer active:scale-[0.97] transition-transform duration-100 origin-center">
 			<polygon points={points.top} 
-				fill={isSelected('top') ? 'var(--primary-light)' : '#f8fafc'} 
+				fill={clickedSurface === 'top' || clickedSurface === 'all' ? 'var(--primary)' : isSelected('top') ? 'var(--primary-light)' : '#f8fafc'} 
 				stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"
-				class="transition-all duration-200 hover:brightness-95 {isSelected('top') ? 'stroke-primary' : ''}" />
-			<text x={tPos.top.x} y={tPos.top.y} font-size="12" font-weight="bold" fill={isSelected('top') ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none">{getLabel('top')}</text>
+				class="transition-colors duration-150 hover:brightness-95" />
+			<line x1="0" y1="0" x2="100" y2="0" 
+				stroke="var(--primary)" 
+				stroke-width={isSelected('top') || clickedSurface === 'top' || clickedSurface === 'all' ? '6' : '0'} 
+				class="transition-all duration-200" />
+			<text x={tPos.top.x} y={tPos.top.y} font-size="12" font-weight="bold" fill={isSelected('top') || clickedSurface === 'top' || clickedSurface === 'all' ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none transition-colors duration-150">{getLabel('top')}</text>
 		</g>
 
 		<!-- Right Polygon -->
-		<g on:click={() => handleSurfaceClick('right')} class="cursor-pointer">
+		<g on:click={() => handleSurfaceClick('right')} class="cursor-pointer active:scale-[0.97] transition-transform duration-100 origin-center">
 			<polygon points={points.right} 
-				fill={isSelected('right') ? 'var(--primary-light)' : '#f8fafc'} 
+				fill={clickedSurface === 'right' || clickedSurface === 'all' ? 'var(--primary)' : isSelected('right') ? 'var(--primary-light)' : '#f8fafc'} 
 				stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"
-				class="transition-all duration-200 hover:brightness-95 {isSelected('right') ? 'stroke-primary' : ''}" />
-			<text x={tPos.right.x} y={tPos.right.y} font-size="12" font-weight="bold" fill={isSelected('right') ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none">{getLabel('right')}</text>
+				class="transition-colors duration-150 hover:brightness-95" />
+			<line x1="100" y1="0" x2="100" y2="100" 
+				stroke="var(--primary)" 
+				stroke-width={isSelected('right') || clickedSurface === 'right' || clickedSurface === 'all' ? '6' : '0'} 
+				class="transition-all duration-200" />
+			<text x={tPos.right.x} y={tPos.right.y} font-size="12" font-weight="bold" fill={isSelected('right') || clickedSurface === 'right' || clickedSurface === 'all' ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none transition-colors duration-150">{getLabel('right')}</text>
 		</g>
 
 		<!-- Bottom Polygon -->
-		<g on:click={() => handleSurfaceClick('bottom')} class="cursor-pointer">
+		<g on:click={() => handleSurfaceClick('bottom')} class="cursor-pointer active:scale-[0.97] transition-transform duration-100 origin-center">
 			<polygon points={points.bottom} 
-				fill={isSelected('bottom') ? 'var(--primary-light)' : '#f8fafc'} 
+				fill={clickedSurface === 'bottom' || clickedSurface === 'all' ? 'var(--primary)' : isSelected('bottom') ? 'var(--primary-light)' : '#f8fafc'} 
 				stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"
-				class="transition-all duration-200 hover:brightness-95 {isSelected('bottom') ? 'stroke-primary' : ''}" />
-			<text x={tPos.bottom.x} y={tPos.bottom.y} font-size="12" font-weight="bold" fill={isSelected('bottom') ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none">{getLabel('bottom')}</text>
+				class="transition-colors duration-150 hover:brightness-95" />
+			<line x1="0" y1="100" x2="100" y2="100" 
+				stroke="var(--primary)" 
+				stroke-width={isSelected('bottom') || clickedSurface === 'bottom' || clickedSurface === 'all' ? '6' : '0'} 
+				class="transition-all duration-200" />
+			<text x={tPos.bottom.x} y={tPos.bottom.y} font-size="12" font-weight="bold" fill={isSelected('bottom') || clickedSurface === 'bottom' || clickedSurface === 'all' ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none transition-colors duration-150">{getLabel('bottom')}</text>
 		</g>
 
 		<!-- Left Polygon -->
-		<g on:click={() => handleSurfaceClick('left')} class="cursor-pointer">
+		<g on:click={() => handleSurfaceClick('left')} class="cursor-pointer active:scale-[0.97] transition-transform duration-100 origin-center">
 			<polygon points={points.left} 
-				fill={isSelected('left') ? 'var(--primary-light)' : '#f8fafc'} 
+				fill={clickedSurface === 'left' || clickedSurface === 'all' ? 'var(--primary)' : isSelected('left') ? 'var(--primary-light)' : '#f8fafc'} 
 				stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"
-				class="transition-all duration-200 hover:brightness-95 {isSelected('left') ? 'stroke-primary' : ''}" />
-			<text x={tPos.left.x} y={tPos.left.y} font-size="12" font-weight="bold" fill={isSelected('left') ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none">{getLabel('left')}</text>
+				class="transition-colors duration-150 hover:brightness-95" />
+			<line x1="0" y1="0" x2="0" y2="100" 
+				stroke="var(--primary)" 
+				stroke-width={isSelected('left') || clickedSurface === 'left' || clickedSurface === 'all' ? '6' : '0'} 
+				class="transition-all duration-200" />
+			<text x={tPos.left.x} y={tPos.left.y} font-size="12" font-weight="bold" fill={isSelected('left') || clickedSurface === 'left' || clickedSurface === 'all' ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none transition-colors duration-150">{getLabel('left')}</text>
 		</g>
 
 		<!-- Center Polygon -->
-		<g on:click={() => handleSurfaceClick('center')} class="cursor-pointer">
+		<g on:click={() => handleSurfaceClick('center')} class="cursor-pointer active:scale-[0.97] transition-transform duration-100 origin-center">
 			<polygon points={points.center} 
-				fill={isSelected('center') ? 'var(--primary-light)' : '#ffffff'} 
-				stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"
-				class="transition-all duration-200 hover:brightness-95 z-10 {isSelected('center') ? 'stroke-primary' : ''}" />
-			<text x={tPos.center.x} y={tPos.center.y} font-size="12" font-weight="bold" fill={isSelected('center') ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none">{getLabel('center')}</text>
+				fill={clickedSurface === 'center' || clickedSurface === 'all' ? 'var(--primary)' : isSelected('center') ? 'var(--primary-light)' : '#ffffff'} 
+				stroke={isSelected('center') || clickedSurface === 'center' || clickedSurface === 'all' ? 'var(--primary)' : '#cbd5e1'} 
+				stroke-width={isSelected('center') || clickedSurface === 'center' || clickedSurface === 'all' ? '3' : '2'} stroke-linejoin="round"
+				class="transition-colors duration-150 hover:brightness-95 z-10" />
+			<text x={tPos.center.x} y={tPos.center.y} font-size="12" font-weight="bold" fill={isSelected('center') || clickedSurface === 'center' || clickedSurface === 'all' ? 'var(--primary)' : '#94a3b8'} text-anchor="middle" dominant-baseline="middle" class="pointer-events-none select-none transition-colors duration-150">{getLabel('center')}</text>
 		</g>
 	</svg>
 </div>

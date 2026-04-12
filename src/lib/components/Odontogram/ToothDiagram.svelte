@@ -25,39 +25,33 @@
 	function getFill(surfaceData, position) {
 		if (selectedSurface === position) return 'var(--primary-light)';
 		
-		if (surfaceData?.bahan_restorasi === 'Amalgam Filling') return '#000000';
-		if (surfaceData?.bahan_restorasi === 'Composite filling') return 'url(#hatch-green)';
-		if (surfaceData?.bahan_restorasi === 'Fissure Sealant') return 'url(#hatch-red)';
+		if (surfaceData?.bahan_restorasi === 'amf') return '#000000';
+		if (surfaceData?.bahan_restorasi === 'cof') return 'url(#hatch-green)';
+		if (surfaceData?.bahan_restorasi === 'fis') return 'url(#hatch-red)';
 
 		if (surfaceData?.color) return surfaceData.color;
 		return '#ffffff';
 	}
 
 	function getStroke(surfaceData, defaultStroke = '#94a3b8') {
-		if (surfaceData?.condition && surfaceData.condition.toUpperCase().includes("CARIES")) return '#000000';
+		if (surfaceData?.condition === 'car' || surfaceData?.condition === 'cav') return '#000000';
 		return defaultStroke;
 	}
 
 	function getStrokeWidth(surfaceData, defaultWidth = '2.5') {
-		if (surfaceData?.condition && surfaceData.condition.toUpperCase().includes("CARIES")) return '4';
+		if (surfaceData?.condition === 'car' || surfaceData?.condition === 'cav') return '4';
 		return defaultWidth;
 	}
 
-	$: isFMC = center?.restoration?.includes('Full Metal Crown') || 
-			   center?.restoration?.includes('Metal Bridge') || 
-			   center?.restoration?.includes('Gold Metal Crown');
-	$: isPOC = center?.restoration?.includes('Porcelain Crown') || 
-			   center?.restoration?.includes('Porcelain Bridge') || 
-			   center?.restoration?.includes('Metal Porcelain');
-	$: isIPX = center?.restoration?.toLowerCase().includes('implan');
-	$: isBridgeComponent = center?.restoration?.toLowerCase().includes('bridge') || 
-						   center?.restoration?.includes('Pontic') || 
-						   center?.restoration?.includes('Gigi abutment');
-	$: isDenture = center?.protesa?.toLowerCase().includes('denture') || center?.restoration?.toLowerCase().includes('denture');
+	$: isFMC = ['fmc', 'meb', 'gmc'].includes(center?.restoration);
+	$: isPOC = ['poc', 'pob', 'mpc'].includes(center?.restoration);
+	$: isIPX = center?.restoration === 'ipx';
+	$: isBridgeComponent = ['meb', 'pob', 'pon', 'abu', 'Bridge'].includes(center?.restoration);
+	$: isDenture = ['prd', 'fld', 'fud', 'pld', 'pud', 'hld', 'hud'].includes(center?.protesa);
 
 	$: isAnterior = ['1', '2', '3'].includes(String(number).charAt(1));
 
-	$: cond = center?.condition?.toLowerCase() || '';
+	$: cond = center?.condition || '';
 	$: isRightSideOfMouth = ['1', '4', '5', '8'].includes(String(number).charAt(0));
 	$: isMaxillary = ['1', '2', '5', '6'].includes(String(number).charAt(0));
 
@@ -66,12 +60,12 @@
 	$: drawCurvedAbove = false;
 	$: drawCurvedBelow = false;
 
-	$: if (cond.includes('version')) {
-		if (cond === 'mesio version') {
+	$: if (cond.includes('.ver')) {
+		if (cond === 'M.ver') {
 			if (isRightSideOfMouth) drawArrowRight = true; else drawArrowLeft = true;
-		} else if (cond === 'disto version') {
+		} else if (cond === 'D.ver') {
 			if (isRightSideOfMouth) drawArrowLeft = true; else drawArrowRight = true;
-		} else if (cond.includes('linguo') || cond.includes('palato')) {
+		} else if (['ML.ver', 'DL.ver', 'MP.ver', 'DP.ver'].includes(cond) || cond === 'L.ver' || cond === 'P.ver') {
 			drawCurvedBelow = true;
 		} else {
 			drawCurvedAbove = true;

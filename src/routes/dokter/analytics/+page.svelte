@@ -1222,8 +1222,22 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Pasien Hari Ini</div>
-					<div class="kpi-value">
-						{analytics.periodCounts?.today_count || 0}
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.periodCounts?.today_count || 0}
+						</div>
+						{#if analytics.changes?.today_count !== undefined}
+							{@const chg = analytics.changes.today_count}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1250,8 +1264,22 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">7 Hari Terakhir</div>
-					<div class="kpi-value">
-						{analytics.periodCounts?.week_count || 0}
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.periodCounts?.week_count || 0}
+						</div>
+						{#if analytics.changes?.week_count !== undefined}
+							{@const chg = analytics.changes.week_count}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1274,8 +1302,22 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Total Kunjungan</div>
-					<div class="kpi-value">
-						{analytics.overview?.total_encounters || 0}
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.overview?.total_encounters || 0}
+						</div>
+						{#if analytics.changes?.total_encounters !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.total_encounters}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1300,8 +1342,22 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Pasien Unik</div>
-					<div class="kpi-value">
-						{analytics.overview?.unique_patients || 0}
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.overview?.unique_patients || 0}
+						</div>
+						{#if analytics.changes?.unique_patients !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.unique_patients}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1324,8 +1380,22 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Tingkat Penyelesaian</div>
-					<div class="kpi-value">
-						{analytics.overview?.completion_rate || 0}%
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.overview?.completion_rate || 0}%
+						</div>
+						{#if analytics.changes?.completion_rate !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.completion_rate}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1348,10 +1418,24 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Rata-rata Tunggu</div>
-					<div class="kpi-value">
-						{analytics.timingStats?.avg_wait_minutes
-							? Math.round(analytics.timingStats.avg_wait_minutes)
-							: "-"} <span class="kpi-unit">min</span>
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.timingStats?.avg_wait_minutes
+								? Math.round(analytics.timingStats.avg_wait_minutes)
+								: "-"} <span class="kpi-unit">min</span>
+						</div>
+						{#if analytics.changes?.avg_wait_minutes !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.avg_wait_minutes}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1372,12 +1456,26 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Rata-rata Konsultasi</div>
-					<div class="kpi-value">
-						{analytics.timingStats?.avg_consult_minutes
-							? Math.round(
-									analytics.timingStats.avg_consult_minutes,
-								)
-							: "-"} <span class="kpi-unit">min</span>
+					<div class="flex items-center gap-2">
+						<div class="kpi-value">
+							{analytics.timingStats?.avg_consult_minutes
+								? Math.round(
+										analytics.timingStats.avg_consult_minutes,
+									)
+								: "-"} <span class="kpi-unit">min</span>
+						</div>
+						{#if analytics.changes?.avg_consult_minutes !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.avg_consult_minutes}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -1403,10 +1501,24 @@
 				</div>
 				<div class="kpi-content">
 					<div class="kpi-label">Total Pendapatan</div>
-					<div class="kpi-value kpi-value-sm">
-						{formatCurrency(
-							Number(analytics.revenueStats?.total_revenue || 0),
-						)}
+					<div class="flex items-center gap-2">
+						<div class="kpi-value kpi-value-sm">
+							{formatCurrency(
+								Number(analytics.revenueStats?.total_revenue || 0),
+							)}
+						</div>
+						{#if analytics.changes?.total_revenue !== undefined && dateFrom && dateTo}
+							{@const chg = analytics.changes.total_revenue}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+							{:else}
+								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
 				</div>
 			</div>

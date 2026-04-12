@@ -36,6 +36,13 @@
       "when": 1775961558318,
       "tag": "0004_tough_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775984074528,
+      "tag": "0005_deep_mastermind",
+      "breakpoints": true
     }
   ]
 }

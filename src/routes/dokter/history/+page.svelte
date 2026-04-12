@@ -11,7 +11,8 @@
 	let filterType = "date"; // 'all', 'date' or 'month'
 	
 	let tableStatusFilter = "";
-	let tableDoctorFilter = "";
+	let tableDoctorFilter = ""; // This will now store doctor_id
+	let doctors = [];
 	let searchQuery = "";
 
 	let expandedRowId = null;
@@ -28,12 +29,6 @@
 	let itemsPerPage = 10;
 
 	$: filteredTableEncounters = encounters.filter((e) => {
-		if (tableDoctorFilter && e.doctor_name !== tableDoctorFilter) {
-			return false;
-		}
-		if (tableStatusFilter && e.encounter?.status !== tableStatusFilter) {
-			return false;
-		}
 		if (searchQuery) {
 		    const query = searchQuery.toLowerCase();
 		    if (!e.patient_name?.toLowerCase().includes(query) && 
@@ -69,6 +64,15 @@
 			    params.set("date_from", `${filterMonth}-01`);
 			    params.set("date_to", `${filterMonth}-${daysInMonth}`);
 			}
+			
+			if (tableDoctorFilter) {
+			    params.set("doctor_id", tableDoctorFilter);
+			}
+			
+			if (tableStatusFilter) {
+			    params.set("status", tableStatusFilter);
+			}
+
 			const res = await fetch(`/api/encounters?${params}`);
 			const data = await res.json();
 			encounters = data.data || [];
@@ -79,9 +83,20 @@
 		}
 	}
 
+	async function loadDoctors() {
+		try {
+			const res = await fetch('/api/doctors');
+			const data = await res.json();
+			doctors = data.doctors || [];
+		} catch (err) {
+			console.error("Failed to load doctors:", err);
+		}
+	}
+
 	onMount(async () => {
-		if (user?.name) {
-			tableDoctorFilter = user.name;
+		await loadDoctors();
+		if (user?.role === 'dokter' && user?.id) {
+			tableDoctorFilter = user.id;
 		}
 		await loadEncounters();
 	});
@@ -138,11 +153,12 @@
 				<label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Doctor:</label>
 				<select
 					bind:value={tableDoctorFilter}
+					on:change={loadEncounters}
 					class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-white focus:ring-primary focus:border-primary outline-none"
 				>
 					<option value="">All Doctors</option>
-					{#each [...new Set(encounters.map((e) => e.doctor_name).filter(Boolean))] as doc}
-						<option value={doc}>Dr. {doc}</option>
+					{#each doctors as doc}
+						<option value={doc.id}>Dr. {doc.name}</option>
 					{/each}
 				</select>
 			</div>
@@ -151,6 +167,7 @@
 				<label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status:</label>
 				<select
 					bind:value={tableStatusFilter}
+					on:change={loadEncounters}
 					class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-white focus:ring-primary focus:border-primary outline-none"
 				>
 					<option value="">All Status</option>
@@ -236,13 +253,27 @@
 									</div>
 								</td>
 								<td class="px-6 py-4">
-								    <a 
-								        href="/dokter/{row.encounter?.id}" 
-								        class="text-primary hover:text-primary/80 font-semibold text-xs uppercase tracking-wider bg-primary/10 px-3 py-1.5 rounded hover:bg-primary/20 transition-colors"
-								        on:click|stopPropagation
-								    >
-								        View Session
-								    </a>
+								    <div class="flex items-center gap-2">
+								        {#if row.encounter?.soap_document_id}
+								            <a 
+								                href="/api/documents/{row.encounter?.soap_document_id}" 
+								                target="_blank"
+								                class="text-teal-700 hover:text-teal-800 font-semibold text-xs uppercase tracking-wider bg-teal-50 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-teal-100 transition-colors border border-teal-200 shadow-sm"
+								                on:click|stopPropagation
+								            >
+								                <span class="material-symbols-outlined text-[16px]">description</span>
+								                SOAP
+								            </a>
+								        {/if}
+								        <a 
+								            href="/dokter/{row.encounter?.id}" 
+								            class="text-primary hover:text-primary/80 font-semibold text-xs uppercase tracking-wider bg-primary/10 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-primary/20 transition-colors"
+								            on:click|stopPropagation
+								        >
+								            <span class="material-symbols-outlined text-[16px]">visibility</span>
+								            View
+								        </a>
+								    </div>
 								</td>
 							</tr>
 							{#if expandedRowId === row.encounter?.id}
@@ -280,6 +311,29 @@
 											</div>
 										</div>
 									</div>
+									
+									{#if row.clinical_photos && row.clinical_photos.length > 0}
+									<div class="mt-6 border-t border-slate-200 pt-5">
+										<h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">photo_library</span> Clinical Photos</h4>
+										<div class="flex flex-wrap gap-4">
+											{#each row.clinical_photos as photo}
+												<a href="/api/documents/{photo.id}" target="_blank" class="block w-28 h-28 rounded-xl border border-slate-200 overflow-hidden hover:border-primary transition-all hover:shadow-md hover:-translate-y-0.5 group relative bg-white">
+													{#if photo.mime_type?.startsWith('image/')}
+													<img src="/api/documents/{photo.id}" alt={photo.file_name} class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+													<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+														<span class="material-symbols-outlined text-white shadow-sm">open_in_new</span>
+													</div>
+													{:else}
+													<div class="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center group-hover:text-primary transition-colors">
+														<span class="material-symbols-outlined mb-1 text-2xl group-hover:scale-110 transition-transform">description</span>
+														<span class="text-[10px] truncate w-full font-medium" title={photo.file_name}>{photo.file_name}</span>
+													</div>
+													{/if}
+												</a>
+											{/each}
+										</div>
+									</div>
+									{/if}
 								</td>
 							</tr>
 							{/if}

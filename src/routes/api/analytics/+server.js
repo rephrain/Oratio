@@ -12,7 +12,10 @@ export async function GET({ url, locals }) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const doctorId = locals.user.role === 'dokter' ? locals.user.id : null;
+	// Always filter by a specific doctor to ensure stats are unique per doctor.
+	// Use URL param if provided, otherwise default to the logged-in user.
+	const reqDoctorId = url.searchParams.get('doctor_id');
+	const doctorId = reqDoctorId ? reqDoctorId : locals.user.id;
 
 	// Build date + doctor filter fragments
 	const dateFilter = dateFrom && dateTo
@@ -274,12 +277,13 @@ export async function GET({ url, locals }) {
 
 		// 18. Referral stats
 		const referralStats = await db.execute(sql`
-			SELECT er.doctor_code,
+			SELECT er.doctor_code, u.name AS doctor_name,
 			       COUNT(*)::int AS count
 			FROM encounters e
 			JOIN encounter_referrals er ON er.encounter_id = e.id
+			LEFT JOIN users u ON er.doctor_code = u.doctor_code
 			${baseWhere}
-			GROUP BY er.doctor_code
+			GROUP BY er.doctor_code, u.name
 			ORDER BY count DESC
 			LIMIT 10
 		`);
@@ -549,9 +553,21 @@ export async function GET({ url, locals }) {
 
 		const [prevRevenueStats] = await db.execute(sql`
 			SELECT
-				COALESCE(SUM(ei.subtotal), 0)::bigint AS total_revenue
+				COALESCE(SUM(ei.subtotal), 0)::bigint AS total_revenue,
+				COUNT(DISTINCT ei.encounter_id)::int AS encounters_with_items,
+				CASE WHEN COUNT(DISTINCT ei.encounter_id) > 0
+					THEN ROUND(SUM(ei.subtotal)::numeric / COUNT(DISTINCT ei.encounter_id))::bigint
+					ELSE 0 END AS avg_revenue_per_encounter
 			FROM encounters e
 			JOIN encounter_items ei ON ei.encounter_id = e.id
+			${prevBaseWhere}
+		`);
+
+		const [prevDiscountStats] = await db.execute(sql`
+			SELECT
+				COALESCE(SUM(p.discount_amount), 0)::bigint AS total_discount_amount
+			FROM encounters e
+			JOIN payments p ON p.encounter_id = e.id
 			${prevBaseWhere}
 		`);
 
@@ -570,7 +586,10 @@ export async function GET({ url, locals }) {
 			completion_rate: dateFrom && dateTo ? calcChange(overview?.completion_rate, prevOverview?.completion_rate) : 0,
 			avg_wait_minutes: dateFrom && dateTo ? calcChange(timingStats?.avg_wait_minutes, prevTimingStats?.avg_wait_minutes) : 0,
 			avg_consult_minutes: dateFrom && dateTo ? calcChange(timingStats?.avg_consult_minutes, prevTimingStats?.avg_consult_minutes) : 0,
-			total_revenue: dateFrom && dateTo ? calcChange(revenueStats?.total_revenue, prevRevenueStats?.total_revenue) : 0
+			total_revenue: dateFrom && dateTo ? calcChange(revenueStats?.total_revenue, prevRevenueStats?.total_revenue) : 0,
+			avg_revenue_per_encounter: dateFrom && dateTo ? calcChange(revenueStats?.avg_revenue_per_encounter, prevRevenueStats?.avg_revenue_per_encounter) : 0,
+			encounters_with_items: dateFrom && dateTo ? calcChange(revenueStats?.encounters_with_items, prevRevenueStats?.encounters_with_items) : 0,
+			total_discount_amount: dateFrom && dateTo ? calcChange(discountStats?.total_discount_amount, prevDiscountStats?.total_discount_amount) : 0
 		};
 
 		return json({

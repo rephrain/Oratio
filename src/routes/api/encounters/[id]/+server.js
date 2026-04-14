@@ -5,7 +5,7 @@ import {
 	odontogramTeeth, odontogramSurfaces, odontogramRestorations, odontogramRestorationSurfaces,
 	odontogramDiagnoses, odontogramProcedures,
 	encounterPrescriptions,
-	encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
+	encounterReferrals, encounterItems, items, patients, users, terminologyMaster, documents
 } from '$lib/server/db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -15,6 +15,7 @@ export async function GET({ params }) {
 	try {
 		const [encounter] = await db.select({
 			encounter: encounters,
+			patient: patients,
 			patient_name: patients.nama_lengkap,
 			patient_nik: patients.nik,
 			patient_birth_date: patients.birth_date,
@@ -45,7 +46,20 @@ export async function GET({ params }) {
 		const referrals = await db.select().from(encounterReferrals)
 			.where(eq(encounterReferrals.encounter_id, params.id));
 
-		const items = await db.select().from(encounterItems)
+		const encounter_items_data = await db.select({
+			id: encounterItems.id,
+			encounter_id: encounterItems.encounter_id,
+			item_id: encounterItems.item_id,
+			quantity: encounterItems.quantity,
+			price_at_time: encounterItems.price_at_time,
+			subtotal: encounterItems.subtotal,
+			created_at: encounterItems.created_at,
+			name: items.name,
+			item_group: items.item_group,
+			denomination: items.denomination
+		})
+			.from(encounterItems)
+			.leftJoin(items, eq(encounterItems.item_id, items.id))
 			.where(eq(encounterItems.encounter_id, params.id));
 
 		const odontograms = await db.select().from(encounterOdontograms)
@@ -198,7 +212,7 @@ export async function GET({ params }) {
 		return json({
 			...encounter,
 			referrals,
-			items,
+			items: encounter_items_data,
 			odontograms,
 			odontogramDetails: odontoDetails,
 			statusHistory: history,

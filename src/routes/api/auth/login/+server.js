@@ -32,6 +32,6 @@ export async function POST({ request, cookies }) {
 	});
 
 	return json({
-		user: { id: user.id, name: user.name, role: user.role, doctor_code: user.doctor_code }
+		user: { id: user.id, name: user.name, role: user.role, doctor_code: user.doctor_code, profile_image_url: user.profile_image_url }
 	});
 }

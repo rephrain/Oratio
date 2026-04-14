@@ -8,7 +8,8 @@ export async function createToken(user) {
 		sub: user.id,
 		name: user.name,
 		role: user.role,
-		doctor_code: user.doctor_code || null
+		doctor_code: user.doctor_code || null,
+		profile_image_url: user.profile_image_url || null
 	};
 
 	return await new SignJWT(payload)

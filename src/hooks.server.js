@@ -51,7 +51,8 @@ export async function handle({ event, resolve }) {
 		id: payload.sub,
 		name: payload.name,
 		role: payload.role,
-		doctor_code: payload.doctor_code
+		doctor_code: payload.doctor_code,
+		profile_image_url: payload.profile_image_url
 	};
 
 	// Role-based access control

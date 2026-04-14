@@ -29,13 +29,17 @@
 		BAHAN_PROTESA,
 		PROTESA,
 	} from "$lib/utils/constants.js";
-	import { formatDate, getWhatsAppUrl, generateSOAPWHOText } from "$lib/utils/formatters.js";
+	import {
+		formatDate,
+		getWhatsAppUrl,
+		generateSOAPWHOText,
+	} from "$lib/utils/formatters.js";
 	import { addToast } from "$lib/stores/toast.js";
 
 	// Helper: look up a label from a key in {key, label}[] constants
 	function lookupLabel(list, key) {
-		if (!key) return '';
-		const found = list.find(item => item.key === key);
+		if (!key) return "";
+		const found = list.find((item) => item.key === key);
 		return found ? found.label : key; // fallback to raw key if not found
 	}
 
@@ -260,67 +264,73 @@
 
 	function getClinicalSurfaceName(surfaceKey, toothNum) {
 		const quad = String(toothNum)[0];
-		const isUpper = ['1', '2', '5', '6'].includes(quad);
-		const isRightSideOfMouth = ['1', '4', '5', '8'].includes(quad);
-		const isAnterior = ['1', '2', '3'].includes(String(toothNum)[1]); 
+		const isUpper = ["1", "2", "5", "6"].includes(quad);
+		const isRightSideOfMouth = ["1", "4", "5", "8"].includes(quad);
+		const isAnterior = ["1", "2", "3"].includes(String(toothNum)[1]);
 
-		if (surfaceKey === 'center') return isAnterior ? 'I' : 'O';
-		if (surfaceKey === 'top') return isUpper ? 'B' : 'L';
-		if (surfaceKey === 'bottom') return isUpper ? 'P' : 'B';
-		if (surfaceKey === 'left') return isRightSideOfMouth ? 'D' : 'M';
-		if (surfaceKey === 'right') return isRightSideOfMouth ? 'M' : 'D';
+		if (surfaceKey === "center") return isAnterior ? "I" : "O";
+		if (surfaceKey === "top") return isUpper ? "B" : "L";
+		if (surfaceKey === "bottom") return isUpper ? "P" : "B";
+		if (surfaceKey === "left") return isRightSideOfMouth ? "D" : "M";
+		if (surfaceKey === "right") return isRightSideOfMouth ? "M" : "D";
 		return "";
 	}
 
 	function parseSurfaces(surfaceStr, toothNum) {
 		let s = (surfaceStr || "").toUpperCase().trim();
-		if (s === '') return ['center'];
-		if (['TOP', 'BOTTOM', 'LEFT', 'RIGHT', 'CENTER'].includes(s)) return [s.toLowerCase()];
+		if (s === "") return ["center"];
+		if (["TOP", "BOTTOM", "LEFT", "RIGHT", "CENTER"].includes(s))
+			return [s.toLowerCase()];
 
 		const quad = String(toothNum)[0];
-		const isUpper = ['1', '2', '5', '6'].includes(quad);
-		const isRightSideOfMouth = ['1', '4', '5', '8'].includes(quad);
+		const isUpper = ["1", "2", "5", "6"].includes(quad);
+		const isRightSideOfMouth = ["1", "4", "5", "8"].includes(quad);
 
 		let result = [];
-		if (s.includes('O') || s.includes('I')) result.push('center');
-		if (s.includes('M')) result.push(isRightSideOfMouth ? 'right' : 'left');
-		if (s.includes('D')) result.push(isRightSideOfMouth ? 'left' : 'right');
-		if (s.includes('V') || s.includes('B') || s.includes('F') || s.includes('LA')) result.push(isUpper ? 'top' : 'bottom');
-		if (s.includes('P') || (s.includes('L') && !s.includes('LA'))) result.push(isUpper ? 'bottom' : 'top');
+		if (s.includes("O") || s.includes("I")) result.push("center");
+		if (s.includes("M")) result.push(isRightSideOfMouth ? "right" : "left");
+		if (s.includes("D")) result.push(isRightSideOfMouth ? "left" : "right");
+		if (
+			s.includes("V") ||
+			s.includes("B") ||
+			s.includes("F") ||
+			s.includes("LA")
+		)
+			result.push(isUpper ? "top" : "bottom");
+		if (s.includes("P") || (s.includes("L") && !s.includes("LA")))
+			result.push(isUpper ? "bottom" : "top");
 
-		if (result.length === 0) return ['center']; 
+		if (result.length === 0) return ["center"];
 		return result;
 	}
 
 	$: mappedOdontogramData = (odontogram.details || []).reduce((acc, d) => {
 		const tn = String(d.tooth_number);
 		if (!acc[tn]) acc[tn] = {};
-		
-		let color = "#10B981"; // Default green
-		if (d.keadaan === 'car' || d.keadaan === 'cav') color = "#ffffff";
-		else if (d.keadaan === 'mis') color = "#9CA3AF";
-		else if (d.keadaan === 'sou') color = "#ffffff";
 
-		if (d.keadaan === 'mis') acc[tn].global = "Missing";
-		else if (d.protesa === 'prd' || d.protesa === 'fld' || d.protesa === 'fud')
+		let color = "#10B981"; // Default green
+		if (d.keadaan === "car" || d.keadaan === "cav") color = "#ffffff";
+		else if (d.keadaan === "mis") color = "#9CA3AF";
+		else if (d.keadaan === "sou") color = "#ffffff";
+
+		if (d.keadaan === "mis") acc[tn].global = "Missing";
+		else if (
+			d.protesa === "prd" ||
+			d.protesa === "fld" ||
+			d.protesa === "fud"
+		)
 			acc[tn].global = "Missing";
-		else if (d.keadaan === 'nvt')
-			acc[tn].global = "Non-Vital";
-		else if (d.keadaan === 'non')
-			acc[tn].global = "NON";
-		else if (d.keadaan === 'une')
-			acc[tn].global = "UNE";
-		else if (d.keadaan === 'pre')
-			acc[tn].global = "PRE";
-		else if (d.keadaan === 'ano')
-			acc[tn].global = "ANO";
-		else if (d.keadaan === 'cfr' || d.keadaan === 'frx')
+		else if (d.keadaan === "nvt") acc[tn].global = "Non-Vital";
+		else if (d.keadaan === "non") acc[tn].global = "NON";
+		else if (d.keadaan === "une") acc[tn].global = "UNE";
+		else if (d.keadaan === "pre") acc[tn].global = "PRE";
+		else if (d.keadaan === "ano") acc[tn].global = "ANO";
+		else if (d.keadaan === "cfr" || d.keadaan === "frx")
 			acc[tn].global = "Fracture";
-		else if (d.keadaan === 'rrx')
-			acc[tn].global = "Sisa Akar";
+		else if (d.keadaan === "rrx") acc[tn].global = "Sisa Akar";
 
 		if (d.restorations && d.restorations.length > 0) {
-			d.restorations.forEach(r => {
+			d.restorations.forEach((r) => {
 				const mappedData = {
 					condition: d.keadaan,
 					color,
@@ -329,9 +339,9 @@
 					protesa: d.protesa,
 				};
 				if (r.surfaces && r.surfaces.length > 0) {
-					r.surfaces.forEach(s => {
+					r.surfaces.forEach((s) => {
 						const keys = parseSurfaces(s, tn);
-						keys.forEach(k => {
+						keys.forEach((k) => {
 							if (!acc[tn][k]) acc[tn][k] = mappedData;
 						});
 					});
@@ -339,16 +349,19 @@
 					if (!acc[tn]["center"]) acc[tn]["center"] = mappedData;
 				}
 
-				if (r.restorasi === 'rct') {
+				if (r.restorasi === "rct") {
 					acc[tn].global = "RCT";
-				} else if (r.restorasi === 'pon') {
+				} else if (r.restorasi === "pon") {
 					acc[tn].global = "Missing";
 				}
 			});
 		} else {
 			const mappedData = {
-				condition: d.keadaan, color,
-				restoration: null, bahan_restorasi: null, protesa: d.protesa
+				condition: d.keadaan,
+				color,
+				restoration: null,
+				bahan_restorasi: null,
+				protesa: d.protesa,
 			};
 			if (!acc[tn]["center"]) acc[tn]["center"] = mappedData;
 		}
@@ -372,7 +385,7 @@
 
 			if (data.odontograms?.length > 0) {
 				const grouped = {};
-				for (const d of (data.odontogramDetails || [])) {
+				for (const d of data.odontogramDetails || []) {
 					if (!grouped[d.tooth_number]) {
 						grouped[d.tooth_number] = {
 							tooth_number: d.tooth_number,
@@ -380,26 +393,32 @@
 							protesa: d.protesa,
 							bahan_protesa: d.bahan_protesa,
 							restorations: [],
-							diagnoses: (d.all_diagnoses || []).map(diag => ({
+							diagnoses: (d.all_diagnoses || []).map((diag) => ({
 								icd10_id: diag.icd10_id,
 								diagnosis_code: diag.icd10_code,
 								diagnosis_display: diag.icd10_display,
-								is_primary: diag.is_primary
+								is_primary: diag.is_primary,
 							})),
-							procedures: (d.all_procedures || []).map(proc => ({
-								icd9cm_id: proc.icd9cm_id,
-								procedure_code: proc.icd9cm_code,
-								procedure_display: proc.icd9cm_display
-							}))
+							procedures: (d.all_procedures || []).map(
+								(proc) => ({
+									icd9cm_id: proc.icd9cm_id,
+									procedure_code: proc.icd9cm_code,
+									procedure_display: proc.icd9cm_display,
+								}),
+							),
 						};
 					}
 					if (d.restorasi) {
-						let rest = grouped[d.tooth_number].restorations.find(r => r.restorasi === d.restorasi && r.bahan_restorasi === d.bahan_restorasi);
+						let rest = grouped[d.tooth_number].restorations.find(
+							(r) =>
+								r.restorasi === d.restorasi &&
+								r.bahan_restorasi === d.bahan_restorasi,
+						);
 						if (!rest) {
 							rest = {
 								restorasi: d.restorasi,
 								bahan_restorasi: d.bahan_restorasi,
-								surfaces: []
+								surfaces: [],
 							};
 							grouped[d.tooth_number].restorations.push(rest);
 						}
@@ -408,7 +427,7 @@
 						}
 					}
 				}
-				
+
 				odontogram = {
 					...data.odontograms[0],
 					details: Object.values(grouped),
@@ -711,7 +730,10 @@
 	// Tooth click
 	function handleToothClick(toothNum, selectedObjOrSurface, maybeEvent) {
 		const tn = String(toothNum); // Normalize to string — DB stores strings, chart uses integers
-		let surfaceArea = typeof selectedObjOrSurface === 'string' ? selectedObjOrSurface : '';
+		let surfaceArea =
+			typeof selectedObjOrSurface === "string"
+				? selectedObjOrSurface
+				: "";
 		let event = maybeEvent || selectedObjOrSurface;
 
 		if (event && event.shiftKey) {
@@ -724,9 +746,11 @@
 		} else {
 			selectedTooth = tn;
 			selectedSurfaceArea = surfaceArea;
-			
+
 			const clinicalSurface = getClinicalSurfaceName(surfaceArea, tn);
-			let existing = odontogram.details.find((d) => String(d.tooth_number) === tn);
+			let existing = odontogram.details.find(
+				(d) => String(d.tooth_number) === tn,
+			);
 
 			if (existing) {
 				toothDetail = JSON.parse(JSON.stringify(existing));
@@ -736,7 +760,15 @@
 					keadaan: "",
 					protesa: "",
 					bahan_protesa: "",
-					restorations: clinicalSurface ? [{ restorasi: "", bahan_restorasi: "", surfaces: [clinicalSurface] }] : [],
+					restorations: clinicalSurface
+						? [
+								{
+									restorasi: "",
+									bahan_restorasi: "",
+									surfaces: [clinicalSurface],
+								},
+							]
+						: [],
 					diagnoses: [],
 					procedures: [],
 				};
@@ -748,7 +780,9 @@
 	function saveToothDetail(event) {
 		const updatedTooth = event.detail; // from dispatch('save', t)
 		updatedTooth.tooth_number = String(updatedTooth.tooth_number); // Always string
-		const idx = odontogram.details.findIndex((d) => String(d.tooth_number) === updatedTooth.tooth_number);
+		const idx = odontogram.details.findIndex(
+			(d) => String(d.tooth_number) === updatedTooth.tooth_number,
+		);
 		if (idx >= 0) {
 			odontogram.details[idx] = updatedTooth;
 		} else {
@@ -758,7 +792,9 @@
 	}
 
 	function hasCondition(toothNum) {
-		return odontogram.details.some((d) => String(d.tooth_number) === String(toothNum));
+		return odontogram.details.some(
+			(d) => String(d.tooth_number) === String(toothNum),
+		);
 	}
 
 	// Render 5-surface tooth SVG (cross/diamond pattern per PDGI standard)
@@ -787,11 +823,20 @@
 			let soapPlan = plan;
 
 			if (formMode === "SOAP_WHO") {
-				const currentReasonDisplay = newReasonCode ? newReasonDisplay : reasonDisplay;
+				const currentReasonDisplay = newReasonCode
+					? newReasonDisplay
+					: reasonDisplay;
 				const soapText = generateSOAPWHOText({
 					reasonDisplay: currentReasonDisplay,
 					details: odontogram.details || [],
-					constants: { KEADAAN, RESTORASI, BAHAN_RESTORASI, PROTESA, BAHAN_PROTESA, TOOTH_SURFACES },
+					constants: {
+						KEADAAN,
+						RESTORASI,
+						BAHAN_RESTORASI,
+						PROTESA,
+						BAHAN_PROTESA,
+						TOOTH_SURFACES,
+					},
 				});
 				soapSubjective = soapText.subjective;
 				soapObjective = soapText.objective;
@@ -880,11 +925,14 @@
 			if (res.ok) {
 				const data = await res.json();
 				// Add to local state
-				clinicalPhotos = [...clinicalPhotos, {
-					id: data.id,
-					file_name: data.fileName,
-					created_at: new Date().toISOString()
-				}];
+				clinicalPhotos = [
+					...clinicalPhotos,
+					{
+						id: data.id,
+						file_name: data.fileName,
+						created_at: new Date().toISOString(),
+					},
+				];
 				addToast("Foto berhasil diunggah", "success");
 			} else {
 				// Attempt to read the error message from the server
@@ -1008,7 +1056,8 @@
 								<p
 									class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest"
 								>
-									ID Tindakan: {encounter.encounter?.id || "-"}
+									ID Tindakan: {encounter.encounter?.id ||
+										"-"}
 								</p>
 							</div>
 						</div>
@@ -1639,9 +1688,13 @@
 								{selectedTooth}
 								{selectedSurfaceArea}
 								on:toothClick={(e) =>
-									handleToothClick(e.detail.tooth, e.detail.surface, {
-										shiftKey: e.detail.shiftKey,
-									})}
+									handleToothClick(
+										e.detail.tooth,
+										e.detail.surface,
+										{
+											shiftKey: e.detail.shiftKey,
+										},
+									)}
 							/>
 						</div>
 
@@ -1824,132 +1877,148 @@
 													</td>
 													<td class="px-4 py-3">
 														{#if d.restorations && d.restorations.length > 0}
-															<div class="flex flex-wrap gap-1">
+															<div
+																class="flex flex-wrap gap-1"
+															>
 																{#each [...new Set(d.restorations.flatMap((r) => r.surfaces))] as s}
 																	<span
 																		class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold border border-indigo-100"
 																		>{s}</span
 																	>
 																{/each}
-														</div>
-													{:else if d.surface}
-														<span
-															class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold"
-															>{d.surface}</span
-														>
-													{:else}
-														<span
-															class="text-slate-300"
-															>-</span
-														>
-													{/if}
-												</td>
-												<td class="px-4 py-3">
-													{#if d.keadaan}
-														{@const isBad =
-															d.keadaan ===
-																"car" ||
-															d.keadaan ===
-																"mis"}
-														{@const isGood =
-															d.keadaan ===
+															</div>
+														{:else if d.surface}
+															<span
+																class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold"
+																>{d.surface}</span
+															>
+														{:else}
+															<span
+																class="text-slate-300"
+																>-</span
+															>
+														{/if}
+													</td>
+													<td class="px-4 py-3">
+														{#if d.keadaan}
+															{@const isBad =
+																d.keadaan ===
+																	"car" ||
+																d.keadaan ===
+																	"mis"}
+															{@const isGood =
+																d.keadaan ===
 																"sou"}
-														<span
-															class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider
+															<span
+																class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider
 															{isBad
-																? 'bg-red-50 text-red-600 border border-red-100'
-																: isGood
-																	? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-																	: 'bg-slate-100 text-slate-600 border border-slate-200'}"
-														>
-															{lookupLabel(KEADAAN, d.keadaan)}
-														</span>
-													{:else}
-														<span
-															class="text-slate-300"
-															>-</span
-														>
-													{/if}
-												</td>
-												<td
-													class="px-4 py-3 font-medium text-slate-600"
-												>
-													{#if d.restorations && d.restorations.length > 0}
-														<ul
-															class="list-none p-0 m-0 space-y-1"
-														>
-															{#each d.restorations as r}
-																<li
-																	class="text-[11px] leading-tight flex flex-col"
-																>
-																	<span
-																		class="font-bold text-indigo-600"
-																		>{lookupLabel(RESTORASI, r.restorasi) ||
-																			"Restorasi"}</span
+																	? 'bg-red-50 text-red-600 border border-red-100'
+																	: isGood
+																		? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+																		: 'bg-slate-100 text-slate-600 border border-slate-200'}"
+															>
+																{lookupLabel(
+																	KEADAAN,
+																	d.keadaan,
+																)}
+															</span>
+														{:else}
+															<span
+																class="text-slate-300"
+																>-</span
+															>
+														{/if}
+													</td>
+													<td
+														class="px-4 py-3 font-medium text-slate-600"
+													>
+														{#if d.restorations && d.restorations.length > 0}
+															<ul
+																class="list-none p-0 m-0 space-y-1"
+															>
+																{#each d.restorations as r}
+																	<li
+																		class="text-[11px] leading-tight flex flex-col"
 																	>
-																	{#if r.bahan_restorasi}
 																		<span
-																			class="text-[9px] text-slate-400"
-																			>{lookupLabel(BAHAN_RESTORASI, r.bahan_restorasi)}</span
+																			class="font-bold text-indigo-600"
+																			>{lookupLabel(
+																				RESTORASI,
+																				r.restorasi,
+																			) ||
+																				"Restorasi"}</span
 																		>
-																	{/if}
-																</li>
-															{/each}
-														</ul>
-													{:else}
-														{d.restorasi ? lookupLabel(RESTORASI, d.restorasi) : "-"}
-													{/if}
-												</td>
-												<td
-													class="px-4 py-3 text-slate-600"
-												>
-													{#if d.diagnoses && d.diagnoses.length > 0}
-														<ul
-															class="list-none p-0 m-0 space-y-1"
-														>
-															{#each d.diagnoses as diag}
-																<li
-																	class="text-[11px] leading-tight"
-																>
-																	<span
-																		class="font-bold text-red-600"
-																		>{diag.diagnosis_code ||
-																			"ICD-10"}</span
+																		{#if r.bahan_restorasi}
+																			<span
+																				class="text-[9px] text-slate-400"
+																				>{lookupLabel(
+																					BAHAN_RESTORASI,
+																					r.bahan_restorasi,
+																				)}</span
+																			>
+																		{/if}
+																	</li>
+																{/each}
+															</ul>
+														{:else}
+															{d.restorasi
+																? lookupLabel(
+																		RESTORASI,
+																		d.restorasi,
+																	)
+																: "-"}
+														{/if}
+													</td>
+													<td
+														class="px-4 py-3 text-slate-600"
+													>
+														{#if d.diagnoses && d.diagnoses.length > 0}
+															<ul
+																class="list-none p-0 m-0 space-y-1"
+															>
+																{#each d.diagnoses as diag}
+																	<li
+																		class="text-[11px] leading-tight"
 																	>
-																	- {diag.diagnosis_display}
-																</li>
-															{/each}
-														</ul>
-													{:else}
-														{d.diagnosis_display ||
-															"-"}
-													{/if}
-												</td>
-												<td
-													class="px-4 py-3 text-slate-600"
-												>
-													{#if d.procedures && d.procedures.length > 0}
-														<ul
-															class="list-none p-0 m-0 space-y-1"
-														>
-															{#each d.procedures as proc}
-																<li
-																	class="text-[11px] leading-tight"
-																>
-																	<span
-																		class="font-bold text-emerald-600"
-																		>{proc.procedure_code ||
-																			"ICD-9"}</span
+																		<span
+																			class="font-bold text-red-600"
+																			>{diag.diagnosis_code ||
+																				"ICD-10"}</span
+																		>
+																		- {diag.diagnosis_display}
+																	</li>
+																{/each}
+															</ul>
+														{:else}
+															{d.diagnosis_display ||
+																"-"}
+														{/if}
+													</td>
+													<td
+														class="px-4 py-3 text-slate-600"
+													>
+														{#if d.procedures && d.procedures.length > 0}
+															<ul
+																class="list-none p-0 m-0 space-y-1"
+															>
+																{#each d.procedures as proc}
+																	<li
+																		class="text-[11px] leading-tight"
 																	>
-																	- {proc.procedure_display}
-																</li>
-															{/each}
-														</ul>
-													{:else}
-														{d.procedure_display ||
-															"-"}
-													{/if}
-												</td>
+																		<span
+																			class="font-bold text-emerald-600"
+																			>{proc.procedure_code ||
+																				"ICD-9"}</span
+																		>
+																		- {proc.procedure_display}
+																	</li>
+																{/each}
+															</ul>
+														{:else}
+															{d.procedure_display ||
+																"-"}
+														{/if}
+													</td>
 												</tr>
 											{/each}
 										</tbody>
@@ -1958,20 +2027,30 @@
 							</div>
 						{/if}
 					</div>
-				{/if}				<!-- Prescriptions Section -->
+				{/if}
+				<!-- Prescriptions Section -->
 				<section
 					class="rounded-3xl p-8 border border-primary/10 mb-8 overflow-hidden relative"
 					style="background: linear-gradient(135deg, rgba(60, 60, 246, 0.03) 0%, rgba(60, 60, 246, 0.08) 100%);"
 				>
 					<div class="flex items-center justify-between mb-6">
-						<h3 class="text-lg font-bold flex items-center gap-3 text-slate-800">
-							<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-								<span class="material-symbols-outlined text-[24px]">pill</span>
+						<h3
+							class="text-lg font-bold flex items-center gap-3 text-slate-800"
+						>
+							<div
+								class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+							>
+								<span
+									class="material-symbols-outlined text-[24px]"
+									>pill</span
+								>
 							</div>
 							Prescriptions (KFA)
 						</h3>
 						{#if prescriptions.length > 0}
-							<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">
+							<span
+								class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest"
+							>
 								{prescriptions.length} Item(s)
 							</span>
 						{/if}
@@ -1981,23 +2060,41 @@
 						<!-- Input Grid Row 1 -->
 						<div class="grid grid-cols-12 gap-4 items-end">
 							<div class="col-span-12 lg:col-span-6">
-								<div class="flex justify-between items-center mb-2 px-1">
-									<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Name</label>
-									<div class="flex p-0.5 bg-slate-200/50 rounded-lg w-fit">
+								<div
+									class="flex justify-between items-center mb-2 px-1"
+								>
+									<label
+										class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+										>Product Name</label
+									>
+									<div
+										class="flex p-0.5 bg-slate-200/50 rounded-lg w-fit"
+									>
 										<button
 											type="button"
-											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type === 'known' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
-											on:click={() => { newRx.merk_type = "known"; }}
-										>MERK KNOWN</button>
+											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type ===
+											'known'
+												? 'bg-white text-primary shadow-sm'
+												: 'text-slate-500 hover:text-slate-700'}"
+											on:click={() => {
+												newRx.merk_type = "known";
+											}}>MERK KNOWN</button
+										>
 										<button
 											type="button"
-											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type === 'unknown' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
-											on:click={() => { newRx.merk_type = "unknown"; }}
-										>MERK UNKNOWN</button>
+											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type ===
+											'unknown'
+												? 'bg-white text-primary shadow-sm'
+												: 'text-slate-500 hover:text-slate-700'}"
+											on:click={() => {
+												newRx.merk_type = "unknown";
+											}}>MERK UNKNOWN</button
+										>
 									</div>
 								</div>
 								<SearchableSelect
-									searchFn={(term) => searchMedication(term, newRx.merk_type)}
+									searchFn={(term) =>
+										searchMedication(term, newRx.merk_type)}
 									placeholder="Cari produk obat (KFA)..."
 									wrapperClass="w-full"
 									inputClass="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm transition-all"
@@ -2005,12 +2102,18 @@
 									on:select={(e) => {
 										newRx.kfa_code = e.detail.value;
 										newRx.product_name = e.detail.label;
-										newRx.dosage_form = e.detail.dosage_form || "";
+										newRx.dosage_form =
+											e.detail.dosage_form || "";
 									}}
 								/>
 							</div>
-							<div class="col-span-12 md:col-span-8 lg:col-span-4">
-								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Dosage</label>
+							<div
+								class="col-span-12 md:col-span-8 lg:col-span-4"
+							>
+								<label
+									class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1"
+									>Dosage</label
+								>
 								<div class="relative flex items-center">
 									<input
 										class="w-full py-3 pl-4 pr-20 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm"
@@ -2019,14 +2122,21 @@
 										bind:value={newRx.dosage}
 									/>
 									{#if newRx.dosage_form}
-										<div class="absolute right-3 px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 border border-slate-200">
+										<div
+											class="absolute right-3 px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 border border-slate-200"
+										>
 											{newRx.dosage_form}
 										</div>
 									{/if}
 								</div>
 							</div>
-							<div class="col-span-12 md:col-span-4 lg:col-span-2">
-								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Quantity</label>
+							<div
+								class="col-span-12 md:col-span-4 lg:col-span-2"
+							>
+								<label
+									class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1"
+									>Quantity</label
+								>
 								<input
 									class="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm font-bold text-center focus:ring-primary focus:border-primary shadow-sm"
 									type="number"
@@ -2038,9 +2148,15 @@
 						<!-- Input Grid Row 2 (Instruction) -->
 						<div class="grid grid-cols-12 gap-4 items-end">
 							<div class="col-span-12 md:col-span-11">
-								<label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Special Instruction</label>
+								<label
+									class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1"
+									>Special Instruction</label
+								>
 								<div class="relative flex items-center">
-									<span class="material-symbols-outlined absolute left-4 text-slate-300 text-[18px]">info</span>
+									<span
+										class="material-symbols-outlined absolute left-4 text-slate-300 text-[18px]"
+										>info</span
+									>
 									<input
 										class="w-full py-3 pl-10 pr-4 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm placeholder:text-slate-300"
 										placeholder="e.g. Sesudah makan / Habiskan obat / Jika demam saja"
@@ -2056,7 +2172,10 @@
 									on:click={addPrescription}
 									title="Tambah Resep"
 								>
-									<span class="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform">add</span>
+									<span
+										class="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform"
+										>add</span
+									>
 								</button>
 							</div>
 						</div>
@@ -2069,32 +2188,80 @@
 						<!-- Added Item Chips -->
 						<div class="grid grid-cols-1 gap-4">
 							{#each prescriptions as rx, i}
-								<div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-primary/20 hover:shadow-md transition-all group flex items-start gap-4">
-									<div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
-										<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">medication</span>
+								<div
+									class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-primary/20 hover:shadow-md transition-all group flex items-start gap-4"
+								>
+									<div
+										class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors"
+									>
+										<span
+											class="material-symbols-outlined text-[24px]"
+											style="font-variation-settings: 'FILL' 1;"
+											>medication</span
+										>
 									</div>
 									<div class="flex-1 min-w-0 pt-1">
-										<h4 class="text-sm font-bold text-slate-800 mb-1 truncate" title={rx.product_name}>
+										<h4
+											class="text-sm font-bold text-slate-800 mb-1 truncate"
+											title={rx.product_name}
+										>
 											{rx.product_name}
 										</h4>
-										<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-											<div class="flex items-center gap-1.5">
-												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Dosage</span>
-												<span class="text-xs font-bold text-slate-600">{rx.dosage || "-"}</span>
+										<div
+											class="flex flex-wrap items-center gap-x-4 gap-y-1.5"
+										>
+											<div
+												class="flex items-center gap-1.5"
+											>
+												<span
+													class="text-[10px] font-black text-slate-300 uppercase tracking-widest"
+													>Dosage</span
+												>
+												<span
+													class="text-xs font-bold text-slate-600"
+													>{rx.dosage || "-"}</span
+												>
 											</div>
-											<div class="flex items-center gap-1.5">
-												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Qty</span>
-												<span class="text-xs font-bold text-slate-600">{rx.quantity} <span class="text-slate-400 font-medium">{rx.dosage_form}</span></span>
+											<div
+												class="flex items-center gap-1.5"
+											>
+												<span
+													class="text-[10px] font-black text-slate-300 uppercase tracking-widest"
+													>Qty</span
+												>
+												<span
+													class="text-xs font-bold text-slate-600"
+													>{rx.quantity}
+													<span
+														class="text-slate-400 font-medium"
+														>{rx.dosage_form}</span
+													></span
+												>
 											</div>
-											<div class="flex items-center gap-1.5">
-												<span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">KFA</span>
-												<span class="text-xs font-medium text-slate-400 font-mono">{rx.kfa_code}</span>
+											<div
+												class="flex items-center gap-1.5"
+											>
+												<span
+													class="text-[10px] font-black text-slate-300 uppercase tracking-widest"
+													>KFA</span
+												>
+												<span
+													class="text-xs font-medium text-slate-400 font-mono"
+													>{rx.kfa_code}</span
+												>
 											</div>
 										</div>
 										{#if rx.instruction}
-											<div class="mt-3 p-2 px-3 bg-primary/5 rounded-xl border border-primary/10 inline-flex items-center gap-2">
-												<span class="material-symbols-outlined text-primary text-[16px]">info</span>
-												<p class="text-[11px] font-bold text-primary italic leading-none">
+											<div
+												class="mt-3 p-2 px-3 bg-primary/5 rounded-xl border border-primary/10 inline-flex items-center gap-2"
+											>
+												<span
+													class="material-symbols-outlined text-primary text-[16px]"
+													>info</span
+												>
+												<p
+													class="text-[11px] font-bold text-primary italic leading-none"
+												>
 													{rx.instruction}
 												</p>
 											</div>
@@ -2106,17 +2273,31 @@
 										on:click={() => removePrescription(i)}
 										title="Hapus"
 									>
-										<span class="material-symbols-outlined text-[20px]">delete</span>
+										<span
+											class="material-symbols-outlined text-[20px]"
+											>delete</span
+										>
 									</button>
 								</div>
 							{/each}
 
 							{#if prescriptions.length === 0}
-								<div class="py-8 flex flex-col items-center justify-center bg-white/40 rounded-3xl border-2 border-dashed border-slate-100">
-									<div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mb-3">
-										<span class="material-symbols-outlined text-3xl">medication</span>
+								<div
+									class="py-8 flex flex-col items-center justify-center bg-white/40 rounded-3xl border-2 border-dashed border-slate-100"
+								>
+									<div
+										class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mb-3"
+									>
+										<span
+											class="material-symbols-outlined text-3xl"
+											>medication</span
+										>
 									</div>
-									<p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Belum ada resep ditambahkan</p>
+									<p
+										class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+									>
+										Belum ada resep ditambahkan
+									</p>
 								</div>
 							{/if}
 						</div>
@@ -2479,7 +2660,8 @@
 										<button
 											type="button"
 											class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors flex items-center justify-center"
-											on:click={() => deletePhoto(photo.id)}
+											on:click={() =>
+												deletePhoto(photo.id)}
 											title="Hapus Foto"
 										>
 											<span
@@ -2501,7 +2683,9 @@
 								<div
 									class="aspect-square rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-3"
 								>
-									<span class="spinner spinner-md text-primary"></span>
+									<span
+										class="spinner spinner-md text-primary"
+									></span>
 									<span
 										class="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse"
 										>Uploading</span
@@ -2514,7 +2698,8 @@
 									<div
 										class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-primary transition-all duration-300"
 									>
-										<span class="material-symbols-outlined text-3xl"
+										<span
+											class="material-symbols-outlined text-3xl"
 											>add</span
 										>
 									</div>
@@ -2538,24 +2723,31 @@
 							<div
 								class="flex-1 bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 relative overflow-hidden"
 							>
-								<div class="absolute top-0 right-0 p-2 opacity-10">
+								<div
+									class="absolute top-0 right-0 p-2 opacity-10"
+								>
 									<span
 										class="material-symbols-outlined text-4xl text-blue-700"
 										>info</span
 									>
 								</div>
-								<p class="text-xs text-blue-700 font-medium leading-relaxed">
-									<span class="font-bold text-blue-800 block mb-1"
+								<p
+									class="text-xs text-blue-700 font-medium leading-relaxed"
+								>
+									<span
+										class="font-bold text-blue-800 block mb-1"
 										>DOKUMENTASI KLINIS:</span
 									>
-									Dokumentasi visual sangat membantu dalam diagnosa dan
-									pemantauan perkembangan kasus pasien. Foto yang diunggah akan
-									secara otomatis terlampir pada resume medis PDF dan
-									terenkripsi aman.
+									Dokumentasi visual sangat membantu dalam diagnosa
+									dan pemantauan perkembangan kasus pasien. Foto
+									yang diunggah akan secara otomatis terlampir
+									pada resume medis PDF dan terenkripsi aman.
 								</p>
 							</div>
 
-							<div class="grid grid-cols-2 gap-4 w-full md:w-auto md:min-w-[300px]">
+							<div
+								class="grid grid-cols-2 gap-4 w-full md:w-auto md:min-w-[300px]"
+							>
 								<div
 									class="p-4 rounded-2xl border border-slate-100 bg-slate-50/30"
 								>
@@ -2565,7 +2757,8 @@
 										Status
 									</p>
 									<p
-										class="text-xs font-bold {clinicalPhotos.length > 0
+										class="text-xs font-bold {clinicalPhotos.length >
+										0
 											? 'text-emerald-600'
 											: 'text-slate-500'}"
 									>
@@ -2582,7 +2775,9 @@
 									>
 										Tipe Dokumen
 									</p>
-									<p class="text-xs font-bold text-slate-700">Foto Klinis</p>
+									<p class="text-xs font-bold text-slate-700">
+										Foto Klinis
+									</p>
 								</div>
 							</div>
 						</div>
@@ -2786,9 +2981,26 @@
 																		>S</span
 																	>
 																	<span
+																		class="whitespace-pre-wrap"
 																		>{hist
 																			.encounter
 																			.subjective}</span
+																	>
+																</div>
+															{/if}
+															{#if hist.encounter?.objective}
+																<div
+																	class="flex gap-2"
+																>
+																	<span
+																		class="font-black text-slate-800 min-w-4 text-center bg-slate-200/50 rounded h-fit px-1"
+																		>O</span
+																	>
+																	<span
+																		class="whitespace-pre-wrap"
+																		>{hist
+																			.encounter
+																			.objective}</span
 																	>
 																</div>
 															{/if}
@@ -2801,6 +3013,7 @@
 																		>A</span
 																	>
 																	<span
+																		class="whitespace-pre-wrap"
 																		>{hist
 																			.encounter
 																			.assessment}</span
@@ -2816,6 +3029,7 @@
 																		>P</span
 																	>
 																	<span
+																		class="whitespace-pre-wrap"
 																		>{hist
 																			.encounter
 																			.plan}</span
@@ -2831,7 +3045,7 @@
 																		>R</span
 																	>
 																	<span
-																		class="italic text-slate-500 font-medium"
+																		class="italic text-slate-500 font-medium whitespace-pre-wrap"
 																		>{hist
 																			.encounter
 																			.resep}</span
@@ -2839,7 +3053,7 @@
 																</div>
 															{/if}
 
-															{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.plan && !hist.encounter?.resep}
+															{#if !hist.encounter?.subjective && !hist.encounter?.objective && !hist.encounter?.assessment && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}
 																<span
 																	class="italic text-slate-400 text-[11px]"
 																	>Belum ada

@@ -45,8 +45,39 @@
 		if (filteredTableEncounters.length >= 0) currentPage = 1;
 	}
 
-	$: totalPages = Math.ceil(filteredTableEncounters.length / itemsPerPage);
-	$: paginatedEncounters = filteredTableEncounters.slice(
+	let sortKey = "";
+	let sortDesc = false;
+
+	function handleSort(key) {
+		if (sortKey === key) {
+			sortDesc = !sortDesc;
+		} else {
+			sortKey = key;
+			sortDesc = false;
+		}
+	}
+
+	$: sortedTableEncounters = [...filteredTableEncounters].sort((a, b) => {
+		if (!sortKey) return 0;
+		let valA, valB;
+		if (sortKey === 'id') { valA = a.encounter?.id || ''; valB = b.encounter?.id || ''; }
+		else if (sortKey === 'patient') { valA = a.patient_name || ''; valB = b.patient_name || ''; }
+		else if (sortKey === 'patient_id') { valA = a.encounter?.patient_id || ''; valB = b.encounter?.patient_id || ''; }
+		else if (sortKey === 'doctor') { valA = a.doctor_name || ''; valB = b.doctor_name || ''; }
+		else if (sortKey === 'reason') { valA = a.encounter_reason_display || ''; valB = b.encounter_reason_display || ''; }
+		else if (sortKey === 'status') { valA = a.encounter?.status || ''; valB = b.encounter?.status || ''; }
+		else if (sortKey === 'time') { valA = new Date(a.encounter?.created_at || 0).getTime(); valB = new Date(b.encounter?.created_at || 0).getTime(); }
+		
+		if (typeof valA === 'string') valA = valA.toLowerCase();
+		if (typeof valB === 'string') valB = valB.toLowerCase();
+		
+		if (valA < valB) return sortDesc ? 1 : -1;
+		if (valA > valB) return sortDesc ? -1 : 1;
+		return 0;
+	});
+
+	$: totalPages = Math.ceil(sortedTableEncounters.length / itemsPerPage);
+	$: paginatedEncounters = sortedTableEncounters.slice(
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	);
@@ -156,7 +187,7 @@
 					on:change={loadEncounters}
 					class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-white focus:ring-primary focus:border-primary outline-none"
 				>
-					<option value="">All Doctors</option>
+					<option value="all">All Doctors</option>
 					{#each doctors as doc}
 						<option value={doc.id}>Dr. {doc.name}</option>
 					{/each}
@@ -201,13 +232,27 @@
 				<table class="w-full text-left text-sm whitespace-nowrap">
 					<thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
 						<tr>
-							<th class="px-6 py-4 font-semibold text-slate-700">Encounter ID</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Patient Name</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Patient ID</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Doctor</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Reason</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Status</th>
-							<th class="px-6 py-4 font-semibold text-slate-700">Time</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('id')}>
+							    <div class="flex items-center gap-1">Encounter ID<span class="material-symbols-outlined text-[14px] {sortKey === 'id' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'id' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient')}>
+							    <div class="flex items-center gap-1">Patient Name<span class="material-symbols-outlined text-[14px] {sortKey === 'patient' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient_id')}>
+							    <div class="flex items-center gap-1">Patient ID<span class="material-symbols-outlined text-[14px] {sortKey === 'patient_id' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient_id' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('doctor')}>
+							    <div class="flex items-center gap-1">Doctor<span class="material-symbols-outlined text-[14px] {sortKey === 'doctor' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'doctor' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('reason')}>
+							    <div class="flex items-center gap-1">Reason<span class="material-symbols-outlined text-[14px] {sortKey === 'reason' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'reason' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('status')}>
+							    <div class="flex items-center gap-1">Status<span class="material-symbols-outlined text-[14px] {sortKey === 'status' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'status' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('time')}>
+							    <div class="flex items-center gap-1">Time<span class="material-symbols-outlined text-[14px] {sortKey === 'time' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'time' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
 							<th class="px-6 py-4 font-semibold text-slate-700">Action</th>
 						</tr>
 					</thead>

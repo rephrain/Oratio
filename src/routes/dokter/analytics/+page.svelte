@@ -95,17 +95,21 @@
 
 	import { headerTitle } from "$lib/stores/layout.js";
 
+	let refreshInterval;
+
 	onMount(() => {
 		headerTitle.set("Analytics & Statistik");
 		loadData();
+		refreshInterval = setInterval(() => loadData(true), 60000); // 1 minute is fine for analytics
 	});
 
 	onDestroy(() => {
 		headerTitle.set(null);
+		if (refreshInterval) clearInterval(refreshInterval);
 	});
 
-	async function loadData() {
-		loading = true;
+	async function loadData(isBg = false) {
+		if (!isBg) loading = true;
 		error = null;
 		try {
 			const params = new URLSearchParams({
@@ -119,10 +123,46 @@
 			console.error(err);
 			error = err.message;
 		} finally {
-			loading = false;
+			if (!isBg) loading = false;
 			setTimeout(renderCharts, 80);
 		}
 	}
+
+	$: peakDay = (() => {
+		if (!analytics?.dailyVolume?.length) return null;
+		const sorted = [...analytics.dailyVolume].sort((a, b) => b.count - a.count);
+		const top = sorted[0];
+		if (!top || top.count === 0) return null;
+
+		const dt = new Date(top.date);
+		return {
+			name: dt.toLocaleDateString("id-ID", {
+				weekday: "long",
+				timeZone: "Asia/Jakarta",
+			}),
+			date: dt.toLocaleDateString("id-ID", {
+				day: "2-digit",
+				month: "short",
+				timeZone: "Asia/Jakarta",
+			}),
+			count: top.count,
+		};
+	})();
+
+	$: peakHour = (() => {
+		if (!analytics?.hourlyDist?.length) return null;
+		const sorted = [...analytics.hourlyDist].sort((a, b) => b.count - a.count);
+		const top = sorted[0];
+		if (!top || top.count === 0) return null;
+
+		const startHour = String(top.hour).padStart(2, "0") + ":00";
+		const endHour = String((top.hour + 1) % 24).padStart(2, "0") + ":00";
+
+		return {
+			label: `${startHour} - ${endHour}`,
+			count: top.count,
+		};
+	})();
 
 	// Color palette
 	const C = {
@@ -498,9 +538,12 @@
 							),
 							backgroundColor: palette
 								.slice(0, analytics.topItems.length)
-								.map((c) => c + "E6"),
-							borderRadius: 6,
-							barThickness: 20,
+								.map((c) => c + "CC"),
+							borderColor: palette.slice(0, analytics.topItems.length),
+							borderWidth: 2,
+							hoverBackgroundColor: palette.slice(0, analytics.topItems.length),
+							borderRadius: 8,
+							barThickness: 24,
 							borderSkipped: false,
 						},
 					],
@@ -551,10 +594,14 @@
 								backgroundColor: palette.slice(
 									0,
 									analytics.revenueByGroup.length,
+								).map(c => c + "E6"),
+								hoverBackgroundColor: palette.slice(
+									0,
+									analytics.revenueByGroup.length,
 								),
-								borderWidth: 2,
+								borderWidth: 3,
 								borderColor: "white",
-								hoverOffset: 8,
+								hoverOffset: 12,
 							},
 						],
 					},
@@ -804,10 +851,11 @@
 					labels: analytics.paymentMethodBreakdown.map((d) => d.payment_type),
 					datasets: [{
 						data: analytics.paymentMethodBreakdown.map((d) => Number(d.total_amount)),
-						backgroundColor: pmColors.slice(0, analytics.paymentMethodBreakdown.length),
-						borderWidth: 2,
+						backgroundColor: pmColors.slice(0, analytics.paymentMethodBreakdown.length).map(c => c + "E6"),
+						hoverBackgroundColor: pmColors.slice(0, analytics.paymentMethodBreakdown.length),
+						borderWidth: 3,
 						borderColor: "white",
-						hoverOffset: 8,
+						hoverOffset: 12,
 					}],
 				},
 				options: {
@@ -833,7 +881,16 @@
 		if (canvasRefs.revenueDow && analytics.revenueDow?.length > 0) {
 			const dowRevMap = {};
 			analytics.revenueDow.forEach((d) => (dowRevMap[d.dow] = Number(d.revenue)));
-			charts.revenueDow = new Chart(canvasRefs.revenueDow.getContext("2d"), {
+			
+			const rDowCtx = canvasRefs.revenueDow.getContext("2d");
+			const rDowGrad = rDowCtx.createLinearGradient(0, 0, 0, 240);
+			rDowGrad.addColorStop(0, C.success + "CC");
+			rDowGrad.addColorStop(1, C.success + "33");
+			const rDowDangerGrad = rDowCtx.createLinearGradient(0, 0, 0, 240);
+			rDowDangerGrad.addColorStop(0, C.danger + "CC");
+			rDowDangerGrad.addColorStop(1, C.danger + "33");
+
+			charts.revenueDow = new Chart(rDowCtx, {
 				type: "bar",
 				data: {
 					labels: DAYS_ID,
@@ -841,14 +898,17 @@
 						label: "Revenue",
 						data: DAYS_ID.map((_, i) => dowRevMap[i] || 0),
 						backgroundColor: DAYS_ID.map((_, i) =>
-							i === 0 ? C.danger + "33" : C.success + "33",
+							i === 0 ? rDowDangerGrad : rDowGrad,
+						),
+						hoverBackgroundColor: DAYS_ID.map((_, i) =>
+							i === 0 ? C.danger : C.success,
 						),
 						borderColor: DAYS_ID.map((_, i) =>
 							i === 0 ? C.danger : C.success,
 						),
 						borderWidth: 2,
 						borderRadius: 8,
-						barPercentage: 0.55,
+						barPercentage: 0.6,
 						borderSkipped: false,
 					}],
 				},
@@ -874,15 +934,22 @@
 
 		// -- Revenue Distribution Bar --
 		if (canvasRefs.revenueDist && analytics.revenueDistribution?.length > 0) {
-			const distColors = [C.cyan, C.accent, C.primary, C.purple, C.indigo, C.warning, C.orange].map(c => c + "E6");
-			charts.revenueDist = new Chart(canvasRefs.revenueDist.getContext("2d"), {
+			const rDistCtx = canvasRefs.revenueDist.getContext("2d");
+			const distGrad = rDistCtx.createLinearGradient(0, 0, 0, 240);
+			distGrad.addColorStop(0, C.indigo + "CC");
+			distGrad.addColorStop(1, C.indigo + "33");
+			
+			charts.revenueDist = new Chart(rDistCtx, {
 				type: "bar",
 				data: {
 					labels: analytics.revenueDistribution.map((d) => d.bucket),
 					datasets: [{
 						label: "Jumlah Visit",
 						data: analytics.revenueDistribution.map((d) => d.count),
-						backgroundColor: distColors.slice(0, analytics.revenueDistribution.length),
+						backgroundColor: distGrad,
+						hoverBackgroundColor: C.indigo,
+						borderColor: C.indigo,
+						borderWidth: 2,
 						borderRadius: 8,
 						barPercentage: 0.65,
 						borderSkipped: false,
@@ -922,9 +989,10 @@
 						label: "Revenue",
 						data: analytics.monthlyRevenue.map((d) => Number(d.revenue)),
 						backgroundColor: mGradient,
+						hoverBackgroundColor: C.emerald,
 						borderColor: C.emerald,
 						borderWidth: 2,
-						borderRadius: 10,
+						borderRadius: 8,
 						barPercentage: 0.6,
 						borderSkipped: false,
 					}],
@@ -982,7 +1050,14 @@
 							label: "Revenue",
 							data: paretoData.map((d) => Number(d.total_revenue)),
 							backgroundColor: paretoBarColors,
-							borderRadius: 6,
+							borderColor: paretoData.map((_, i) =>
+								i <= pareto80Idx ? C.success : C.primary
+							),
+							borderWidth: 1.5,
+							hoverBackgroundColor: paretoData.map((_, i) =>
+								i <= pareto80Idx ? C.success : C.primary
+							),
+							borderRadius: 8,
 							barPercentage: 0.7,
 							borderSkipped: false,
 							yAxisID: "y",
@@ -994,12 +1069,13 @@
 							data: cumulativePct,
 							borderColor: C.danger,
 							backgroundColor: C.danger + "22",
-							pointRadius: 3,
+							pointRadius: 4,
+							pointHoverRadius: 6,
 							pointBackgroundColor: "white",
 							pointBorderColor: C.danger,
 							pointBorderWidth: 2,
-							borderWidth: 2.5,
-							tension: 0.3,
+							borderWidth: 3,
+							tension: 0.4,
 							fill: false,
 							yAxisID: "y1",
 							order: 1,
@@ -1221,22 +1297,34 @@
 					>
 				</div>
 				<div class="kpi-content">
-					<div class="kpi-label">Pasien Hari Ini</div>
+					<div class="kpi-label">
+						{quickRange === "today" ? "Pasien Hari Ini" : peakDay ? "Hari Teramai" : "Pasien Hari Ini"}
+					</div>
 					<div class="flex items-center gap-2">
 						<div class="kpi-value">
-							{analytics.periodCounts?.today_count || 0}
+							{quickRange === "today"
+								? (analytics.periodCounts?.today_count || 0)
+								: peakDay
+									? peakDay.name
+									: (analytics.periodCounts?.today_count || 0)}
 						</div>
-						{#if analytics.changes?.today_count !== undefined}
-							{@const chg = analytics.changes.today_count}
-							{@const isZero = chg === 0}
-							{@const isPos = chg > 0}
-							{#if isZero}
-								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
-							{:else}
-								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
-								</span>
+						{#if quickRange === "today"}
+							{#if analytics.changes?.today_count !== undefined}
+								{@const chg = analytics.changes.today_count}
+								{@const isZero = chg === 0}
+								{@const isPos = chg > 0}
+								{#if isZero}
+									<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
+								{:else}
+									<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
+										{isPos ? "+" : "-"}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? "trending_up" : "trending_down"}</span>
+									</span>
+								{/if}
 							{/if}
+						{:else if peakDay}
+							<span class="text-slate-400 text-[10px] font-bold flex items-center">
+								{peakDay.date} ({peakDay.count})
+							</span>
 						{/if}
 					</div>
 				</div>
@@ -1244,31 +1332,59 @@
 
 			<div class="kpi-card kpi-cyan">
 				<div class="kpi-icon-wrap">
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						><path d="M8 2v4" /><path d="M16 2v4" /><rect
-							width="18"
-							height="18"
-							x="3"
-							y="4"
-							rx="2"
-						/><path d="M3 10h18" /><path d="M8 14h8" /></svg
-					>
+					{#if quickRange !== "today" && peakHour}
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><circle cx="12" cy="12" r="10" /><polyline
+								points="12 6 12 12 16 14"
+							/></svg
+						>
+					{:else}
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><path d="M8 2v4" /><path d="M16 2v4" /><rect
+								width="18"
+								height="18"
+								x="3"
+								y="4"
+								rx="2"
+							/><path d="M3 10h18" /><path d="M8 14h8" /></svg
+						>
+					{/if}
 				</div>
 				<div class="kpi-content">
-					<div class="kpi-label">7 Hari Terakhir</div>
+					<div class="kpi-label">
+						{quickRange === "today" ? "Pasien Kemarin" : peakHour ? "Jam Teramai" : "7 Hari Terakhir"}
+					</div>
 					<div class="flex items-center gap-2">
-						<div class="kpi-value">
-							{analytics.periodCounts?.week_count || 0}
+						<div class="kpi-value {quickRange !== 'today' && peakHour ? 'text-[1.2rem]' : ''}">
+							{quickRange === "today"
+								? (analytics.periodCounts?.yesterday_count || 0)
+								: peakHour
+									? peakHour.label
+									: (analytics.periodCounts?.week_count || 0)}
 						</div>
-						{#if analytics.changes?.week_count !== undefined}
+						{#if quickRange === "today"}
+							<!-- Yesterday count usually doesn't show trend in our logic -->
+						{:else if peakHour}
+							<span class="text-slate-400 text-[10px] font-bold flex items-center">
+								{peakHour.count} Pasien
+							</span>
+						{:else if analytics.changes?.week_count !== undefined}
 							{@const chg = analytics.changes.week_count}
 							{@const isZero = chg === 0}
 							{@const isPos = chg > 0}
@@ -1276,7 +1392,7 @@
 								<span class="text-slate-400 text-[10px] font-bold flex items-center">-</span>
 							{:else}
 								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? 'trending_up' : 'trending_down'}</span>
+									{isPos ? "+" : "-"}{Math.abs(chg)}% <span class="material-symbols-outlined text-[13px] ml-0.5">{isPos ? "trending_up" : "trending_down"}</span>
 								</span>
 							{/if}
 						{/if}
@@ -2245,7 +2361,41 @@
 					</div>
 					<div class="kpi-content">
 						<div class="kpi-label">Avg Revenue/Visit</div>
-						<div class="kpi-value kpi-value-sm">{formatCurrency(Number(analytics.revenueStats?.avg_revenue_per_encounter || 0))}</div>
+						<div class="flex items-center gap-2">
+							<div class="kpi-value kpi-value-sm">
+								{formatCurrency(
+									Number(
+										analytics.revenueStats
+											?.avg_revenue_per_encounter || 0,
+									),
+								)}
+							</div>
+							{#if analytics.changes?.avg_revenue_per_encounter !== undefined && dateFrom && dateTo}
+								{@const chg =
+									analytics.changes.avg_revenue_per_encounter}
+								{@const isZero = chg === 0}
+								{@const isPos = chg > 0}
+								{#if isZero}
+									<span
+										class="text-slate-400 text-[10px] font-bold flex items-center"
+										>-</span
+									>
+								{:else}
+									<span
+										class="{isPos
+											? 'text-green-500'
+											: 'text-red-500'} text-[10px] font-bold flex items-center"
+									>
+										{isPos ? "+" : "-"}{Math.abs(chg)}% <span
+											class="material-symbols-outlined text-[13px] ml-0.5"
+											>{isPos
+												? "trending_up"
+												: "trending_down"}</span
+										>
+									</span>
+								{/if}
+							{/if}
+						</div>
 					</div>
 				</div>
 				<div class="kpi-card kpi-blue">
@@ -2254,7 +2404,36 @@
 					</div>
 					<div class="kpi-content">
 						<div class="kpi-label">Visit + Billing</div>
-						<div class="kpi-value">{analytics.revenueStats?.encounters_with_items || 0}</div>
+						<div class="flex items-center gap-2">
+							<div class="kpi-value">
+								{analytics.revenueStats?.encounters_with_items || 0}
+							</div>
+							{#if analytics.changes?.encounters_with_items !== undefined && dateFrom && dateTo}
+								{@const chg =
+									analytics.changes.encounters_with_items}
+								{@const isZero = chg === 0}
+								{@const isPos = chg > 0}
+								{#if isZero}
+									<span
+										class="text-slate-400 text-[10px] font-bold flex items-center"
+										>-</span
+									>
+								{:else}
+									<span
+										class="{isPos
+											? 'text-green-500'
+											: 'text-red-500'} text-[10px] font-bold flex items-center"
+									>
+										{isPos ? "+" : "-"}{Math.abs(chg)}% <span
+											class="material-symbols-outlined text-[13px] ml-0.5"
+											>{isPos
+												? "trending_up"
+												: "trending_down"}</span
+										>
+									</span>
+								{/if}
+							{/if}
+						</div>
 					</div>
 				</div>
 				<div class="kpi-card kpi-orange">
@@ -2263,7 +2442,41 @@
 					</div>
 					<div class="kpi-content">
 						<div class="kpi-label">Total Diskon</div>
-						<div class="kpi-value kpi-value-sm">{formatCurrency(Number(analytics.discountStats?.total_discount_amount || 0))}</div>
+						<div class="flex items-center gap-2">
+							<div class="kpi-value kpi-value-sm">
+								{formatCurrency(
+									Number(
+										analytics.discountStats
+											?.total_discount_amount || 0,
+									),
+								)}
+							</div>
+							{#if analytics.changes?.total_discount_amount !== undefined && dateFrom && dateTo}
+								{@const chg =
+									analytics.changes.total_discount_amount}
+								{@const isZero = chg === 0}
+								{@const isPos = chg > 0}
+								{#if isZero}
+									<span
+										class="text-slate-400 text-[10px] font-bold flex items-center"
+										>-</span
+									>
+								{:else}
+									<span
+										class="{isPos
+											? 'text-red-500'
+											: 'text-green-500'} text-[10px] font-bold flex items-center"
+									>
+										{isPos ? "+" : "-"}{Math.abs(chg)}% <span
+											class="material-symbols-outlined text-[13px] ml-0.5"
+											>{isPos
+												? "trending_up"
+												: "trending_down"}</span
+										>
+									</span>
+								{/if}
+							{/if}
+						</div>
 					</div>
 				</div>
 				<div class="kpi-card kpi-purple">
@@ -2576,21 +2789,25 @@
 						<div class="table-scroll">
 							<table class="data-table">
 								<thead>
-									<tr><th>Kode Dokter</th><th>Jumlah</th></tr>
+									<tr>
+										<th>Dokter</th>
+										<th class="text-right">Jumlah</th>
+									</tr>
 								</thead>
 								<tbody>
 									{#each analytics.referralStats as ref}
-										<tr>
-											<td
-												><span class="code-badge"
-													>{ref.doctor_code}</span
-												></td
-											>
-											<td
-												><span class="count-badge"
+										<tr class="hover:bg-slate-50/50 transition-colors">
+											<td>
+												<div class="flex flex-col py-1">
+													<span class="font-bold text-slate-700">{ref.doctor_name || 'Dokter Luar'}</span>
+													<span class="text-[10px] text-slate-400 font-mono">{ref.doctor_code}</span>
+												</div>
+											</td>
+											<td class="text-right">
+												<span class="count-badge count-badge-indigo"
 													>{ref.count}</span
-												></td
-											>
+												>
+											</td>
 										</tr>
 									{/each}
 								</tbody>

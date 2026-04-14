@@ -1,9 +1,10 @@
 <script>
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 
 	let stats = {};
 	let loading = true;
+	let refreshInterval;
 
 	const importantTables = [
 		"users",
@@ -13,7 +14,8 @@
 		"items",
 	];
 
-	async function loadStats() {
+	async function loadStats(isBg = false) {
+		if (!isBg) loading = true;
 		try {
 			for (const key of importantTables) {
 				const res = await fetch(`/api/admin/${key}?limit=1`);
@@ -23,11 +25,18 @@
 		} catch (err) {
 			console.error(err);
 		} finally {
-			loading = false;
+			if (!isBg) loading = false;
 		}
 	}
 
-	onMount(loadStats);
+	onMount(() => {
+		loadStats();
+		refreshInterval = setInterval(() => loadStats(true), 30000);
+	});
+
+	onDestroy(() => {
+		if (refreshInterval) clearInterval(refreshInterval);
+	});
 </script>
 
 <svelte:head>

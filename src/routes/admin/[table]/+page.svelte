@@ -1,6 +1,6 @@
 <script>
 	import { page } from "$app/stores";
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 	import AdminDataTable from "$lib/components/Tables/AdminDataTable.svelte";
 	import AdminModal from "$lib/components/UI/AdminModal.svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
@@ -77,8 +77,8 @@
 		await Promise.all(fkTables.map((t) => loadFkLookup(t)));
 	}
 
-	async function loadData() {
-		loading = true;
+	async function loadData(isBg = false) {
+		if (!isBg) loading = true;
 		try {
 			const res = await fetch(
 				`/api/admin/${tableName}?page=${currentPage}&limit=20`,
@@ -146,7 +146,7 @@
 			console.error(err);
 			addToast("Gagal memuat data", "error");
 		} finally {
-			loading = false;
+			if (!isBg) loading = false;
 		}
 	}
 
@@ -299,11 +299,25 @@
 		editRecord[field.key] = rawVal === "" ? null : rawVal;
 	}
 
+	let refreshInterval;
+
 	$: if (tableName) {
 		currentPage = 1;
 		fkLookups = {};
 		loadData();
 	}
+
+	onMount(() => {
+		refreshInterval = setInterval(() => {
+			if (!showModal && !showDeleteConfirm) {
+				loadData(true);
+			}
+		}, 30000);
+	});
+
+	onDestroy(() => {
+		if (refreshInterval) clearInterval(refreshInterval);
+	});
 </script>
 
 <svelte:head>

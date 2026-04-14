@@ -29,16 +29,17 @@ export async function GET({ url, locals }) {
 		conditions.push(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = ${date}`);
 	}
 
-	if (doctorId) conditions.push(eq(encounters.doctor_id, doctorId));
+	if (doctorId && doctorId !== 'all') conditions.push(eq(encounters.doctor_id, doctorId));
 	if (status) conditions.push(eq(encounters.status, status));
 	if (patientId) conditions.push(eq(encounters.patient_id, patientId));
 
-	// For dokter role, only show their own encounters unless searching for a specific patient's history or a specific doctor's history
-	if (locals.user?.role === 'dokter' && !patientId && !doctorId) {
+	// For dokter role, only show their own encounters unless searching for a specific patient's history or explicitly requesting 'all'
+	if (locals.user?.role === 'dokter' && !patientId && (!doctorId || doctorId !== 'all')) {
 		conditions.push(eq(encounters.doctor_id, locals.user.id));
 	}
 
 	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
 
 	const doctors = alias(users, 'doctors');
 	const kasirs = alias(users, 'kasirs');

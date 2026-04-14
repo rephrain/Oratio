@@ -1,5 +1,6 @@
 <script>
 	import { onMount, onDestroy } from "svelte";
+	import { goto } from "$app/navigation";
 	import DataTable from "$lib/components/Tables/DataTable.svelte";
 	import { QUEUE_COLUMNS, STATUS_COLORS } from "$lib/utils/constants.js";
 	import {
@@ -26,6 +27,37 @@
 			return false;
 		}
 		return true;
+	});
+
+	let sortKey = "";
+	let sortDesc = false;
+
+	function handleSort(key) {
+		if (sortKey === key) {
+			sortDesc = !sortDesc;
+		} else {
+			sortKey = key;
+			sortDesc = false;
+		}
+	}
+
+	$: sortedTableEncounters = [...filteredTableEncounters].sort((a, b) => {
+		if (!sortKey) return 0;
+		let valA, valB;
+		if (sortKey === 'queue') { valA = a.encounter?.queue_number || 0; valB = b.encounter?.queue_number || 0; }
+		else if (sortKey === 'patient') { valA = a.patient_name || ''; valB = b.patient_name || ''; }
+		else if (sortKey === 'patient_id') { valA = a.patient?.id || ''; valB = b.patient?.id || ''; }
+		else if (sortKey === 'doctor') { valA = a.doctor_name || ''; valB = b.doctor_name || ''; }
+		else if (sortKey === 'status') { valA = a.encounter?.status || ''; valB = b.encounter?.status || ''; }
+		else if (sortKey === 'time') { valA = new Date(a.encounter?.created_at || 0).getTime(); valB = new Date(b.encounter?.created_at || 0).getTime(); }
+		else if (sortKey === 'dur') { valA = new Date(a.encounter?.created_at || 0).getTime(); valB = new Date(b.encounter?.created_at || 0).getTime(); }
+		
+		if (typeof valA === 'string') valA = valA.toLowerCase();
+		if (typeof valB === 'string') valB = valB.toLowerCase();
+		
+		if (valA < valB) return sortDesc ? 1 : -1;
+		if (valA > valB) return sortDesc ? -1 : 1;
+		return 0;
 	});
 
 	// Summary counts
@@ -414,6 +446,7 @@
 									</p>
 									<button
 										class="w-full bg-accent text-white text-xs font-bold py-2 rounded shadow-sm hover:brightness-105 transition-all"
+										on:click={() => goto(`/kasir/payment?id=${item.encounter.id}`)}
 									>
 										Process Billing
 									</button>
@@ -536,37 +569,37 @@
 						>
 							<tr>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Queue #</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('queue')}
+									><div class="flex items-center gap-1">Queue #<span class="material-symbols-outlined text-[14px] {sortKey === 'queue' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'queue' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Patient Name</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient')}
+									><div class="flex items-center gap-1">Patient Name<span class="material-symbols-outlined text-[14px] {sortKey === 'patient' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Patient ID</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient_id')}
+									><div class="flex items-center gap-1">Patient ID<span class="material-symbols-outlined text-[14px] {sortKey === 'patient_id' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient_id' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Doctor</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('doctor')}
+									><div class="flex items-center gap-1">Doctor<span class="material-symbols-outlined text-[14px] {sortKey === 'doctor' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'doctor' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Status</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('status')}
+									><div class="flex items-center gap-1">Status<span class="material-symbols-outlined text-[14px] {sortKey === 'status' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'status' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Arrived Time</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('time')}
+									><div class="flex items-center gap-1">Arrived Time<span class="material-symbols-outlined text-[14px] {sortKey === 'time' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'time' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700"
-									>Duration</th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('dur')}
+									><div class="flex items-center gap-1">Duration<span class="material-symbols-outlined text-[14px] {sortKey === 'dur' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'dur' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-slate-100">
-							{#each filteredTableEncounters as row}
+							{#each sortedTableEncounters as row}
 								{@const status = row.encounter?.status}
 								<tr
 									class="hover:bg-slate-50/50 transition-colors"

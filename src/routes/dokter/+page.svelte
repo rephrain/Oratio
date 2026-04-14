@@ -145,6 +145,34 @@
 		}
 	}
 
+	let sortKey = "";
+	let sortDesc = false;
+
+	function handleSort(key) {
+		if (sortKey === key) {
+			sortDesc = !sortDesc;
+		} else {
+			sortKey = key;
+			sortDesc = false;
+		}
+	}
+
+	$: sortedReferrals = [...referrals].sort((a, b) => {
+		if (!sortKey) return 0;
+		let valA, valB;
+		if (sortKey === 'doctor') { valA = a.sender_name || ''; valB = b.sender_name || ''; }
+		else if (sortKey === 'date') { valA = new Date(a.referral_date || 0).getTime(); valB = new Date(b.referral_date || 0).getTime(); }
+		else if (sortKey === 'patient') { valA = a.patient_name || ''; valB = b.patient_name || ''; }
+		else if (sortKey === 'note') { valA = a.note || ''; valB = b.note || ''; }
+		
+		if (typeof valA === 'string') valA = valA.toLowerCase();
+		if (typeof valB === 'string') valB = valB.toLowerCase();
+		
+		if (valA < valB) return sortDesc ? 1 : -1;
+		if (valA > valB) return sortDesc ? -1 : 1;
+		return 0;
+	});
+
 	function toggleHistory(id) {
 		expandedHistoryId = expandedHistoryId === id ? null : id;
 	}
@@ -290,40 +318,7 @@
 		);
 	})();
 
-	function changeDate(offset) {
-		const d = new Date(filterDate + "T00:00:00");
-		d.setDate(d.getDate() + offset);
-		filterDate = d.toISOString().split("T")[0];
-		loading = true;
-		loadEncounters();
-	}
-
-	function goToToday() {
-		const today = new Date(
-			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
-		)
-			.toISOString()
-			.split("T")[0];
-		if (filterDate !== today) {
-			filterDate = today;
-			loading = true;
-			loadEncounters();
-		}
-	}
-
-	function onDateInput(e) {
-		filterDate = e.target.value;
-		loading = true;
-		loadEncounters();
-	}
-
-	$: isToday =
-		filterDate ===
-		new Date(
-			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
-		)
-			.toISOString()
-			.split("T")[0];
+	// Date filter has been removed, the dashboard now permanently stays on 'today' (filterDate).
 
 	onMount(() => {
 		loadEncounters();
@@ -351,42 +346,8 @@
 			? 'mr-80'
 			: 'mr-0'} transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden custom-scrollbar p-6"
 	>
-		<!-- Date Filter -->
-		<div class="flex items-center justify-between mb-6">
-			<div class="flex items-center gap-3">
-				<button
-					on:click={() => changeDate(-1)}
-					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-				>
-					<span class="material-symbols-outlined text-lg"
-						>chevron_left</span
-					>
-				</button>
-				<div class="relative">
-					<input
-						type="date"
-						value={filterDate}
-						on:input={onDateInput}
-						class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-					/>
-				</div>
-				<button
-					on:click={() => changeDate(1)}
-					class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-				>
-					<span class="material-symbols-outlined text-lg"
-						>chevron_right</span
-					>
-				</button>
-				{#if !isToday}
-					<button
-						on:click={goToToday}
-						class="ml-1 px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-all"
-					>
-						Today
-					</button>
-				{/if}
-			</div>
+		<!-- Date Display -->
+		<div class="flex items-center justify-end mb-6">
 			<p
 				class="text-xs font-bold text-slate-400 uppercase tracking-widest"
 			>
@@ -719,7 +680,7 @@
 								>
 									<div class="flex items-center gap-2">
 										<div
-											class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center overflow-hidden shadow-sm"
+											class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
 										>
 											{#if row.kasir_profile_image}
 												<img
@@ -790,22 +751,18 @@
 				<table class="w-full text-left">
 					<thead>
 						<tr class="bg-slate-50/50">
-							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
-								>Sender Doctor</th
-							>
-							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
-								>Date</th
-							>
-							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
-								>Patient Name</th
-							>
-							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
-								>Note</th
-							>
+							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('doctor')}>
+							    <div class="flex items-center gap-1">Sender Doctor<span class="material-symbols-outlined text-[14px] {sortKey === 'doctor' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'doctor' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('date')}>
+							    <div class="flex items-center gap-1">Date<span class="material-symbols-outlined text-[14px] {sortKey === 'date' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'date' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient')}>
+							    <div class="flex items-center gap-1">Patient Name<span class="material-symbols-outlined text-[14px] {sortKey === 'patient' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
+							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('note')}>
+							    <div class="flex items-center gap-1">Note<span class="material-symbols-outlined text-[14px] {sortKey === 'note' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'note' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-50">
@@ -822,14 +779,14 @@
 								</td>
 							</tr>
 						{:else if referrals.length > 0}
-							{#each referrals as ref}
+							{#each sortedReferrals as ref}
 								<tr
 									class="hover:bg-slate-50 transition-colors cursor-pointer group"
 								>
 									<td class="px-6 py-5">
 										<div class="flex items-center gap-3">
 											<div
-												class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm overflow-hidden"
+												class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm overflow-hidden"
 											>
 												{#if ref.sender_profile_image}
 													<img
@@ -838,9 +795,7 @@
 														class="w-full h-full object-cover"
 													/>
 												{:else}
-													{ref.sender_name
-														.substring(0, 2)
-														.toUpperCase()}
+												    {ref.sender_name?.[0] || "D"}
 												{/if}
 											</div>
 											<div>
@@ -1541,7 +1496,7 @@
 												class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-[11px] text-slate-700 space-y-2 relative z-10 leading-relaxed shadow-inner"
 											>
 												{#if hist.encounter?.subjective}
-													<div>
+													<div class="whitespace-pre-wrap">
 														<strong
 															class="text-blue-900 font-black"
 															>S:</strong
@@ -1551,7 +1506,7 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.objective}
-													<div>
+													<div class="whitespace-pre-wrap">
 														<strong
 															class="text-blue-900 font-black"
 															>O:</strong
@@ -1561,7 +1516,7 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.assessment}
-													<div>
+													<div class="whitespace-pre-wrap">
 														<strong
 															class="text-blue-900 font-black"
 															>A:</strong
@@ -1571,7 +1526,7 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.plan}
-													<div>
+													<div class="whitespace-pre-wrap">
 														<strong
 															class="text-blue-900 font-black"
 															>P:</strong
@@ -1580,7 +1535,7 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.resep}
-													<div>
+													<div class="whitespace-pre-wrap">
 														<strong
 															class="text-blue-900 font-black"
 															>R:</strong
@@ -1590,7 +1545,7 @@
 												{/if}
 												{#if hist.encounter?.keterangan}
 													<div
-														class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800"
+														class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800 whitespace-pre-wrap"
 													>
 														<strong
 															class="font-black"

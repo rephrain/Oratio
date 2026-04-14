@@ -3,10 +3,14 @@
 	import { page } from "$app/stores";
 	import { logout } from "$lib/stores/auth.js";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
+	import { isProfileModalOpen } from "$lib/stores/layout.js";
+	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
 
 	export let data;
 	$: user = data?.user;
 	$: currentPath = $page.url.pathname;
+
+	let showProfileMenu = false;
 </script>
 
 <div class="relative flex min-h-screen w-full overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
@@ -59,20 +63,6 @@
 				<span class="text-sm {currentPath.startsWith('/admin/import') ? 'font-semibold' : 'font-medium'}">Data Import</span>
 			</a>
 		</nav>
-		<div class="p-4 border-t border-slate-800/50">
-			<div class="flex items-center gap-3 p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
-				<div class="size-9 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-white/10 text-white font-bold uppercase">
-					{user?.name?.[0] || 'U'}
-				</div>
-				<div class="flex-1 min-w-0">
-					<p class="text-xs font-bold text-white truncate">{user?.name || 'Admin User'}</p>
-					<p class="text-[10px] text-slate-500 truncate uppercase tracking-wider">{user?.role || 'System Admin'}</p>
-				</div>
-				<button class="text-slate-500 hover:text-rose-400 transition-colors" on:click={logout} title="Logout">
-					<span class="material-symbols-outlined text-lg">logout</span>
-				</button>
-			</div>
-		</div>
 	</aside>
 
 	<!-- Main Content -->
@@ -85,14 +75,61 @@
 					<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800/50 border border-transparent focus:border-primary/30 dark:focus:border-primary/30 rounded-lg text-sm transition-all focus:ring-0 text-slate-900 dark:text-white placeholder:text-slate-500" placeholder="Search system, patients, or logs..." type="text"/>
 				</div>
 			</div>
-			<div class="flex items-center gap-3">
-				<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
-					<span class="material-symbols-outlined">notifications</span>
-					<span class="absolute top-2.5 right-2.5 size-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-				</button>
-				<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-					<span class="material-symbols-outlined">help</span>
-				</button>
+			<div class="flex items-center gap-6">
+				<div class="flex items-center gap-4">
+					<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
+						<span class="material-symbols-outlined">notifications</span>
+						<span class="absolute top-2.5 right-2.5 size-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+					</button>
+					<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+						<span class="material-symbols-outlined">help</span>
+					</button>
+				</div>
+				
+				<div class="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+				<div class="relative">
+					<button
+						class="flex items-center gap-3 focus:outline-none hover:opacity-80 transition-opacity"
+						on:click={() => (showProfileMenu = !showProfileMenu)}
+						on:blur={() => setTimeout(() => (showProfileMenu = false), 200)}
+					>
+						<div class="text-right hidden sm:block">
+							<p class="text-sm font-semibold text-slate-900 dark:text-white leading-none">{user?.name || "Admin"}</p>
+							<p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{user?.role || "System Admin"}</p>
+						</div>
+						<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold uppercase overflow-hidden border border-primary/20">
+							{#if user?.profile_image_url}
+								<img src={user.profile_image_url} alt={user?.name} class="w-full h-full object-cover"/>
+							{:else}
+								{user?.name?.[0] || "A"}
+							{/if}
+						</div>
+						<span class="material-symbols-outlined text-slate-400 text-sm {showProfileMenu ? 'rotate-180' : ''} transition-transform">expand_more</span>
+					</button>
+
+					{#if showProfileMenu}
+						<div class="absolute right-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-[60] origin-top-right transition-all">
+							<div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-1 sm:hidden">
+								<p class="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name || 'Admin User'}</p>
+								<p class="text-[10px] text-slate-500 uppercase tracking-wider truncate">{user?.role || 'System Admin'}</p>
+							</div>
+							<button on:click={() => { $isProfileModalOpen = true; showProfileMenu = false; }} class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors">
+								<span class="material-symbols-outlined text-xl text-slate-400">account_circle</span>
+								<span class="font-medium text-sm">My Profile</span>
+							</button>
+							<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors">
+								<span class="material-symbols-outlined text-xl text-slate-400">settings</span>
+								<span class="font-medium text-sm">Settings</span>
+							</button>
+							<div class="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+							<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors" on:click={logout}>
+								<span class="material-symbols-outlined text-xl">logout</span>
+								<span class="font-medium text-sm">Logout</span>
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</header>
 		
@@ -101,6 +138,7 @@
 </div>
 
 <Toast />
+<ProfileModal {user} />
 
 <style>
 	:global(.custom-scrollbar::-webkit-scrollbar) { width: 6px; }

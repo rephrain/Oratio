@@ -3,7 +3,8 @@
 	import Sidebar from "$lib/components/Layout/Sidebar.svelte";
 	import { page } from "$app/stores";
 	import { logout } from "$lib/stores/auth.js";
-	import { isSidebarOpen } from "$lib/stores/layout.js";
+	import { isSidebarOpen, isProfileModalOpen } from "$lib/stores/layout.js";
+	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
 
 	export let data;
 	$: user = data?.user;
@@ -80,9 +81,13 @@
 							</p>
 						</div>
 						<div
-							class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+							class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold uppercase overflow-hidden border border-slate-100"
 						>
-							{user?.name?.[0]?.toUpperCase() || "R"}
+							{#if user?.profile_image_url}
+								<img src={user.profile_image_url} alt={user?.name} class="w-full h-full object-cover"/>
+							{:else}
+								{user?.name?.[0] || "R"}
+							{/if}
 						</div>
 						<span
 							class="material-symbols-outlined text-slate-400 text-sm {showProfileMenu
@@ -96,6 +101,7 @@
 							class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50 origin-top-right transition-all"
 						>
 							<button
+								on:click={() => { $isProfileModalOpen = true; showProfileMenu = false; }}
 								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 transition-colors"
 							>
 								<span
@@ -140,6 +146,7 @@
 	</main>
 </div>
 <Toast />
+<ProfileModal {user} />
 
 <style>
 	:global(:root) {

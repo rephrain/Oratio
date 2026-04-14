@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
 	import { PAYMENT_TYPES } from "$lib/utils/constants.js";
 	import { formatCurrency } from "$lib/utils/formatters.js";
 	import { addToast } from "$lib/stores/toast.js";
@@ -13,6 +14,34 @@
 	let selectedEncounterId = "";
 	let encounterDetail = null;
 	let items = [];
+
+	let sortKey = "";
+	let sortDesc = false;
+
+	function handleSort(key) {
+		if (sortKey === key) {
+			sortDesc = !sortDesc;
+		} else {
+			sortKey = key;
+			sortDesc = false;
+		}
+	}
+
+	$: sortedItems = [...items].sort((a, b) => {
+		if (!sortKey) return 0;
+		let valA, valB;
+		if (sortKey === 'desc') { valA = a.name || a.item_id || ''; valB = b.name || b.item_id || ''; }
+		else if (sortKey === 'qty') { valA = a.quantity || 0; valB = b.quantity || 0; }
+		else if (sortKey === 'price') { valA = a.price_at_time || 0; valB = b.price_at_time || 0; }
+		else if (sortKey === 'subtotal') { valA = a.subtotal || 0; valB = b.subtotal || 0; }
+		
+		if (typeof valA === 'string') valA = valA.toLowerCase();
+		if (typeof valB === 'string') valB = valB.toLowerCase();
+		
+		if (valA < valB) return sortDesc ? 1 : -1;
+		if (valA > valB) return sortDesc ? -1 : 1;
+		return 0;
+	});
 
 	// Payment form
 	let paymentMode = "NORMAL";
@@ -34,6 +63,17 @@
         discountType = "fixed";
         discountPct = totalSales > 0 ? (discountFixed / totalSales) * 100 : 0;
     }
+
+	function setPaymentMode(mode) {
+		paymentMode = mode;
+		if (mode === 'VOUCHER') {
+			discountPct = 10;
+			handlePercentChange();
+		} else if (mode === 'NORMAL') {
+			discountPct = 0;
+			handlePercentChange();
+		}
+	}
 
 	$: selectedPaymentType = PAYMENT_TYPES.find(
 		(pt) => pt.label === paymentType,
@@ -115,7 +155,15 @@
 		}
 	}
 
-	onMount(loadDischargedEncounters);
+	onMount(async () => {
+		await loadDischargedEncounters();
+		
+		const id = $page.url.searchParams.get("id");
+		if (id) {
+			selectedEncounterId = id;
+			loadEncounterDetail();
+		}
+	});
 </script>
 
 <svelte:head>
@@ -154,7 +202,7 @@
 				<option value="">-- Cari atau Pilih Pasien yang Selesai Pemeriksaan --</option>
 				{#each dischargedEncounters as enc}
 					<option value={enc.encounter.id}>
-						Antrean #{enc.encounter.queue_number} — {enc.patient_name} (MR: {enc.patient_id})
+						Antrean #{enc.encounter.queue_number} — {enc.patient_name} (MR: {enc.patient?.id || '-'})
 					</option>
 				{/each}
 			</select>
@@ -204,16 +252,24 @@
 					<table class="w-full text-left">
 						<thead class="bg-white">
 							<tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-50">
-								<th class="px-6 py-4">Description</th>
-								<th class="px-6 py-4 text-center">Qty</th>
-								<th class="px-6 py-4 text-right">Price</th>
-								<th class="px-6 py-4 text-right">Subtotal</th>
+								<th class="px-6 py-4 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('desc')}>
+									<div class="flex items-center gap-1">Description<span class="material-symbols-outlined text-[14px] {sortKey === 'desc' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'desc' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+								</th>
+								<th class="px-6 py-4 text-center cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('qty')}>
+									<div class="flex items-center gap-1 justify-center">Qty<span class="material-symbols-outlined text-[14px] {sortKey === 'qty' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'qty' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+								</th>
+								<th class="px-6 py-4 text-right cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('price')}>
+									<div class="flex items-center gap-1 justify-end">Price<span class="material-symbols-outlined text-[14px] {sortKey === 'price' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'price' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+								</th>
+								<th class="px-6 py-4 text-right cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('subtotal')}>
+									<div class="flex items-center gap-1 justify-end">Subtotal<span class="material-symbols-outlined text-[14px] {sortKey === 'subtotal' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'subtotal' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+								</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-slate-50">
-							{#each items as item}
+							{#each sortedItems as item}
 							<tr class="text-sm hover:bg-slate-50/50 transition-colors">
-								<td class="px-6 py-4 font-semibold text-slate-800 truncate max-w-[200px]">{item.item_id}</td>
+								<td class="px-6 py-4 font-semibold text-slate-800 truncate max-w-[200px]">{item.name || item.item_id}</td>
 								<td class="px-6 py-4 text-center text-slate-600">{item.quantity}</td>
 								<td class="px-6 py-4 text-right text-slate-600">{formatCurrency(item.price_at_time)}</td>
 								<td class="px-6 py-4 text-right font-bold text-slate-800">{formatCurrency(item.subtotal)}</td>
@@ -253,12 +309,12 @@
 						<button 
 							type="button"
 							class="flex-1 py-2 text-sm font-bold rounded-lg transition-all {paymentMode === 'NORMAL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
-							on:click={() => paymentMode = 'NORMAL'}
+							on:click={() => setPaymentMode('NORMAL')}
 						>NORMAL</button>
 						<button 
 							type="button"
 							class="flex-1 py-2 text-sm font-bold rounded-lg transition-all {paymentMode === 'VOUCHER' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
-							on:click={() => paymentMode = 'VOUCHER'}
+							on:click={() => setPaymentMode('VOUCHER')}
 						>VOUCHER</button>
 					</div>
 

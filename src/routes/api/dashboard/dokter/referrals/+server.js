@@ -33,7 +33,12 @@ export async function GET({ locals }) {
 			.innerJoin(encounters, eq(encounterReferrals.encounter_id, encounters.id))
 			.innerJoin(senderDoctor, eq(encounters.doctor_id, senderDoctor.id))
 			.innerJoin(patients, eq(encounters.patient_id, patients.id))
-			.where(eq(encounterReferrals.doctor_code, doctorCode))
+			.where(
+				and(
+					eq(encounterReferrals.doctor_code, doctorCode),
+					sql`DATE(${encounterReferrals.referral_date}) <= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`
+				)
+			)
 			.orderBy(desc(encounterReferrals.created_at));
 
 		return json({ data: referralsData });

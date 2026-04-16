@@ -131,6 +131,61 @@
 		}
 		await loadEncounters();
 	});
+
+	function handleExport() {
+		if (encounters.length === 0) return;
+
+		const headers = [
+			"Encounter ID",
+			"Patient Name",
+			"Patient ID",
+			"Doctor",
+			"Reason",
+			"Status",
+			"Date",
+			"Time",
+			"Subjective (S)",
+			"Objective (O)",
+			"Assessment (A)",
+			"Plan (P)",
+			"Prescription (Resep)",
+			"Additional Notes (Keterangan)"
+		];
+
+		const rows = sortedTableEncounters.map(e => [
+			e.encounter?.id || "",
+			e.patient_name || "",
+			e.encounter?.patient_id || "",
+			e.doctor_name || "",
+			e.encounter_reason_display || "",
+			e.encounter?.status || "",
+			new Date(e.encounter?.created_at).toLocaleDateString('id-ID'),
+			formatTime(e.encounter?.created_at),
+			e.encounter?.subjective || "",
+			e.encounter?.objective || "",
+			e.encounter?.assessment || "",
+			e.encounter?.plan || "",
+			e.encounter?.resep || "",
+			e.encounter?.keterangan || ""
+		]);
+
+		const csvContent = [
+			headers.join(","),
+			...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+		].join("\n");
+
+		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		
+		const timestamp = new Date().toISOString().split('T')[0];
+		link.setAttribute("href", url);
+		link.setAttribute("download", `Encounter_History_${timestamp}.csv`);
+		link.style.visibility = 'hidden';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
 </script>
 
 <svelte:head>
@@ -213,7 +268,11 @@
 			</div>
 			
 			<div class="ml-auto">
-				<button class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors">
+				<button 
+					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors disabled:opacity-50"
+					on:click={handleExport}
+					disabled={encounters.length === 0}
+				>
 					<span class="material-symbols-outlined text-sm">download</span>
 					Export Data
 				</button>

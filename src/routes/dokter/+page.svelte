@@ -246,6 +246,26 @@
 		}
 	}
 
+	let waSentSet = new Set();
+	
+	function sendWA(row, event) {
+		if (event) event.stopPropagation();
+		
+		const phone = row.patient?.handphone || row.patient?.handphone;
+		if (!phone) return;
+
+		const patientName = row.patient_name || "Pasien";
+		const queueNum = String(row.encounter?.queue_number || "").padStart(2, "0");
+		const doctorName = user?.name ? `Dr. ${user.name}` : "Dokter";
+		
+		const text = `Halo *${patientName}*,\n\nGiliran antrian Anda (Nomor *${queueNum}*) telah tiba. Silakan masuk ke ruangan pemeriksaan *${doctorName}* sekarang.\n\n_Pesan otomatis dari Oratio Clinic._`;
+		
+		const url = getWhatsAppUrl(phone) + "?text=" + encodeURIComponent(text);
+		window.open(url, '_blank');
+		
+		waSentSet = new Set([...waSentSet, row.encounter?.id]);
+	}
+
 	const tableColumns = [
 		{
 			key: "queue",
@@ -627,13 +647,25 @@
 								<div
 									class="flex justify-between items-start mb-4"
 								>
-									<div
-										class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl {config.queueBg}"
-									>
-										{String(
-											row.encounter?.queue_number ||
-												index + 1,
-										).padStart(2, "0")}
+									<div class="flex items-center gap-3 relative z-10 w-full pr-16">
+										<div
+											class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl {config.queueBg}"
+										>
+											{String(
+												row.encounter?.queue_number ||
+													index + 1,
+											).padStart(2, "0")}
+										</div>
+										
+										{#if row.patient?.handphone && !waSentSet.has(row.encounter?.id)}
+											<button
+												class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all transform hover:scale-105"
+												on:click={(e) => sendWA(row, e)}
+												title="Kirim Panggilan WhatsApp"
+											>
+												<span class="material-symbols-outlined text-[20px]">chat</span>
+											</button>
+										{/if}
 									</div>
 								</div>
 

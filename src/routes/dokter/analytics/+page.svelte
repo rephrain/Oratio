@@ -1124,6 +1124,39 @@
 				},
 			});
 		}
+		// -- Referral Stats Doughnut --
+		if (canvasRefs.referrals && analytics.referralStats?.length > 0) {
+			charts.referrals = new Chart(canvasRefs.referrals.getContext("2d"), {
+				type: "doughnut",
+				data: {
+					labels: analytics.referralStats.map((d) => d.doctor_name || d.doctor_code || "Dokter Luar"),
+					datasets: [{
+						data: analytics.referralStats.map((d) => d.count),
+						backgroundColor: palette.slice(0, analytics.referralStats.length).map(c => c + "E6"),
+						hoverBackgroundColor: palette.slice(0, analytics.referralStats.length),
+						borderWidth: 3,
+						borderColor: "white",
+						hoverOffset: 12,
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					cutout: "70%",
+					plugins: {
+						legend: {
+							position: "bottom",
+							labels: { padding: 15, usePointStyle: true, pointStyle: "circle", font: { size: 10 } }
+						},
+						tooltip: {
+							callbacks: {
+								label: (ctx) => `${ctx.label}: ${ctx.raw} rujukan`
+							}
+						}
+					}
+				}
+			});
+		}
 	}
 
 	function truncLabel(str, len = 30) {
@@ -2786,7 +2819,14 @@
 						>
 					</div>
 					{#if analytics.referralStats?.length > 0}
-						<div class="table-scroll">
+						<div class="chart-body" style="height: 240px; position: relative;">
+							<canvas bind:this={canvasRefs.referrals}></canvas>
+							<div class="doughnut-center">
+								<div class="doughnut-value doughnut-value-sm">{analytics.referralOverview?.total_referrals || 0}</div>
+								<div class="doughnut-label">Rujukan</div>
+							</div>
+						</div>
+						<div class="table-scroll mt-4">
 							<table class="data-table">
 								<thead>
 									<tr>

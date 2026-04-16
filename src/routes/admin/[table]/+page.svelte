@@ -3,6 +3,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import AdminDataTable from "$lib/components/Tables/AdminDataTable.svelte";
 	import AdminModal from "$lib/components/UI/AdminModal.svelte";
+	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import { addToast } from "$lib/stores/toast.js";
 
@@ -21,6 +22,7 @@
 	let modalMode = "create"; // 'create' | 'edit'
 	let editRecord = {};
 	let saving = false;
+	let uploadingField = null; // Tracks which image field is uploading
 
 	// FK lookup data cache
 	let fkLookups = {};
@@ -200,6 +202,37 @@
 			payload.id = editRecord.id;
 		}
 		return payload;
+	}
+
+	async function handleImageUpload(fieldKey, event) {
+		const file = event.detail.file;
+		if (!file) return;
+
+		uploadingField = fieldKey;
+		try {
+			const formData = new FormData();
+			formData.append("file", file);
+			formData.append("document_type", "profile_image");
+
+			const res = await fetch("/api/documents", {
+				method: "POST",
+				body: formData,
+			});
+
+			if (res.ok) {
+				const result = await res.json();
+				editRecord[fieldKey] = `/api/documents/${result.id}`;
+				addToast("Gambar berhasil diunggah", "success");
+			} else {
+				const err = await res.json();
+				addToast(err.error || "Gagal mengunggah gambar", "error");
+			}
+		} catch (err) {
+			console.error("Upload error:", err);
+			addToast("Terjadi kesalahan saat mengunggah", "error");
+		} finally {
+			uploadingField = null;
+		}
 	}
 
 	async function handleSave() {
@@ -522,6 +555,39 @@
 							<option value="" disabled>Loading...</option>
 						{/if}
 					</select>
+				{:else if field.type === "image"}
+					<!-- Image upload with preview -->
+					<div class="space-y-3">
+						{#if editRecord[field.key]}
+							<div class="relative w-32 h-32 rounded-xl border border-slate-200 overflow-hidden group bg-slate-50">
+								<img
+									src={editRecord[field.key]}
+									alt="Preview"
+									class="w-full h-full object-cover"
+								/>
+								<button
+									type="button"
+									class="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1"
+									on:click={() => (editRecord[field.key] = null)}
+								>
+									<span class="material-symbols-outlined">delete</span>
+									<span class="text-[10px] font-bold uppercase">Hapus</span>
+								</button>
+							</div>
+						{:else if uploadingField === field.key}
+							<div class="w-full h-32 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-2">
+								<span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+								<span class="text-xs font-bold text-primary uppercase">Mengunggah...</span>
+							</div>
+						{:else}
+							<FileUpload
+								label="Pilih Foto Profil"
+								accept="image/*"
+								on:file={(e) => handleImageUpload(field.key, e)}
+							/>
+						{/if}
+						<p class="text-[10px] text-slate-400 font-medium">Format: JPG, PNG. Max 5MB.</p>
+					</div>
 				{:else}
 					<!-- Default text input -->
 					<input

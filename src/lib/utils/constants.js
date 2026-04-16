@@ -241,7 +241,7 @@ export const ADMIN_TABLES = {
 			{ key: 'password', label: 'Password', type: 'password', createOnly: true },
 			{ key: 'role', label: 'Role', type: 'select', required: true, options: ['admin', 'kasir', 'dokter'] },
 			{ key: 'doctor_code', label: 'Doctor Code', type: 'text', maxLength: 5 },
-			{ key: 'profile_image_url', label: 'Profile Image URL', type: 'text' },
+			{ key: 'profile_image_url', label: 'Profile Image URL', type: 'image' },
 			{ key: 'is_active', label: 'Is Active', type: 'boolean', defaultValue: true },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true },
 			{ key: 'updated_at', label: 'Updated At', type: 'datetime', readOnly: true }

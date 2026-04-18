@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { patients, patientDiseaseHistory, patientAllergy, patientMedication, terminologyMaster, documents } from '$lib/server/db/schema.js';
-import { eq, and, or, ilike, desc, sql } from 'drizzle-orm';
+import { eq, and, or, ilike, desc, asc, sql } from 'drizzle-orm';
 import { generatePatientId } from '$lib/utils/formatters.js';
 import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
 import fs from 'fs';
@@ -13,6 +13,8 @@ export async function GET({ url }) {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '20');
 	const offset = (page - 1) * limit;
+	const sortKey = url.searchParams.get('sort') || 'created_at';
+	const sortDir = url.searchParams.get('dir') || 'desc';
 
 	let query = db.select().from(patients);
 
@@ -26,7 +28,11 @@ export async function GET({ url }) {
 		);
 	}
 
-	const data = await query.orderBy(desc(patients.created_at)).limit(limit).offset(offset);
+	let orderFunc = sortDir === 'asc' ? asc : desc;
+	// Fallback to created_at if the key doesn't exist on patients
+	let sortColumn = patients[sortKey] || patients.created_at;
+
+	const data = await query.orderBy(orderFunc(sortColumn)).limit(limit).offset(offset);
 
 	const [{ count }] = await db.select({ count: sql`count(*)` }).from(patients);
 

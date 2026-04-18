@@ -938,6 +938,16 @@
 							ID Tindakan: {selectedEncounterData.encounter?.id ||
 								"-"}
 						</p>
+						<div class="mt-4 w-full flex justify-center">
+							<a
+								href={`/api/patients/${selectedEncounterData.encounter?.patient_id || selectedEncounterData.patient?.id}/pdf`}
+								target="_blank"
+								class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+							>
+								<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+								View PDF Record
+							</a>
+						</div>
 					</div>
 				</div>
 

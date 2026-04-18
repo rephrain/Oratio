@@ -1,6 +1,7 @@
 <script>
     import { goto } from "$app/navigation";
     import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
+    import RichSelect from "$lib/components/Forms/RichSelect.svelte";
     import {
         ALLERGY_REACTIONS,
         BLOOD_TYPES,
@@ -63,6 +64,8 @@
         chief_complaint_display: "",
     };
 
+    $: activeDoctorsCount = doctors.filter(d => d.has_active_shift).length;
+
     let diseaseHistory = [];
     let allergies = [];
     let medications = [];
@@ -88,11 +91,72 @@
         return c?.code?.toLowerCase() || "id";
     })();
 
+    const GENDER_OPTIONS = [
+        { value: "male", label: "Laki-laki (Male)" },
+        { value: "female", label: "Perempuan (Female)" },
+        { value: "other", label: "Lainnya (Other)" },
+    ];
+    const MARITAL_OPTIONS = [
+        { value: "S", label: "Belum Menikah" },
+        { value: "M", label: "Menikah" },
+        { value: "W", label: "Janda/Duda" },
+        { value: "D", label: "Cerai" },
+    ];
+    const CITIZENSHIP_OPTIONS = [
+        { value: "WNI", label: "WNI" },
+        { value: "WNA", label: "WNA" },
+    ];
+
+    const RHESUS_OPTIONS = [
+        { value: "+", label: "+" },
+        { value: "-", label: "-" },
+    ];
+    $: bloodTypeOptions = BLOOD_TYPES.map((bt) => ({ value: bt, label: bt }));
+
+    const REASON_OPTIONS = [
+        { value: "finding", label: "Finding (Clinical Finding)" },
+        { value: "procedure", label: "Procedure" },
+        { value: "situation", label: "Situation" },
+        { value: "event", label: "Event" },
+    ];
+
+    $: provinceOptions = $provinces.map((p) => ({ value: p.code, label: p.name }));
+    $: regencyOptions = $regencies.map((r) => ({ value: r.code, label: r.name }));
+    $: districtOptions = $districts.map((d) => ({
+        value: d.code,
+        label: d.name,
+    }));
+    $: villageOptions = $villages.map((v) => ({ value: v.code, label: v.name }));
+
+    const DISEASE_TYPE_OPTIONS = [
+        { value: "personal", label: "Pribadi" },
+        { value: "family", label: "Keluarga" },
+    ];
+    $: reactionOptions = ALLERGY_REACTIONS.map((r) => ({
+        value: r.code,
+        label: r.display,
+    }));
+
     // ── Doctors ──────────────────────────────────────────────────────────────
+    let doctorOptions = [];
     async function loadDoctors() {
-        const res = await fetch(`/api/doctors`);
-        const data = await res.json();
-        doctors = data.doctors || [];
+        try {
+            const res = await fetch(`/api/doctors`);
+            const data = await res.json();
+            doctors = data.doctors || [];
+            doctorOptions = doctors.map((d) => ({
+                value: d.id,
+                label: `drg. ${d.name}`,
+                sublabel: d.doctor_code || "General Dentist",
+                meta: {
+                    profile_image_url: d.profile_image_url,
+                    has_active_shift: d.has_active_shift,
+                    is_doctor: true,
+                },
+            }));
+        } catch (err) {
+            console.error("Failed to load doctors:", err);
+        }
     }
 
     // ── Snowstorm searches ───────────────────────────────────────────────────
@@ -366,8 +430,8 @@
         }
     });
 
-    async function onProvinceChange(e) {
-        selectedProvinceCode = e.target.value;
+    async function handleProvinceSelect(code) {
+        selectedProvinceCode = code;
         form.province =
             $provinces.find((p) => p.code === selectedProvinceCode)?.name ?? "";
         // Reset downstream
@@ -382,11 +446,6 @@
 
         if (!selectedProvinceCode) return;
         loadingRegency.set(true);
-        regencies.set(await fetchRegencies(selectedProvinceCode));
-        loadingRegency.set(false);
-
-        if (!selectedProvinceCode) return;
-        loadingRegency.set(true);
         try {
             regencies.set(await fetchRegencies(selectedProvinceCode));
         } finally {
@@ -394,8 +453,8 @@
         }
     }
 
-    async function onRegencyChange(e) {
-        selectedRegencyCode = e.target.value;
+    async function handleRegencySelect(code) {
+        selectedRegencyCode = code;
         form.city =
             $regencies.find((r) => r.code === selectedRegencyCode)?.name ?? "";
         form.district = "";
@@ -406,12 +465,15 @@
 
         if (!selectedRegencyCode) return;
         loadingDistrict.set(true);
-        districts.set(await fetchDistricts(selectedRegencyCode));
-        loadingDistrict.set(false);
+        try {
+            districts.set(await fetchDistricts(selectedRegencyCode));
+        } finally {
+            loadingDistrict.set(false);
+        }
     }
 
-    async function onDistrictChange(e) {
-        selectedDistrictCode = e.target.value;
+    async function handleDistrictSelect(code) {
+        selectedDistrictCode = code;
         form.district =
             $districts.find((d) => d.code === selectedDistrictCode)?.name ?? "";
         form.village = "";
@@ -419,13 +481,15 @@
 
         if (!selectedDistrictCode) return;
         loadingVillage.set(true);
-        villages.set(await fetchVillages(selectedDistrictCode));
-        loadingVillage.set(false);
+        try {
+            villages.set(await fetchVillages(selectedDistrictCode));
+        } finally {
+            loadingVillage.set(false);
+        }
     }
 
-    function onVillageChange(e) {
-        form.village =
-            $villages.find((v) => v.code === e.target.value)?.name ?? "";
+    function handleVillageSelect(code) {
+        form.village = $villages.find((v) => v.code === code)?.name ?? "";
     }
 
     function onBirthplaceInput(e) {
@@ -616,47 +680,26 @@
                     </div>
                 </div>
                 <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Jenis Kelamin <span class="text-red-500">*</span
-                        ></label
-                    >
-                    <select
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                    <RichSelect
+                        label="Jenis Kelamin"
+                        options={GENDER_OPTIONS}
                         bind:value={form.gender}
-                    >
-                        <option value="male">Laki-laki (Male)</option>
-                        <option value="female">Perempuan (Female)</option>
-                        <option value="other">Lainnya (Other)</option>
-                    </select>
+                        required
+                    />
                 </div>
                 <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Status Perkawinan</label
-                    >
-                    <select
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                    <RichSelect
+                        label="Status Perkawinan"
+                        options={MARITAL_OPTIONS}
                         bind:value={form.marital_status}
-                    >
-                        <option value="S">Belum Menikah</option>
-                        <option value="M">Menikah</option>
-                        <option value="W">Janda/Duda</option>
-                        <option value="D">Cerai</option>
-                    </select>
+                    />
                 </div>
                 <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Kewarganegaraan</label
-                    >
-                    <select
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                    <RichSelect
+                        label="Kewarganegaraan"
+                        options={CITIZENSHIP_OPTIONS}
                         bind:value={form.citizenship}
-                    >
-                        <option value="WNI">WNI</option>
-                        <option value="WNA">WNA</option>
-                    </select>
+                    />
                 </div>
             </div>
         </section>
@@ -706,284 +749,52 @@
                 </div>
                 <!-- Provinsi -->
                 <div class="col-span-2">
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Provinsi</label
-                    >
-                    <div class="relative">
-                        <select
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
-                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
-                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            on:change={onProvinceChange}
-                            disabled={$loadingProvince}
-                        >
-                            <option value=""
-                                >{$loadingProvince
-                                    ? "Memuat..."
-                                    : "Pilih Provinsi"}</option
-                            >
-                            {#each $provinces as p}
-                                <option
-                                    value={p.code}
-                                    selected={p.name === form.province}
-                                    >{p.name}</option
-                                >
-                            {/each}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
-                        >
-                            {#if $loadingProvince}
-                                <svg
-                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v8z"
-                                    />
-                                </svg>
-                            {:else}
-                                <svg
-                                    class="w-3 h-3 text-slate-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2.5"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                    </div>
+                    <RichSelect
+                        label="Provinsi"
+                        placeholder="Pilih Provinsi"
+                        options={provinceOptions}
+                        bind:value={selectedProvinceCode}
+                        on:select={(e) => handleProvinceSelect(e.detail.value)}
+                        loading={$loadingProvince}
+                    />
                 </div>
 
                 <!-- Kota/Kabupaten -->
                 <div class="col-span-2">
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Kota/Kabupaten</label
-                    >
-                    <div class="relative">
-                        <select
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
-                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
-                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            on:change={onRegencyChange}
-                            disabled={!selectedProvinceCode || $loadingRegency}
-                        >
-                            <option value="">
-                                {!selectedProvinceCode
-                                    ? "Pilih Provinsi dulu"
-                                    : $loadingRegency
-                                      ? "Memuat..."
-                                      : "Pilih Kota/Kabupaten"}
-                            </option>
-                            {#each $regencies as r}
-                                <option
-                                    value={r.code}
-                                    selected={r.name === form.city}
-                                    >{r.name}</option
-                                >
-                            {/each}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
-                        >
-                            {#if $loadingRegency}
-                                <svg
-                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v8z"
-                                    />
-                                </svg>
-                            {:else}
-                                <svg
-                                    class="w-3 h-3 text-slate-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2.5"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                    </div>
+                    <RichSelect
+                        label="Kota/Kabupaten"
+                        placeholder="Pilih Kota"
+                        options={regencyOptions}
+                        bind:value={selectedRegencyCode}
+                        on:select={(e) => handleRegencySelect(e.detail.value)}
+                        loading={$loadingRegency}
+                        disabled={!selectedProvinceCode}
+                    />
                 </div>
 
                 <!-- Kecamatan -->
-                <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Kecamatan</label
-                    >
-                    <div class="relative">
-                        <select
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
-                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
-                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            on:change={onDistrictChange}
-                            disabled={!selectedRegencyCode || $loadingDistrict}
-                        >
-                            <option value="">
-                                {!selectedRegencyCode
-                                    ? "Pilih Kota dulu"
-                                    : $loadingDistrict
-                                      ? "Memuat..."
-                                      : "Pilih Kecamatan"}
-                            </option>
-                            {#each $districts as d}
-                                <option
-                                    value={d.code}
-                                    selected={d.name === form.district}
-                                    >{d.name}</option
-                                >
-                            {/each}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
-                        >
-                            {#if $loadingDistrict}
-                                <svg
-                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v8z"
-                                    />
-                                </svg>
-                            {:else}
-                                <svg
-                                    class="w-3 h-3 text-slate-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2.5"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                    </div>
+                <div class="col-span-1">
+                    <RichSelect
+                        label="Kecamatan"
+                        placeholder="Pilih Kecamatan"
+                        options={districtOptions}
+                        bind:value={selectedDistrictCode}
+                        on:select={(e) => handleDistrictSelect(e.detail.value)}
+                        loading={$loadingDistrict}
+                        disabled={!selectedRegencyCode}
+                    />
                 </div>
 
                 <!-- Kelurahan/Desa -->
-                <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Kelurahan/Desa</label
-                    >
-                    <div class="relative">
-                        <select
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
-                            focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
-                            appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            on:change={onVillageChange}
-                            disabled={!selectedDistrictCode || $loadingVillage}
-                        >
-                            <option value="">
-                                {!selectedDistrictCode
-                                    ? "Pilih Kecamatan dulu"
-                                    : $loadingVillage
-                                      ? "Memuat..."
-                                      : "Pilih Kelurahan/Desa"}
-                            </option>
-                            {#each $villages as v}
-                                <option
-                                    value={v.code}
-                                    selected={v.name === form.village}
-                                    >{v.name}</option
-                                >
-                            {/each}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center"
-                        >
-                            {#if $loadingVillage}
-                                <svg
-                                    class="w-3.5 h-3.5 text-slate-400 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v8z"
-                                    />
-                                </svg>
-                            {:else}
-                                <svg
-                                    class="w-3 h-3 text-slate-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2.5"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            {/if}
-                        </div>
-                    </div>
+                <div class="col-span-1">
+                    <RichSelect
+                        label="Kelurahan/Desa"
+                        placeholder="Pilih Kelurahan"
+                        options={villageOptions}
+                        on:select={(e) => handleVillageSelect(e.detail.value)}
+                        loading={$loadingVillage}
+                        disabled={!selectedDistrictCode}
+                    />
                 </div>
                 <div class="col-span-1">
                     <label
@@ -1170,39 +981,23 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label
-                            class="block text-sm font-semibold text-slate-700 mb-2"
-                            >Gol. Darah <span class="text-red-500">*</span
-                            ></label
-                        >
-                        <select
-                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.blood_type
-                                ? 'border-red-500 ring-1 ring-red-500'
-                                : ''}"
+                        <RichSelect
+                            label="Gol. Darah"
+                            options={bloodTypeOptions}
                             bind:value={form.blood_type}
-                        >
-                            <option value="">-- Pilih --</option>
-                            {#each BLOOD_TYPES as bt}
-                                <option value={bt}>{bt}</option>
-                            {/each}
-                        </select>
+                            required
+                        />
                         {#if errors.blood_type}<span
                                 class="text-xs text-red-500 mt-1 block"
                                 >{errors.blood_type}</span
                             >{/if}
                     </div>
                     <div>
-                        <label
-                            class="block text-sm font-semibold text-slate-700 mb-2"
-                            >Rhesus</label
-                        >
-                        <select
-                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                        <RichSelect
+                            label="Rhesus"
+                            options={RHESUS_OPTIONS}
                             bind:value={form.rhesus}
-                        >
-                            <option value="+">+</option>
-                            <option value="-">-</option>
-                        </select>
+                        />
                     </div>
                     <div class="col-span-2">
                         <label
@@ -1267,30 +1062,13 @@
                         class="block text-sm font-semibold text-slate-700 mb-2"
                         >Pilih Dokter <span class="text-red-500">*</span></label
                     >
-                    <div class="relative">
-                        <select
-                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all appearance-none {errors.doctor_id
-                                ? 'border-red-500 ring-1 ring-red-500'
-                                : ''}"
+                    <div>
+                        <RichSelect
+                            placeholder="Pilih Dokter..."
+                            options={doctorOptions}
                             bind:value={form.doctor_id}
-                        >
-                            <option disabled selected value=""
-                                >Cari Dokter...</option
-                            >
-                            {#each doctors as doc}
-                                <option value={doc.id}
-                                    >drg. {doc.name} ({doc.doctor_code})</option
-                                >
-                            {/each}
-                        </select>
-                        <span
-                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            >stethoscope</span
-                        >
-                        <span
-                            class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                            >expand_more</span
-                        >
+                            required
+                        />
                     </div>
                     {#if errors.doctor_id}<span
                             class="text-xs text-red-500 mt-1 block"
@@ -1303,31 +1081,21 @@
                         <p
                             class="text-[11px] font-bold text-emerald-600 uppercase tracking-tight"
                         >
-                            {doctors.length} Doctors available for walk-in
+                            {activeDoctorsCount} Doctors available for walk-in
                         </p>
                     </div>
                 </div>
                 <div>
-                    <label
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Alasan Kunjungan</label
-                    >
-                    <div class="flex flex-col gap-3">
-                        <select
-                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all text-sm"
-                            bind:value={form.reason_type}
-                            on:change={() => {
-                                form.chief_complaint_code = "";
-                                form.chief_complaint_display = "";
-                            }}
-                        >
-                            <option value="finding"
-                                >Finding (Clinical Finding)</option
-                            >
-                            <option value="procedure">Procedure</option>
-                            <option value="situation">Situation</option>
-                            <option value="event">Event</option>
-                        </select>
+                    <RichSelect
+                        label="Alasan Kunjungan"
+                        options={REASON_OPTIONS}
+                        bind:value={form.reason_type}
+                        on:select={() => {
+                            form.chief_complaint_code = "";
+                            form.chief_complaint_display = "";
+                        }}
+                    />
+                    <div class="mt-4">
                         <div
                             class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary [&_input]:focus:border-primary"
                         >
@@ -1373,13 +1141,11 @@
                         class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
                         <div class="w-full md:w-40 shrink-0">
-                            <select
-                                class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                            <RichSelect
+                                placeholder="Tipe"
+                                options={DISEASE_TYPE_OPTIONS}
                                 bind:value={item.type}
-                            >
-                                <option value="personal">Pribadi</option>
-                                <option value="family">Keluarga</option>
-                            </select>
+                            />
                         </div>
                         <div
                             class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
@@ -1454,22 +1220,14 @@
                             />
                         </div>
                         <div class="w-full md:w-64 shrink-0">
-                            <select
-                                class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                            <RichSelect
+                                placeholder="Pilih Reaksi"
+                                options={reactionOptions}
                                 bind:value={item.reaction_code}
-                                on:change={(e) => {
-                                    const sel = ALLERGY_REACTIONS.find(
-                                        (r) => r.code === item.reaction_code,
-                                    );
-                                    if (sel)
-                                        item.reaction_display = sel.display;
+                                on:select={(e) => {
+                                    item.reaction_display = e.detail.label;
                                 }}
-                            >
-                                <option value="">-- Reaksi --</option>
-                                {#each ALLERGY_REACTIONS as r}
-                                    <option value={r.code}>{r.display}</option>
-                                {/each}
-                            </select>
+                            />
                         </div>
                         <button
                             type="button"

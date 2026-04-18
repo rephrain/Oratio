@@ -2,6 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
 	import { addToast } from "$lib/stores/toast.js";
 	import { formatDate, getWhatsAppUrl } from "$lib/utils/formatters.js";
 
@@ -16,6 +17,8 @@
 	let chiefComplaintDisplay = "";
 	let patientMedicalBackground = null;
 	let loadingMedical = false;
+
+	$: activeDoctorsCount = doctors.filter(d => d.has_active_shift).length;
 
 	$: personalDiseases =
 		patientMedicalBackground?.diseases?.filter(
@@ -71,10 +74,33 @@
 		return age;
 	}
 
+	// ── Doctors ──────────────────────────────────────────────────────────────
+	let doctorOptions = [];
+	const REASON_OPTIONS = [
+		{ value: "finding", label: "Finding (Clinical Finding)" },
+		{ value: "procedure", label: "Procedure" },
+		{ value: "situation", label: "Situation" },
+		{ value: "event", label: "Event" },
+	];
+
 	async function loadDoctors() {
-		const res = await fetch(`/api/doctors`);
-		const data = await res.json();
-		doctors = data.doctors || [];
+		try {
+			const res = await fetch(`/api/doctors`);
+			const data = await res.json();
+			doctors = data.doctors || [];
+			doctorOptions = doctors.map((d) => ({
+				value: d.id,
+				label: `drg. ${d.name}`,
+				sublabel: d.doctor_code || "General Dentist",
+				meta: {
+					profile_image_url: d.profile_image_url,
+					has_active_shift: d.has_active_shift,
+					is_doctor: true,
+				},
+			}));
+		} catch (err) {
+			console.error("Failed to load doctors:", err);
+		}
 	}
 
 	async function searchPatient(term) {
@@ -705,30 +731,13 @@
 								>Pilih Dokter <span class="text-red-500">*</span
 								></label
 							>
-							<div class="relative">
-								<select
-									id="doctor"
-									class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all appearance-none cursor-pointer"
+							<div>
+								<RichSelect
+									placeholder="Pilih Dokter..."
+									options={doctorOptions}
 									bind:value={doctorId}
 									required
-								>
-									<option value="" disabled selected
-										>-- Pilih Dokter --</option
-									>
-									{#each doctors as doc}
-										<option value={doc.id}
-											>drg. {doc.name} (Available)</option
-										>
-									{/each}
-								</select>
-								<span
-									class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-									>stethoscope</span
-								>
-								<span
-									class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-									>expand_more</span
-								>
+								/>
 							</div>
 							<div class="mt-2 flex items-center gap-1.5">
 								<div
@@ -737,7 +746,7 @@
 								<p
 									class="text-[11px] font-bold text-emerald-600 uppercase tracking-tight"
 								>
-									{doctors.length} Doctors available for walk-in
+									{activeDoctorsCount} Doctors available for walk-in
 								</p>
 							</div>
 						</div>
@@ -748,32 +757,16 @@
 								class="block text-sm font-semibold text-slate-700 mb-2"
 								>Alasan Kunjungan</label
 							>
-							<div class="flex flex-col gap-3">
-								<div class="relative">
-									<select
-										class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all text-sm appearance-none cursor-pointer"
-										bind:value={reasonType}
-										on:change={() => {
-											chiefComplaintCode = "";
-											chiefComplaintDisplay = "";
-										}}
-									>
-										<option value="finding"
-											>Finding (Clinical Finding)</option
-										>
-										<option value="procedure"
-											>Procedure</option
-										>
-										<option value="situation"
-											>Situation</option
-										>
-										<option value="event">Event</option>
-									</select>
-									<span
-										class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-										>expand_more</span
-									>
-								</div>
+							<div class="space-y-4">
+								<RichSelect
+									placeholder="Alasan Kunjungan"
+									options={REASON_OPTIONS}
+									bind:value={reasonType}
+									on:select={() => {
+										chiefComplaintCode = "";
+										chiefComplaintDisplay = "";
+									}}
+								/>
 
 								<div
 									class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-3 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary"

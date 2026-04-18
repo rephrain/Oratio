@@ -25,6 +25,7 @@
 		],
 		kasir: [
 			{ href: "/kasir", icon: "📋", label: "Antrian" },
+			{ href: "/kasir/patients", icon: "🏥", label: "Data Pasien" },
 			{ href: "/kasir/new-patient", icon: "➕", label: "Pasien Baru" },
 			{
 				href: "/kasir/existing-patient",
@@ -147,6 +148,22 @@
 				>
 				{#if $isSidebarOpen}
 				<span class="font-medium text-sm whitespace-nowrap">Payment</span>
+				{/if}
+			</a>
+			<a
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/kasir/patients')
+					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+				href="/kasir/patients"
+				title="Data Pasien"
+			>
+				<span
+					class="material-symbols-outlined {currentPath.startsWith('/kasir/patients')
+						? ''
+						: 'opacity-70'}">database</span
+				>
+				{#if $isSidebarOpen}
+				<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
 				{/if}
 			</a>
 		</nav>

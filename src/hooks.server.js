@@ -56,15 +56,18 @@ export async function handle({ event, resolve }) {
 	};
 
 	// Role-based access control
-	for (const [role, prefix] of Object.entries(ROLE_PATHS)) {
-		if (path.startsWith(prefix) && payload.role !== role) {
-			if (path.startsWith('/api/')) {
-				return new Response(JSON.stringify({ error: 'Forbidden' }), {
-					status: 403,
-					headers: { 'Content-Type': 'application/json' }
-				});
+	// Chat API is accessible by both dokter and kasir
+	if (!path.startsWith('/api/chat')) {
+		for (const [role, prefix] of Object.entries(ROLE_PATHS)) {
+			if (path.startsWith(prefix) && payload.role !== role) {
+				if (path.startsWith('/api/')) {
+					return new Response(JSON.stringify({ error: 'Forbidden' }), {
+						status: 403,
+						headers: { 'Content-Type': 'application/json' }
+					});
+				}
+				return Response.redirect(`${event.url.origin}/${payload.role}`, 302);
 			}
-			return Response.redirect(`${event.url.origin}/${payload.role}`, 302);
 		}
 	}
 

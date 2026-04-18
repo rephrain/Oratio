@@ -445,6 +445,33 @@ export const shifts = pgTable('shifts', {
 
 
 // =============================================================
+// 18. CHAT CONVERSATIONS
+// =============================================================
+export const chatConversations = pgTable('chat_conversations', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	participant_a: uuid('participant_a').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	participant_b: uuid('participant_b').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	last_message_at: timestamp('last_message_at'),
+	created_at: timestamp('created_at').defaultNow().notNull()
+}, (table) => ({
+	uniqueParticipants: unique('uq_chat_participants').on(table.participant_a, table.participant_b)
+}));
+
+
+// =============================================================
+// 19. CHAT MESSAGES
+// =============================================================
+export const chatMessages = pgTable('chat_messages', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	conversation_id: uuid('conversation_id').notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
+	sender_id: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	content: text('content').notNull(),
+	read_at: timestamp('read_at'),
+	created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+
+// =============================================================
 // RELATIONS
 // =============================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -453,7 +480,10 @@ export const usersRelations = relations(users, ({ many }) => ({
 	kasir_encounters: many(encounters, { relationName: 'kasir_to_encounters' }),
 	items: many(items),
 	uploaded_documents: many(documents),
-	processed_payments: many(payments)
+	processed_payments: many(payments),
+	sentMessages: many(chatMessages),
+	conversationsAsA: many(chatConversations, { relationName: 'participant_a_conversations' }),
+	conversationsAsB: many(chatConversations, { relationName: 'participant_b_conversations' })
 }));
 
 export const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
@@ -580,4 +610,15 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 
 export const shiftsRelations = relations(shifts, ({ one }) => ({
 	user: one(users, { fields: [shifts.user_id], references: [users.id] })
+}));
+
+export const chatConversationsRelations = relations(chatConversations, ({ one, many }) => ({
+	participantA: one(users, { fields: [chatConversations.participant_a], references: [users.id], relationName: 'participant_a_conversations' }),
+	participantB: one(users, { fields: [chatConversations.participant_b], references: [users.id], relationName: 'participant_b_conversations' }),
+	messages: many(chatMessages)
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+	conversation: one(chatConversations, { fields: [chatMessages.conversation_id], references: [chatConversations.id] }),
+	sender: one(users, { fields: [chatMessages.sender_id], references: [users.id] })
 }));

@@ -2,6 +2,8 @@
 	import { onMount, onDestroy } from "svelte";
 	import { goto } from "$app/navigation";
 	import DataTable from "$lib/components/Tables/DataTable.svelte";
+	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
 	import { QUEUE_COLUMNS, STATUS_COLORS } from "$lib/utils/constants.js";
 	import {
 		formatElapsedTime,
@@ -14,11 +16,22 @@
 	let viewMode = "board"; // 'board' | 'table'
 	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
 	let filterDoctor = "";
+	let doctorOptions = [];
 	let refreshInterval;
 
 	// Table View filters
 	let tableDoctorFilter = "";
 	let tableStatusFilter = "";
+	const STATUS_OPTIONS = [
+		{ value: "", label: "All Status" },
+		{ value: "Planned", label: "Planned" },
+		{ value: "In Progress", label: "In Progress" },
+		{ value: "On Hold", label: "On Hold" },
+		{ value: "Discharged", label: "Discharged" },
+		{ value: "Completed", label: "Completed" },
+		{ value: "Cancelled", label: "Cancelled" },
+		{ value: "Discontinued", label: "Discontinued" },
+	];
 
 	$: filteredTableEncounters = encounters.filter((e) => {
 		if (tableDoctorFilter && e.doctor_name !== tableDoctorFilter)
@@ -95,7 +108,31 @@
 		}
 	}
 
+	async function loadDoctors() {
+		try {
+			const res = await fetch(`/api/doctors`);
+			const data = await res.json();
+			const doctors = data.doctors || [];
+			doctorOptions = [
+				{ value: "", label: "All Doctors" },
+				...doctors.map((d) => ({
+					value: d.id,
+					label: `drg. ${d.name}`,
+					sublabel: d.doctor_code || "General Dentist",
+					meta: {
+						profile_image_url: d.profile_image_url,
+						has_active_shift: d.has_active_shift,
+						is_doctor: true,
+					},
+				}))
+			];
+		} catch (err) {
+			console.error("Failed to load doctors:", err);
+		}
+	}
+
 	onMount(() => {
+		loadDoctors();
 		loadEncounters();
 		refreshInterval = setInterval(loadEncounters, 30000);
 	});
@@ -226,9 +263,17 @@
 			</p>
 		</div>
 		<div class="flex items-center gap-4">
+			<div class="w-64">
+				<RichSelect
+					placeholder="All Doctors"
+					options={doctorOptions}
+					bind:value={filterDoctor}
+					on:select={loadEncounters}
+				/>
+			</div>
 			<input
 				type="date"
-				class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary/20 outline-none"
+				class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary/20 outline-none h-[42px]"
 				bind:value={filterDate}
 				on:change={loadEncounters}
 			/>
@@ -511,40 +556,13 @@
 					/>
 				</div>
 				<div class="flex items-center gap-2">
-					<label
-						class="text-xs font-semibold text-slate-500 uppercase tracking-wider"
-						>Doctor:</label
-					>
-					<select
-						bind:value={tableDoctorFilter}
-						class="text-sm py-1.5 pl-3 pr-8 border-slate-200 rounded-md bg-slate-50 focus:ring-primary focus:border-primary outline-none"
-					>
-						<option value="">All Doctors</option>
-						{#each [...new Set(encounters
-									.map((e) => e.doctor_name)
-									.filter(Boolean))] as doc}
-							<option value={doc}>Dr. {doc}</option>
-						{/each}
-					</select>
-				</div>
-				<div class="flex items-center gap-2">
-					<label
-						class="text-xs font-semibold text-slate-500 uppercase tracking-wider"
-						>Status:</label
-					>
-					<select
+					<RichSelect
+						label=""
+						placeholder="All Status"
+						options={STATUS_OPTIONS}
 						bind:value={tableStatusFilter}
-						class="text-sm py-1.5 pl-3 pr-8 border-slate-200 rounded-md bg-slate-50 focus:ring-primary focus:border-primary outline-none"
-					>
-						<option value="">All Status</option>
-						<option value="Planned">Planned</option>
-						<option value="In Progress">In Progress</option>
-						<option value="On Hold">On Hold</option>
-						<option value="Discharged">Discharged</option>
-						<option value="Completed">Completed</option>
-						<option value="Cancelled">Cancelled</option>
-						<option value="Discontinued">Discontinued</option>
-					</select>
+						wrapperClass="min-w-[160px]"
+					/>
 				</div>
 				<div class="ml-auto">
 					<button

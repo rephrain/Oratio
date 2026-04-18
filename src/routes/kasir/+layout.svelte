@@ -4,7 +4,9 @@
 	import { page } from "$app/stores";
 	import { logout } from "$lib/stores/auth.js";
 	import { isSidebarOpen, isProfileModalOpen } from "$lib/stores/layout.js";
+	import { isChatOpen, unreadCount } from '$lib/stores/chat.js';
 	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
+	import ChatPanel from '$lib/components/Chat/ChatPanel.svelte';
 
 	export let data;
 	$: user = data?.user;
@@ -55,11 +57,16 @@
 						></span>
 					</button>
 					<button
-						class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+						class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative"
+						on:click={() => ($isChatOpen = !$isChatOpen)}
+						id="kasir-chat-toggle-btn"
 					>
 						<span class="material-symbols-outlined"
 							>chat_bubble</span
 						>
+						{#if $unreadCount > 0}
+							<span class="chat-unread-indicator">{$unreadCount > 99 ? '99+' : $unreadCount}</span>
+						{/if}
 					</button>
 				</div>
 				<div class="h-8 w-px bg-slate-200"></div>
@@ -147,6 +154,7 @@
 </div>
 <Toast />
 <ProfileModal {user} />
+<ChatPanel {user} />
 
 <style>
 	:global(:root) {
@@ -182,5 +190,28 @@
 		to {
 			transform: rotate(360deg);
 		}
+	}
+	.chat-unread-indicator {
+		position: absolute;
+		top: 0;
+		right: 0;
+		background: #ef4444;
+		color: white;
+		font-size: 0.6rem;
+		font-weight: 700;
+		min-width: 18px;
+		height: 18px;
+		border-radius: 9px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 4px;
+		border: 2px solid white;
+		line-height: 1;
+		animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+	@keyframes badgePop {
+		from { transform: scale(0); }
+		to { transform: scale(1); }
 	}
 </style>

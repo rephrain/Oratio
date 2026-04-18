@@ -8,6 +8,7 @@
 		isSidebarHidden,
 	} from "$lib/stores/layout.js";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
 	import Modal from "$lib/components/UI/Modal.svelte";
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import OdontogramChart from "$lib/components/Odontogram/OdontogramChart.svelte";
@@ -96,6 +97,53 @@
 	let loadingMedical = false;
 	let showSidebar = true;
 	let doctorsList = [];
+
+	// Options mapping for RichSelect
+	$: occlusiOptions = [
+		{ value: "", label: "Normal / Not Set" },
+		...OCCLUSI_OPTIONS.map((opt) => ({ value: opt, label: opt })),
+	];
+
+	$: torusPalatinusOptions = TORUS_PALATINUS_OPTIONS.map((opt) => ({
+		value: opt,
+		label: opt,
+	}));
+
+	$: torusMandibularisOptions = TORUS_MANDIBULARIS_OPTIONS.map((opt) => ({
+		value: opt,
+		label: opt,
+	}));
+
+	$: palatumOptions = [
+		{ value: "", label: "Normal / Not Set" },
+		...PALATUM_OPTIONS.map((opt) => ({ value: opt, label: opt })),
+	];
+
+	$: referralDoctorOptions = [
+		{ value: "", label: "Select Doctor" },
+		...doctorsList.map((doc) => ({
+			value: doc.doctor_code,
+			label: doc.name,
+			sublabel: doc.doctor_code,
+			meta: {
+				profile_image_url: doc.profile_image_url,
+				is_doctor: true,
+			},
+		})),
+	];
+
+	$: itemOptions = [
+		{ value: "", label: "Pilih Item" },
+		...availableItems.map((ai) => ({
+			value: ai.id,
+			label: ai.name,
+			sublabel: ai.item_group || "Umum",
+			meta: {
+				icon: "medical_services",
+				iconColor: "text-primary",
+			},
+		})),
+	];
 
 	$: if (encounter?.patient_name && encounter?.encounter?.patient_id) {
 		const title = `${encounter.patient_name} (${encounter.encounter.patient_id})`;
@@ -1059,6 +1107,16 @@
 									ID Tindakan: {encounter.encounter?.id ||
 										"-"}
 								</p>
+								<div class="mt-4 w-full flex justify-center">
+									<a
+										href={`/api/patients/${encounter.encounter?.patient_id || encounter.patient?.id}/pdf`}
+										target="_blank"
+										class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+									>
+										<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+										View PDF Record
+									</a>
+								</div>
 							</div>
 						</div>
 
@@ -1717,68 +1775,44 @@
 										class="text-xs font-bold text-slate-500 block"
 										for="occlusi-sel">Occlusi</label
 									>
-									<select
-										id="occlusi-sel"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
+									<RichSelect
+										options={occlusiOptions}
 										bind:value={odontogram.occlusi}
-									>
-										<option value=""
-											>-- Pilih Occlusi --</option
-										>
-										{#each OCCLUSI_OPTIONS as opt}
-											<option value={opt}>{opt}</option>
-										{/each}
-									</select>
+										placeholder="-- Pilih Occlusi --"
+									/>
 								</div>
 								<div class="space-y-2">
 									<label
 										class="text-xs font-bold text-slate-500 block"
 										for="tp-sel">Torus Palatinus</label
 									>
-									<select
-										id="tp-sel"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
+									<RichSelect
+										options={torusPalatinusOptions}
 										bind:value={odontogram.torus_palatinus}
-									>
-										{#each TORUS_PALATINUS_OPTIONS as opt}
-											<option value={opt}>{opt}</option>
-										{/each}
-									</select>
+									/>
 								</div>
 								<div class="space-y-2">
 									<label
 										class="text-xs font-bold text-slate-500 block"
 										for="tm-sel">Torus Mandibularis</label
 									>
-									<select
-										id="tm-sel"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
+									<RichSelect
+										options={torusMandibularisOptions}
 										bind:value={
 											odontogram.torus_mandibularis
 										}
-									>
-										{#each TORUS_MANDIBULARIS_OPTIONS as opt}
-											<option value={opt}>{opt}</option>
-										{/each}
-									</select>
+									/>
 								</div>
 								<div class="space-y-2">
 									<label
 										class="text-xs font-bold text-slate-500 block"
 										for="palatum-sel">Palatum</label
 									>
-									<select
-										id="palatum-sel"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm"
+									<RichSelect
+										options={palatumOptions}
 										bind:value={odontogram.palatum}
-									>
-										<option value=""
-											>-- Pilih Palatum --</option
-										>
-										{#each PALATUM_OPTIONS as opt}
-											<option value={opt}>{opt}</option>
-										{/each}
-									</select>
+										placeholder="-- Pilih Palatum --"
+									/>
 								</div>
 								<div class="space-y-2">
 									<label
@@ -2363,18 +2397,11 @@
 									class="text-xs font-bold text-slate-500 mb-1 block"
 									>Dokter</label
 								>
-								<select
-									class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50"
+								<RichSelect
+									options={referralDoctorOptions}
 									bind:value={newRef.doctor_code}
-								>
-									<option value="">-- Pekerja Medis --</option
-									>
-									{#each doctorsList as doc}
-										<option value={doc.doctor_code}
-											>{doc.doctor_code} - {doc.name}</option
-										>
-									{/each}
-								</select>
+									placeholder="-- Pekerja Medis --"
+								/>
 							</div>
 							<div>
 								<label
@@ -2500,20 +2527,13 @@
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Pilih Item</label
 							>
-							<select
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50"
+							<RichSelect
+								options={itemOptions}
 								bind:value={newItem.item_id}
-								on:change={() =>
-									onNewItemSelect(newItem.item_id)}
-							>
-								<option value="">-- Pilih Item --</option>
-								{#each availableItems as ai}
-									<option value={ai.id}
-										>{ai.name} ({ai.item_group ||
-											"-"})</option
-									>
-								{/each}
-							</select>
+								on:select={(e) =>
+									onNewItemSelect(e.detail.value)}
+								placeholder="-- Pilih Item --"
+							/>
 						</div>
 						<div class="w-full md:w-12">
 							<label

@@ -3,6 +3,8 @@
 	export let data;
 	$: user = data?.user;
 	import { formatElapsedTime, formatTime } from "$lib/utils/formatters.js";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
+	import { ENCOUNTER_STATUSES } from "$lib/utils/constants.js";
 
 	let encounters = [];
 	let loading = true;
@@ -14,6 +16,30 @@
 	let tableDoctorFilter = ""; // This will now store doctor_id
 	let doctors = [];
 	let searchQuery = "";
+
+	const filterTypeOptions = [
+		{ value: "all", label: "All Records" },
+		{ value: "date", label: "Daily View" },
+		{ value: "month", label: "Monthly View" },
+	];
+
+	$: statusOptions = [
+		{ value: "", label: "All Status" },
+		...ENCOUNTER_STATUSES.map(s => ({ value: s, label: s }))
+	];
+
+	$: doctorOptions = [
+		{ value: "all", label: "All Doctors" },
+		...doctors.map(d => ({
+			value: d.id,
+			label: `Dr. ${d.name}`,
+			sublabel: d.doctor_code || "General Dentist",
+			meta: {
+				profile_image_url: d.profile_image_url,
+				is_doctor: true
+			}
+		}))
+	];
 
 	let expandedRowId = null;
 
@@ -204,11 +230,13 @@
 		<!-- Filters Bar -->
 		<div class="bg-white p-4 rounded-t-xl border-x border-t border-slate-200 flex flex-wrap items-center gap-4 shrink-0 shadow-sm">
 			<div class="flex items-center gap-2">
-				<select bind:value={filterType} on:change={loadEncounters} class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-slate-50 focus:ring-primary focus:border-primary outline-none font-medium">
-				    <option value="all">All</option>
-				    <option value="date">Daily</option>
-				    <option value="month">Monthly</option>
-				</select>
+				<div class="w-40">
+					<RichSelect
+						options={filterTypeOptions}
+						bind:value={filterType}
+						on:select={loadEncounters}
+					/>
+				</div>
 				{#if filterType === 'date'}
 				<input
 					type="date"
@@ -236,35 +264,27 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Doctor:</label>
-				<select
-					bind:value={tableDoctorFilter}
-					on:change={loadEncounters}
-					class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-white focus:ring-primary focus:border-primary outline-none"
-				>
-					<option value="all">All Doctors</option>
-					{#each doctors as doc}
-						<option value={doc.id}>Dr. {doc.name}</option>
-					{/each}
-				</select>
+				<label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-2">Doctor:</label>
+				<div class="w-64">
+					<RichSelect
+						options={doctorOptions}
+						bind:value={tableDoctorFilter}
+						on:select={loadEncounters}
+						placeholder="Select Doctor"
+					/>
+				</div>
 			</div>
 
 			<div class="flex items-center gap-2">
-				<label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status:</label>
-				<select
-					bind:value={tableStatusFilter}
-					on:change={loadEncounters}
-					class="text-sm py-1.5 pl-3 pr-8 border border-slate-200 rounded-md bg-white focus:ring-primary focus:border-primary outline-none"
-				>
-					<option value="">All Status</option>
-					<option value="Planned">Planned</option>
-					<option value="In Progress">In Progress</option>
-					<option value="On Hold">On Hold</option>
-					<option value="Discharged">Discharged</option>
-					<option value="Completed">Completed</option>
-					<option value="Cancelled">Cancelled</option>
-					<option value="Discontinued">Discontinued</option>
-				</select>
+				<label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Status:</label>
+				<div class="w-44">
+					<RichSelect
+						options={statusOptions}
+						bind:value={tableStatusFilter}
+						on:select={loadEncounters}
+						placeholder="Filter Status"
+					/>
+				</div>
 			</div>
 			
 			<div class="ml-auto">

@@ -32,9 +32,10 @@ WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/drizzle.config.ts ./
 
-RUN npm install
+RUN npm ci
 
 EXPOSE 3000
 

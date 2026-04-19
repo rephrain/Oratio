@@ -472,6 +472,27 @@ export const chatMessages = pgTable('chat_messages', {
 
 
 // =============================================================
+// 20. NOTIFICATIONS (version updates from admin)
+// =============================================================
+export const notifications = pgTable('notifications', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	created_by: uuid('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+export const notificationReads = pgTable('notification_reads', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	notification_id: uuid('notification_id').notNull().references(() => notifications.id, { onDelete: 'cascade' }),
+	user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	read_at: timestamp('read_at').defaultNow().notNull()
+}, (table) => ({
+	uniqueNotificationUser: unique('uq_notification_read').on(table.notification_id, table.user_id)
+}));
+
+
+// =============================================================
 // RELATIONS
 // =============================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -621,4 +642,14 @@ export const chatConversationsRelations = relations(chatConversations, ({ one, m
 export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
 	conversation: one(chatConversations, { fields: [chatMessages.conversation_id], references: [chatConversations.id] }),
 	sender: one(users, { fields: [chatMessages.sender_id], references: [users.id] })
+}));
+
+export const notificationsRelations = relations(notifications, ({ one, many }) => ({
+	creator: one(users, { fields: [notifications.created_by], references: [users.id] }),
+	reads: many(notificationReads)
+}));
+
+export const notificationReadsRelations = relations(notificationReads, ({ one }) => ({
+	notification: one(notifications, { fields: [notificationReads.notification_id], references: [notifications.id] }),
+	user: one(users, { fields: [notificationReads.user_id], references: [users.id] })
 }));

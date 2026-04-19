@@ -2,8 +2,10 @@
 	import { isSidebarOpen, isSidebarHidden, headerTitle, isPatientProfileOpen, isProfileModalOpen } from '$lib/stores/layout.js';
 	import { logout } from '$lib/stores/auth.js';
 	import { isChatOpen, unreadCount } from '$lib/stores/chat.js';
+	import { isNotificationOpen, unreadNotificationCount } from '$lib/stores/notifications.js';
 	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
 	import ChatPanel from '$lib/components/Chat/ChatPanel.svelte';
+	import NotificationPanel from '$lib/components/Notifications/NotificationPanel.svelte';
 
 	export let user = null;
 
@@ -24,9 +26,11 @@
 	</div>
 	<div class="flex items-center gap-6">
 		<div class="flex items-center gap-4">
-			<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors focus:outline-none">
+			<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors focus:outline-none" on:click={() => ($isNotificationOpen = !$isNotificationOpen)} id="notification-toggle-btn">
 				<span class="material-symbols-outlined">notifications</span>
-				<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+				{#if $unreadNotificationCount > 0}
+					<span class="notif-unread-indicator">{$unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount}</span>
+				{/if}
 			</button>
 			<button 
 				class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors focus:outline-none relative"
@@ -83,6 +87,7 @@
 
 <ProfileModal {user} />
 <ChatPanel {user} />
+<NotificationPanel {user} />
 
 <style>
 	.chat-unread-indicator {
@@ -108,5 +113,25 @@
 	@keyframes badgePop {
 		from { transform: scale(0); }
 		to { transform: scale(1); }
+	}
+
+	.notif-unread-indicator {
+		position: absolute;
+		top: 0;
+		right: 0;
+		background: linear-gradient(135deg, #6366f1, #4f46e5);
+		color: white;
+		font-size: 0.6rem;
+		font-weight: 700;
+		min-width: 18px;
+		height: 18px;
+		border-radius: 9px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 4px;
+		border: 2px solid white;
+		line-height: 1;
+		animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 </style>

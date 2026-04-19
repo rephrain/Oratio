@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { encounterReferrals, encounters, patients, users } from '$lib/server/db/schema.js';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 /** @type {import('./$types').RequestHandler} */

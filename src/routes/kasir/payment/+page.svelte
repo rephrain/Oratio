@@ -3,8 +3,10 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { PAYMENT_TYPES } from "$lib/utils/constants.js";
-	import { formatCurrency } from "$lib/utils/formatters.js";
+	import { formatCurrency, getJakartaDateString } from "$lib/utils/formatters.js";
 	import { addToast } from "$lib/stores/toast.js";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
+	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 
 	export let data;
 	$: cashierName = data?.user?.name || "Kasir";
@@ -12,8 +14,32 @@
 	let loading = false;
 	let dischargedEncounters = [];
 	let selectedEncounterId = "";
+	$: dischargedEncounterOptions = [
+		{ value: "", label: "-- Cari atau Pilih Pasien yang Selesai Pemeriksaan --" },
+		...dischargedEncounters.map(enc => ({
+			value: enc.encounter.id,
+			label: enc.patient_name || 'Unknown Patient',
+			sublabel: `Antrean #${enc.encounter.queue_number} — MR: ${enc.patient?.id || '-'}`,
+			meta: {
+				profile_image_url: enc.patient?.profile_image_url || null
+			}
+		}))
+	];
 	let encounterDetail = null;
 	let items = [];
+
+	let uploadedFile = null;
+	let uploadStatus = ''; 
+	
+	function handleFileUpload(e) {
+		uploadedFile = e.detail.file;
+		uploadStatus = '';
+	}
+	
+	function removeFile() {
+		uploadedFile = null;
+		uploadStatus = '';
+	}
 
 	let sortKey = "";
 	let sortDesc = false;
@@ -90,7 +116,7 @@
 	$: netSales = totalSales - discountAmount;
 
 	async function loadDischargedEncounters() {
-		const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
+		const today = getJakartaDateString();
 		const res = await fetch(
 			`/api/encounters?date=${today}&status=Discharged`,
 		);
@@ -123,6 +149,32 @@
 
 		loading = true;
 		try {
+			let proofDocumentId = null;
+
+			if (uploadedFile) {
+				uploadStatus = 'uploading';
+				const formData = new FormData();
+				formData.append('file', uploadedFile);
+				formData.append('encounter_id', selectedEncounterId);
+				formData.append('document_type', 'payment_proof');
+				
+				const uploadRes = await fetch('/api/documents', {
+					method: 'POST',
+					body: formData
+				});
+				
+				if (!uploadRes.ok) {
+					addToast('Gagal mengupload bukti pembayaran', 'error');
+					uploadStatus = 'error';
+					loading = false;
+					return;
+				}
+				
+				const docData = await uploadRes.json();
+				proofDocumentId = docData.id;
+				uploadStatus = 'success';
+			}
+
 			const res = await fetch("/api/payments", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -137,6 +189,7 @@
 					discount_amount: discountType === "fixed" ? discountFixed : null,
 					total_paid: netSales,
 					note,
+					proof_document_id: proofDocumentId
 				}),
 			});
 
@@ -191,24 +244,14 @@
 
 	<!-- Encounter Selection -->
 	<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative z-20">
-		<label for="queue-select" class="block text-sm font-bold text-slate-700 mb-2">Pilih Antrean Pasien (Status: Discharged)</label>
+		<label class="block text-sm font-bold text-slate-700 mb-2">Pilih Antrean Pasien (Status: Discharged)</label>
 		<div class="relative">
-			<select
-				id="queue-select"
-				class="w-full py-3 pl-4 pr-10 rounded-xl border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 appearance-none bg-slate-50 text-sm font-medium cursor-pointer transition-all"
+			<RichSelect
+				options={dischargedEncounterOptions}
 				bind:value={selectedEncounterId}
-				on:change={loadEncounterDetail}
-			>
-				<option value="">-- Cari atau Pilih Pasien yang Selesai Pemeriksaan --</option>
-				{#each dischargedEncounters as enc}
-					<option value={enc.encounter.id}>
-						Antrean #{enc.encounter.queue_number} — {enc.patient_name} (MR: {enc.patient?.id || '-'})
-					</option>
-				{/each}
-			</select>
-			<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-				<span class="material-symbols-outlined text-slate-400">expand_more</span>
-			</div>
+				on:select={loadEncounterDetail}
+				placeholder="-- Cari atau Pilih Pasien yang Selesai Pemeriksaan --"
+			/>
 		</div>
 	</div>
 
@@ -398,10 +441,40 @@
 					<!-- Proof Upload -->
 					<div>
 						<span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Upload Proof of Payment</span>
-						<div class="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group">
-							<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">cloud_upload</span>
-							<p class="text-[10px] font-medium text-slate-500">Drag file or <span class="text-primary font-bold underline">browse</span></p>
-						</div>
+						{#if !uploadedFile}
+							<FileUpload
+								accept="image/*,application/pdf"
+								label="Upload Proof of Payment"
+								on:file={handleFileUpload}
+								on:error={(e) => addToast(e.detail.message, 'error')}
+							/>
+						{:else}
+							<div class="border border-primary/30 bg-primary/5 rounded-xl p-4 flex items-center justify-between">
+								<div class="flex items-center gap-3 overflow-hidden">
+									<span class="material-symbols-outlined text-primary text-3xl shrink-0">task</span>
+									<div class="truncate">
+										<p class="text-sm font-bold text-slate-800 truncate">{uploadedFile.name}</p>
+										<p class="text-[10px] text-slate-500 font-medium">{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+									</div>
+								</div>
+								<div class="flex items-center gap-2 shrink-0">
+									{#if uploadStatus === 'uploading'}
+										<span class="material-symbols-outlined text-primary animate-spin" style="animation: spin 1s linear infinite;">refresh</span>
+									{:else if uploadStatus === 'success'}
+										<span class="material-symbols-outlined text-emerald-500">check_circle</span>
+									{:else}
+										<button 
+											type="button" 
+											class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors border border-red-100"
+											on:click|preventDefault={removeFile}
+											disabled={loading}
+										>
+											<span class="material-symbols-outlined text-sm">delete</span>
+										</button>
+									{/if}
+								</div>
+							</div>
+						{/if}
 					</div>
 
 					<!-- Totals Summary -->

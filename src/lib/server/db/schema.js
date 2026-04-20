@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, integer, bigint, boolean, timestamp, time, date, numeric, unique, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, integer, bigint, boolean, timestamp, time, date, numeric, unique, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 // === Enums (kept from existing where user specified) ===
@@ -375,16 +375,31 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 // 14. MASTER ITEMS
 // =============================================================
 export const items = pgTable('items', {
-	id: uuid('id').defaultRandom().primaryKey(),
+	id: varchar('id', { length: 50 }).primaryKey(),
+
 	name: varchar('name', { length: 255 }).notNull(),
-	doctor_id: uuid('doctor_id').references(() => users.id),
 	price: numeric('price', { precision: 12, scale: 2 }).notNull(),
+
 	item_group: varchar('item_group', { length: 50 }),
 	denomination: varchar('denomination', { length: 50 }),
+
 	is_active: boolean('is_active').default(true).notNull(),
+
 	created_at: timestamp('created_at').defaultNow().notNull(),
 	updated_at: timestamp('updated_at').defaultNow().notNull()
 });
+
+export const doctorItems = pgTable('doctor_items', {
+	doctor_id: uuid('doctor_id')
+		.notNull()
+		.references(() => users.id),
+
+	item_id: varchar('item_id', { length: 50 })
+		.notNull()
+		.references(() => items.id)
+}, (table) => ({
+	pk: primaryKey(table.doctor_id, table.item_id)
+}));
 
 
 // =============================================================
@@ -393,7 +408,9 @@ export const items = pgTable('items', {
 export const encounterItems = pgTable('encounter_items', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	item_id: uuid('item_id').notNull().references(() => items.id, { onDelete: 'restrict' }),
+	item_id: varchar('item_id', { length: 50 })
+		.notNull()
+		.references(() => items.id, { onDelete: 'restrict' }),
 	quantity: integer('quantity').notNull().default(1),
 	price_at_time: integer('price_at_time').notNull(),
 	subtotal: integer('subtotal').notNull(),  // computed in app as quantity * price_at_time
@@ -424,6 +441,7 @@ export const payments = pgTable('payments', {
 	note: text('note'),
 
 	proof_document_id: uuid('proof_document_id').references(() => documents.id, { onDelete: 'set null' }),
+	doctor_id: uuid('doctor_id').notNull().references(() => users.id),
 	cashier_id: uuid('cashier_id').notNull().references(() => users.id),
 
 	paid_at: timestamp('paid_at').defaultNow().notNull(),
@@ -499,12 +517,16 @@ export const usersRelations = relations(users, ({ many }) => ({
 	shifts: many(shifts),
 	doctor_encounters: many(encounters, { relationName: 'doctor_to_encounters' }),
 	kasir_encounters: many(encounters, { relationName: 'kasir_to_encounters' }),
-	items: many(items),
+	registered_patients: many(patients),
+	doctorItems: many(doctorItems),
 	uploaded_documents: many(documents),
-	processed_payments: many(payments),
+	doctor_payments: many(payments, { relationName: 'doctor_to_payments' }),
+	cashier_payments: many(payments, { relationName: 'cashier_to_payments' }),
 	sentMessages: many(chatMessages),
 	conversationsAsA: many(chatConversations, { relationName: 'participant_a_conversations' }),
-	conversationsAsB: many(chatConversations, { relationName: 'participant_b_conversations' })
+	conversationsAsB: many(chatConversations, { relationName: 'participant_b_conversations' }),
+	notifications: many(notifications),
+	notificationReads: many(notificationReads)
 }));
 
 export const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
@@ -519,6 +541,7 @@ export const terminologyMasterRelations = relations(terminologyMaster, ({ many }
 
 export const patientsRelations = relations(patients, ({ one, many }) => ({
 	kasir: one(users, { fields: [patients.kasir_id], references: [users.id] }),
+	profile_document: one(documents, { fields: [patients.profile_document_id], references: [documents.id] }),
 	diseaseHistory: many(patientDiseaseHistory),
 	allergies: many(patientAllergy),
 	medications: many(patientMedication),
@@ -546,7 +569,8 @@ export const encountersRelations = relations(encounters, ({ one, many }) => ({
 	doctor: one(users, { fields: [encounters.doctor_id], references: [users.id], relationName: 'doctor_to_encounters' }),
 	kasir: one(users, { fields: [encounters.kasir_id], references: [users.id], relationName: 'kasir_to_encounters' }),
 	encounter_reason: one(terminologyMaster, { fields: [encounters.encounter_reason_id], references: [terminologyMaster.id] }),
-	referral_in: one(encounterReferrals, { fields: [encounters.encounter_referral_id], references: [encounterReferrals.id] }),
+	referral_in: one(encounterReferrals, { fields: [encounters.encounter_referral_id], references: [encounterReferrals.id], relationName: 'referral_to_encounter' }),
+	soap_document: one(documents, { fields: [encounters.soap_document_id], references: [documents.id] }),
 	statusHistory: many(statusHistory),
 	odontograms: many(encounterOdontograms),
 	prescriptions: many(encounterPrescriptions),
@@ -609,13 +633,19 @@ export const encounterPrescriptionsRelations = relations(encounterPrescriptions,
 	terminology: one(terminologyMaster, { fields: [encounterPrescriptions.terminology_id], references: [terminologyMaster.id] })
 }));
 
-export const encounterReferralsRelations = relations(encounterReferrals, ({ one }) => ({
-	encounter: one(encounters, { fields: [encounterReferrals.encounter_id], references: [encounters.id] })
+export const encounterReferralsRelations = relations(encounterReferrals, ({ one, many }) => ({
+	encounter: one(encounters, { fields: [encounterReferrals.encounter_id], references: [encounters.id] }),
+	encounters_referred_in: many(encounters, { relationName: 'referral_to_encounter' })
 }));
 
-export const itemsRelations = relations(items, ({ one, many }) => ({
-	doctor: one(users, { fields: [items.doctor_id], references: [users.id] }),
+export const itemsRelations = relations(items, ({ many }) => ({
+	doctorItems: many(doctorItems),
 	encounterItems: many(encounterItems)
+}));
+
+export const doctorItemsRelations = relations(doctorItems, ({ one }) => ({
+	doctor: one(users, { fields: [doctorItems.doctor_id], references: [users.id] }),
+	item: one(items, { fields: [doctorItems.item_id], references: [items.id] })
 }));
 
 export const encounterItemsRelations = relations(encounterItems, ({ one }) => ({
@@ -626,7 +656,8 @@ export const encounterItemsRelations = relations(encounterItems, ({ one }) => ({
 export const paymentsRelations = relations(payments, ({ one }) => ({
 	encounter: one(encounters, { fields: [payments.encounter_id], references: [encounters.id] }),
 	proof_document: one(documents, { fields: [payments.proof_document_id], references: [documents.id] }),
-	cashier: one(users, { fields: [payments.cashier_id], references: [users.id] })
+	doctor: one(users, { fields: [payments.doctor_id], references: [users.id], relationName: 'doctor_to_payments' }),
+	cashier: one(users, { fields: [payments.cashier_id], references: [users.id], relationName: 'cashier_to_payments' })
 }));
 
 export const shiftsRelations = relations(shifts, ({ one }) => ({

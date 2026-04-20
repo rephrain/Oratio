@@ -46,13 +46,31 @@ export async function handle({ event, resolve }) {
 		return Response.redirect(`${event.url.origin}/login`, 302);
 	}
 
+	// Verify user still exists in database (prevents 500 errors on stale tags)
+	const { db } = await import('$lib/server/db/index.js');
+	const { users } = await import('$lib/server/db/schema.js');
+	const { eq } = await import('drizzle-orm');
+
+	const [dbUser] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+
+	if (!dbUser || !dbUser.is_active) {
+		event.cookies.delete('auth_token', { path: '/' });
+		if (path.startsWith('/api/')) {
+			return new Response(JSON.stringify({ error: 'Session expired' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+		return Response.redirect(`${event.url.origin}/login`, 302);
+	}
+
 	// Attach user to event.locals
 	event.locals.user = {
-		id: payload.sub,
-		name: payload.name,
-		role: payload.role,
-		doctor_code: payload.doctor_code,
-		profile_image_url: payload.profile_image_url
+		id: dbUser.id,
+		name: dbUser.name,
+		role: dbUser.role,
+		doctor_code: dbUser.doctor_code,
+		profile_image_url: dbUser.profile_image_url
 	};
 
 	// Role-based access control

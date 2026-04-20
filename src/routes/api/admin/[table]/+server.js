@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import * as schema from '$lib/server/db/schema.js';
-import { eq, desc, ilike, sql } from 'drizzle-orm';
+import { eq, desc, ilike, sql, and } from 'drizzle-orm';
 import { ADMIN_TABLES } from '$lib/utils/constants.js';
 
 const schemaMap = {
@@ -102,8 +102,72 @@ export async function GET({ params, url }) {
 	const limit = parseInt(url.searchParams.get('limit') || '50');
 	const offset = (page - 1) * limit;
 
-	const data = await db.select().from(table).limit(limit).offset(offset);
-	const [{ count }] = await db.select({ count: sql`count(*)` }).from(table);
+	// Build mapping of field keys to definitions
+	const fieldMap = {};
+	if (tableConfig.fields) {
+		for (const f of tableConfig.fields) {
+			fieldMap[f.key] = f;
+		}
+	}
+
+	// Build filters from remaining searchParams
+	const filters = [];
+	const skipParams = ['page', 'limit', 'offset'];
+	url.searchParams.forEach((val, key) => {
+		if (!skipParams.includes(key) && table[key]) {
+			let coercedVal = val;
+			const fieldDef = fieldMap[key];
+			
+			// Simple coercion for boolean and numbers in filters
+			if (fieldDef?.type === 'boolean') {
+				coercedVal = val === 'true';
+			} else if (fieldDef?.type === 'number') {
+				coercedVal = Number(val);
+			}
+
+			filters.push(eq(table[key], coercedVal));
+		}
+	});
+
+	const query = db.select().from(table).limit(limit).offset(offset);
+	if (filters.length > 0) {
+		query.where(and(...filters));
+	}
+
+	const data = await query;
+
+	// Fetch M2M values for each row if needed
+	const m2mFields = tableConfig.fields?.filter(f => f.type === 'm2m') || [];
+	if (m2mFields.length > 0 && data.length > 0) {
+		for (const field of m2mFields) {
+			const junctionTable = schemaMap[field.m2mSchema];
+			if (junctionTable) {
+				const ids = data.map(row => row.id);
+				const associations = await db.select()
+					.from(junctionTable)
+					.where(sql`${junctionTable[field.m2mLocalKey]} IN ${ids}`);
+				
+				// Group associations by local ID
+				const grouped = {};
+				for (const assoc of associations) {
+					const localId = assoc[field.m2mLocalKey];
+					if (!grouped[localId]) grouped[localId] = [];
+					grouped[localId].push(assoc[field.m2mForeignKey]);
+				}
+				
+				// Attach to rows
+				for (const row of data) {
+					row[field.key] = grouped[row.id] || [];
+				}
+			}
+		}
+	}
+
+	const countQuery = db.select({ count: sql`count(*)` }).from(table);
+	if (filters.length > 0) {
+		countQuery.where(and(...filters));
+	}
+	const [{ count }] = await countQuery;
 
 	return json({ data, total: Number(count), page, limit, table: tableConfig.label });
 }
@@ -128,11 +192,30 @@ export async function POST({ params, request }) {
 	}
 
 	// Clean data
-	body = cleanBody(body, tableConfig);
+	const mainBody = cleanBody(body, tableConfig);
 
 	try {
-		const [record] = await db.insert(table).values(body).returning();
-		return json({ record }, { status: 201 });
+		const m2mResults = await db.transaction(async (tx) => {
+			const [record] = await tx.insert(table).values(mainBody).returning();
+			
+			// Handle Many-to-Many synchronization
+			for (const field of tableConfig.fields || []) {
+				if (field.type === 'm2m' && body[field.key] && Array.isArray(body[field.key])) {
+					const junctionTable = schemaMap[field.m2mSchema];
+					if (junctionTable) {
+						const inserts = body[field.key].map(id => ({
+							[field.m2mLocalKey]: record.id,
+							[field.m2mForeignKey]: id
+						}));
+						if (inserts.length > 0) {
+							await tx.insert(junctionTable).values(inserts);
+						}
+					}
+				}
+			}
+			return record;
+		});
+		return json({ record: m2mResults }, { status: 201 });
 	} catch (error) {
 		console.error(`Admin POST error for ${params.table}:`, error.message);
 		return json({ error: error.message }, { status: 400 });
@@ -163,13 +246,36 @@ export async function PUT({ params, request }) {
 		delete restData.password;
 	}
 
-	// Clean data
+	// Clean data (excluding m2m fields from main table update)
 	const updateData = cleanBody(restData, tableConfig);
 
 	try {
-		const pkCol = table.id;
-		const [record] = await db.update(table).set(updateData).where(eq(pkCol, id)).returning();
-		return json({ record });
+		const result = await db.transaction(async (tx) => {
+			const pkCol = table.id;
+			const [record] = await tx.update(table).set(updateData).where(eq(pkCol, id)).returning();
+
+			// Handle Many-to-Many synchronization
+			for (const field of tableConfig.fields || []) {
+				if (field.type === 'm2m' && restData[field.key] && Array.isArray(restData[field.key])) {
+					const junctionTable = schemaMap[field.m2mSchema];
+					if (junctionTable) {
+						// 1. Delete all existing links for this record
+						await tx.delete(junctionTable).where(eq(junctionTable[field.m2mLocalKey], id));
+						
+						// 2. Insert new links
+						const inserts = restData[field.key].map(foreignId => ({
+							[field.m2mLocalKey]: id,
+							[field.m2mForeignKey]: foreignId
+						}));
+						if (inserts.length > 0) {
+							await tx.insert(junctionTable).values(inserts);
+						}
+					}
+				}
+			}
+			return record;
+		});
+		return json({ record: result });
 	} catch (error) {
 		console.error(`Admin PUT error for ${params.table}:`, error.message);
 		return json({ error: error.message }, { status: 400 });

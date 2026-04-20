@@ -33,6 +33,7 @@
 				label: "Pasien Lama",
 			},
 			{ href: "/kasir/payment", icon: "💳", label: "Pembayaran" },
+			{ href: "/kasir/payments", icon: "📚", label: "Riwayat Pembayaran" },
 		],
 		dokter: [
 			{ href: "/dokter", icon: "📋", label: "Dashboard" },
@@ -78,94 +79,146 @@
 			</div>
 			{/if}
 		</div>
-		<nav class="flex-1 px-4 space-y-2 mt-4 { $isSidebarOpen ? '' : '!px-2' }">
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath ===
-				'/kasir'
-					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/kasir"
-				title="Dashboard"
-			>
-				<span
-					class="material-symbols-outlined {currentPath === '/kasir'
-						? ''
-						: 'opacity-70'}">dashboard</span
+		<nav class="flex-1 px-4 mt-4 { $isSidebarOpen ? '' : '!px-2' } overflow-y-auto custom-scrollbar overflow-x-hidden pb-4">
+			<!-- MAIN -->
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath ===
+					'/kasir'
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir"
+					title="Dashboard"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Dashboard</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath ===
-				'/kasir/new-patient'
-					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/kasir/new-patient"
-				title="New Patient"
-			>
-				<span
-					class="material-symbols-outlined {currentPath ===
+					<span
+						class="material-symbols-outlined {currentPath === '/kasir'
+							? ''
+							: 'opacity-70'}">dashboard</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Dashboard</span>
+					{/if}
+				</a>
+			</div>
+
+			<!-- REGISTRASI PASIEN -->
+			{#if $isSidebarOpen}
+				<div class="px-4 mt-6 mb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">
+					Registrasi Pasien
+				</div>
+			{:else}
+				<div class="my-4 border-t border-white/10 mx-3"></div>
+			{/if}
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath ===
 					'/kasir/new-patient'
-						? ''
-						: 'opacity-70'}">person_add</span
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir/new-patient"
+					title="Pasien Baru"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">New Patient</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath ===
-				'/kasir/existing-patient'
-					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/kasir/existing-patient"
-				title="Existing Patient"
-			>
-				<span
-					class="material-symbols-outlined {currentPath ===
+					<span
+						class="material-symbols-outlined {currentPath ===
+						'/kasir/new-patient'
+							? ''
+							: 'opacity-70'} !text-[20px]">person_add</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Pasien Baru</span>
+					{/if}
+				</a>
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath ===
 					'/kasir/existing-patient'
-						? ''
-						: 'opacity-70'}">group</span
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir/existing-patient"
+					title="Pasien Lama"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Existing Patient</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath ===
-				'/kasir/payment'
-					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/kasir/payment"
-				title="Payment"
-			>
-				<span
-					class="material-symbols-outlined {currentPath ===
+					<span
+						class="material-symbols-outlined {currentPath ===
+						'/kasir/existing-patient'
+							? ''
+							: 'opacity-70'} !text-[20px]">group</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Pasien Lama</span>
+					{/if}
+				</a>
+			</div>
+
+			<!-- TRANSAKSI PEMBAYARAN -->
+			{#if $isSidebarOpen}
+				<div class="px-4 mt-6 mb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">
+					Transaksi Pembayaran
+				</div>
+			{:else}
+				<div class="my-4 border-t border-white/10 mx-3"></div>
+			{/if}
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath ===
 					'/kasir/payment'
-						? ''
-						: 'opacity-70'}">payments</span
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir/payment"
+					title="Pembayaran"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Payment</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/kasir/patients')
-					? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/kasir/patients"
-				title="Data Pasien"
-			>
-				<span
-					class="material-symbols-outlined {currentPath.startsWith('/kasir/patients')
-						? ''
-						: 'opacity-70'}">database</span
+					<span
+						class="material-symbols-outlined {currentPath ===
+						'/kasir/payment'
+							? ''
+							: 'opacity-70'} !text-[20px]">payments</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Pembayaran</span>
+					{/if}
+				</a>
+			</div>
+
+			<!-- DATABASE & RIWAYAT -->
+			{#if $isSidebarOpen}
+				<div class="px-4 mt-6 mb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">
+					Database & Riwayat
+				</div>
+			{:else}
+				<div class="my-4 border-t border-white/10 mx-3"></div>
+			{/if}
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath.startsWith('/kasir/patients')
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir/patients"
+					title="Data Pasien"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
-				{/if}
-			</a>
+					<span
+						class="material-symbols-outlined {currentPath.startsWith('/kasir/patients')
+							? ''
+							: 'opacity-70'} !text-[20px]">database</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
+					{/if}
+				</a>
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath.startsWith('/kasir/payments')
+						? 'bg-primary/20 border-l-4 border-primary !text-emerald-400 hover:!text-emerald-300'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/kasir/payments"
+					title="Riwayat Pembayaran"
+				>
+					<span
+						class="material-symbols-outlined {currentPath.startsWith('/kasir/payments')
+							? ''
+							: 'opacity-70'} !text-[20px]">receipt_long</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Riwayat Pembayaran</span>
+					{/if}
+				</a>
+			</div>
 		</nav>
 		<div class="mt-auto p-4 border-t border-white/10">
 			<ShiftTimer />

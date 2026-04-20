@@ -44,6 +44,10 @@
 		const val = row[col.key];
 		if (col.format) return col.format(val, row);
 		if (val === null || val === undefined) return '-';
+		if (Array.isArray(val)) {
+			if (val.length === 0) return '-';
+			return val.join(', ');
+		}
 		return val;
 	}
 </script>

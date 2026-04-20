@@ -2,14 +2,14 @@
 	import { onMount } from "svelte";
 	export let data;
 	$: user = data?.user;
-	import { formatElapsedTime, formatTime } from "$lib/utils/formatters.js";
+	import { formatElapsedTime, formatTime, getJakartaDateString, getJakartaMonthString } from "$lib/utils/formatters.js";
 	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
 	import { ENCOUNTER_STATUSES } from "$lib/utils/constants.js";
 
 	let encounters = [];
 	let loading = true;
-	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split('T')[0];
-	let filterMonth = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().substring(0, 7); // YYYY-MM
+	let filterDate = getJakartaDateString();
+	let filterMonth = getJakartaMonthString();
 	let filterType = "date"; // 'all', 'date' or 'month'
 	
 	let tableStatusFilter = "";
@@ -204,7 +204,7 @@
 		const url = URL.createObjectURL(blob);
 		const link = document.createElement("a");
 		
-		const timestamp = new Date().toISOString().split('T')[0];
+		const timestamp = getJakartaDateString();
 		link.setAttribute("href", url);
 		link.setAttribute("download", `Encounter_History_${timestamp}.csv`);
 		link.style.visibility = 'hidden';
@@ -234,7 +234,7 @@
 					<RichSelect
 						options={filterTypeOptions}
 						bind:value={filterType}
-						on:select={loadEncounters}
+						on:select={(e) => { filterType = e.detail.value; loadEncounters(); }}
 					/>
 				</div>
 				{#if filterType === 'date'}
@@ -269,7 +269,7 @@
 					<RichSelect
 						options={doctorOptions}
 						bind:value={tableDoctorFilter}
-						on:select={loadEncounters}
+						on:select={(e) => { tableDoctorFilter = e.detail.value; loadEncounters(); }}
 						placeholder="Select Doctor"
 					/>
 				</div>
@@ -281,7 +281,7 @@
 					<RichSelect
 						options={statusOptions}
 						bind:value={tableStatusFilter}
-						on:select={loadEncounters}
+						on:select={(e) => { tableStatusFilter = e.detail.value; loadEncounters(); }}
 						placeholder="Filter Status"
 					/>
 				</div>
@@ -378,9 +378,8 @@
 								</td>
 								<td class="px-6 py-4">
 								    <div class="flex items-center gap-2">
-								        {#if row.encounter?.soap_document_id}
 								            <a 
-								                href="/api/documents/{row.encounter?.soap_document_id}" 
+								                href="/api/encounters/{row.encounter?.id}/pdf" 
 								                target="_blank"
 								                class="text-teal-700 hover:text-teal-800 font-semibold text-xs uppercase tracking-wider bg-teal-50 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-teal-100 transition-colors border border-teal-200 shadow-sm"
 								                on:click|stopPropagation
@@ -388,7 +387,7 @@
 								                <span class="material-symbols-outlined text-[16px]">description</span>
 								                SOAP
 								            </a>
-								        {/if}
+								        {#if row.encounter?.doctor_id === user?.id}
 								        <a 
 								            href="/dokter/{row.encounter?.id}" 
 								            class="text-primary hover:text-primary/80 font-semibold text-xs uppercase tracking-wider bg-primary/10 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-primary/20 transition-colors"
@@ -397,6 +396,7 @@
 								            <span class="material-symbols-outlined text-[16px]">visibility</span>
 								            View
 								        </a>
+								        {/if}
 								    </div>
 								</td>
 							</tr>

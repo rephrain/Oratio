@@ -9,12 +9,13 @@
 		formatElapsedTime,
 		getWaitTimeClass,
 		formatTime,
+		getJakartaDateString,
 	} from "$lib/utils/formatters.js";
 
 	let encounters = [];
 	let loading = true;
 	let viewMode = "board"; // 'board' | 'table'
-	let filterDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString().split("T")[0];
+	let filterDate = getJakartaDateString();
 	let filterDoctor = "";
 	let doctorOptions = [];
 	let refreshInterval;

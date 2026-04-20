@@ -1,19 +1,60 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { payments, encounters, encounterItems, documents } from '$lib/server/db/schema.js';
+import { payments, encounters, encounterItems, documents, patients, users } from '$lib/server/db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 // GET /api/payments
 export async function GET({ url }) {
 	const encounterId = url.searchParams.get('encounter_id');
+	const date = url.searchParams.get('date');
+	const doctorId = url.searchParams.get('doctor_id');
+	const cashierId = url.searchParams.get('cashier_id');
+	const paymentMode = url.searchParams.get('payment_mode');
+	const paymentType = url.searchParams.get('payment_type');
 	const page = parseInt(url.searchParams.get('page') || '1');
-	const limit = parseInt(url.searchParams.get('limit') || '20');
+	const limit = parseInt(url.searchParams.get('limit') || '50');
 	const offset = (page - 1) * limit;
 
-	let query = db.select().from(payments);
+	const doctors = alias(users, 'doctors');
+	const kasirs = alias(users, 'kasirs');
+
+	let query = db.select({
+		payment: payments,
+		encounter: encounters,
+		patient: patients,
+		patient_name: patients.nama_lengkap,
+		doctor_name: doctors.name,
+		kasir_name: kasirs.name
+	})
+	.from(payments)
+	.leftJoin(encounters, eq(payments.encounter_id, encounters.id))
+	.leftJoin(patients, eq(encounters.patient_id, patients.id))
+	.leftJoin(doctors, eq(encounters.doctor_id, doctors.id))
+	.leftJoin(kasirs, eq(payments.cashier_id, kasirs.id));
 
 	if (encounterId) {
 		query = query.where(eq(payments.encounter_id, encounterId));
+	}
+	
+	if (date) {
+		query = query.where(sql`DATE(${payments.paid_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = ${date}`);
+	}
+
+	if (doctorId) {
+		query = query.where(eq(encounters.doctor_id, doctorId));
+	}
+
+	if (cashierId) {
+		query = query.where(eq(payments.cashier_id, cashierId));
+	}
+
+	if (paymentMode) {
+		query = query.where(eq(payments.payment_mode, paymentMode));
+	}
+
+	if (paymentType) {
+		query = query.where(eq(payments.payment_type, paymentType));
 	}
 
 	const data = await query.orderBy(desc(payments.created_at)).limit(limit).offset(offset);
@@ -40,8 +81,19 @@ export async function POST({ request, locals }) {
 
 	const netSales = totalSales - discountAmount;
 
+	// Fetch encounter to get doctor_id
+	const [encounterInfo] = await db.select({ doctor_id: encounters.doctor_id })
+		.from(encounters)
+		.where(eq(encounters.id, body.encounter_id))
+		.limit(1);
+
+	if (!encounterInfo) {
+		return json({ error: 'Encounter not found' }, { status: 404 });
+	}
+
 	const [payment] = await db.insert(payments).values({
 		encounter_id: body.encounter_id,
+		doctor_id: encounterInfo.doctor_id,
 		cashier_id: locals.user.id,
 		payment_mode: body.payment_mode || 'NORMAL',
 		payment_type: body.payment_type,

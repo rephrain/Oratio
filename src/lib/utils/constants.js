@@ -372,7 +372,7 @@ export const ADMIN_TABLES = {
 			{ key: 'id', label: 'ID', type: 'text', required: true, maxLength: 30, editReadOnly: true },
 			{ key: 'patient_id', label: 'Patient', type: 'fk', required: true, fkTable: 'patients', fkLabel: 'nama_lengkap' },
 			{ key: 'kasir_id', label: 'Kasir', type: 'fk', fkTable: 'users', fkLabel: 'name' },
-			{ key: 'doctor_id', label: 'Doctor', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
+			{ key: 'doctor_id', label: 'Doctor', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'dokter' } },
 			{ key: 'queue_number', label: 'Queue Number', type: 'number' },
 			{ key: 'form_mode', label: 'Form Mode', type: 'select', options: ['SOAP', 'SOAP_WHO'], defaultValue: 'SOAP' },
 			{ key: 'status', label: 'Status', type: 'select', required: true, options: ['Planned', 'In Progress', 'On Hold', 'Discharged', 'Completed', 'Cancelled', 'Discontinued'], defaultValue: 'Planned' },
@@ -512,9 +512,19 @@ export const ADMIN_TABLES = {
 		label: 'Items',
 		schema: 'items',
 		fields: [
-			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'id', label: 'ID (Item Code)', type: 'text', required: true, maxLength: 50, editReadOnly: true },
 			{ key: 'name', label: 'Name', type: 'text', required: true },
-			{ key: 'doctor_id', label: 'Doctor', type: 'fk', fkTable: 'users', fkLabel: 'name' },
+			{ 
+				key: 'doctor_ids', 
+				label: 'Doctors', 
+				type: 'm2m', 
+				m2mSchema: 'doctorItems',
+				m2mLocalKey: 'item_id',
+				m2mForeignKey: 'doctor_id',
+				fkTable: 'users', 
+				fkLabel: 'name', 
+				fkFilter: { role: 'dokter' } 
+			},
 			{ key: 'price', label: 'Price', type: 'number', required: true },
 			{ key: 'item_group', label: 'Item Group', type: 'text', maxLength: 50 },
 			{ key: 'denomination', label: 'Denomination', type: 'text', maxLength: 50 },
@@ -553,6 +563,7 @@ export const ADMIN_TABLES = {
 			{ key: 'reference_number', label: 'Reference Number', type: 'text', maxLength: 50 },
 			{ key: 'note', label: 'Note', type: 'textarea' },
 			{ key: 'proof_document_id', label: 'Proof Document', type: 'fk', fkTable: 'documents', fkLabel: 'file_name' },
+			{ key: 'doctor_id', label: 'Doctor', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'dokter' } },
 			{ key: 'cashier_id', label: 'Cashier', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name' },
 			{ key: 'paid_at', label: 'Paid At', type: 'datetime' },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }

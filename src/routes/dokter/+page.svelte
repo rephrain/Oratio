@@ -9,6 +9,7 @@
 		getShiftCountdown,
 		formatDate,
 		getWhatsAppUrl,
+		getJakartaDateString,
 	} from "$lib/utils/formatters.js";
 
 	export let data;
@@ -20,11 +21,7 @@
 	let doctorShifts = [];
 	let refreshInterval;
 	let shiftInterval;
-	let filterDate = new Date(
-		new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
-	)
-		.toISOString()
-		.split("T")[0];
+	let filterDate = getJakartaDateString();
 
 	$: todayQueue = encounters.filter((e) =>
 		["Planned", "Arrived", "On Hold"].includes(e.encounter?.status),
@@ -225,6 +222,22 @@
 		}
 	}
 
+	async function selectReferral(ref) {
+		const virtualRow = {
+			patient_name: ref.patient_name || "Unknown Patient",
+			patient: { id: ref.patient_id },
+			encounter: { 
+				id: ref.id, 
+				patient_id: ref.patient_id,
+				status: 'Referral',
+				reason_type: 'situation' // Default for referrals
+			},
+			encounter_reason_display: `Referral from ${ref.sender_name}: ${ref.note || 'No note'}`,
+			isReferral: true
+		};
+		await selectEncounter(virtualRow);
+	}
+
 	async function startEncounter() {
 		if (selectedEncounterData?.encounter?.id) {
 			const id = selectedEncounterData.encounter.id;
@@ -318,6 +331,11 @@
 				bg: "from-rose-100 to-rose-50",
 				text: "text-rose-600",
 			},
+			Referral: {
+				badge: "bg-purple-500",
+				bg: "from-purple-100 to-purple-50",
+				text: "text-purple-600",
+			},
 			Discharged: {
 				badge: "bg-emerald-500",
 				bg: "from-emerald-100 to-emerald-50",
@@ -344,7 +362,10 @@
 		loadEncounters();
 		loadShifts();
 		loadReferrals();
-		refreshInterval = setInterval(loadEncounters, 30000);
+		refreshInterval = setInterval(() => {
+			loadEncounters();
+			loadReferrals();
+		}, 30000);
 		shiftInterval = setInterval(updateShift, 60000);
 	});
 
@@ -814,6 +835,7 @@
 							{#each sortedReferrals as ref}
 								<tr
 									class="hover:bg-slate-50 transition-colors cursor-pointer group"
+									on:click={() => selectReferral(ref)}
 								>
 									<td class="px-6 py-5">
 										<div class="flex items-center gap-3">
@@ -913,7 +935,7 @@
 							>
 								<span
 									class="text-3xl font-black {selectedStatusConfig.text} drop-shadow-sm"
-									>{selectedEncounterData.patient_name
+									>{(selectedEncounterData.patient_name || "P")
 										.substring(0, 2)
 										.toUpperCase()}</span
 								>
@@ -1643,7 +1665,7 @@
 					<span class="material-symbols-outlined text-[20px]"
 						>play_arrow</span
 					>
-					Start New Encounter
+					{selectedEncounterData.isReferral ? "Select from Queue to Treat" : "Start New Encounter"}
 				</button>
 			</div>
 		{:else}

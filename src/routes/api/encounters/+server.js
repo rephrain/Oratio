@@ -33,8 +33,8 @@ export async function GET({ url, locals }) {
 	if (status) conditions.push(eq(encounters.status, status));
 	if (patientId) conditions.push(eq(encounters.patient_id, patientId));
 
-	// For dokter role, only show their own encounters unless searching for a specific patient's history or explicitly requesting 'all'
-	if (locals.user?.role === 'dokter' && !patientId && (!doctorId || doctorId !== 'all')) {
+	// For dokter role, only show their own encounters unless searching for a specific patient's history or explicitly requesting 'all' or another doctor
+	if (locals.user?.role === 'dokter' && !patientId && !doctorId) {
 		conditions.push(eq(encounters.doctor_id, locals.user.id));
 	}
 

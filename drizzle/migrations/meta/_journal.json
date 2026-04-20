@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775093867353,
-      "tag": "0000_tearful_omega_sentinel",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1775196102254,
-      "tag": "0001_faulty_hairball",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775832883062,
-      "tag": "0002_ambitious_captain_britain",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775898431952,
-      "tag": "0003_boring_deadpool",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775961558318,
-      "tag": "0004_tough_kronos",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1775984074528,
-      "tag": "0005_deep_mastermind",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1776531442801,
-      "tag": "0006_whole_brother_voodoo",
+      "when": 1776593461138,
+      "tag": "0000_acoustic_martin_li",
       "breakpoints": true
     }
   ]

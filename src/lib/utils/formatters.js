@@ -15,6 +15,29 @@ export function formatDateTime(date, locale = 'id-ID') {
 	});
 }
 
+export function getJakartaDateString() {
+	return new Intl.DateTimeFormat('en-CA', { 
+		timeZone: 'Asia/Jakarta', 
+		year: 'numeric', 
+		month: '2-digit', 
+		day: '2-digit' 
+	}).format(new Date());
+}
+
+export function getJakartaMonthString() {
+	return getJakartaDateString().substring(0, 7);
+}
+
+export function getJakartaDateStringFromDate(date) {
+	if (!date) return getJakartaDateString();
+	return new Intl.DateTimeFormat('en-CA', { 
+		timeZone: 'Asia/Jakarta', 
+		year: 'numeric', 
+		month: '2-digit', 
+		day: '2-digit' 
+	}).format(new Date(date));
+}
+
 export function formatTime(date) {
 	if (!date) return '-';
 	return new Date(date).toLocaleTimeString('id-ID', {

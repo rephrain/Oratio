@@ -29,15 +29,6 @@
 			surface: event.detail.surfaceArea
 		});
 	}
-
-	// Helper to pluck data safely
-	function getT(num) {
-		return odontogramData[String(num)] || {};
-	}
-
-	function isSelected(num, surface) {
-		return selectedTooth == num && selectedSurfaceArea == surface ? surface : '';
-	}
 </script>
 
 <div class="min-w-[700px] max-w-4xl mx-auto py-8">
@@ -45,9 +36,10 @@
 	<div class="flex justify-center mb-6">
 		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quadrant1 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -56,9 +48,10 @@
 		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
 		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quadrant2 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -70,9 +63,10 @@
 	<div class="flex justify-center mb-6 opacity-95 scale-90 transform origin-top">
 		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quad5 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -81,9 +75,10 @@
 		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
 		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quad6 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -95,9 +90,10 @@
 	<div class="flex justify-center mb-6 opacity-95 scale-90 transform origin-bottom">
 		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quad8 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -106,9 +102,10 @@
 		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
 		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quad7 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
 					selectedSurface={selectedTooth == num ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
@@ -120,10 +117,11 @@
 	<div class="flex justify-center">
 		<div class="flex gap-1.5 flex-1 justify-end pr-6">
 			{#each quadrant4 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
-					selectedSurface={isSelected(num, selectedSurfaceArea)}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
+					selectedSurface={selectedTooth == num && selectedSurfaceArea ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
 			{/each}
@@ -131,10 +129,11 @@
 		<div class="w-1 bg-slate-200 rounded-full mx-2 opacity-80"></div>
 		<div class="flex gap-1.5 flex-1 justify-start pl-6">
 			{#each quadrant3 as num}
+				{@const td = odontogramData[String(num)] || {}}
 				<ToothDiagram 
 					number={num} 
-					top={getT(num).top} right={getT(num).right} bottom={getT(num).bottom} left={getT(num).left} center={getT(num).center} globalCondition={getT(num).global}
-					selectedSurface={isSelected(num, selectedSurfaceArea)}
+					top={td.top} right={td.right} bottom={td.bottom} left={td.left} center={td.center} globalCondition={td.global}
+					selectedSurface={selectedTooth == num && selectedSurfaceArea ? selectedSurfaceArea : ''}
 					on:surfaceClick={handleSurfaceClick}
 				/>
 			{/each}

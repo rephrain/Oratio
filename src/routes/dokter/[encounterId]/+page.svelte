@@ -93,6 +93,7 @@
 	// Patient context
 	let patientInfo = null;
 	let patientHistory = [];
+	$: filteredHistory = patientHistory.filter(h => h.encounter?.id !== encounterId);
 	let patientMedicalBackground = null;
 	let loadingMedical = false;
 	let showSidebar = true;
@@ -827,16 +828,24 @@
 
 	function saveToothDetail(event) {
 		const updatedTooth = event.detail; // from dispatch('save', t)
-		updatedTooth.tooth_number = String(updatedTooth.tooth_number); // Always string
+		updatedTooth.tooth_number = String(updatedTooth.tooth_number);
 		const idx = odontogram.details.findIndex(
 			(d) => String(d.tooth_number) === updatedTooth.tooth_number,
 		);
+
+		// Use immutable operations to guarantee new array reference for Svelte reactivity
 		if (idx >= 0) {
-			odontogram.details[idx] = updatedTooth;
+			odontogram.details = odontogram.details.map((d, i) =>
+				i === idx ? updatedTooth : d,
+			);
 		} else {
 			odontogram.details = [...odontogram.details, updatedTooth];
 		}
+
+		// Spread to new object so $: mappedOdontogramData recalculates → ToothDiagram flashes
 		odontogram = { ...odontogram };
+
+		addToast(`Gigi ${updatedTooth.tooth_number} berhasil disimpan`, "success");
 	}
 
 	function hasCondition(toothNum) {
@@ -2805,9 +2814,15 @@
 				</div>
 
 				<!-- End of Sections -->
-				<div
-					class="mt-8 pt-6 border-t border-slate-100 flex justify-end"
-				>
+				<div class="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
+					<button
+						class="px-8 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl text-base font-bold hover:bg-slate-50 hover:text-primary hover:border-primary transition-all flex items-center gap-2 shadow-sm"
+						on:click={() => window.open(`/api/encounters/${encounterId}/pdf`, "_blank")}
+					>
+						<span class="material-symbols-outlined text-[20px]">print</span>
+						Cetak & Lihat PDF
+					</button>
+
 					<button
 						class="px-8 py-3 bg-primary text-white rounded-xl text-base font-bold shadow-lg shadow-primary/25 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
 						disabled={saving}
@@ -2857,11 +2872,11 @@
 						class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50"
 					>
 						{#if encounter}
-							{#if patientHistory?.length > 0}
+							{#if filteredHistory?.length > 0}
 								<div
 									class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-slate-200"
 								>
-									{#each patientHistory as hist}
+									{#each filteredHistory as hist}
 										<div
 											class="relative pl-12 pb-10 last:pb-0 group"
 										>
@@ -3103,14 +3118,14 @@
 															class="mt-5 w-full py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-primary hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm group/btn"
 															on:click={() =>
 																window.open(
-																	`/dokter/${hist.encounter?.id}`,
+																	`/api/encounters/${hist.encounter?.id}/pdf`,
 																	"_blank",
 																)}
 														>
-															LIHAT DETAIL PENUH
+															LIHAT PDF RESUME
 															<span
 																class="material-symbols-outlined text-[14px] group-hover/btn:translate-x-1 transition-transform"
-																>arrow_right_alt</span
+																>picture_as_pdf</span
 															>
 														</button>
 													</div>

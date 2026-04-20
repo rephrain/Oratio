@@ -36,7 +36,7 @@ export async function GET({ locals }) {
 			.where(
 				and(
 					eq(encounterReferrals.doctor_code, doctorCode),
-					sql`DATE(${encounterReferrals.referral_date}) <= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`
+					sql`DATE(${encounterReferrals.referral_date}) >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`
 				)
 			)
 			.orderBy(desc(encounterReferrals.created_at));

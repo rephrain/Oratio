@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy } from "svelte";
-	import { formatCurrency } from "$lib/utils/formatters.js";
+	import { formatCurrency, getJakartaDateString, getJakartaDateStringFromDate } from "$lib/utils/formatters.js";
 	import { STATUS_COLORS } from "$lib/utils/constants.js";
 
 	export let data;
@@ -41,10 +41,7 @@
 	];
 
 	function getTodayStr() {
-		const d = new Date(
-			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
-		);
-		return d.toISOString().split("T")[0];
+		return getJakartaDateString();
 	}
 
 	function getMonthStart() {
@@ -59,7 +56,7 @@
 		const now = new Date(
 			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
 		);
-		dateTo = now.toISOString().split("T")[0];
+		dateTo = getJakartaDateStringFromDate(now);
 
 		switch (range) {
 			case "today":
@@ -67,7 +64,7 @@
 				break;
 			case "week":
 				const weekAgo = new Date(now.getTime() - 7 * 86400000);
-				dateFrom = weekAgo.toISOString().split("T")[0];
+				dateFrom = getJakartaDateStringFromDate(weekAgo);
 				break;
 			case "month":
 				dateFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -75,12 +72,12 @@
 			case "3months":
 				const m3 = new Date(now);
 				m3.setMonth(m3.getMonth() - 3);
-				dateFrom = m3.toISOString().split("T")[0];
+				dateFrom = getJakartaDateStringFromDate(m3);
 				break;
 			case "6months":
 				const m6 = new Date(now);
 				m6.setMonth(m6.getMonth() - 6);
-				dateFrom = m6.toISOString().split("T")[0];
+				dateFrom = getJakartaDateStringFromDate(m6);
 				break;
 			case "year":
 				dateFrom = `${now.getFullYear()}-01-01`;

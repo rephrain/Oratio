@@ -45,38 +45,53 @@
 	function initDefaults() {
 		const record = {};
 		for (const field of formFields) {
-			if (field.defaultValue !== undefined) {
+			if (field.type === 'm2m') {
+				record[field.key] = [];
+			} else if (field.defaultValue !== undefined) {
 				record[field.key] = field.defaultValue;
 			}
 		}
 		return record;
 	}
 
-	// Load FK lookup data for a given fkTable
-	async function loadFkLookup(fkTable) {
-		if (fkLookups[fkTable] || fkLoading[fkTable]) return;
-		fkLoading[fkTable] = true;
+	// Load FK lookup data for a given fkTable with optional filters
+	async function loadFkLookup(fkTable, filter = null) {
+		const cacheKey = filter 
+			? `${fkTable}?${new URLSearchParams(filter).toString()}`
+			: fkTable;
+
+		if (fkLookups[cacheKey] || fkLoading[cacheKey]) return;
+		fkLoading[cacheKey] = true;
 		try {
-			const res = await fetch(`/api/admin/${fkTable}?limit=500`);
+			let url = `/api/admin/${fkTable}?limit=500`;
+			if (filter) {
+				const params = new URLSearchParams(filter);
+				url += `&${params.toString()}`;
+			}
+			const res = await fetch(url);
 			const resp = await res.json();
-			fkLookups[fkTable] = resp.data || [];
+			fkLookups[cacheKey] = resp.data || [];
 			fkLookups = fkLookups; // trigger reactivity
 		} catch (err) {
 			console.error(`Failed to load FK data for ${fkTable}:`, err);
-			fkLookups[fkTable] = [];
+			fkLookups[cacheKey] = [];
 		} finally {
-			fkLoading[fkTable] = false;
+			fkLoading[cacheKey] = false;
 		}
+	}
+
+	function getCacheKey(field) {
+		if (!field.fkFilter) return field.fkTable;
+		return `${field.fkTable}?${new URLSearchParams(field.fkFilter).toString()}`;
 	}
 
 	// Load all FK lookups needed for this table
 	async function loadAllFkLookups() {
-		const fkTables = [
-			...new Set(
-				formFields.filter((f) => f.type === "fk").map((f) => f.fkTable),
-			),
-		];
-		await Promise.all(fkTables.map((t) => loadFkLookup(t)));
+		const lookups = formFields
+			.filter((f) => f.type === "fk" || f.type === "m2m")
+			.map((f) => ({ table: f.fkTable, filter: f.fkFilter }));
+
+		await Promise.all(lookups.map((l) => loadFkLookup(l.table, l.filter)));
 	}
 
 	async function loadData(isBg = false) {
@@ -92,31 +107,19 @@
 			// Build columns from field definitions
 			if (formFields.length > 0) {
 				columns = formFields
-					.filter(
-						(f) =>
-							!f.createOnly &&
-							f.type !== "password" &&
-							f.type !== "textarea",
-					)
+					.filter((f) => !f.createOnly && f.type !== "password" && f.type !== "textarea" && f.type !== "m2m")
 					.map((f) => ({
 						key: f.key,
 						label: f.label,
 						sortable: true,
 						format: (val) => {
 							if (val === null || val === undefined) return "-";
-							if (typeof val === "boolean")
-								return val ? "✅" : "❌";
-							if (typeof val === "string" && val.length > 50)
-								return val.substring(0, 50) + "...";
+							if (typeof val === "boolean") return val ? "✅" : "❌";
+							
 							// Format datetime
-							if (
-								f.type === "datetime" &&
-								typeof val === "string"
-							) {
+							if (f.type === "datetime" && typeof val === "string") {
 								try {
-									return new Date(val).toLocaleString(
-										"id-ID",
-									);
+									return new Date(val).toLocaleString("id-ID");
 								} catch {
 									return val;
 								}
@@ -124,6 +127,26 @@
 							return String(val);
 						},
 					}));
+
+				// Add M2M columns with custom formatters to show labels in the table
+				const m2mFields = formFields.filter(f => f.type === 'm2m');
+				for (const f of m2mFields) {
+					columns.push({
+						key: f.key,
+						label: f.label,
+						sortable: false,
+						format: (val) => {
+							if (!val || !Array.isArray(val)) return '-';
+							const lookup = fkLookups[getCacheKey(f)] || [];
+							const labels = val.map(id => {
+								const found = lookup.find(l => l.id === id);
+								return found ? found[f.fkLabel] : id;
+							});
+							return labels.join(', ');
+						}
+					});
+				}
+				columns = columns; // for reactivity
 			} else if (data.length > 0) {
 				// Fallback: auto-detect columns like before
 				columns = Object.keys(data[0])
@@ -545,8 +568,8 @@
 						}}
 					>
 						<option value="">-- Pilih --</option>
-						{#if fkLookups[field.fkTable]}
-							{#each fkLookups[field.fkTable] as fkRow}
+						{#if fkLookups[getCacheKey(field)]}
+							{#each fkLookups[getCacheKey(field)] as fkRow}
 								<option value={fkRow.id}>
 									{fkRow[field.fkLabel] || fkRow.id}
 								</option>
@@ -555,6 +578,46 @@
 							<option value="" disabled>Loading...</option>
 						{/if}
 					</select>
+				{:else if field.type === "m2m"}
+					<!-- Many-to-Many Multi-selection -->
+					<div class="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[100px]">
+						{#if fkLookups[getCacheKey(field)]}
+							{#each fkLookups[getCacheKey(field)] as fkRow}
+								{@const isSelected = (editRecord[field.key] || []).includes(fkRow.id)}
+								<button
+									type="button"
+									class="px-3 py-1.5 rounded-full text-xs font-bold transition-all border {isSelected 
+										? 'bg-primary text-white border-primary shadow-md shadow-primary/20' 
+										: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary/50'}"
+									on:click={() => {
+										const current = editRecord[field.key] || [];
+										if (isSelected) {
+											editRecord[field.key] = current.filter(id => id !== fkRow.id);
+										} else {
+											editRecord[field.key] = [...current, fkRow.id];
+										}
+									}}
+								>
+									<div class="flex items-center gap-1.5">
+										{#if isSelected}
+											<span class="material-symbols-outlined text-[14px]">check_circle</span>
+										{/if}
+										{fkRow[field.fkLabel] || fkRow.id}
+									</div>
+								</button>
+							{/each}
+							{#if fkLookups[getCacheKey(field)].length === 0}
+								<div class="w-full flex flex-col items-center justify-center text-slate-400 py-4">
+									<span class="material-symbols-outlined text-4xl mb-2 opacity-20">group_off</span>
+									<p class="text-xs font-medium">No results found for filtering.</p>
+								</div>
+							{/if}
+						{:else}
+							<div class="w-full flex items-center justify-center py-4">
+								<span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+							</div>
+						{/if}
+					</div>
 				{:else if field.type === "image"}
 					<!-- Image upload with preview -->
 					<div class="space-y-3">

@@ -122,7 +122,9 @@
 
 	$: referralDoctorOptions = [
 		{ value: "", label: "Select Doctor" },
-		...doctorsList.map((doc) => ({
+		...doctorsList
+			.filter((doc) => doc.doctor_code !== encounter?.doctor_code)
+			.map((doc) => ({
 			value: doc.doctor_code,
 			label: doc.name,
 			sublabel: doc.doctor_code,

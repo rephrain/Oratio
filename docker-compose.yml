@@ -3,34 +3,30 @@ version: '3.8'
 services:
   db:
     image: postgres:16-alpine
-    container_name: oratio-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: oratio
       POSTGRES_USER: oratio
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oratio_secret}
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U oratio" ]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U oratio"]
+      interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - oratio-network
 
   app:
-    env_file:
-      - .env
-    build: .
-    container_name: oratio-app
+    image: rephrainarchaimeric/oratio:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://oratio:${POSTGRES_PASSWORD:-oratio_secret}@db:5432/oratio
+      DATABASE_URL: postgresql://oratio:${POSTGRES_PASSWORD}@db:5432/oratio
       JWT_SECRET: ${JWT_SECRET}
-      SATUSEHAT_ENV: ${SATUSEHAT_ENV:-staging}
+      SATUSEHAT_ENV: ${SATUSEHAT_ENV}
       SATUSEHAT_CLIENT_ID: ${SATUSEHAT_CLIENT_ID}
       SATUSEHAT_CLIENT_SECRET: ${SATUSEHAT_CLIENT_SECRET}
       SATUSEHAT_ORG_ID: ${SATUSEHAT_ORG_ID}
@@ -39,13 +35,18 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
+      ORIGIN: ${ORIGIN}
     volumes:
       - uploads:/app/uploads
-      - ./drizzle:/app/drizzle
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - oratio-network
+
+networks:
+  oratio-network:
+    driver: bridge
 
 volumes:
   pgdata:

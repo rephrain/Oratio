@@ -1,6 +1,7 @@
 process.env.TZ = 'Asia/Jakarta';
-import '$lib/server/cron.js'; 
+import '$lib/server/cron.js';
 import { verifyToken } from '$lib/server/auth.js';
+import { redirect } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 const ROLE_PATHS = {
@@ -31,7 +32,7 @@ export async function handle({ event, resolve }) {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		}
-		return Response.redirect(`${event.url.origin}/login`, 302);
+		throw redirect(302, '/login');
 	}
 
 	const payload = await verifyToken(token);
@@ -43,25 +44,36 @@ export async function handle({ event, resolve }) {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		}
-		return Response.redirect(`${event.url.origin}/login`, 302);
+		throw redirect(302, '/login');
 	}
 
-	// Verify user still exists in database (prevents 500 errors on stale tags)
-	const { db } = await import('$lib/server/db/index.js');
-	const { users } = await import('$lib/server/db/schema.js');
-	const { eq } = await import('drizzle-orm');
+	let dbUser;
 
-	const [dbUser] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+	try {
+		const { db } = await import('$lib/server/db/index.js');
+		const { users } = await import('$lib/server/db/schema.js');
+		const { eq } = await import('drizzle-orm');
 
-	if (!dbUser || !dbUser.is_active) {
+		const result = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, payload.sub))
+			.limit(1);
+
+		dbUser = result[0];
+	} catch (err) {
+		console.error('DB ERROR:', err);
+
 		event.cookies.delete('auth_token', { path: '/' });
+
 		if (path.startsWith('/api/')) {
-			return new Response(JSON.stringify({ error: 'Session expired' }), {
-				status: 401,
+			return new Response(JSON.stringify({ error: 'Database error' }), {
+				status: 500,
 				headers: { 'Content-Type': 'application/json' }
 			});
 		}
-		return Response.redirect(`${event.url.origin}/login`, 302);
+
+		throw redirect(302, '/login');
 	}
 
 	// Attach user to event.locals
@@ -84,14 +96,14 @@ export async function handle({ event, resolve }) {
 						headers: { 'Content-Type': 'application/json' }
 					});
 				}
-				return Response.redirect(`${event.url.origin}/${payload.role}`, 302);
+				throw redirect(302, `/${payload.role}`);
 			}
 		}
 	}
 
 	// Redirect root to role dashboard
 	if (path === '/') {
-		return Response.redirect(`${event.url.origin}/${payload.role}`, 302);
+		throw redirect(302, `/${payload.role}`);
 	}
 
 	return resolve(event);

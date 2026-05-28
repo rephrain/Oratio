@@ -10,11 +10,25 @@ npm-debug.log
 build_log.txt
 build_log2.txt
 build_output.txt
+build-logs.txt
+build.log
+logs.txt
+query.txt
+test_avg.txt
+hashing.js
+terminologyService.js
+scratch
+uploads
+*.resolved
 
 .env
+.env.example
 
 Dockerfile
 docker-compose.yml
+deploy.sh
+push.sh
+nginx.conf
 
 LICENSE
 *.md

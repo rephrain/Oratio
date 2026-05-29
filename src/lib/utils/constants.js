@@ -512,7 +512,8 @@ export const ADMIN_TABLES = {
 		label: 'Items',
 		schema: 'items',
 		fields: [
-			{ key: 'id', label: 'ID (Item Code)', type: 'text', required: true, maxLength: 50, editReadOnly: true },
+			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
+			{ key: 'kode_item', label: 'Kode Item', type: 'text', required: true, maxLength: 50 },
 			{ key: 'name', label: 'Name', type: 'text', required: true },
 			{ 
 				key: 'doctor_ids', 

@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.8e47f7af.js","app":"_app/immutable/entry/app.e5c06ead.js","imports":["_app/immutable/entry/start.8e47f7af.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/singletons.3cb44420.js","_app/immutable/chunks/index.8449654f.js","_app/immutable/chunks/paths.c67aefbd.js","_app/immutable/entry/app.e5c06ead.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/index.98d8086f.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.8fc59e6b.js","app":"_app/immutable/entry/app.d5ad62e0.js","imports":["_app/immutable/entry/start.8fc59e6b.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/singletons.e1db24ca.js","_app/immutable/chunks/index.8449654f.js","_app/immutable/chunks/paths.dff09679.js","_app/immutable/entry/app.d5ad62e0.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/index.98d8086f.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),

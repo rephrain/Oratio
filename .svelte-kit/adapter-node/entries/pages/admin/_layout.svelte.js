@@ -52,13 +52,7 @@ const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   )}" href="/admin/encounters"><span class="material-symbols-outlined" data-svelte-h="svelte-jdvlvw">calendar_month</span> <span class="${"text-sm " + escape(
     currentPath.startsWith("/admin/encounters") ? "font-semibold" : "font-medium",
     true
-  )}">Encounters</span></a> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
-    currentPath.startsWith("/admin/doctor-shifts") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
-    true
-  )}" href="/admin/doctor-shifts"><span class="material-symbols-outlined" data-svelte-h="svelte-12u6m5a">schedule</span> <span class="${"text-sm " + escape(
-    currentPath.startsWith("/admin/doctor-shifts") ? "font-semibold" : "font-medium",
-    true
-  )}">Doctor Shifts</span></a> <div class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-3 py-4 mt-4" data-svelte-h="svelte-yweprj">System</div> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
+  )}">Encounters</span></a> <div class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-3 py-4 mt-4" data-svelte-h="svelte-yweprj">System</div> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
     currentPath.startsWith("/admin/payments") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
     true
   )}" href="/admin/payments"><span class="material-symbols-outlined" data-svelte-h="svelte-c6s5rw">payments</span> <span class="${"text-sm " + escape(
@@ -71,12 +65,6 @@ const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     currentPath.startsWith("/admin/items") ? "font-semibold" : "font-medium",
     true
   )}">Items &amp; DB</span></a> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
-    currentPath.startsWith("/admin/terminology") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
-    true
-  )}" href="/admin/terminology"><span class="material-symbols-outlined" data-svelte-h="svelte-ax8gj7">dictionary</span> <span class="${"text-sm " + escape(
-    currentPath.startsWith("/admin/terminology") ? "font-semibold" : "font-medium",
-    true
-  )}">Terminology</span></a> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
     currentPath.startsWith("/admin/import") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
     true
   )}" href="/admin/import"><span class="material-symbols-outlined" data-svelte-h="svelte-1wgy74a">database</span> <span class="${"text-sm " + escape(

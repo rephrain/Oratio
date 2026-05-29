@@ -1138,40 +1138,64 @@
             <div class="space-y-4">
                 {#each diseaseHistory as item, i}
                     <div
-                        class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
+                        class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
-                        <div class="w-full md:w-40 shrink-0">
-                            <RichSelect
-                                placeholder="Tipe"
-                                options={DISEASE_TYPE_OPTIONS}
-                                bind:value={item.type}
-                            />
-                        </div>
-                        <div
-                            class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
-                        >
-                            <SearchableSelect
-                                placeholder="Cari penyakit (SNOMED)..."
-                                searchFn={item.type === "family"
-                                    ? searchFamilyDisease
-                                    : searchPersonalDisease}
-                                bind:value={item.code}
-                                on:select={(e) =>
-                                    onDiseaseSelected(i, e.detail)}
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
-                            on:click={() => removeDiseaseHistory(i)}
-                        >
-                            <span class="material-symbols-outlined text-[18px]"
-                                >delete</span
-                            >
-                            <span class="md:hidden text-sm font-semibold"
-                                >Hapus</span
-                            >
-                        </button>
+                        {#if item.code}
+                            <div class="flex items-center gap-2 text-sm">
+                                <span
+                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    >check_circle</span
+                                >
+                                <span class="font-medium text-slate-800">{item.display}</span>
+                                {#if item.type}
+                                    <span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">
+                                        {item.type === "family" ? "Keluarga" : "Pribadi"}
+                                    </span>
+                                {/if}
+                                <button
+                                    type="button"
+                                    class="text-red-500 hover:text-red-700"
+                                    on:click={() => removeDiseaseHistory(i)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="flex flex-col md:flex-row gap-4 items-center">
+                                <div
+                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                                >
+                                    <SearchableSelect
+                                        placeholder="Cari penyakit (SNOMED)..."
+                                        searchFn={item.type === "family"
+                                            ? searchFamilyDisease
+                                            : searchPersonalDisease}
+                                        bind:value={item.code}
+                                        on:select={(e) =>
+                                            onDiseaseSelected(i, e.detail)}
+                                    />
+                                </div>
+                                <div class="w-full md:w-40 shrink-0">
+                                    <RichSelect
+                                        placeholder="Tipe"
+                                        options={DISEASE_TYPE_OPTIONS}
+                                        bind:value={item.type}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
+                                    on:click={() => removeDiseaseHistory(i)}
+                                >
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        >delete</span
+                                    >
+                                    <span class="md:hidden text-sm font-semibold"
+                                        >Hapus</span
+                                    >
+                                </button>
+                            </div>
+                        {/if}
                     </div>
                 {/each}
                 {#if diseaseHistory.length === 0}
@@ -1206,41 +1230,61 @@
             <div class="space-y-4">
                 {#each allergies as item, i}
                     <div
-                        class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"
+                        class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100"
                     >
-                        <div
-                            class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
-                        >
-                            <SearchableSelect
-                                placeholder="Cari alergen/substansi..."
-                                searchFn={searchAllergy}
-                                bind:value={item.substance_code}
-                                on:select={(e) =>
-                                    onAllergySelected(i, e.detail)}
-                            />
-                        </div>
-                        <div class="w-full md:w-64 shrink-0">
-                            <RichSelect
-                                placeholder="Pilih Reaksi"
-                                options={reactionOptions}
-                                bind:value={item.reaction_code}
-                                on:select={(e) => {
-                                    item.reaction_display = e.detail.label;
-                                }}
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
-                            on:click={() => removeAllergy(i)}
-                        >
-                            <span class="material-symbols-outlined text-[18px]"
-                                >delete</span
-                            >
-                            <span class="md:hidden text-sm font-semibold"
-                                >Hapus</span
-                            >
-                        </button>
+                        {#if item.substance_code && item.reaction_code}
+                            <div class="flex items-center gap-2 text-sm">
+                                <span
+                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    >check_circle</span
+                                >
+                                <span class="font-medium text-slate-800">{item.substance_display}</span>
+                                {#if item.reaction_display}
+                                    <span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">
+                                        {item.reaction_display}
+                                    </span>
+                                {/if}
+                                <button
+                                    type="button"
+                                    class="text-red-500 hover:text-red-700"
+                                    on:click={() => removeAllergy(i)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="flex flex-col md:flex-row gap-4 items-center">
+                                <div
+                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                                >
+                                    <SearchableSelect
+                                        placeholder="Cari alergen/substansi..."
+                                        searchFn={searchAllergy}
+                                        bind:value={item.substance_code}
+                                        on:select={(e) =>
+                                            onAllergySelected(i, e.detail)}
+                                    />
+                                </div>
+                                <div class="w-full md:w-64 shrink-0">
+                                    <RichSelect
+                                        placeholder="Pilih Reaksi"
+                                        options={reactionOptions}
+                                        bind:value={item.reaction_code}
+                                        on:select={(e) => {
+                                            item.reaction_display = e.detail.label;
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
+                                    on:click={() => removeAllergy(i)}
+                                >
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    <span class="md:hidden text-sm font-semibold">Hapus</span>
+                                </button>
+                            </div>
+                        {/if}
                     </div>
                 {/each}
                 {#if allergies.length === 0}

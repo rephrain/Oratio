@@ -37,11 +37,6 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         label: "Users"
       },
       {
-        href: "/admin/doctor-shifts",
-        icon: "🕐",
-        label: "Doctor Shifts"
-      },
-      {
         href: "/admin/patients",
         icon: "🏥",
         label: "Patients"
@@ -50,11 +45,6 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         href: "/admin/encounters",
         icon: "📋",
         label: "Encounters"
-      },
-      {
-        href: "/admin/terminology",
-        icon: "📖",
-        label: "Terminology"
       },
       {
         href: "/admin/items",

@@ -375,7 +375,7 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 // 14. MASTER ITEMS
 // =============================================================
 export const items = pgTable('items', {
-	id: `uuid`('id').defaultRandom().primaryKey(),
+	id: uuid('id').defaultRandom().primaryKey(),
 
     kode_item: varchar('kode_item', { length: 50 }).notNull(),
 

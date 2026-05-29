@@ -64,8 +64,7 @@
     function navigateToEdit() {
         if (!selectedPatient?.id) return;
         addToast("Dialihkan ke halaman edit...", "success");
-        // Navigation could go to existing edit route or a modal
-        // goto(`/kasir/patients/edit?id=${selectedPatient.id}`);
+        goto(`/kasir/edit-patient?id=${selectedPatient.id}`);
     }
 
     // PDF Actions

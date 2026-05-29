@@ -236,7 +236,8 @@ const encounterReferrals = pgTable("encounter_referrals", {
   created_at: timestamp("created_at").defaultNow().notNull()
 });
 const items = pgTable("items", {
-  id: varchar("id", { length: 50 }).primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
+  kode_item: varchar("kode_item", { length: 50 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
   item_group: varchar("item_group", { length: 50 }),
@@ -247,14 +248,14 @@ const items = pgTable("items", {
 });
 const doctorItems = pgTable("doctor_items", {
   doctor_id: uuid("doctor_id").notNull().references(() => users.id),
-  item_id: varchar("item_id", { length: 50 }).notNull().references(() => items.id)
+  item_id: uuid("item_id").notNull().references(() => items.id)
 }, (table) => ({
   pk: primaryKey(table.doctor_id, table.item_id)
 }));
 const encounterItems = pgTable("encounter_items", {
   id: uuid("id").defaultRandom().primaryKey(),
   encounter_id: varchar("encounter_id", { length: 30 }).notNull().references(() => encounters.id, { onDelete: "cascade" }),
-  item_id: varchar("item_id", { length: 50 }).notNull().references(() => items.id, { onDelete: "restrict" }),
+  item_id: uuid("item_id").notNull().references(() => items.id, { onDelete: "restrict" }),
   quantity: integer("quantity").notNull().default(1),
   price_at_time: integer("price_at_time").notNull(),
   subtotal: integer("subtotal").notNull(),

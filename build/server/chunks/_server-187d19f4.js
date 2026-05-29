@@ -1,0 +1,53 @@
+import { j as json } from './index-d7f43214.js';
+import { mkdir, writeFile } from 'fs/promises';
+import { join } from 'path';
+import { d as db, g as documents } from './index3-41fb71fd.js';
+import 'postgres';
+import 'drizzle-orm/postgres-js';
+import 'drizzle-orm/pg-core';
+import 'drizzle-orm';
+
+async function POST({ request, locals }) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const patientId = formData.get("patient_id");
+    const encounterId = formData.get("encounter_id");
+    const documentType = formData.get("document_type") || "clinical_photo";
+    if (!file || !(file instanceof File)) {
+      console.warn("Upload attempt with no file or invalid file instance");
+      return json({ error: "No file uploaded" }, { status: 400 });
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const id = globalThis.crypto.randomUUID();
+    const originalName = file.name;
+    const extension = originalName.split(".").pop();
+    const fileName = `${id}.${extension}`;
+    const uploadsDir = join(process.cwd(), "uploads");
+    const filePath = join(uploadsDir, fileName);
+    await mkdir(uploadsDir, { recursive: true });
+    await writeFile(filePath, buffer);
+    const values = {
+      id,
+      patient_id: patientId || null,
+      encounter_id: encounterId || null,
+      document_type: documentType,
+      file_name: originalName,
+      file_path: filePath,
+      mime_type: file.type,
+      file_size: file.size,
+      uploaded_by: locals.user?.id || null
+    };
+    const [doc] = await db.insert(documents).values(values).returning();
+    return json({ id: doc.id, fileName: doc.file_name });
+  } catch (error) {
+    console.error("CRITICAL: File upload error:", error);
+    return json({
+      error: "Failed to save document",
+      details: error.message
+    }, { status: 500 });
+  }
+}
+
+export { POST };
+//# sourceMappingURL=_server-187d19f4.js.map

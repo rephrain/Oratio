@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.7b6f6038.js","app":"_app/immutable/entry/app.329b4b19.js","imports":["_app/immutable/entry/start.7b6f6038.js","_app/immutable/chunks/scheduler.f04c06a7.js","_app/immutable/chunks/singletons.0009ad37.js","_app/immutable/chunks/index.2d48bea8.js","_app/immutable/entry/app.329b4b19.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.f04c06a7.js","_app/immutable/chunks/index.e1be8bf6.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.8e47f7af.js","app":"_app/immutable/entry/app.e5c06ead.js","imports":["_app/immutable/entry/start.8e47f7af.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/singletons.3cb44420.js","_app/immutable/chunks/index.8449654f.js","_app/immutable/chunks/paths.c67aefbd.js","_app/immutable/entry/app.e5c06ead.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/index.98d8086f.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -28,7 +28,10 @@ return {
 			__memo(() => import('./nodes/13.js')),
 			__memo(() => import('./nodes/14.js')),
 			__memo(() => import('./nodes/15.js')),
-			__memo(() => import('./nodes/16.js'))
+			__memo(() => import('./nodes/16.js')),
+			__memo(() => import('./nodes/17.js')),
+			__memo(() => import('./nodes/18.js')),
+			__memo(() => import('./nodes/19.js'))
 		],
 		routes: [
 			{
@@ -53,11 +56,46 @@ return {
 				endpoint: null
 			},
 			{
+				id: "/api/admin/dashboard",
+				pattern: /^\/api\/admin\/dashboard\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/dashboard/_server.js'))
+			},
+			{
+				id: "/api/admin/notifications",
+				pattern: /^\/api\/admin\/notifications\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/notifications/_server.js'))
+			},
+			{
+				id: "/api/admin/notifications/read-all",
+				pattern: /^\/api\/admin\/notifications\/read-all\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/notifications/read-all/_server.js'))
+			},
+			{
+				id: "/api/admin/notifications/[id]/read",
+				pattern: /^\/api\/admin\/notifications\/([^/]+?)\/read\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/admin/notifications/_id_/read/_server.js'))
+			},
+			{
 				id: "/api/admin/[table]",
 				pattern: /^\/api\/admin\/([^/]+?)\/?$/,
 				params: [{"name":"table","optional":false,"rest":false,"chained":false}],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/admin/_table_/_server.js'))
+			},
+			{
+				id: "/api/analytics",
+				pattern: /^\/api\/analytics\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/analytics/_server.js'))
 			},
 			{
 				id: "/api/auth/login",
@@ -81,11 +119,67 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/auth/me/_server.js'))
 			},
 			{
+				id: "/api/auth/profile",
+				pattern: /^\/api\/auth\/profile\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/auth/profile/_server.js'))
+			},
+			{
 				id: "/api/auth/shifts",
 				pattern: /^\/api\/auth\/shifts\/?$/,
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/auth/shifts/_server.js'))
+			},
+			{
+				id: "/api/cashiers",
+				pattern: /^\/api\/cashiers\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/cashiers/_server.js'))
+			},
+			{
+				id: "/api/chat/conversations",
+				pattern: /^\/api\/chat\/conversations\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/conversations/_server.js'))
+			},
+			{
+				id: "/api/chat/messages",
+				pattern: /^\/api\/chat\/messages\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/messages/_server.js'))
+			},
+			{
+				id: "/api/chat/messages/read",
+				pattern: /^\/api\/chat\/messages\/read\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/messages/read/_server.js'))
+			},
+			{
+				id: "/api/chat/unread",
+				pattern: /^\/api\/chat\/unread\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/unread/_server.js'))
+			},
+			{
+				id: "/api/chat/users",
+				pattern: /^\/api\/chat\/users\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/users/_server.js'))
+			},
+			{
+				id: "/api/dashboard/dokter/referrals",
+				pattern: /^\/api\/dashboard\/dokter\/referrals\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/dokter/referrals/_server.js'))
 			},
 			{
 				id: "/api/dashboard/dokter/stats",
@@ -109,6 +203,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/doctors/_server.js'))
 			},
 			{
+				id: "/api/documents",
+				pattern: /^\/api\/documents\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/documents/_server.js'))
+			},
+			{
+				id: "/api/documents/[id]",
+				pattern: /^\/api\/documents\/([^/]+?)\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/documents/_id_/_server.js'))
+			},
+			{
 				id: "/api/encounters",
 				pattern: /^\/api\/encounters\/?$/,
 				params: [],
@@ -121,6 +229,13 @@ return {
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/encounters/_id_/_server.js'))
+			},
+			{
+				id: "/api/encounters/[id]/pdf",
+				pattern: /^\/api\/encounters\/([^/]+?)\/pdf\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/encounters/_id_/pdf/_server.js'))
 			},
 			{
 				id: "/api/geonames",
@@ -165,6 +280,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/payments/_server.js'))
 			},
 			{
+				id: "/api/payments/[id]/pdf",
+				pattern: /^\/api\/payments\/([^/]+?)\/pdf\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/payments/_id_/pdf/_server.js'))
+			},
+			{
 				id: "/api/pdf",
 				pattern: /^\/api\/pdf\/?$/,
 				params: [],
@@ -177,6 +299,20 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/snowstorm/_server.js'))
+			},
+			{
+				id: "/api/terminologies",
+				pattern: /^\/api\/terminologies\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/terminologies/_server.js'))
+			},
+			{
+				id: "/api/test-ssr",
+				pattern: /^\/api\/test-ssr\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/test-ssr/_server.js'))
 			},
 			{
 				id: "/api/wilayah",
@@ -200,52 +336,73 @@ return {
 				endpoint: null
 			},
 			{
+				id: "/dokter/history",
+				pattern: /^\/dokter\/history\/?$/,
+				params: [],
+				page: { layouts: [0,3,], errors: [1,,], leaf: 10 },
+				endpoint: null
+			},
+			{
 				id: "/dokter/patient/[patientId]",
 				pattern: /^\/dokter\/patient\/([^/]+?)\/?$/,
 				params: [{"name":"patientId","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 10 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 11 },
 				endpoint: null
 			},
 			{
 				id: "/dokter/[encounterId]",
 				pattern: /^\/dokter\/([^/]+?)\/?$/,
 				params: [{"name":"encounterId","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 11 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 12 },
 				endpoint: null
 			},
 			{
 				id: "/kasir",
 				pattern: /^\/kasir\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 12 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 13 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/existing-patient",
 				pattern: /^\/kasir\/existing-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 13 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/new-patient",
 				pattern: /^\/kasir\/new-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
+				endpoint: null
+			},
+			{
+				id: "/kasir/patients",
+				pattern: /^\/kasir\/patients\/?$/,
+				params: [],
+				page: { layouts: [0,4,], errors: [1,,], leaf: 16 },
+				endpoint: null
+			},
+			{
+				id: "/kasir/payments",
+				pattern: /^\/kasir\/payments\/?$/,
+				params: [],
+				page: { layouts: [0,4,], errors: [1,,], leaf: 18 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/payment",
 				pattern: /^\/kasir\/payment\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 17 },
 				endpoint: null
 			},
 			{
 				id: "/login",
 				pattern: /^\/login\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 16 },
+				page: { layouts: [0,], errors: [1,], leaf: 19 },
 				endpoint: null
 			}
 		],

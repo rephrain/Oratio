@@ -375,7 +375,9 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 // 14. MASTER ITEMS
 // =============================================================
 export const items = pgTable('items', {
-	id: varchar('id', { length: 50 }).primaryKey(),
+	id: `uuid`('id').defaultRandom().primaryKey(),
+
+    kode_item: varchar('kode_item', { length: 50 }).notNull(),
 
 	name: varchar('name', { length: 255 }).notNull(),
 	price: numeric('price', { precision: 12, scale: 2 }).notNull(),
@@ -394,7 +396,7 @@ export const doctorItems = pgTable('doctor_items', {
 		.notNull()
 		.references(() => users.id),
 
-	item_id: varchar('item_id', { length: 50 })
+	item_id: uuid('item_id')
 		.notNull()
 		.references(() => items.id)
 }, (table) => ({
@@ -408,7 +410,7 @@ export const doctorItems = pgTable('doctor_items', {
 export const encounterItems = pgTable('encounter_items', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	encounter_id: varchar('encounter_id', { length: 30 }).notNull().references(() => encounters.id, { onDelete: 'cascade' }),
-	item_id: varchar('item_id', { length: 50 })
+	item_id: uuid('item_id')
 		.notNull()
 		.references(() => items.id, { onDelete: 'restrict' }),
 	quantity: integer('quantity').notNull().default(1),

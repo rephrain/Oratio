@@ -2,6 +2,7 @@
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import AdminFileUpload from "$lib/components/UI/AdminFileUpload.svelte";
 	import { addToast } from "$lib/stores/toast.js";
+	import Papa from "papaparse";
 
 	let selectedTable = "";
 	let csvFile = null;
@@ -11,6 +12,51 @@
 	let importing = false;
 	let importErrors = [];
 	let step = 1; // 1=select, 2=preview, 3=result
+
+	// FK lookups
+	let fkLookups = {};
+	let fkLoading = {};
+	let selectedFks = {};
+
+	async function loadFkLookup(fkTable, filter = null) {
+		const cacheKey = filter 
+			? `${fkTable}?${new URLSearchParams(filter).toString()}`
+			: fkTable;
+
+		if (fkLookups[cacheKey] || fkLoading[cacheKey]) return;
+		fkLoading[cacheKey] = true;
+		try {
+			let url = `/api/admin/${fkTable}?limit=500`;
+			if (filter) {
+				const params = new URLSearchParams(filter);
+				url += `&${params.toString()}`;
+			}
+			const res = await fetch(url);
+			const resp = await res.json();
+			fkLookups[cacheKey] = resp.data || [];
+			fkLookups = fkLookups; // trigger reactivity
+		} catch (err) {
+			console.error(`Failed to load FK data for ${fkTable}:`, err);
+			fkLookups[cacheKey] = [];
+		} finally {
+			fkLoading[cacheKey] = false;
+		}
+	}
+
+	function getCacheKey(field) {
+		if (!field.fkFilter) return field.fkTable;
+		return `${field.fkTable}?${new URLSearchParams(field.fkFilter).toString()}`;
+	}
+
+	$: if (selectedTable) {
+		selectedFks = {};
+		const fields = ADMIN_TABLES[selectedTable]?.fields || [];
+		fields.forEach(field => {
+			if (field.type === 'fk') {
+				loadFkLookup(field.fkTable, field.fkFilter);
+			}
+		});
+	}
 
 	async function handleFile(e) {
 		csvFile = e.detail.file;
@@ -23,23 +69,41 @@
 	}
 
 	function parsePreview() {
-		const lines = csvText.split("\n").filter((l) => l.trim());
-		if (lines.length < 2) {
+		if (!csvText) return;
+
+		const parsed = Papa.parse(csvText, {
+			header: true,
+			skipEmptyLines: 'greedy',
+		});
+
+		if (parsed.errors && parsed.errors.length > 0 && parsed.data.length === 0) {
+			addToast("Gagal memparsing file CSV", "error");
+			return;
+		}
+
+		if (parsed.data.length === 0) {
 			addToast("File CSV kosong atau tidak valid", "error");
 			return;
 		}
 
-		previewFields = lines[0]
-			.split(",")
-			.map((f) => f.trim().replace(/"/g, ""));
-		previewData = lines.slice(1, 11).map((line) => {
-			const values = line
-				.split(",")
-				.map((v) => v.trim().replace(/"/g, ""));
-			const obj = {};
-			previewFields.forEach((f, i) => (obj[f] = values[i] || ""));
+		previewFields = parsed.meta.fields || [];
+		
+		previewData = parsed.data.slice(0, 10).map((row) => {
+			const obj = { ...row };
+			Object.entries(selectedFks).forEach(([fkKey, fkValue]) => {
+				if (fkValue) {
+					obj[fkKey] = fkValue;
+				}
+			});
 			return obj;
 		});
+
+		Object.entries(selectedFks).forEach(([fkKey, fkValue]) => {
+			if (fkValue && !previewFields.includes(fkKey)) {
+				previewFields.push(fkKey);
+			}
+		});
+		previewFields = previewFields;
 
 		step = 2;
 	}
@@ -53,22 +117,32 @@
 		importing = true;
 		importErrors = [];
 
-		const allLines = csvText.split("\n").filter((l) => l.trim());
-		const fields = allLines[0]
-			.split(",")
-			.map((f) => f.trim().replace(/"/g, ""));
-		const rows = allLines.slice(1);
+		const parsed = Papa.parse(csvText, {
+			header: true,
+			skipEmptyLines: 'greedy',
+		});
 
+		const rows = parsed.data;
 		let success = 0;
 		let failed = 0;
 
+		const tableConfig = ADMIN_TABLES[selectedTable];
+		const allowedFields = tableConfig.fields.map(f => f.key);
+
 		for (let i = 0; i < rows.length; i++) {
-			const values = rows[i]
-				.split(",")
-				.map((v) => v.trim().replace(/"/g, ""));
+			const row = rows[i];
 			const obj = {};
-			fields.forEach((f, j) => {
-				if (values[j]) obj[f] = values[j];
+
+			allowedFields.forEach(field => {
+				if (row[field] !== undefined) {
+					obj[field] = row[field];
+				}
+			});
+
+			Object.entries(selectedFks).forEach(([fkKey, fkValue]) => {
+				if (fkValue) {
+					obj[fkKey] = fkValue;
+				}
 			});
 
 			try {
@@ -108,6 +182,7 @@
 		previewData = [];
 		previewFields = [];
 		importErrors = [];
+		selectedFks = {};
 		step = 1;
 	}
 </script>
@@ -143,6 +218,44 @@
 					{/each}
 				</select>
 			</div>
+			
+			{#if selectedTable && ADMIN_TABLES[selectedTable]?.fields.some(f => f.type === 'fk')}
+				<div class="mb-8 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-2xl transition-all duration-300">
+					<h4 class="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+						<span class="material-symbols-outlined text-[18px] text-primary">link</span>
+						Relasi Record Induk (Optional)
+					</h4>
+					<p class="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">
+						Pilih record induk jika data tersebut ingin diset sama untuk seluruh baris yang diimpor dari CSV. Jika dibiarkan kosong, sistem akan menggunakan nilai kolom dari file CSV.
+					</p>
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{#each ADMIN_TABLES[selectedTable].fields.filter(f => f.type === 'fk') as field}
+							{@const cacheKey = getCacheKey(field)}
+							<div class="flex flex-col gap-1.5">
+								<label class="text-xs font-bold text-slate-600 dark:text-slate-400" for="fk-{field.key}">
+									{field.label}
+								</label>
+								<select
+									id="fk-{field.key}"
+									class="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white font-medium"
+									bind:value={selectedFks[field.key]}
+								>
+									<option value="">-- Gunakan nilai dari CSV --</option>
+									{#if fkLookups[cacheKey]}
+										{#each fkLookups[cacheKey] as fkRow}
+											<option value={fkRow.id}>
+												{fkRow[field.fkLabel] || fkRow.id}
+											</option>
+										{/each}
+									{:else}
+										<option value="" disabled>Loading...</option>
+									{/if}
+								</select>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 			
 			<div class="max-w-2xl">
 				<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">File CSV</label>

@@ -7,6 +7,26 @@
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import { addToast } from "$lib/stores/toast.js";
 
+	// Child table relationships — parent slug → list of child descriptors
+	const CHILD_TABLE_MAP = {
+		'users': [
+			{ childTable: 'doctor-shifts', fkKey: 'user_id', label: 'Shift Dokter' }
+		],
+		'patients': [
+			{ childTable: 'patient-disease-history', fkKey: 'patient_id', label: 'Riwayat Penyakit' },
+			{ childTable: 'patient-allergy',          fkKey: 'patient_id', label: 'Alergi' },
+			{ childTable: 'patient-medication',       fkKey: 'patient_id', label: 'Pengobatan' }
+		],
+		'encounters': [
+			{ childTable: 'status-history',           fkKey: 'encounter_id', label: 'Status History' },
+			{ childTable: 'encounter-prescriptions',  fkKey: 'encounter_id', label: 'Resep' },
+			{ childTable: 'encounter-items',          fkKey: 'encounter_id', label: 'Item Tagihan' },
+			{ childTable: 'encounter-referrals',      fkKey: 'encounter_id', label: 'Rujukan' }
+		]
+	};
+
+	$: childDefs = CHILD_TABLE_MAP[tableName] || [];
+
 	$: tableName = $page.params.table;
 	$: tableConfig = ADMIN_TABLES[tableName];
 	$: formFields = tableConfig?.fields || [];
@@ -22,11 +42,16 @@
 	let modalMode = "create"; // 'create' | 'edit'
 	let editRecord = {};
 	let saving = false;
-	let uploadingField = null; // Tracks which image field is uploading
+	let uploadingField = null;
 
 	// FK lookup data cache
 	let fkLookups = {};
 	let fkLoading = {};
+
+	// Child table state
+	let activeTab = 'main';
+	let childRecords = {};         // { childTableSlug: [rows] }
+	let childOriginalRecords = {}; // snapshot for diffing on save
 
 	// Delete confirmation
 	let showDeleteConfirm = false;
@@ -178,15 +203,24 @@
 	function openCreate() {
 		editRecord = initDefaults();
 		modalMode = "create";
+		activeTab = 'main';
+		childRecords = {};
+		childOriginalRecords = {};
 		showModal = true;
 		loadAllFkLookups();
+		loadAllChildFkLookups();
 	}
 
 	function openEdit(row) {
 		editRecord = { ...row };
 		modalMode = "edit";
+		activeTab = 'main';
+		childRecords = {};
+		childOriginalRecords = {};
 		showModal = true;
 		loadAllFkLookups();
+		loadAllChildFkLookups();
+		loadChildRecords(row.id);
 	}
 
 	// Clean payload: remove readOnly fields and empty strings
@@ -270,6 +304,7 @@
 				const val = editRecord[field.key];
 				if (val === undefined || val === null || val === "") {
 					addToast(`${field.label} wajib diisi`, "error");
+					activeTab = 'main';
 					return;
 				}
 			}
@@ -286,6 +321,11 @@
 			});
 
 			if (res.ok) {
+				const saved = await res.json();
+				const parentId = saved?.record?.id ?? editRecord.id;
+				if (parentId && childDefs.length > 0) {
+					await syncChildRecords(parentId);
+				}
 				addToast(
 					modalMode === "create"
 						? "Data berhasil ditambahkan"
@@ -298,11 +338,129 @@
 				const err = await res.json();
 				addToast(err.error || "Gagal menyimpan", "error");
 			}
-		} catch {
+		} catch (e) {
+			console.error(e);
 			addToast("Terjadi kesalahan", "error");
 		} finally {
 			saving = false;
 		}
+	}
+
+	// ── Child table helpers ──────────────────────────────────────────────────
+
+	// Pre-load all FK lookups referenced by any child table of this parent
+	async function loadAllChildFkLookups() {
+		for (const def of CHILD_TABLE_MAP[tableName] || []) {
+			const fields = ADMIN_TABLES[def.childTable]?.fields || [];
+			for (const f of fields) {
+				if (f.type === 'fk') await loadFkLookup(f.fkTable, f.fkFilter);
+			}
+		}
+	}
+
+	// Fetch existing child rows for every child table of the given parent ID
+	async function loadChildRecords(parentId) {
+		for (const def of CHILD_TABLE_MAP[tableName] || []) {
+			try {
+				const res = await fetch(`/api/admin/${def.childTable}?${def.fkKey}=${encodeURIComponent(parentId)}&limit=200`);
+				const resp = await res.json();
+				const rows = resp.data || [];
+				childRecords[def.childTable] = rows.map(r => ({ ...r }));
+				childOriginalRecords[def.childTable] = rows.map(r => ({ ...r }));
+			} catch (err) {
+				console.error(`Failed to load child records for ${def.childTable}:`, err);
+				childRecords[def.childTable] = [];
+				childOriginalRecords[def.childTable] = [];
+			}
+		}
+		childRecords = childRecords;
+	}
+
+	// Diff and sync child records against the API after parent is saved
+	async function syncChildRecords(parentId) {
+		for (const def of CHILD_TABLE_MAP[tableName] || []) {
+			const current  = childRecords[def.childTable]         || [];
+			const original = childOriginalRecords[def.childTable] || [];
+
+			// Delete rows removed by user
+			const toDelete = original.filter(o => o.id && !current.find(c => c.id === o.id));
+			for (const row of toDelete) {
+				await fetch(`/api/admin/${def.childTable}?id=${row.id}`, { method: 'DELETE' });
+			}
+
+			// Create / update remaining rows
+			for (const row of current) {
+				const isExisting = row.id && original.find(o => o.id === row.id);
+				const childFields = ADMIN_TABLES[def.childTable]?.fields || [];
+				const payload = {};
+				for (const f of childFields) {
+					if (f.readOnly || f.autoGenerate) continue;
+					if (f.key === def.fkKey) { payload[f.key] = parentId; continue; }
+					const v = row[f.key];
+					if (v !== undefined && v !== '') {
+						if (f.type === 'number') payload[f.key] = Number(v);
+						else if (f.type === 'boolean') payload[f.key] = v === true || v === 'true';
+						else payload[f.key] = v;
+					} else if (v === '' && !f.required) {
+						payload[f.key] = null;
+					}
+				}
+				payload[def.fkKey] = parentId;
+				if (isExisting) payload.id = row.id;
+
+				await fetch(`/api/admin/${def.childTable}`, {
+					method: isExisting ? 'PUT' : 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload)
+				});
+			}
+		}
+	}
+
+	// Return child table fields that are editable in the inline editor
+	function getChildModalFields(childTableSlug, fkKey) {
+		return (ADMIN_TABLES[childTableSlug]?.fields || []).filter(f =>
+			f.key !== fkKey &&
+			!f.readOnly &&
+			!f.autoGenerate &&
+			f.key !== 'id' &&
+			f.key !== 'created_at' &&
+			f.key !== 'updated_at'
+		);
+	}
+
+	function addChildRow(childTableSlug) {
+		const fields = ADMIN_TABLES[childTableSlug]?.fields || [];
+		const defaults = {};
+		for (const f of fields) {
+			if (f.defaultValue !== undefined) defaults[f.key] = f.defaultValue;
+		}
+		childRecords[childTableSlug] = [...(childRecords[childTableSlug] || []), defaults];
+		childRecords = childRecords;
+	}
+
+	function deleteChildRow(childTableSlug, idx) {
+		const arr = [...(childRecords[childTableSlug] || [])];
+		arr.splice(idx, 1);
+		childRecords[childTableSlug] = arr;
+		childRecords = childRecords;
+	}
+
+	function handleChildSelectChange(childTableSlug, rowIdx, field, event) {
+		const rawVal = event.target.value;
+		const arr = [...(childRecords[childTableSlug] || [])];
+		if (field.options?.length > 0) {
+			const firstOpt = field.options[0];
+			if (typeof firstOpt === 'object' && typeof firstOpt.value === 'number') {
+				arr[rowIdx] = { ...arr[rowIdx], [field.key]: rawVal === '' ? null : parseInt(rawVal, 10) };
+				childRecords[childTableSlug] = arr;
+				childRecords = childRecords;
+				return;
+			}
+		}
+		arr[rowIdx] = { ...arr[rowIdx], [field.key]: rawVal === '' ? null : rawVal };
+		childRecords[childTableSlug] = arr;
+		childRecords = childRecords;
 	}
 
 	function confirmDelete(id) {
@@ -440,231 +598,310 @@
 <!-- Create/Edit Modal -->
 <AdminModal
 	bind:show={showModal}
-	title="{modalMode === 'create' ? 'Tambah' : 'Edit'} {tableConfig?.label ||
-		''}"
+	title="{modalMode === 'create' ? 'Tambah' : 'Edit'} {tableConfig?.label || ''}"
 	size="lg"
 >
-	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-		{#each getModalFields(modalMode) as field (field.key)}
-			{@const isDisabled =
-				field.readOnly ||
-				(field.editReadOnly && modalMode === "edit")}
-			<div class="flex flex-col gap-1.5 {field.type === 'textarea' ? 'sm:col-span-2' : ''}">
-				<label class="text-sm font-bold text-slate-700 dark:text-slate-300" for="inp-{field.key}">
-					{field.label}
-					{#if field.required && !isDisabled}
-						<span class="text-red-500">*</span>
+	<!-- Tab navigation (shown only for tables that have child relations) -->
+	{#if childDefs.length > 0}
+		<div class="flex gap-1 mb-6 border-b border-slate-200 dark:border-slate-700 overflow-x-auto pb-px">
+			<button
+				class="px-4 py-2 text-sm font-bold rounded-t-lg whitespace-nowrap transition-colors
+					{activeTab === 'main'
+						? 'bg-primary text-white shadow-sm'
+						: 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}"
+				on:click={() => (activeTab = 'main')}
+			>
+				<span class="material-symbols-outlined text-[15px] align-middle mr-1">edit_note</span>
+				Detail Utama
+			</button>
+			{#each childDefs as def}
+				<button
+					class="px-4 py-2 text-sm font-bold rounded-t-lg whitespace-nowrap transition-colors flex items-center gap-1.5
+						{activeTab === def.childTable
+							? 'bg-primary text-white shadow-sm'
+							: 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}
+						{modalMode === 'create' ? 'opacity-50 cursor-not-allowed' : ''}"
+					on:click={() => { if (modalMode !== 'create') activeTab = def.childTable; }}
+					disabled={modalMode === 'create'}
+					title={modalMode === 'create' ? 'Simpan record induk terlebih dahulu' : ''}
+				>
+					<span class="material-symbols-outlined text-[15px]">table_rows</span>
+					{def.label}
+					{#if (childRecords[def.childTable] || []).length > 0}
+						<span class="text-[10px] font-black px-1.5 py-0.5 rounded-full
+							{activeTab === def.childTable ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}">
+							{childRecords[def.childTable].length}
+						</span>
 					{/if}
-				</label>
+				</button>
+			{/each}
+		</div>
+	{/if}
 
-				{#if isDisabled}
-					<!-- Read-only fields -->
-					<input
-						id="inp-{field.key}"
-						class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed w-full"
-						value={editRecord[field.key] ?? ""}
-						disabled
-					/>
-				{:else if field.type === "select"}
-					<!-- Select / Enum fields -->
-					<select
-						id="inp-{field.key}"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						value={editRecord[field.key] ?? ""}
-						on:change={(e) => handleSelectChange(field, e)}
-					>
-						<option value="">-- Pilih --</option>
-						{#each field.options || [] as opt}
-							<option value={getOptionValue(opt)}
-								>{getOptionLabel(opt)}</option
-							>
-						{/each}
-					</select>
-				{:else if field.type === "boolean"}
-					<!-- Boolean toggle -->
-					<div class="py-2 flex items-center pr-4">
-						<label class="relative inline-flex items-center cursor-pointer">
-							<input
-								type="checkbox"
-								id="inp-{field.key}"
-								bind:checked={editRecord[field.key]}
-								class="sr-only peer"
-							/>
-							<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/10 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary"></div>
-							<span class="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400">
-								{editRecord[field.key] ? "Ya" : "Tidak"}
-							</span>
-						</label>
-					</div>
-				{:else if field.type === "textarea"}
-					<!-- Textarea -->
-					<textarea
-						id="inp-{field.key}"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white resize-none"
-						rows="3"
-						bind:value={editRecord[field.key]}
-						placeholder={field.placeholder || ""}
-					></textarea>
-				{:else if field.type === "password"}
-					<!-- Password -->
-					<input
-						id="inp-{field.key}"
-						type="password"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-						placeholder="Enter password"
-					/>
-				{:else if field.type === "date"}
-					<!-- Date picker -->
-					<input
-						id="inp-{field.key}"
-						type="date"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-					/>
-				{:else if field.type === "time"}
-					<!-- Time picker -->
-					<input
-						id="inp-{field.key}"
-						type="time"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-					/>
-				{:else if field.type === "datetime"}
-					<!-- Datetime picker -->
-					<input
-						id="inp-{field.key}"
-						type="datetime-local"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-					/>
-				{:else if field.type === "number"}
-					<!-- Number input -->
-					<input
-						id="inp-{field.key}"
-						type="number"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-						step="any"
-					/>
-				{:else if field.type === "email"}
-					<!-- Email input -->
-					<input
-						id="inp-{field.key}"
-						type="email"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-						placeholder={field.placeholder || "email@example.com"}
-					/>
-				{:else if field.type === "fk"}
-					<!-- Foreign key lookup select -->
-					<select
-						id="inp-{field.key}"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						value={editRecord[field.key] ?? ""}
-						on:change={(e) => {
-							editRecord[field.key] =
-								e.target.value === "" ? null : e.target.value;
-						}}
-					>
-						<option value="">-- Pilih --</option>
-						{#if fkLookups[getCacheKey(field)]}
-							{#each fkLookups[getCacheKey(field)] as fkRow}
-								<option value={fkRow.id}>
-									{fkRow[field.fkLabel] || fkRow.id}
-								</option>
-							{/each}
-						{:else}
-							<option value="" disabled>Loading...</option>
-						{/if}
-					</select>
-				{:else if field.type === "m2m"}
-					<!-- Many-to-Many Multi-selection -->
-					<div class="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[100px]">
-						{#if fkLookups[getCacheKey(field)]}
-							{#each fkLookups[getCacheKey(field)] as fkRow}
-								{@const isSelected = (editRecord[field.key] || []).includes(fkRow.id)}
-								<button
-									type="button"
-									class="px-3 py-1.5 rounded-full text-xs font-bold transition-all border {isSelected 
-										? 'bg-primary text-white border-primary shadow-md shadow-primary/20' 
-										: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary/50'}"
-									on:click={() => {
-										const current = editRecord[field.key] || [];
-										if (isSelected) {
-											editRecord[field.key] = current.filter(id => id !== fkRow.id);
-										} else {
-											editRecord[field.key] = [...current, fkRow.id];
-										}
-									}}
-								>
-									<div class="flex items-center gap-1.5">
-										{#if isSelected}
-											<span class="material-symbols-outlined text-[14px]">check_circle</span>
-										{/if}
-										{fkRow[field.fkLabel] || fkRow.id}
-									</div>
-								</button>
-							{/each}
-							{#if fkLookups[getCacheKey(field)].length === 0}
-								<div class="w-full flex flex-col items-center justify-center text-slate-400 py-4">
-									<span class="material-symbols-outlined text-4xl mb-2 opacity-20">group_off</span>
-									<p class="text-xs font-medium">No results found for filtering.</p>
+	<!-- ── MAIN TAB: parent record fields ─────────────────────────────── -->
+	{#if activeTab === 'main'}
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			{#each getModalFields(modalMode) as field (field.key)}
+				{@const isDisabled =
+					field.readOnly ||
+					(field.editReadOnly && modalMode === "edit")}
+				<div class="flex flex-col gap-1.5 {field.type === 'textarea' ? 'sm:col-span-2' : ''}">
+					<label class="text-sm font-bold text-slate-700 dark:text-slate-300" for="inp-{field.key}">
+						{field.label}
+						{#if field.required && !isDisabled}<span class="text-red-500">*</span>{/if}
+					</label>
+
+					{#if isDisabled}
+						<input id="inp-{field.key}" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed w-full" value={editRecord[field.key] ?? ""} disabled />
+					{:else if field.type === "select"}
+						<select id="inp-{field.key}" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" value={editRecord[field.key] ?? ""} on:change={(e) => handleSelectChange(field, e)}>
+							<option value="">-- Pilih --</option>
+							{#each field.options || [] as opt}<option value={getOptionValue(opt)}>{getOptionLabel(opt)}</option>{/each}
+						</select>
+					{:else if field.type === "boolean"}
+						<div class="py-2 flex items-center pr-4">
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input type="checkbox" id="inp-{field.key}" bind:checked={editRecord[field.key]} class="sr-only peer" />
+								<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/10 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary"></div>
+								<span class="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400">{editRecord[field.key] ? "Ya" : "Tidak"}</span>
+							</label>
+						</div>
+					{:else if field.type === "textarea"}
+						<textarea id="inp-{field.key}" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white resize-none" rows="3" bind:value={editRecord[field.key]} placeholder={field.placeholder || ""}></textarea>
+					{:else if field.type === "password"}
+						<input id="inp-{field.key}" type="password" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} placeholder="Enter password" />
+					{:else if field.type === "date"}
+						<input id="inp-{field.key}" type="date" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} />
+					{:else if field.type === "time"}
+						<input id="inp-{field.key}" type="time" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} />
+					{:else if field.type === "datetime"}
+						<input id="inp-{field.key}" type="datetime-local" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} />
+					{:else if field.type === "number"}
+						<input id="inp-{field.key}" type="number" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} step="any" />
+					{:else if field.type === "email"}
+						<input id="inp-{field.key}" type="email" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} placeholder={field.placeholder || "email@example.com"} />
+					{:else if field.type === "fk"}
+						<select id="inp-{field.key}" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" value={editRecord[field.key] ?? ""} on:change={(e) => { editRecord[field.key] = e.target.value === '' ? null : e.target.value; }}>
+							<option value="">-- Pilih --</option>
+							{#if fkLookups[getCacheKey(field)]}
+								{#each fkLookups[getCacheKey(field)] as fkRow}<option value={fkRow.id}>{fkRow[field.fkLabel] || fkRow.id}</option>{/each}
+							{:else}<option value="" disabled>Loading...</option>{/if}
+						</select>
+					{:else if field.type === "m2m"}
+						<div class="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[100px]">
+							{#if fkLookups[getCacheKey(field)]}
+								{#each fkLookups[getCacheKey(field)] as fkRow}
+									{@const isSelected = (editRecord[field.key] || []).includes(fkRow.id)}
+									<button type="button" class="px-3 py-1.5 rounded-full text-xs font-bold transition-all border {isSelected ? 'bg-primary text-white border-primary shadow-md shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary/50'}" on:click={() => { const cur = editRecord[field.key] || []; editRecord[field.key] = isSelected ? cur.filter(id => id !== fkRow.id) : [...cur, fkRow.id]; }}>
+										<div class="flex items-center gap-1.5">{#if isSelected}<span class="material-symbols-outlined text-[14px]">check_circle</span>{/if}{fkRow[field.fkLabel] || fkRow.id}</div>
+									</button>
+								{/each}
+								{#if fkLookups[getCacheKey(field)].length === 0}<div class="w-full flex flex-col items-center justify-center text-slate-400 py-4"><span class="material-symbols-outlined text-4xl mb-2 opacity-20">group_off</span><p class="text-xs font-medium">No results found.</p></div>{/if}
+							{:else}<div class="w-full flex items-center justify-center py-4"><span class="material-symbols-outlined animate-spin text-primary">progress_activity</span></div>{/if}
+						</div>
+					{:else if field.type === "image"}
+						<div class="space-y-3">
+							{#if editRecord[field.key]}
+								<div class="relative w-32 h-32 rounded-xl border border-slate-200 overflow-hidden group bg-slate-50">
+									<img src={editRecord[field.key]} alt="Preview" class="w-full h-full object-cover" />
+									<button type="button" class="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1" on:click={() => (editRecord[field.key] = null)}>
+										<span class="material-symbols-outlined">delete</span><span class="text-[10px] font-bold uppercase">Hapus</span>
+									</button>
 								</div>
+							{:else if uploadingField === field.key}
+								<div class="w-full h-32 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-2">
+									<span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+									<span class="text-xs font-bold text-primary uppercase">Mengunggah...</span>
+								</div>
+							{:else}
+								<FileUpload label="Pilih Foto Profil" accept="image/*" on:file={(e) => handleImageUpload(field.key, e)} />
 							{/if}
-						{:else}
-							<div class="w-full flex items-center justify-center py-4">
-								<span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
-							</div>
-						{/if}
-					</div>
-				{:else if field.type === "image"}
-					<!-- Image upload with preview -->
-					<div class="space-y-3">
-						{#if editRecord[field.key]}
-							<div class="relative w-32 h-32 rounded-xl border border-slate-200 overflow-hidden group bg-slate-50">
-								<img
-									src={editRecord[field.key]}
-									alt="Preview"
-									class="w-full h-full object-cover"
-								/>
-								<button
-									type="button"
-									class="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1"
-									on:click={() => (editRecord[field.key] = null)}
-								>
-									<span class="material-symbols-outlined">delete</span>
-									<span class="text-[10px] font-bold uppercase">Hapus</span>
-								</button>
-							</div>
-						{:else if uploadingField === field.key}
-							<div class="w-full h-32 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-2">
-								<span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
-								<span class="text-xs font-bold text-primary uppercase">Mengunggah...</span>
-							</div>
-						{:else}
-							<FileUpload
-								label="Pilih Foto Profil"
-								accept="image/*"
-								on:file={(e) => handleImageUpload(field.key, e)}
-							/>
-						{/if}
-						<p class="text-[10px] text-slate-400 font-medium">Format: JPG, PNG. Max 5MB.</p>
+							<p class="text-[10px] text-slate-400 font-medium">Format: JPG, PNG. Max 5MB.</p>
+						</div>
+					{:else}
+						<input id="inp-{field.key}" type="text" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} maxlength={field.maxLength || undefined} placeholder={field.placeholder || ""} />
+					{/if}
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	<!-- ── CHILD TABLE TABS ────────────────────────────────────────────── -->
+	{#each childDefs as def}
+		{#if activeTab === def.childTable}
+			{@const childFields = getChildModalFields(def.childTable, def.fkKey)}
+			{@const rows = childRecords[def.childTable] || []}
+			<div class="space-y-4">
+				<!-- Header row -->
+				<div class="flex items-center justify-between">
+					<p class="text-sm font-bold text-slate-700 dark:text-slate-300">
+						{rows.length} record{rows.length !== 1 ? 's' : ''}
+					</p>
+					<button
+						type="button"
+						class="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all"
+						on:click={() => addChildRow(def.childTable)}
+					>
+						<span class="material-symbols-outlined text-[15px]">add</span>
+						Tambah Baris
+					</button>
+				</div>
+
+				{#if rows.length === 0}
+					<div class="flex flex-col items-center justify-center py-12 text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+						<span class="material-symbols-outlined text-4xl mb-2 opacity-30">table_rows</span>
+						<p class="text-sm font-bold">Belum ada data {def.label}</p>
+						<p class="text-xs mt-1">Klik "Tambah Baris" untuk menambahkan record baru</p>
 					</div>
 				{:else}
-					<!-- Default text input -->
-					<input
-						id="inp-{field.key}"
-						type="text"
-						class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white"
-						bind:value={editRecord[field.key]}
-						maxlength={field.maxLength || undefined}
-						placeholder={field.placeholder || ""}
-					/>
+					<!-- Scrollable table of child rows -->
+					<div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+						<table class="w-full text-sm">
+							<thead>
+								<tr class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+									{#each childFields as cf}
+										<th class="px-4 py-3 text-left text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">
+											{cf.label}{#if cf.required}<span class="text-red-500 ml-0.5">*</span>{/if}
+										</th>
+									{/each}
+									<th class="px-4 py-3 w-12"></th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+								{#each rows as row, rowIdx}
+									<tr class="bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+										{#each childFields as cf}
+											<td class="px-3 py-2">
+												{#if cf.type === 'select'}
+													<select
+														class="w-full min-w-[120px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														on:change={(e) => handleChildSelectChange(def.childTable, rowIdx, cf, e)}
+													>
+														<option value="">-- Pilih --</option>
+														{#each cf.options || [] as opt}
+															<option value={getOptionValue(opt)}>{getOptionLabel(opt)}</option>
+														{/each}
+													</select>
+												{:else if cf.type === 'fk'}
+													<select
+														class="w-full min-w-[160px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														on:change={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value || null };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													>
+														<option value="">-- Pilih --</option>
+														{#if fkLookups[getCacheKey(cf)]}
+															{#each fkLookups[getCacheKey(cf)] as fkRow}
+																<option value={fkRow.id}>{fkRow[cf.fkLabel] || fkRow.id}</option>
+															{/each}
+														{:else}
+															<option disabled>Loading…</option>
+														{/if}
+													</select>
+												{:else if cf.type === 'boolean'}
+													<label class="flex items-center gap-2 cursor-pointer">
+														<input
+															type="checkbox"
+															checked={row[cf.key] === true || row[cf.key] === 'true'}
+															on:change={(e) => {
+																const arr = [...(childRecords[def.childTable] || [])];
+																arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.checked };
+																childRecords[def.childTable] = arr;
+																childRecords = childRecords;
+															}}
+															class="w-4 h-4 accent-primary"
+														/>
+														<span class="text-xs text-slate-600 dark:text-slate-400">{row[cf.key] ? 'Ya' : 'Tidak'}</span>
+													</label>
+												{:else if cf.type === 'number'}
+													<input
+														type="number"
+														class="w-full min-w-[100px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														step="any"
+														on:input={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													/>
+												{:else if cf.type === 'date'}
+													<input
+														type="date"
+														class="w-full min-w-[140px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														on:change={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													/>
+												{:else if cf.type === 'time'}
+													<input
+														type="time"
+														class="w-full min-w-[120px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														on:change={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													/>
+												{:else if cf.type === 'datetime'}
+													<input
+														type="datetime-local"
+														class="w-full min-w-[180px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														on:change={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													/>
+												{:else}
+													<input
+														type="text"
+														class="w-full min-w-[120px] px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none"
+														value={row[cf.key] ?? ''}
+														maxlength={cf.maxLength || undefined}
+														on:input={(e) => {
+															const arr = [...(childRecords[def.childTable] || [])];
+															arr[rowIdx] = { ...arr[rowIdx], [cf.key]: e.target.value };
+															childRecords[def.childTable] = arr;
+															childRecords = childRecords;
+														}}
+													/>
+												{/if}
+											</td>
+										{/each}
+										<!-- Delete row button -->
+										<td class="px-3 py-2 text-center">
+											<button
+												type="button"
+												class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+												on:click={() => deleteChildRow(def.childTable, rowIdx)}
+											>
+												<span class="material-symbols-outlined text-[18px]">delete</span>
+											</button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				{/if}
 			</div>
-		{/each}
-	</div>
+		{/if}
+	{/each}
 
 	<div slot="footer">
 		<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-bold text-sm transition-colors" on:click={() => (showModal = false)}>

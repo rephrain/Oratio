@@ -17,7 +17,10 @@ export const nodes = [
 	() => import('./nodes/13'),
 	() => import('./nodes/14'),
 	() => import('./nodes/15'),
-	() => import('./nodes/16')
+	() => import('./nodes/16'),
+	() => import('./nodes/17'),
+	() => import('./nodes/18'),
+	() => import('./nodes/19')
 ];
 
 export const server_loads = [];
@@ -28,13 +31,16 @@ export const dictionary = {
 		"/admin/[table]": [7,[2]],
 		"/dokter": [8,[3]],
 		"/dokter/analytics": [9,[3]],
-		"/dokter/patient/[patientId]": [10,[3]],
-		"/dokter/[encounterId]": [11,[3]],
-		"/kasir": [12,[4]],
-		"/kasir/existing-patient": [13,[4]],
-		"/kasir/new-patient": [14,[4]],
-		"/kasir/payment": [15,[4]],
-		"/login": [16]
+		"/dokter/history": [10,[3]],
+		"/dokter/patient/[patientId]": [11,[3]],
+		"/dokter/[encounterId]": [12,[3]],
+		"/kasir": [13,[4]],
+		"/kasir/existing-patient": [14,[4]],
+		"/kasir/new-patient": [15,[4]],
+		"/kasir/patients": [16,[4]],
+		"/kasir/payments": [18,[4]],
+		"/kasir/payment": [17,[4]],
+		"/login": [19]
 	};
 
 export const hooks = {

@@ -1,7 +1,11 @@
 // Snowstorm FHIR ValueSet/$expand endpoint integration
 // Uses the FHIR API as specified in the original requirements
 
-const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || 'https://r4.ontoserver.csiro.au/fhir/ValueSet/$expand';
+let base = process.env.SNOWSTORM_BASE_URL || 'https://r4.ontoserver.csiro.au/fhir/ValueSet/$expand';
+if (!base.endsWith('$expand')) {
+	base = base.endsWith('/') ? `${base}$expand` : `${base}/$expand`;
+}
+const SNOWSTORM_FHIR_BASE = base;
 
 /**
  * Core FHIR ValueSet/$expand search
@@ -10,22 +14,16 @@ const SNOWSTORM_FHIR_BASE = process.env.SNOWSTORM_BASE_URL || 'https://r4.ontose
  * @param {number} count - Max results
  */
 async function expandValueSet(ecl, filter, count = 10) {
-	// 1. Strict Encoder: Standard encodeURIComponent ignores () characters. 
-	// This custom function forces them into %28 and %29 to match your exact required format.
-	const encodeStrict = (str) => encodeURIComponent(str).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+	// Strip display terms |...| from ECL — they're optional decorators
+	// that cause encoding issues with FHIR servers
+	const cleanEcl = ecl.replace(/\s*\|[^|]*\|/g, '').replace(/\s+/g, ' ').trim();
 
-	const encodedEcl = encodeStrict(ecl);
-	const encodedFilter = encodeStrict(filter || '');
+	const encodedEcl = encodeURIComponent(cleanEcl);
+	const encodedFilter = encodeURIComponent(filter || '');
 
-	// 2. Stitch together the exact string sequence you requested:
-	// - Raw base URL
-	// - ?url=http://snomed.info/sct
-	// - %3Ffhir_vs%3Decl/  (Hardcoded encoded part)
-	// - The strictly encoded ECL string
-	// - The standard count and filter params
-	const queryString = `$expand?url=http://snomed.info/sct?fhir_vs=ecl/${encodedEcl}&count=${count}&filter=${encodedFilter}`;
-
-	const fullUrl = `${SNOWSTORM_FHIR_BASE}${queryString}`;
+	// FHIR expects this exact format with raw http:// and ?fhir_vs in the url param.
+	// SNOWSTORM_FHIR_BASE already ends with $expand, so just append query params.
+	const fullUrl = `${SNOWSTORM_FHIR_BASE}?url=http://snomed.info/sct?fhir_vs=ecl/${encodedEcl}&count=${count}&filter=${encodedFilter}`;
 
 	console.log('Fetching Snowstorm:', fullUrl);
 

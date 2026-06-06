@@ -3,10 +3,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 COPY package*.json ./
-RUN npm ci
+
+RUN npm install --include=dev
 
 COPY . .
+
 RUN npm run build
 
 # ---- runner ----
@@ -23,19 +28,18 @@ RUN apk add --no-cache \
     yarn \
     postgresql-client
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    TZ=Asia/Jakarta
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV TZ=Asia/Jakarta
 
 WORKDIR /app
 
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/src ./src
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
-COPY --from=builder /app/drizzle.config.ts ./
 
-RUN npm ci
+RUN npm install --omit=dev
 
 EXPOSE 3000
 

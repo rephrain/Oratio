@@ -6,13 +6,57 @@ on:
       - main
 
 jobs:
-  deploy:
-    name: Build image and redeploy on NAS
-    runs-on: [self-hosted, linux]
+  # ── Job 1: Build on GitHub's servers (7GB RAM, fast) ──────────────────────
+  build:
+    name: Build & push image
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  # ── Job 2: Pull & run on NAS (no building, just docker pull + compose up) ─
+  deploy:
+    name: Deploy on NAS
+    runs-on: [self-hosted, linux]
+    needs: build
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Pull latest image
+        run: docker pull ghcr.io/${{ github.repository }}:latest
 
       - name: Ensure data directories exist
         run: |
@@ -24,10 +68,8 @@ jobs:
         run: |
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
             down --remove-orphans
-          docker compose \
-            -f /volume1/docker/oratio/docker-compose.yml \
-            --project-directory $GITHUB_WORKSPACE \
-            up -d --build
+          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+            up -d
 
       - name: Health check
         run: |

@@ -14,27 +14,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set image tag
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t oratio-app:${{ steps.vars.outputs.sha_short }} \
-            -t oratio-app:latest \
-            .
-
       - name: Ensure data directories exist
         run: |
           mkdir -p /volume1/docker/oratio/pgdata
           mkdir -p /volume1/docker/oratio/uploads
           mkdir -p /volume1/docker/oratio/drizzle
 
-      - name: Redeploy app container
+      - name: Deploy
         run: |
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
-            up -d --no-deps app
+            down --remove-orphans
+          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+            up -d --build
 
       - name: Health check
         run: |

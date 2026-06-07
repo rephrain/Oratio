@@ -42,7 +42,7 @@ COPY --from=builder /app/drizzle.config.ts ./
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/src/lib/server/db ./src/lib/server/db
 
-RUN npm install --omit=dev
+RUN npm install --omit=dev && npm install drizzle-kit tsx
 
 EXPOSE 3000
 

@@ -3,24 +3,24 @@ name: Build & Deploy Oratio
 on:
   push:
     branches:
-      - main        # adjust if your default branch is 'master' or another name
+      - main   # change to 'master' if that's your default branch
 
 jobs:
   deploy:
     name: Build image and redeploy on NAS
-    runs-on: [self-hosted, linux]   # <-- runs on your Synology runner
+    runs-on: [self-hosted, linux]
 
     steps:
       # ── 1. Pull latest code ───────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Set a short SHA tag so every image is traceable ────────────────
+      # ── 2. Tag image with short commit SHA for traceability ───────────────
       - name: Set image tag
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # ── 3. Build the Docker image ─────────────────────────────────────────
+      # ── 3. Build the app image (postgres is a stock image, no build needed)
       - name: Build Docker image
         run: |
           docker build \
@@ -28,20 +28,17 @@ jobs:
             -t oratio-app:latest \
             .
 
-      # ── 4. Stop & remove the old container (ignore error if not running) ──
-      - name: Stop old container
+      # ── 4. Restart ONLY the app container — leave postgres untouched ──────
+      #    This avoids any unnecessary DB downtime on every deploy.
+      - name: Redeploy app container
         run: |
-          docker compose -f /volume1/docker/oratio/docker-compose.yml down --remove-orphans || true
+          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+            up -d --no-deps app
 
-      # ── 5. Start fresh container with the new image ───────────────────────
-      - name: Start new container
-        run: |
-          docker compose -f /volume1/docker/oratio/docker-compose.yml up -d
-
-      # ── 6. Quick smoke-test: wait for container to be healthy ─────────────
+      # ── 5. Health check — waits up to 60s for the app to become healthy ───
       - name: Health check
         run: |
-          echo "Waiting for app to become healthy..."
+          echo "Waiting for oratio-app to become healthy..."
           for i in $(seq 1 12); do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' oratio-app 2>/dev/null || echo "starting")
             echo "  attempt $i: $STATUS"
@@ -51,6 +48,6 @@ jobs:
             fi
             sleep 5
           done
-          echo "⚠️  Health check timed out — check container logs."
+          echo "⚠️  Health check timed out — dumping logs:"
           docker logs oratio-app --tail 50
           exit 1

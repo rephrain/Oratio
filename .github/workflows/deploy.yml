@@ -68,6 +68,10 @@ jobs:
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
             up -d
 
+      - name: Run database migrations
+        run: |
+          docker exec oratio-app npx drizzle-kit migrate --config=drizzle.config.ts
+
       - name: Health check
         run: |
           echo "Waiting for oratio-app to become healthy..."

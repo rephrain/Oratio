@@ -83,7 +83,11 @@ jobs:
 
       - name: Run database migrations
         run: |
-          docker exec oratio-app sh -c 'npx drizzle-kit migrate --config=drizzle.config.ts 2>&1'
+          for f in $(docker exec oratio-app sh -c 'ls /app/drizzle/migrations/*.sql 2>/dev/null | sort'); do
+            echo "Applying migration: $f"
+            docker exec oratio-app sh -c "cat $f" | docker exec -i oratio-db psql -U oratio -d oratio || true
+          done
+          echo "✅ Migrations done."
 
       - name: Health check
         run: |

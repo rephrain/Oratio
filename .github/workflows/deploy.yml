@@ -24,7 +24,9 @@ jobs:
         run: |
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
             down --remove-orphans
-          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+          docker compose \
+            -f /volume1/docker/oratio/docker-compose.yml \
+            --project-directory $GITHUB_WORKSPACE \
             up -d --build
 
       - name: Health check

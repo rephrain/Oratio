@@ -39,8 +39,10 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/drizzle.config.ts ./
-COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/src/lib/server/db ./src/lib/server/db
+
+# Copy drizzle migrations directly from builder source (before any build output)
+COPY --from=builder /app/drizzle/migrations ./drizzle/migrations
 
 RUN npm install --omit=dev && npm install drizzle-kit tsx
 

@@ -3,7 +3,7 @@ name: Build & Deploy Oratio
 on:
   push:
     branches:
-      - main   # change to 'master' if that's your default branch
+      - main
 
 jobs:
   deploy:
@@ -11,16 +11,13 @@ jobs:
     runs-on: [self-hosted, linux]
 
     steps:
-      # ── 1. Pull latest code ───────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Tag image with short commit SHA for traceability ───────────────
       - name: Set image tag
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # ── 3. Build the app image (postgres is a stock image, no build needed)
       - name: Build Docker image
         run: |
           docker build \
@@ -28,14 +25,17 @@ jobs:
             -t oratio-app:latest \
             .
 
-      # ── 4. Restart ONLY the app container — leave postgres untouched ──────
-      #    This avoids any unnecessary DB downtime on every deploy.
+      - name: Ensure data directories exist
+        run: |
+          mkdir -p /volume1/docker/oratio/pgdata
+          mkdir -p /volume1/docker/oratio/uploads
+          mkdir -p /volume1/docker/oratio/drizzle
+
       - name: Redeploy app container
         run: |
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
             up -d --no-deps app
 
-      # ── 5. Health check — waits up to 60s for the app to become healthy ───
       - name: Health check
         run: |
           echo "Waiting for oratio-app to become healthy..."

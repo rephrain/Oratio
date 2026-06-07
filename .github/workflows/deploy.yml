@@ -1,18 +1,56 @@
-name: Deploy to NAS
+name: Build & Deploy Oratio
 
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main        # adjust if your default branch is 'master' or another name
 
 jobs:
-deploy:
-runs-on: self-hosted
+  deploy:
+    name: Build image and redeploy on NAS
+    runs-on: [self-hosted, linux]   # <-- runs on your Synology runner
 
-```
-steps:
-  - name: Deploy
-    run: |
-      cd /share/CACHEDEV1_DATA/homes/oratio/oratio-ci
-      sh deploy.sh
-```
+    steps:
+      # ── 1. Pull latest code ───────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Set a short SHA tag so every image is traceable ────────────────
+      - name: Set image tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # ── 3. Build the Docker image ─────────────────────────────────────────
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t oratio-app:${{ steps.vars.outputs.sha_short }} \
+            -t oratio-app:latest \
+            .
+
+      # ── 4. Stop & remove the old container (ignore error if not running) ──
+      - name: Stop old container
+        run: |
+          docker compose -f /volume1/docker/oratio/docker-compose.yml down --remove-orphans || true
+
+      # ── 5. Start fresh container with the new image ───────────────────────
+      - name: Start new container
+        run: |
+          docker compose -f /volume1/docker/oratio/docker-compose.yml up -d
+
+      # ── 6. Quick smoke-test: wait for container to be healthy ─────────────
+      - name: Health check
+        run: |
+          echo "Waiting for app to become healthy..."
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' oratio-app 2>/dev/null || echo "starting")
+            echo "  attempt $i: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ App is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️  Health check timed out — check container logs."
+          docker logs oratio-app --tail 50
+          exit 1

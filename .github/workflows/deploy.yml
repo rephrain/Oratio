@@ -9,7 +9,6 @@ env:
   IMAGE: ghcr.io/rephrain/oratio
 
 jobs:
-  # ── Job 1: Build arm64 image natively on an arm64 GitHub runner ───────────
   build:
     name: Build & push image
     runs-on: ubuntu-24.04-arm
@@ -38,11 +37,11 @@ jobs:
           context: .
           push: true
           platforms: linux/arm64
+          no-cache: true
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
 
-  # ── Job 2: Pull & run on NAS ───────────────────────────────────────────────
   deploy:
     name: Deploy on NAS
     runs-on: [self-hosted, linux]
@@ -53,7 +52,9 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull latest image
-        run: docker pull ${{ env.IMAGE }}:latest
+        run: |
+          docker rmi ${{ env.IMAGE }}:latest || true
+          docker pull ${{ env.IMAGE }}:latest
 
       - name: Ensure data directories exist
         run: |
@@ -68,9 +69,21 @@ jobs:
           docker compose -f /volume1/docker/oratio/docker-compose.yml \
             up -d
 
+      - name: Wait for database
+        run: |
+          echo "Waiting for postgres..."
+          for i in $(seq 1 12); do
+            if docker exec oratio-db pg_isready -U oratio; then
+              echo "✅ Postgres is ready."
+              break
+            fi
+            echo "  attempt $i: not ready"
+            sleep 5
+          done
+
       - name: Run database migrations
         run: |
-          docker exec oratio-app sh -c 'npx drizzle-kit migrate --config=drizzle.config.ts'
+          docker exec oratio-app sh -c 'npx drizzle-kit migrate --config=drizzle.config.ts 2>&1'
 
       - name: Health check
         run: |

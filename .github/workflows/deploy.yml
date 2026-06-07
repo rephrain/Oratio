@@ -70,7 +70,7 @@ jobs:
 
       - name: Run database migrations
         run: |
-          docker exec oratio-app npx drizzle-kit migrate --config=drizzle.config.ts
+          docker exec oratio-app sh -c 'npx drizzle-kit migrate --config=drizzle.config.ts'
 
       - name: Health check
         run: |

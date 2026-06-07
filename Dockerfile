@@ -38,6 +38,9 @@ WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
+COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/src/lib/server/db ./src/lib/server/db
 
 RUN npm install --omit=dev
 

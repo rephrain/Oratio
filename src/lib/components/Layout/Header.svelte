@@ -1,7 +1,7 @@
 <script>
 	import { isSidebarOpen, isSidebarHidden, headerTitle, isPatientProfileOpen, isProfileModalOpen } from '$lib/stores/layout.js';
 	import { logout } from '$lib/stores/auth.js';
-	import { isChatOpen, unreadCount } from '$lib/stores/chat.js';
+	import { isChatOpen, unreadCount, chatView } from '$lib/stores/chat.js';
 	import { isNotificationOpen, unreadNotificationCount } from '$lib/stores/notifications.js';
 	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
 	import ChatPanel from '$lib/components/Chat/ChatPanel.svelte';
@@ -26,6 +26,15 @@
 	</div>
 	<div class="flex items-center gap-6">
 		<div class="flex items-center gap-4">
+			{#if user?.role === 'admin'}
+				<button 
+					class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors focus:outline-none relative" 
+					on:click={() => { $chatView = 'broadcast'; $isChatOpen = true; }} 
+					title="Broadcast Message"
+				>
+					<span class="material-symbols-outlined text-primary">campaign</span>
+				</button>
+			{/if}
 			<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors focus:outline-none" on:click={() => ($isNotificationOpen = !$isNotificationOpen)} id="notification-toggle-btn">
 				<span class="material-symbols-outlined">notifications</span>
 				{#if $unreadNotificationCount > 0}

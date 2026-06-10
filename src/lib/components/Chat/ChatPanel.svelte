@@ -1,11 +1,10 @@
 <script>
-	import { isChatOpen, unreadCount } from '$lib/stores/chat.js';
+	import { isChatOpen, unreadCount, chatView } from '$lib/stores/chat.js';
 	import { onMount, onDestroy, tick } from 'svelte';
 
 	export let user = null;
 
 	// === State ===
-	let view = 'conversations'; // 'conversations' | 'chat' | 'newChat'
 	let conversations = [];
 	let chatUsers = [];
 	let messages = [];
@@ -58,7 +57,7 @@
 	function onPanelClose() {
 		clearInterval(pollConvInterval);
 		clearInterval(pollMsgInterval);
-		view = 'conversations';
+		$chatView = 'conversations';
 		activeConversation = null;
 		messages = [];
 		lastMessageTimestamp = null;
@@ -211,7 +210,7 @@
 				broadcastMessage = '';
 				broadcastStatus = 'success';
 				setTimeout(() => {
-					view = 'conversations';
+					$chatView = 'conversations';
 					broadcastStatus = '';
 					fetchConversations();
 				}, 1500);
@@ -227,7 +226,7 @@
 
 	async function openConversation(conv) {
 		activeConversation = conv;
-		view = 'chat';
+		$chatView = 'chat';
 		messages = [];
 		lastMessageTimestamp = null;
 		clearInterval(pollMsgInterval);
@@ -268,7 +267,7 @@
 
 	function goBack() {
 		clearInterval(pollMsgInterval);
-		view = 'conversations';
+		$chatView = 'conversations';
 		activeConversation = null;
 		messages = [];
 		lastMessageTimestamp = null;
@@ -352,30 +351,30 @@
 	<div class="chat-panel">
 		<!-- Header -->
 		<div class="chat-panel-header">
-			{#if view === 'conversations'}
+			{#if $chatView === 'conversations'}
 				<div class="chat-panel-header-left">
 					<span class="material-symbols-outlined chat-header-icon">chat</span>
 					<h2>Messages</h2>
 				</div>
 				<div class="chat-panel-header-right">
 					{#if user?.role === 'admin'}
-						<button class="chat-icon-btn" on:click={() => { view = 'broadcast'; }} title="Broadcast Message" style="color: var(--primary, #3b82f6)">
+						<button class="chat-icon-btn" on:click={() => { $chatView = 'broadcast'; }} title="Broadcast Message" style="color: var(--primary, #3b82f6)">
 							<span class="material-symbols-outlined">campaign</span>
 						</button>
 					{/if}
-					<button class="chat-icon-btn" on:click={() => { view = 'newChat'; fetchChatUsers(); }} title="New Chat">
+					<button class="chat-icon-btn" on:click={() => { $chatView = 'newChat'; fetchChatUsers(); }} title="New Chat">
 						<span class="material-symbols-outlined">edit_square</span>
 					</button>
 					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>
-			{:else if view === 'newChat' || view === 'broadcast'}
+			{:else if $chatView === 'newChat' || $chatView === 'broadcast'}
 				<div class="chat-panel-header-left">
-					<button class="chat-icon-btn" on:click={() => { view = 'conversations'; }} title="Back">
+					<button class="chat-icon-btn" on:click={() => { $chatView = 'conversations'; }} title="Back">
 						<span class="material-symbols-outlined">arrow_back</span>
 					</button>
-					<h2>{view === 'broadcast' ? 'Broadcast Message' : 'New Chat'}</h2>
+					<h2>{$chatView === 'broadcast' ? 'Broadcast Message' : 'New Chat'}</h2>
 				</div>
 				<div class="chat-panel-header-right">
 					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
@@ -425,7 +424,7 @@
 
 		<!-- Body -->
 		<div class="chat-panel-body">
-			{#if view === 'conversations'}
+			{#if $chatView === 'conversations'}
 				<!-- Conversation List -->
 				{#if loadingConversations}
 					<div class="chat-empty-state">
@@ -437,7 +436,7 @@
 						<span class="material-symbols-outlined chat-empty-icon">forum</span>
 						<p class="chat-empty-title">No conversations yet</p>
 						<p class="chat-empty-subtitle">Start a new chat with your team</p>
-						<button class="chat-start-btn" on:click={() => { view = 'newChat'; fetchChatUsers(); }}>
+						<button class="chat-start-btn" on:click={() => { $chatView = 'newChat'; fetchChatUsers(); }}>
 							<span class="material-symbols-outlined">add</span>
 							New Chat
 						</button>
@@ -481,7 +480,7 @@
 					</div>
 				{/if}
 
-			{:else if view === 'broadcast'}
+			{:else if $chatView === 'broadcast'}
 				<div class="chat-broadcast-view">
 					<div class="chat-broadcast-header">
 						<div class="chat-broadcast-banner">
@@ -526,7 +525,7 @@
 					</div>
 				</div>
 
-			{:else if view === 'newChat'}
+			{:else if $chatView === 'newChat'}
 				<!-- User Picker -->
 				<div class="chat-search-wrapper">
 					<span class="material-symbols-outlined chat-search-icon">search</span>

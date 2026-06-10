@@ -518,12 +518,55 @@
 			if (["Planned", "Arrived"].includes(encounter.encounter?.status)) {
 				await updateStatus("In Progress");
 			}
+		} catch (err) {
+			console.error("Error loading encounter:", err);
+			addToast("Gagal memuat data encounter", "error");
+		} finally {
+			loading = false;
 		}
 	}
 
-	async function loadEncounter() {
-		await setupEncounterRealtime();
+	async function setupEncounterRealtime() {
+		if (encounterStore) encounterStore.destroy();
+
+		encounterStore = createRealtimeDetail(`/api/encounters/${encounterId}`, {
+			rooms: [`encounter_${encounterId}`],
+			events: {
+				encounter_updated: (current, data) => {
+					if (data.id === encounterId) {
+						// Only reactive update for core fields, avoid resetting form if user is typing
+						return { ...current, encounter: { ...current.encounter, ...data } };
+					}
+					return current;
+				},
+				status_changed: (current, data) => {
+					if (current?.encounter) {
+						current.encounter.status = data.status;
+					}
+					return current;
+				},
+				soap_updated: (current, data) => {
+					// We only update if we're not the one who saved? 
+					// For now, let's just make it reactive
+					subjective = data.subjective || subjective;
+					objective = data.objective || objective;
+					assessment = data.assessment || assessment;
+					plan = data.plan || plan;
+					return current;
+				}
+			}
+		});
+
+		encounterStore.subscribe(val => {
+			if (val) {
+				encounter = val;
+			}
+		});
+
+		// We don't call store.load() because we already have loadEncounter()
+		// which does complex mapping.
 	}
+
 
 	async function loadPatientContext(patientId) {
 		try {
@@ -1047,6 +1090,7 @@
 
 	onMount(() => {
 		loadDoctors();
+		loadEncounter();
 		setupEncounterRealtime();
 	});
 

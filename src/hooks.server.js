@@ -1,6 +1,9 @@
 process.env.TZ = 'Asia/Jakarta';
 import '$lib/server/cron.js'; 
 import { verifyToken } from '$lib/server/auth.js';
+import { db } from '$lib/server/db/index.js';
+import { users } from '$lib/server/db/schema.js';
+import { eq } from 'drizzle-orm';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 const ROLE_PATHS = {
@@ -47,11 +50,21 @@ export async function handle({ event, resolve }) {
 	}
 
 	// Verify user still exists in database (prevents 500 errors on stale tags)
-	const { db } = await import('$lib/server/db/index.js');
-	const { users } = await import('$lib/server/db/schema.js');
-	const { eq } = await import('drizzle-orm');
-
-	const [dbUser] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+	let dbUser;
+	try {
+		[dbUser] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+	} catch (err) {
+		console.error('[Hooks] Database error:', err);
+		return new Response(JSON.stringify({ 
+			error: 'Internal Server Error', 
+			message: err.message,
+			stack: err.stack,
+			payload_sub: payload.sub
+		}), {
+			status: 500,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 
 	if (!dbUser || !dbUser.is_active) {
 		event.cookies.delete('auth_token', { path: '/' });

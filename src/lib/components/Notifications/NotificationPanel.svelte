@@ -1,12 +1,13 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
 	import { isNotificationOpen, notifications, unreadNotificationCount } from '$lib/stores/notifications.js';
+	import { onEvent, subscribe, unsubscribe } from '$lib/stores/realtimeConnection.js';
 
 	export let user = null;
 	export let isAdmin = false;
 
+
 	let loading = true;
-	let pollInterval;
+	let unsubscribers = [];
 
 	// Admin create form
 	let showCreateForm = false;
@@ -97,11 +98,18 @@
 
 	onMount(() => {
 		loadNotifications();
-		pollInterval = setInterval(loadNotifications, 30000);
+		
+		if (user?.id) {
+			subscribe([`user_${user.id}`]);
+			unsubscribers.push(onEvent('notification_created', () => {
+				loadNotifications();
+			}));
+		}
 	});
 
 	onDestroy(() => {
-		if (pollInterval) clearInterval(pollInterval);
+		for (const u of unsubscribers) u();
+		if (user?.id) unsubscribe([`user_${user.id}`]);
 	});
 </script>
 

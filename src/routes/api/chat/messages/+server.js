@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { chatMessages, chatConversations, users } from '$lib/server/db/schema.js';
 import { eq, and, gt, asc, or, desc } from 'drizzle-orm';
+import { emitChatEvent } from '$lib/server/realtime/realtimeService.js';
 
 /** GET /api/chat/messages?conversationId=...&after=... — Fetch messages for a conversation */
 export async function GET({ url, locals }) {
@@ -110,6 +111,11 @@ export async function POST({ request, locals }) {
 		.update(chatConversations)
 		.set({ last_message_at: message.created_at })
 		.where(eq(chatConversations.id, conversationId));
+
+
+	// Emit real-time message event
+	const otherParticipantId = conv.participant_a === userId ? conv.participant_b : conv.participant_a;
+	emitChatEvent('message_sent', conversationId, { message }, userId, [otherParticipantId]);
 
 	return json({ message }, { status: 201 });
 }

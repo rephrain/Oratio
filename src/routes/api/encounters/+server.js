@@ -7,6 +7,7 @@ import {
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { generateEncounterId } from '$lib/utils/formatters.js';
+import { emitQueueEvent, emitDashboardEvent, emitPatientEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/encounters
 export async function GET({ url, locals }) {
@@ -161,11 +162,16 @@ export async function POST({ request, locals }) {
 		reason_type: body.reason_type || null
 	}).returning();
 
+
+
 	// Update patient BP if provided
 	if (body.tekanan_darah) {
 		await db.update(patients)
 			.set({ tekanan_darah: body.tekanan_darah })
 			.where(eq(patients.id, body.patient_id));
+		
+		// Emit patient update event
+		emitPatientEvent('patient_updated', body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
 	}
 
 	// Create initial status history
@@ -175,5 +181,16 @@ export async function POST({ request, locals }) {
 		start_at: new Date()
 	});
 
+	// Emit real-time events
+	const eventPayload = {
+		encounter,
+		patient_name: body.patient_name || 'Patient', // Assuming patient_name is passed or could be fetched
+		doctor_name: doctor.name,
+		queue_number: queueNumber
+	};
+	emitQueueEvent('queue_created', eventPayload, locals?.user?.id);
+	emitDashboardEvent('encounter_created', eventPayload, locals?.user?.id);
+
 	return json({ encounter, queue_number: queueNumber }, { status: 201 });
 }
+

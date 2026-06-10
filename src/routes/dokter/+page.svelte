@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import { goto } from "$app/navigation";
 	import DataTable from "$lib/components/Tables/DataTable.svelte";
+	import { createRealtimeList } from "$lib/stores/realtimeStore.js";
 	import { STATUS_COLORS, DAYS_OF_WEEK } from "$lib/utils/constants.js";
 	import {
 		formatElapsedTime,
@@ -15,11 +16,12 @@
 	export let data;
 	$: user = data?.user;
 
+
+	let encountersStore;
 	let encounters = [];
 	let loading = true;
 	let shiftInfo = { active: false, status: "no-shifts" };
 	let doctorShifts = [];
-	let refreshInterval;
 	let shiftInterval;
 	let filterDate = getJakartaDateString();
 
@@ -33,17 +35,41 @@
 		["Discharged", "Completed"].includes(e.encounter?.status),
 	);
 
-	async function loadEncounters() {
-		try {
-			const res = await fetch(`/api/encounters?date=${filterDate}`);
-			const resp = await res.json();
-			encounters = resp.data || [];
-			loadStats(); // Reload stats whenever encounters reload
-		} catch (err) {
-			console.error(err);
-		} finally {
+	async function setupEncountersRealtime() {
+		if (encountersStore) encountersStore.destroy();
+
+		encountersStore = createRealtimeList(`/api/encounters?date=${filterDate}`, {
+			rooms: ["queue"],
+			events: {
+				queue_created: (list, data) => {
+					loadStats(); // Refresh stats on new patient
+					return [data, ...list];
+				},
+				queue_updated: (list, data) => {
+					loadStats();
+					return list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e);
+				},
+				queue_completed: (list, data) => {
+					loadStats();
+					return list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e);
+				},
+				queue_cancelled: (list, data) => {
+					loadStats();
+					return list.filter(e => e.encounter.id !== data.id);
+				}
+			}
+		});
+
+		encountersStore.subscribe(val => {
+			encounters = val;
 			loading = false;
-		}
+		});
+
+		await encountersStore.load();
+	}
+
+	async function loadEncounters() {
+		await setupEncountersRealtime();
 	}
 
 	async function loadShifts() {
@@ -129,17 +155,33 @@
 		}
 	}
 
-	async function loadReferrals() {
-		loadingReferrals = true;
-		try {
-			const res = await fetch("/api/dashboard/dokter/referrals");
-			const resp = await res.json();
-			referrals = resp.data || [];
-		} catch (err) {
-			console.error("Error loading referrals:", err);
-		} finally {
+	let referralsStore;
+	async function setupReferralsRealtime() {
+		if (referralsStore) referralsStore.destroy();
+		
+		referralsStore = createRealtimeList("/api/dashboard/dokter/referrals", {
+			// Referrals are basically special notifications
+			rooms: [`user_${user?.id}`],
+			events: {
+				notification_created: (list, data) => {
+					if (data.type === 'referral') {
+						return [data.payload, ...list];
+					}
+					return list;
+				}
+			}
+		});
+
+		referralsStore.subscribe(val => {
+			referrals = val;
 			loadingReferrals = false;
-		}
+		});
+
+		await referralsStore.load();
+	}
+
+	async function loadReferrals() {
+		await setupReferralsRealtime();
 	}
 
 	let sortKey = "";
@@ -359,18 +401,15 @@
 	// Date filter has been removed, the dashboard now permanently stays on 'today' (filterDate).
 
 	onMount(() => {
-		loadEncounters();
+		setupEncountersRealtime();
 		loadShifts();
-		loadReferrals();
-		refreshInterval = setInterval(() => {
-			loadEncounters();
-			loadReferrals();
-		}, 30000);
+		setupReferralsRealtime();
 		shiftInterval = setInterval(updateShift, 60000);
 	});
 
 	onDestroy(() => {
-		if (refreshInterval) clearInterval(refreshInterval);
+		if (encountersStore) encountersStore.destroy();
+		if (referralsStore) referralsStore.destroy();
 		if (shiftInterval) clearInterval(shiftInterval);
 	});
 </script>

@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
 import fs from 'fs';
 import path from 'path';
+import { emitPatientEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/patients/[id]
 export async function GET({ params }) {
@@ -273,6 +274,10 @@ export async function PUT({ params, request, locals }) {
 		} catch (pdfErr) {
 			console.error('[PDF] Failed to regenerate patient profile PDF in PUT:', pdfErr);
 		}
+
+
+		// Emit real-time events
+		emitPatientEvent('patient_updated', id, { patient }, locals?.user?.id);
 
 		return json({ success: true, patient });
 	} catch (error) {

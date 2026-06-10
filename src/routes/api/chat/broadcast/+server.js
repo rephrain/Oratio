@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { chatConversations, chatMessages, users } from '$lib/server/db/schema.js';
 import { eq, ne, and, sql } from 'drizzle-orm';
+import { emitChatEvent } from '$lib/server/realtime/realtimeService.js';
 
 /** POST /api/chat/broadcast — Admin sends a message to all users */
 export async function POST({ request, locals }) {
@@ -78,6 +79,9 @@ export async function POST({ request, locals }) {
 					.update(chatConversations)
 					.set({ last_message_at: msg.created_at })
 					.where(eq(chatConversations.id, conv.id));
+
+				// Emit real-time message event
+				emitChatEvent('message_sent', conv.id, { message: msg }, adminId, [targetUserId]);
 
 				return msg;
 			})

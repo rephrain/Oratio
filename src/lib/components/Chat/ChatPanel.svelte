@@ -1,6 +1,7 @@
 <script>
 	import { isChatOpen, unreadCount, chatView } from '$lib/stores/chat.js';
 	import { onMount, onDestroy, tick } from 'svelte';
+	import { onEvent, subscribe, unsubscribe } from '$lib/stores/realtimeConnection.js';
 
 	export let user = null;
 
@@ -16,25 +17,34 @@
 	let loadingUsers = false;
 	let sending = false;
 	let messagesContainer;
-	let pollConvInterval;
-	let pollMsgInterval;
-	let pollUnreadInterval;
-	let lastMessageTimestamp = null;
-	let wasChatOpen = false;
 	let broadcastMessage = '';
 	let broadcasting = false;
 	let broadcastStatus = ''; // '' | 'success' | 'error'
 
+	const rtUnsubscribers = [];
+
 	// === Lifecycle ===
 	onMount(() => {
 		fetchUnreadCount();
-		pollUnreadInterval = setInterval(fetchUnreadCount, 10000);
+		
+		// Subscribe to personal user room for badge updates
+		if (user?.id) {
+			subscribe([`user_${user.id}`]);
+			rtUnsubscribers.push(onEvent('unread_chat_count_updated', fetchUnreadCount));
+			rtUnsubscribers.push(onEvent('message_sent', (data) => {
+				// Refresh conversation list if another user sent a message
+				if (data.sender_id !== user.id) {
+					fetchConversations();
+					fetchUnreadCount();
+				}
+			}));
+		}
 	});
 
 	onDestroy(() => {
-		clearInterval(pollConvInterval);
-		clearInterval(pollMsgInterval);
-		clearInterval(pollUnreadInterval);
+		for (const u of rtUnsubscribers) u();
+		if (user?.id) unsubscribe([`user_${user.id}`]);
+		if (activeConversation) unsubscribe([`conversation_${activeConversation.id}`]);
 	});
 
 	// Watch for panel open/close — only react to actual transitions
@@ -49,14 +59,13 @@
 	}
 
 	function onPanelOpen() {
-		clearInterval(pollConvInterval);
 		fetchConversations();
-		pollConvInterval = setInterval(fetchConversations, 10000);
 	}
 
 	function onPanelClose() {
-		clearInterval(pollConvInterval);
-		clearInterval(pollMsgInterval);
+		if (activeConversation) {
+			unsubscribe([`conversation_${activeConversation.id}`]);
+		}
 		$chatView = 'conversations';
 		activeConversation = null;
 		messages = [];
@@ -106,46 +115,52 @@
 		}
 	}
 
-	async function fetchMessages(isPolling = false) {
+	async function fetchMessages() {
 		if (!activeConversation) return;
 		try {
-			if (!isPolling) loadingMessages = true;
-			let url = `/api/chat/messages?conversationId=${activeConversation.id}`;
-			if (isPolling && lastMessageTimestamp) {
-				url += `&after=${encodeURIComponent(lastMessageTimestamp)}`;
-			}
+			loadingMessages = true;
+			const url = `/api/chat/messages?conversationId=${activeConversation.id}`;
 			const res = await fetch(url);
 			if (res.ok) {
 				const data = await res.json();
-				if (isPolling && data.messages.length > 0) {
-					const existingIds = new Set(messages.map(m => m.id));
-					const newMsgs = data.messages.filter(m => !existingIds.has(m.id));
-					if (newMsgs.length > 0) {
-						messages = [...messages, ...newMsgs];
-						lastMessageTimestamp = newMsgs[newMsgs.length - 1].created_at;
-					}
-					await tick();
-					scrollToBottom();
-					// Mark as read
-					markAsRead();
-					// Update unread globally
-					fetchUnreadCount();
-					// Update conversation list unread counts
-					fetchConversations();
-				} else if (!isPolling) {
-					messages = data.messages;
-					if (messages.length > 0) {
-						lastMessageTimestamp = messages[messages.length - 1].created_at;
-					}
-					await tick();
-					scrollToBottom();
+				messages = data.messages;
+				if (messages.length > 0) {
+					lastMessageTimestamp = messages[messages.length - 1].created_at;
 				}
+				await tick();
+				scrollToBottom();
 			}
 		} catch (e) {
 			// silent
 		} finally {
 			loadingMessages = false;
 		}
+	}
+
+	// SSE Handler for incoming messages in active conversation
+	function handleNewMessage(data) {
+		const msg = data.message;
+		if (!msg || messages.some(m => m.id === msg.id)) return;
+
+		messages = [...messages, msg];
+		lastMessageTimestamp = msg.created_at;
+		
+		tick().then(() => {
+			scrollToBottom();
+			if (msg.sender_id !== user?.id) {
+				markAsRead();
+			}
+		});
+	}
+
+	// SSE Handler for read receipts
+	function handleMessageRead(data) {
+		messages = messages.map(m => {
+			if (m.conversation_id === data.conversationId && !m.read_at) {
+				return { ...m, read_at: new Date().toISOString() };
+			}
+			return m;
+		});
 	}
 
 	async function markAsRead() {
@@ -224,16 +239,29 @@
 		}
 	}
 
+	let messageUnsub = null;
+	let readUnsub = null;
+
 	async function openConversation(conv) {
+		if (activeConversation) {
+			unsubscribe([`conversation_${activeConversation.id}`]);
+			if (messageUnsub) messageUnsub();
+			if (readUnsub) readUnsub();
+		}
+
 		activeConversation = conv;
 		$chatView = 'chat';
 		messages = [];
 		lastMessageTimestamp = null;
-		clearInterval(pollMsgInterval);
-		await fetchMessages(false);
+		
+		// Subscribe to conversation room
+		subscribe([`conversation_${conv.id}`]);
+		messageUnsub = onEvent('message_sent', handleNewMessage);
+		readUnsub = onEvent('message_read', handleMessageRead);
+
+		await fetchMessages();
 		markAsRead();
 		fetchUnreadCount();
-		pollMsgInterval = setInterval(() => fetchMessages(true), 3000);
 	}
 
 	async function startNewChat(targetUser) {
@@ -266,7 +294,11 @@
 	}
 
 	function goBack() {
-		clearInterval(pollMsgInterval);
+		if (activeConversation) {
+			unsubscribe([`conversation_${activeConversation.id}`]);
+			if (messageUnsub) messageUnsub();
+			if (readUnsub) readUnsub();
+		}
 		$chatView = 'conversations';
 		activeConversation = null;
 		messages = [];

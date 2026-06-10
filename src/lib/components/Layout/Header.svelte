@@ -6,6 +6,7 @@
 	import ProfileModal from '$lib/components/Profile/ProfileModal.svelte';
 	import ChatPanel from '$lib/components/Chat/ChatPanel.svelte';
 	import NotificationPanel from '$lib/components/Notifications/NotificationPanel.svelte';
+	import ConnectionStatus from '$lib/components/Realtime/ConnectionStatus.svelte';
 
 	export let user = null;
 
@@ -25,6 +26,7 @@
 		{/if}
 	</div>
 	<div class="flex items-center gap-6">
+		<ConnectionStatus />
 		<div class="flex items-center gap-4">
 			{#if user?.role === 'admin'}
 				<button 

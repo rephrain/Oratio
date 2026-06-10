@@ -12,12 +12,19 @@
 	import ProfileModal from "$lib/components/Profile/ProfileModal.svelte";
 	import NotificationPanel from "$lib/components/Notifications/NotificationPanel.svelte";
 	import ChatPanel from "$lib/components/Chat/ChatPanel.svelte";
+	import ConnectionStatus from "$lib/components/Realtime/ConnectionStatus.svelte";
+	import { connect } from "$lib/stores/realtimeConnection.js";
+	import { onMount } from "svelte";
 
 	export let data;
 	$: user = data?.user;
 	$: currentPath = $page.url.pathname;
 
 	let showProfileMenu = false;
+
+	onMount(() => {
+		connect();
+	});
 </script>
 
 <div
@@ -199,6 +206,7 @@
 				<div class="relative max-w-md w-full"></div>
 			</div>
 			<div class="flex items-center gap-6">
+				<ConnectionStatus />
 				<div class="flex items-center gap-4">
 					<button
 						class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative"

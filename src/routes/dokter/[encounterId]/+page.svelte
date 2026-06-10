@@ -9,6 +9,7 @@
 	} from "$lib/stores/layout.js";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
+	import { createRealtimeDetail } from "$lib/stores/realtimeStore.js";
 	import Modal from "$lib/components/UI/Modal.svelte";
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import OdontogramChart from "$lib/components/Odontogram/OdontogramChart.svelte";
@@ -50,6 +51,7 @@
 	let encounter = null;
 	let loading = true;
 	let saving = false;
+	let encounterStore;
 
 	// SOAP form
 	let formMode = "SOAP";
@@ -509,21 +511,18 @@
 				}
 			} catch {}
 
-			// Load patient context
-			if (data.encounter?.patient_id) {
-				loadPatientContext(data.encounter.patient_id);
+			if (encounter.encounter?.patient_id) {
+				loadPatientContext(encounter.encounter.patient_id);
 			}
 
-			// Auto-transition: Planned/Arrived → In Progress
-			if (["Planned", "Arrived"].includes(data.encounter?.status)) {
+			if (["Planned", "Arrived"].includes(encounter.encounter?.status)) {
 				await updateStatus("In Progress");
 			}
-		} catch (err) {
-			console.error(err);
-			addToast("Gagal memuat encounter", "error");
-		} finally {
-			loading = false;
 		}
+	}
+
+	async function loadEncounter() {
+		await setupEncounterRealtime();
 	}
 
 	async function loadPatientContext(patientId) {
@@ -1047,12 +1046,12 @@
 	}
 
 	onMount(() => {
-		isSidebarHidden.set(true);
-		loadEncounter();
 		loadDoctors();
+		setupEncounterRealtime();
 	});
 
 	onDestroy(() => {
+		if (encounterStore) encounterStore.destroy();
 		headerTitle.set(null);
 		isSidebarHidden.set(false);
 	});

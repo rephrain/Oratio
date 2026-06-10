@@ -9,6 +9,7 @@ import {
 } from '$lib/server/db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
+import { emitEncounterEvent, emitQueueEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
@@ -601,6 +602,40 @@ export async function PUT({ params, request }) {
 				subtotal: item.subtotal
 			});
 		}
+	}
+
+
+	// Emit real-time events
+	const userId = locals?.user?.id;
+	const encounterId = params.id;
+
+	// Always notify encounter room of general update
+	emitEncounterEvent('encounter_updated', encounterId, { encounter: updated }, userId);
+
+	if (body.status) {
+		emitEncounterEvent('status_changed', encounterId, { status: body.status }, userId);
+		emitQueueEvent('queue_updated', { id: encounterId, status: body.status }, userId);
+	}
+
+	if (body.subjective !== undefined || body.objective !== undefined || body.assessment !== undefined || body.plan !== undefined) {
+		emitEncounterEvent('soap_updated', encounterId, {
+			subjective: updated.subjective,
+			objective: updated.objective,
+			assessment: updated.assessment,
+			plan: updated.plan
+		}, userId);
+	}
+
+	if (body.prescriptions) {
+		emitEncounterEvent('prescription_updated', encounterId, { prescriptions: body.prescriptions }, userId);
+	}
+
+	if (body.odontogram) {
+		emitEncounterEvent('odontogram_updated', encounterId, { odontogram: body.odontogram }, userId);
+	}
+
+	if (body.encounter_items) {
+		emitEncounterEvent('item_updated', encounterId, { items: body.encounter_items }, userId);
 	}
 
 	return json({ encounter: updated });

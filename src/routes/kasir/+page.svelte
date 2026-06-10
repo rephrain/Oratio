@@ -4,6 +4,7 @@
 	import DataTable from "$lib/components/Tables/DataTable.svelte";
 	import SearchableSelect from "$lib/components/Forms/SearchableSelect.svelte";
 	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
+	import { createRealtimeList } from "$lib/stores/realtimeStore.js";
 	import { QUEUE_COLUMNS, STATUS_COLORS } from "$lib/utils/constants.js";
 	import {
 		formatElapsedTime,
@@ -12,13 +13,14 @@
 		getJakartaDateString,
 	} from "$lib/utils/formatters.js";
 
+
+	let encountersStore;
 	let encounters = [];
 	let loading = true;
 	let viewMode = "board"; // 'board' | 'table'
 	let filterDate = getJakartaDateString();
 	let filterDoctor = "";
 	let doctorOptions = [];
-	let refreshInterval;
 
 	// Table View filters
 	let tableDoctorFilter = "";
@@ -95,18 +97,32 @@
 		),
 	}));
 
-	async function loadEncounters() {
-		try {
-			const params = new URLSearchParams({ date: filterDate });
-			if (filterDoctor) params.set("doctor_id", filterDoctor);
-			const res = await fetch(`/api/encounters?${params}`);
-			const data = await res.json();
-			encounters = data.data || [];
-		} catch (err) {
-			console.error("Failed to load encounters:", err);
-		} finally {
+	async function setupEncountersRealtime() {
+		if (encountersStore) encountersStore.destroy();
+
+		const params = new URLSearchParams({ date: filterDate });
+		if (filterDoctor) params.set("doctor_id", filterDoctor);
+
+		encountersStore = createRealtimeList(`/api/encounters?${params}`, {
+			rooms: ["queue"],
+			events: {
+				queue_created: (list, data) => [data, ...list],
+				queue_updated: (list, data) => list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e),
+				queue_completed: (list, data) => list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e),
+				queue_cancelled: (list, data) => list.filter(e => e.encounter.id !== data.id)
+			}
+		});
+
+		encountersStore.subscribe(val => {
+			encounters = val;
 			loading = false;
-		}
+		});
+
+		await encountersStore.load();
+	}
+
+	async function loadEncounters() {
+		await setupEncountersRealtime();
 	}
 
 	async function loadDoctors() {
@@ -134,12 +150,11 @@
 
 	onMount(() => {
 		loadDoctors();
-		loadEncounters();
-		refreshInterval = setInterval(loadEncounters, 30000);
+		setupEncountersRealtime();
 	});
 
 	onDestroy(() => {
-		if (refreshInterval) clearInterval(refreshInterval);
+		if (encountersStore) encountersStore.destroy();
 	});
 
 	const tableColumns = [

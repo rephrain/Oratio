@@ -2,10 +2,16 @@
 	import Sidebar from './Sidebar.svelte';
 	import Header from './Header.svelte';
 	import { isSidebarOpen, isSidebarHidden } from '$lib/stores/layout.js';
+	import { connect } from '$lib/stores/realtimeConnection.js';
+	import { onMount } from 'svelte';
 
 	export let user;
 	export let role;
 	export let title = '';
+
+	onMount(() => {
+		connect();
+	});
 </script>
 
 <div class="app-shell role-{role}" 

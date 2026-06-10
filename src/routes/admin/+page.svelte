@@ -1,12 +1,13 @@
 <script>
 	import { onMount, onDestroy } from "svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
+	import { createRealtimeDetail } from "$lib/stores/realtimeStore.js";
 
 	let stats = {};
 	let recentActivity = [];
 	let onShiftNow = [];
 	let loading = true;
-	let refreshInterval;
+	let dashboardStore;
 
 	const importantTables = [
 		"users",
@@ -16,36 +17,63 @@
 		"items",
 	];
 
-	async function loadStats(isBg = false) {
-		if (!isBg) loading = true;
+	async function setupDashboardRealtime() {
+		if (dashboardStore) dashboardStore.destroy();
+
+		dashboardStore = createRealtimeDetail('/api/admin/dashboard', {
+			rooms: ['dashboard'],
+			events: {
+				dashboard_updated: (data, payload) => {
+					// Full refresh on general update
+					loadStats(true);
+					return data;
+				},
+				queue_created: (data, payload) => {
+					loadStats(true); // Increment counts
+					return data;
+				},
+				payment_completed: (data, payload) => {
+					loadStats(true);
+					return data;
+				}
+			}
+		});
+
+		dashboardStore.subscribe(val => {
+			if (val) {
+				recentActivity = val.recentActivity || [];
+				onShiftNow = val.onShiftNow || [];
+			}
+		});
+
+		await dashboardStore.load();
+		await loadKPIs();
+		loading = false;
+	}
+
+	async function loadKPIs() {
 		try {
 			for (const key of importantTables) {
 				const res = await fetch(`/api/admin/${key}?limit=1`);
 				const data = await res.json();
 				stats[key] = data.total || 0;
 			}
-			
-			// Load dashboard specific data
-			const dashRes = await fetch('/api/admin/dashboard');
-			if (dashRes.ok) {
-				const dashData = await dashRes.json();
-				recentActivity = dashData.recentActivity || [];
-				onShiftNow = dashData.onShiftNow || [];
-			}
 		} catch (err) {
 			console.error(err);
-		} finally {
-			if (!isBg) loading = false;
 		}
 	}
 
+	async function loadStats(isBg = false) {
+		await loadKPIs();
+		if (dashboardStore) await dashboardStore.load();
+	}
+
 	onMount(() => {
-		loadStats();
-		refreshInterval = setInterval(() => loadStats(true), 30000);
+		setupDashboardRealtime();
 	});
 
 	onDestroy(() => {
-		if (refreshInterval) clearInterval(refreshInterval);
+		if (dashboardStore) dashboardStore.destroy();
 	});
 
 	function timeAgo(dateString) {

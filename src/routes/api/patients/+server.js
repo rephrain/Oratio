@@ -6,6 +6,7 @@ import { generatePatientId } from '$lib/utils/formatters.js';
 import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
 import fs from 'fs';
 import path from 'path';
+import { emitPatientEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/patients - list/search
 export async function GET({ url }) {
@@ -241,6 +242,10 @@ export async function POST({ request, locals }) {
 		// Non-blocking: log error but don't fail the patient creation
 		console.error('[PDF] Failed to generate patient profile PDF:', pdfErr);
 	}
+
+
+	// Emit real-time events
+	emitPatientEvent('patient_created', newId, { patient }, locals?.user?.id);
 
 	return json({ patient }, { status: 201 });
 }

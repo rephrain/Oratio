@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { payments, encounters, encounterItems, documents, patients, users } from '$lib/server/db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
+import { emitQueueEvent, emitEncounterEvent, emitDashboardEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/payments
 export async function GET({ url }) {
@@ -113,6 +114,14 @@ export async function POST({ request, locals }) {
 	await db.update(encounters)
 		.set({ status: 'Completed', updated_at: new Date() })
 		.where(eq(encounters.id, body.encounter_id));
+
+
+	// Emit real-time events
+	const userId = locals?.user?.id;
+	emitEncounterEvent('payment_completed', body.encounter_id, { payment }, userId);
+	emitEncounterEvent('status_changed', body.encounter_id, { status: 'Completed' }, userId);
+	emitQueueEvent('queue_completed', { id: body.encounter_id, status: 'Completed' }, userId);
+	emitDashboardEvent('payment_completed', { payment, encounter_id: body.encounter_id }, userId);
 
 	return json({ payment }, { status: 201 });
 }

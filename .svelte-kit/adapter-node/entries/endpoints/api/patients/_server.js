@@ -5,6 +5,7 @@ import { a as generatePatientId } from "../../../../chunks/formatters.js";
 import { b as generatePatientProfilePdf } from "../../../../chunks/pdfGenerator.js";
 import fs from "fs";
 import path from "path";
+import { a as emitPatientEvent } from "../../../../chunks/realtimeService.js";
 async function GET({ url }) {
   const search = url.searchParams.get("search") || "";
   const page = parseInt(url.searchParams.get("page") || "1");
@@ -183,6 +184,7 @@ async function POST({ request, locals }) {
   } catch (pdfErr) {
     console.error("[PDF] Failed to generate patient profile PDF:", pdfErr);
   }
+  emitPatientEvent("patient_created", newId, { patient }, locals?.user?.id);
   return json({ patient }, { status: 201 });
 }
 export {

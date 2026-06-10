@@ -1,4 +1,4 @@
-import { d as db, e as encounters } from "./index3.js";
+import { d as db, e as encounters, u as users } from "./index3.js";
 import { and, eq, lt, inArray } from "drizzle-orm";
 import { verifyToken } from "./auth.js";
 async function runEndOfDayCron() {
@@ -69,10 +69,21 @@ async function handle({ event, resolve }) {
     }
     return Response.redirect(`${event.url.origin}/login`, 302);
   }
-  const { db: db2 } = await import("./index3.js").then((n) => n.C);
-  const { users } = await import("./index3.js").then((n) => n.B);
-  const { eq: eq2 } = await import("drizzle-orm");
-  const [dbUser] = await db2.select().from(users).where(eq2(users.id, payload.sub)).limit(1);
+  let dbUser;
+  try {
+    [dbUser] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+  } catch (err) {
+    console.error("[Hooks] Database error:", err);
+    return new Response(JSON.stringify({
+      error: "Internal Server Error",
+      message: err.message,
+      stack: err.stack,
+      payload_sub: payload.sub
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
   if (!dbUser || !dbUser.is_active) {
     event.cookies.delete("auth_token", { path: "/" });
     if (path.startsWith("/api/")) {

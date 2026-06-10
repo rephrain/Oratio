@@ -25,6 +25,11 @@ function subscribe(store, ...callbacks) {
   const unsub = store.subscribe(...callbacks);
   return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
+function get_store_value(store) {
+  let value;
+  subscribe(store, (_) => value = _)();
+  return value;
+}
 function compute_slots(slots) {
   const result = {};
   for (const key in slots) {
@@ -34,6 +39,10 @@ function compute_slots(slots) {
 }
 function null_to_empty(value) {
   return value == null ? "" : value;
+}
+function set_store_value(store, ret, value) {
+  store.set(value);
+  return ret;
 }
 function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
   return new CustomEvent(type, { detail, bubbles, cancelable });
@@ -169,11 +178,13 @@ export {
   each as g,
   getContext as h,
   is_function as i,
-  compute_slots as j,
-  null_to_empty as k,
+  get_store_value as j,
+  set_store_value as k,
+  compute_slots as l,
   missing_component as m,
   noop as n,
   onDestroy as o,
+  null_to_empty as p,
   run_all as r,
   setContext as s,
   validate_component as v

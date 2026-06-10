@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.8fc59e6b.js","app":"_app/immutable/entry/app.d5ad62e0.js","imports":["_app/immutable/entry/start.8fc59e6b.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/singletons.e1db24ca.js","_app/immutable/chunks/index.8449654f.js","_app/immutable/chunks/paths.dff09679.js","_app/immutable/entry/app.d5ad62e0.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/index.98d8086f.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.7bb28938.js","app":"_app/immutable/entry/app.7eda777c.js","imports":["_app/immutable/entry/start.7bb28938.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/paths.7522f69a.js","_app/immutable/entry/app.7eda777c.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/index.ccebf854.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -31,7 +31,8 @@ return {
 			__memo(() => import('./nodes/16.js')),
 			__memo(() => import('./nodes/17.js')),
 			__memo(() => import('./nodes/18.js')),
-			__memo(() => import('./nodes/19.js'))
+			__memo(() => import('./nodes/19.js')),
+			__memo(() => import('./nodes/20.js'))
 		],
 		routes: [
 			{
@@ -138,6 +139,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/cashiers/_server.js'))
+			},
+			{
+				id: "/api/chat/broadcast",
+				pattern: /^\/api\/chat\/broadcast\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/chat/broadcast/_server.js'))
 			},
 			{
 				id: "/api/chat/conversations",
@@ -259,6 +267,13 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/patients/_server.js'))
 			},
 			{
+				id: "/api/patients/[id]",
+				pattern: /^\/api\/patients\/([^/]+?)\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/patients/_id_/_server.js'))
+			},
+			{
 				id: "/api/patients/[id]/medical-background",
 				pattern: /^\/api\/patients\/([^/]+?)\/medical-background\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
@@ -292,6 +307,20 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/pdf/_server.js'))
+			},
+			{
+				id: "/api/realtime/stream",
+				pattern: /^\/api\/realtime\/stream\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/realtime/stream/_server.js'))
+			},
+			{
+				id: "/api/realtime/subscribe",
+				pattern: /^\/api\/realtime\/subscribe\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/realtime/subscribe/_server.js'))
 			},
 			{
 				id: "/api/snowstorm",
@@ -364,45 +393,52 @@ return {
 				endpoint: null
 			},
 			{
+				id: "/kasir/edit-patient",
+				pattern: /^\/kasir\/edit-patient\/?$/,
+				params: [],
+				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
+				endpoint: null
+			},
+			{
 				id: "/kasir/existing-patient",
 				pattern: /^\/kasir\/existing-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/new-patient",
 				pattern: /^\/kasir\/new-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 16 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/patients",
 				pattern: /^\/kasir\/patients\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 16 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 17 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/payments",
 				pattern: /^\/kasir\/payments\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 18 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 19 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/payment",
 				pattern: /^\/kasir\/payment\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 17 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 18 },
 				endpoint: null
 			},
 			{
 				id: "/login",
 				pattern: /^\/login\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 19 },
+				page: { layouts: [0,], errors: [1,], leaf: 20 },
 				endpoint: null
 			}
 		],

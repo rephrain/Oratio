@@ -5,6 +5,6 @@ let component_cache;
 export const component = async () => component_cache ??= (await import('../entries/pages/admin/_layout.svelte.js')).default;
 export { universal };
 export const universal_id = "src/routes/admin/+layout.js";
-export const imports = ["_app/immutable/nodes/2.3d467076.js","_app/immutable/chunks/scheduler.034cee57.js","_app/immutable/chunks/index.98d8086f.js","_app/immutable/chunks/NotificationPanel.f818985e.js","_app/immutable/chunks/each.37e91fe0.js","_app/immutable/chunks/toast.c09e6c6b.js","_app/immutable/chunks/index.8449654f.js","_app/immutable/chunks/layout.a14078e9.js","_app/immutable/chunks/stores.773b3f2b.js","_app/immutable/chunks/singletons.e1db24ca.js","_app/immutable/chunks/paths.dff09679.js"];
-export const stylesheets = ["_app/immutable/assets/2.2e2ef6c2.css","_app/immutable/assets/NotificationPanel.27608108.css"];
+export const imports = ["_app/immutable/nodes/2.24712c1f.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/index.ccebf854.js","_app/immutable/chunks/ChatPanel.dcfe4645.js","_app/immutable/chunks/each.fc1fbb16.js","_app/immutable/chunks/toast.ecaf5d93.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/layout.2f517cee.js","_app/immutable/chunks/realtimeConnection.02b7499f.js","_app/immutable/chunks/stores.d423bea4.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/paths.7522f69a.js","_app/immutable/chunks/ConnectionStatus.b0ba2753.js"];
+export const stylesheets = ["_app/immutable/assets/2.5c5ced20.css","_app/immutable/assets/ChatPanel.fb474781.css","_app/immutable/assets/ConnectionStatus.fafdb7e4.css"];
 export const fonts = [];

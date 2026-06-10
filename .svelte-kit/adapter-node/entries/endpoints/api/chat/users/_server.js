@@ -20,7 +20,7 @@ async function GET({ locals }) {
   const currentHours = nowWIB.getHours();
   const currentMinutes = nowWIB.getMinutes();
   const currentTime = `${currentHours.toString().padStart(2, "0")}:${currentMinutes.toString().padStart(2, "0")}:00`;
-  const filtered = allUsers.filter((u) => u.role === "dokter" || u.role === "kasir").map((u) => {
+  const filtered = allUsers.filter((u) => u.role === "admin" || u.role === "dokter" || u.role === "kasir").map((u) => {
     const is_online = allShifts.some(
       (shift) => shift.user_id === u.id && shift.day_of_week === currentDayOfWeek && shift.start_time <= currentTime && shift.end_time >= currentTime
     );

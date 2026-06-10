@@ -1,6 +1,7 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { d as db, z as chatConversations, A as chatMessages, u as users } from "../../../../../chunks/index3.js";
 import { and, eq, or, gt, asc } from "drizzle-orm";
+import { e as emitChatEvent } from "../../../../../chunks/realtimeService.js";
 async function GET({ url, locals }) {
   if (!locals.user) {
     return json({ error: "Unauthorized" }, { status: 401 });
@@ -67,6 +68,8 @@ async function POST({ request, locals }) {
     content: content.trim()
   }).returning();
   await db.update(chatConversations).set({ last_message_at: message.created_at }).where(eq(chatConversations.id, conversationId));
+  const otherParticipantId = conv.participant_a === userId ? conv.participant_b : conv.participant_a;
+  emitChatEvent("message_sent", conversationId, { message }, userId, [otherParticipantId]);
   return json({ message }, { status: 201 });
 }
 export {

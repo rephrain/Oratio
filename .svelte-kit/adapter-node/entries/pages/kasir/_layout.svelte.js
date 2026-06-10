@@ -1,6 +1,6 @@
 import { c as create_ssr_component, a as subscribe, v as validate_component, e as escape, f as add_attribute } from "../../../chunks/ssr.js";
-import { i as isNotificationOpen, u as unreadNotificationCount, T as Toast, P as ProfileModal, N as NotificationPanel } from "../../../chunks/NotificationPanel.js";
-import { i as isChatOpen, u as unreadCount, S as Sidebar, C as ChatPanel } from "../../../chunks/ChatPanel.js";
+import { i as isNotificationOpen, u as unreadNotificationCount, a as isChatOpen, b as unreadCount, T as Toast, P as ProfileModal, C as ChatPanel, N as NotificationPanel } from "../../../chunks/ChatPanel.js";
+import { S as Sidebar } from "../../../chunks/Sidebar.js";
 import { p as page } from "../../../chunks/stores.js";
 import { i as isProfileModalOpen } from "../../../chunks/layout.js";
 const _layout_svelte_svelte_type_style_lang = "";

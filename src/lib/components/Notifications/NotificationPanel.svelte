@@ -1,4 +1,5 @@
 <script>
+	import { onMount, onDestroy } from 'svelte';
 	import { isNotificationOpen, notifications, unreadNotificationCount } from '$lib/stores/notifications.js';
 	import { onEvent, subscribe, unsubscribe } from '$lib/stores/realtimeConnection.js';
 

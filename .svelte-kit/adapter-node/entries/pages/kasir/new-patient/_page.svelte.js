@@ -2,15 +2,7 @@ import { c as create_ssr_component, a as subscribe, e as escape, f as add_attrib
 import { S as SearchableSelect } from "../../../../chunks/SearchableSelect.js";
 import { R as RichSelect } from "../../../../chunks/RichSelect.js";
 import { C as COUNTRY_CALLING_CODES, b as ALLERGY_REACTIONS, c as BLOOD_TYPES } from "../../../../chunks/constants.js";
-import { w as writable } from "../../../../chunks/index2.js";
-const provinces = writable([]);
-const regencies = writable([]);
-const districts = writable([]);
-const villages = writable([]);
-const loadingProvince = writable(false);
-const loadingRegency = writable(false);
-const loadingDistrict = writable(false);
-const loadingVillage = writable(false);
+import { v as villages, d as districts, r as regencies, p as provinces, l as loadingProvince, a as loadingRegency, b as loadingDistrict, c as loadingVillage } from "../../../../chunks/wilayah.js";
 const _page_svelte_svelte_type_style_lang = "";
 const css = {
   code: "@keyframes svelte-2x98fo-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}",
@@ -374,21 +366,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       },
       {}
     )}</div></div></div></div></section>  <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"><div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"><div class="flex items-center gap-2 text-primary" data-svelte-h="svelte-15jl8lb"><span class="material-symbols-outlined">history</span> <h3 class="font-bold text-lg text-slate-800">Riwayat Penyakit</h3></div> <button type="button" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-1" data-svelte-h="svelte-ey76f1"><span class="material-symbols-outlined text-sm">add</span> Tambah</button></div> <div class="space-y-4">${each(diseaseHistory, (item, i) => {
-      return `<div class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"><div class="w-full md:w-40 shrink-0">${validate_component(RichSelect, "RichSelect").$$render(
-        $$result,
-        {
-          placeholder: "Tipe",
-          options: DISEASE_TYPE_OPTIONS,
-          value: item.type
-        },
-        {
-          value: ($$value) => {
-            item.type = $$value;
-            $$settled = false;
-          }
-        },
-        {}
-      )}</div> <div class="flex-1 w-full min-w-0 [&amp;>div.form-group]:mb-0 [&amp;_input]:w-full [&amp;_input]:h-11 [&amp;_input]:rounded-lg [&amp;_input]:border-slate-200 [&amp;_input]:bg-white [&amp;_input]:focus:ring-primary [&amp;_input]:focus:border-primary [&amp;_input]:text-sm">${validate_component(SearchableSelect, "SearchableSelect").$$render(
+      return `<div class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100">${item.code ? `<div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-[16px]" data-svelte-h="svelte-h4pe0j">check_circle</span> <span class="font-medium text-slate-800">${escape(item.display)}</span> ${item.type ? `<span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">${escape(item.type === "family" ? "Keluarga" : "Pribadi")} </span>` : ``} <button type="button" class="text-red-500 hover:text-red-700" data-svelte-h="svelte-lzcqap">✕</button> </div>` : `<div class="flex flex-col md:flex-row gap-4 items-center"><div class="flex-1 w-full min-w-0 [&amp;>div.form-group]:mb-0 [&amp;_input]:w-full [&amp;_input]:h-11 [&amp;_input]:rounded-lg [&amp;_input]:border-slate-200 [&amp;_input]:bg-white [&amp;_input]:focus:ring-primary [&amp;_input]:focus:border-primary [&amp;_input]:text-sm">${validate_component(SearchableSelect, "SearchableSelect").$$render(
         $$result,
         {
           placeholder: "Cari penyakit (SNOMED)...",
@@ -402,9 +380,23 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
           }
         },
         {}
-      )}</div> <button type="button" class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2" data-svelte-h="svelte-stslod"><span class="material-symbols-outlined text-[18px]">delete</span> <span class="md:hidden text-sm font-semibold">Hapus</span></button> </div>`;
+      )}</div> <div class="w-full md:w-40 shrink-0">${validate_component(RichSelect, "RichSelect").$$render(
+        $$result,
+        {
+          placeholder: "Tipe",
+          options: DISEASE_TYPE_OPTIONS,
+          value: item.type
+        },
+        {
+          value: ($$value) => {
+            item.type = $$value;
+            $$settled = false;
+          }
+        },
+        {}
+      )}</div> <button type="button" class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2" data-svelte-h="svelte-1j67s1p"><span class="material-symbols-outlined text-[18px]">delete</span> <span class="md:hidden text-sm font-semibold">Hapus</span></button> </div>`} </div>`;
     })} ${diseaseHistory.length === 0 ? `<p class="text-sm text-slate-400 text-center py-4 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50" data-svelte-h="svelte-1jhdrsu">Belum ada riwayat penyakit</p>` : ``}</div></section>  <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"><div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"><div class="flex items-center gap-2 text-primary" data-svelte-h="svelte-126u1vt"><span class="material-symbols-outlined">warning</span> <h3 class="font-bold text-lg text-slate-800">Alergi</h3></div> <button type="button" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-1" data-svelte-h="svelte-11m8pn5"><span class="material-symbols-outlined text-sm">add</span> Tambah</button></div> <div class="space-y-4">${each(allergies, (item, i) => {
-      return `<div class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100"><div class="flex-1 w-full min-w-0 [&amp;>div.form-group]:mb-0 [&amp;_input]:w-full [&amp;_input]:h-11 [&amp;_input]:rounded-lg [&amp;_input]:border-slate-200 [&amp;_input]:bg-white [&amp;_input]:focus:ring-primary [&amp;_input]:focus:border-primary [&amp;_input]:text-sm">${validate_component(SearchableSelect, "SearchableSelect").$$render(
+      return `<div class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100">${item.substance_code && item.reaction_code ? `<div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-[16px]" data-svelte-h="svelte-h4pe0j">check_circle</span> <span class="font-medium text-slate-800">${escape(item.substance_display)}</span> ${item.reaction_display ? `<span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">${escape(item.reaction_display)} </span>` : ``} <button type="button" class="text-red-500 hover:text-red-700" data-svelte-h="svelte-7s1fnr">✕</button> </div>` : `<div class="flex flex-col md:flex-row gap-4 items-center"><div class="flex-1 w-full min-w-0 [&amp;>div.form-group]:mb-0 [&amp;_input]:w-full [&amp;_input]:h-11 [&amp;_input]:rounded-lg [&amp;_input]:border-slate-200 [&amp;_input]:bg-white [&amp;_input]:focus:ring-primary [&amp;_input]:focus:border-primary [&amp;_input]:text-sm">${validate_component(SearchableSelect, "SearchableSelect").$$render(
         $$result,
         {
           placeholder: "Cari alergen/substansi...",
@@ -432,7 +424,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
           }
         },
         {}
-      )}</div> <button type="button" class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2" data-svelte-h="svelte-glesdb"><span class="material-symbols-outlined text-[18px]">delete</span> <span class="md:hidden text-sm font-semibold">Hapus</span></button> </div>`;
+      )}</div> <button type="button" class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2" data-svelte-h="svelte-fe2zsv"><span class="material-symbols-outlined text-[18px]">delete</span> <span class="md:hidden text-sm font-semibold">Hapus</span></button> </div>`} </div>`;
     })} ${allergies.length === 0 ? `<p class="text-sm text-slate-400 text-center py-4 border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50" data-svelte-h="svelte-1hvd6zg">Belum ada data alergi</p>` : ``}</div></section>  <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"><div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"><div class="flex items-center gap-2 text-primary" data-svelte-h="svelte-c8os7m"><span class="material-symbols-outlined">medication</span> <h3 class="font-bold text-lg text-slate-800">Riwayat Pengobatan</h3></div> <button type="button" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-1" data-svelte-h="svelte-1k5kx7y"><span class="material-symbols-outlined text-sm">add</span> Tambah</button></div> <div class="space-y-4">${each(medications, (item, i) => {
       return `<div class="flex flex-col gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100">${item.product_name ? `<div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-[16px]" data-svelte-h="svelte-h4pe0j">check_circle</span> <span class="font-medium text-slate-800">${escape(item.product_name)}</span> ${item.dosage_form ? `<span class="text-slate-400">— ${escape(item.dosage_form)}</span>` : ``} <span class="text-xs text-slate-400 ml-auto">KFA: ${escape(item.kfa_code)}</span> <button type="button" class="text-xs text-slate-400 hover:text-red-500 transition-colors" data-svelte-h="svelte-1xix59g">✕</button> </div>` : `<div class="flex flex-col gap-3"><div class="flex p-1 bg-slate-100 rounded-lg w-fit"><button type="button" class="${"px-3 py-1 text-[10px] font-bold rounded-md transition-all " + escape(
         "bg-white text-primary shadow-sm",

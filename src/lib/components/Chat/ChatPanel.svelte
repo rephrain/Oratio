@@ -1,6 +1,6 @@
 <script>
-	import { isChatOpen, unreadCount, chatView } from '$lib/stores/chat.js';
 	import { onMount, onDestroy, tick } from 'svelte';
+	import { isChatOpen, unreadCount, chatView } from '$lib/stores/chat.js';
 	import { onEvent, subscribe, unsubscribe } from '$lib/stores/realtimeConnection.js';
 
 	export let user = null;
@@ -22,6 +22,7 @@
 	let broadcastStatus = ''; // '' | 'success' | 'error'
 
 	const rtUnsubscribers = [];
+	let wasChatOpen = false;
 
 	// === Lifecycle ===
 	onMount(() => {

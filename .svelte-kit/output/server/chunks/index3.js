@@ -540,14 +540,8 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
 const connectionString = process.env.DATABASE_URL || "postgresql://oratio:Pwd%266w9RfK@localhost:5432/oratio";
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
-const index = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  db
-}, Symbol.toStringTag, { value: "Module" }));
 export {
   chatMessages as A,
-  schema as B,
-  index as C,
   notificationReads as a,
   patientDiseaseHistory as b,
   patientAllergy as c,

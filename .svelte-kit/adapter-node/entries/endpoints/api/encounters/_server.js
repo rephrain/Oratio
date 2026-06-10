@@ -3,6 +3,7 @@ import { e as encounters, u as users, d as db, p as patients, t as terminologyMa
 import { sql, eq, and, desc, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { g as generateEncounterId } from "../../../../chunks/formatters.js";
+import { a as emitPatientEvent, b as emitQueueEvent, c as emitDashboardEvent } from "../../../../chunks/realtimeService.js";
 async function GET({ url, locals }) {
   const date = url.searchParams.get("date");
   const dateFrom = url.searchParams.get("date_from");
@@ -114,12 +115,22 @@ async function POST({ request, locals }) {
   }).returning();
   if (body.tekanan_darah) {
     await db.update(patients).set({ tekanan_darah: body.tekanan_darah }).where(eq(patients.id, body.patient_id));
+    emitPatientEvent("patient_updated", body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
   }
   await db.insert(statusHistory).values({
     encounter_id: encId,
     status: "Arrived",
     start_at: /* @__PURE__ */ new Date()
   });
+  const eventPayload = {
+    encounter,
+    patient_name: body.patient_name || "Patient",
+    // Assuming patient_name is passed or could be fetched
+    doctor_name: doctor.name,
+    queue_number: queueNumber
+  };
+  emitQueueEvent("queue_created", eventPayload, locals?.user?.id);
+  emitDashboardEvent("encounter_created", eventPayload, locals?.user?.id);
   return json({ encounter, queue_number: queueNumber }, { status: 201 });
 }
 export {

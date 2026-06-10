@@ -2,6 +2,7 @@ import { j as json } from "../../../../../chunks/index.js";
 import { d as db, e as encounters, p as patients, u as users, t as terminologyMaster, v as encounterReferrals, x as encounterItems, w as items, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, h as statusHistory, g as documents, r as encounterPrescriptions } from "../../../../../chunks/index3.js";
 import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { d as emitEncounterEvent, b as emitQueueEvent } from "../../../../../chunks/realtimeService.js";
 async function GET({ params }) {
   try {
     const [encounter] = await db.select({
@@ -468,6 +469,30 @@ async function PUT({ params, request }) {
         subtotal: item.subtotal
       });
     }
+  }
+  const userId = locals?.user?.id;
+  const encounterId = params.id;
+  emitEncounterEvent("encounter_updated", encounterId, { encounter: updated }, userId);
+  if (body.status) {
+    emitEncounterEvent("status_changed", encounterId, { status: body.status }, userId);
+    emitQueueEvent("queue_updated", { id: encounterId, status: body.status }, userId);
+  }
+  if (body.subjective !== void 0 || body.objective !== void 0 || body.assessment !== void 0 || body.plan !== void 0) {
+    emitEncounterEvent("soap_updated", encounterId, {
+      subjective: updated.subjective,
+      objective: updated.objective,
+      assessment: updated.assessment,
+      plan: updated.plan
+    }, userId);
+  }
+  if (body.prescriptions) {
+    emitEncounterEvent("prescription_updated", encounterId, { prescriptions: body.prescriptions }, userId);
+  }
+  if (body.odontogram) {
+    emitEncounterEvent("odontogram_updated", encounterId, { odontogram: body.odontogram }, userId);
+  }
+  if (body.encounter_items) {
+    emitEncounterEvent("item_updated", encounterId, { items: body.encounter_items }, userId);
   }
   return json({ encounter: updated });
 }

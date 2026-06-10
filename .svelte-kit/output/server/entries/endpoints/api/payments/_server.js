@@ -2,6 +2,7 @@ import { j as json } from "../../../../chunks/index.js";
 import { u as users, d as db, y as payments, e as encounters, p as patients, x as encounterItems } from "../../../../chunks/index3.js";
 import { eq, sql, desc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { d as emitEncounterEvent, b as emitQueueEvent, c as emitDashboardEvent } from "../../../../chunks/realtimeService.js";
 async function GET({ url }) {
   const encounterId = url.searchParams.get("encounter_id");
   const date = url.searchParams.get("date");
@@ -76,6 +77,11 @@ async function POST({ request, locals }) {
     paid_at: /* @__PURE__ */ new Date()
   }).returning();
   await db.update(encounters).set({ status: "Completed", updated_at: /* @__PURE__ */ new Date() }).where(eq(encounters.id, body.encounter_id));
+  const userId = locals?.user?.id;
+  emitEncounterEvent("payment_completed", body.encounter_id, { payment }, userId);
+  emitEncounterEvent("status_changed", body.encounter_id, { status: "Completed" }, userId);
+  emitQueueEvent("queue_completed", { id: body.encounter_id, status: "Completed" }, userId);
+  emitDashboardEvent("payment_completed", { payment, encounter_id: body.encounter_id }, userId);
   return json({ payment }, { status: 201 });
 }
 export {

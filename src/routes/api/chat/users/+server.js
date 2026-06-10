@@ -31,9 +31,9 @@ export async function GET({ locals }) {
 	const currentMinutes = nowWIB.getMinutes();
 	const currentTime = `${currentHours.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}:00`;
 
-	// Filter to only dokter and kasir roles and add online status
+	// Filter to include admins, dokter, and kasir roles
 	const filtered = allUsers
-		.filter(u => u.role === 'dokter' || u.role === 'kasir')
+		.filter(u => u.role === 'admin' || u.role === 'dokter' || u.role === 'kasir')
 		.map(u => {
 			const is_online = allShifts.some(shift => 
 				shift.user_id === u.id &&

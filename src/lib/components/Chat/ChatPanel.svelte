@@ -362,8 +362,8 @@
 							<span class="material-symbols-outlined">campaign</span>
 						</button>
 					{/if}
-					<button class="chat-icon-btn" on:click={() => { $chatView = 'newChat'; fetchChatUsers(); }} title="New Chat">
-						<span class="material-symbols-outlined">edit_square</span>
+					<button class="chat-icon-btn" on:click={() => { $chatView = 'newChat'; fetchChatUsers(); }} title="Search Users">
+						<span class="material-symbols-outlined">search</span>
 					</button>
 					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
 						<span class="material-symbols-outlined">close</span>
@@ -406,8 +406,8 @@
 									{/if}
 								</div>
 								<div>
-									<span class="chat-role-badge" class:role-dokter-badge={activeConversation.otherUser.role === 'dokter'} class:role-kasir-badge={activeConversation.otherUser.role === 'kasir'}>
-									{activeConversation.otherUser.role === 'dokter' ? 'Dokter' : 'Kasir'}
+									<span class="chat-role-badge" class:role-dokter-badge={activeConversation.otherUser.role === 'dokter'} class:role-kasir-badge={activeConversation.otherUser.role === 'kasir'} class:role-admin-badge={activeConversation.otherUser.role === 'admin'}>
+									{activeConversation.otherUser.role === 'dokter' ? 'Dokter' : (activeConversation.otherUser.role === 'admin' ? 'Admin' : 'Kasir')}
 								</span>
 								</div>
 							</div>
@@ -445,7 +445,7 @@
 					<div class="chat-conversation-list">
 						{#each conversations as conv}
 							<button class="chat-conversation-item" class:has-unread={conv.unreadCount > 0} on:click={() => openConversation(conv)}>
-								<div class="chat-avatar" class:role-dokter-avatar={conv.otherUser?.role === 'dokter'} class:role-kasir-avatar={conv.otherUser?.role === 'kasir'}>
+								<div class="chat-avatar" class:role-dokter-avatar={conv.otherUser?.role === 'dokter'} class:role-kasir-avatar={conv.otherUser?.role === 'kasir'} class:role-admin-avatar={conv.otherUser?.role === 'admin'}>
 									{#if conv.otherUser?.profile_image_url}
 										<img src={conv.otherUser.profile_image_url} alt={conv.otherUser?.name} />
 									{:else}
@@ -454,7 +454,7 @@
 									{#if conv.otherUser?.is_online}
 										<span class="chat-online-dot"></span>
 									{:else}
-										<span class="chat-role-dot" class:role-dokter-dot={conv.otherUser?.role === 'dokter'} class:role-kasir-dot={conv.otherUser?.role === 'kasir'}></span>
+										<span class="chat-role-dot" class:role-dokter-dot={conv.otherUser?.role === 'dokter'} class:role-kasir-dot={conv.otherUser?.role === 'kasir'} class:role-admin-dot={conv.otherUser?.role === 'admin'}></span>
 									{/if}
 								</div>
 								<div class="chat-conversation-info">
@@ -562,8 +562,8 @@
 								</div>
 								<div class="chat-user-info">
 									<span class="chat-user-name">{u.name}</span>
-									<span class="chat-role-badge" class:role-dokter-badge={u.role === 'dokter'} class:role-kasir-badge={u.role === 'kasir'}>
-										{u.role === 'dokter' ? 'Dokter' : 'Kasir'}
+									<span class="chat-role-badge" class:role-dokter-badge={u.role === 'dokter'} class:role-kasir-badge={u.role === 'kasir'} class:role-admin-badge={u.role === 'admin'}>
+										{u.role === 'dokter' ? 'Dokter' : (u.role === 'admin' ? 'Admin' : 'Kasir')}
 									</span>
 								</div>
 							</button>
@@ -594,7 +594,7 @@
 							{/if}
 							<div class="chat-message" class:chat-message-self={msg.sender_id === user?.id} class:chat-message-other={msg.sender_id !== user?.id}>
 								{#if msg.sender_id !== user?.id}
-									<div class="chat-msg-avatar-sm" class:role-dokter-avatar={msg.sender_role === 'dokter'} class:role-kasir-avatar={msg.sender_role === 'kasir'}>
+									<div class="chat-msg-avatar-sm" class:role-dokter-avatar={msg.sender_role === 'dokter'} class:role-kasir-avatar={msg.sender_role === 'kasir'} class:role-admin-avatar={msg.sender_role === 'admin'}>
 										{#if msg.sender_profile_image_url}
 											<img src={msg.sender_profile_image_url} alt={msg.sender_name} />
 										{:else}
@@ -925,6 +925,10 @@
 		background: linear-gradient(135deg, #10b981, #047857);
 	}
 
+	.role-admin-avatar {
+		background: linear-gradient(135deg, #6366f1, #4338ca);
+	}
+
 	.chat-role-dot {
 		position: absolute;
 		bottom: -2px;
@@ -938,6 +942,7 @@
 
 	.role-dokter-dot { background: #3b82f6; }
 	.role-kasir-dot { background: #10b981; }
+	.role-admin-dot { background: #6366f1; }
 
 	/* === Role Badge === */
 	.chat-role-badge {
@@ -958,6 +963,11 @@
 	.role-kasir-badge {
 		background: #d1fae5;
 		color: #047857;
+	}
+
+	.role-admin-badge {
+		background: #e0e7ff;
+		color: #4338ca;
 	}
 
 	/* === Conversation List === */

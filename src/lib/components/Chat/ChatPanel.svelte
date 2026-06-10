@@ -22,6 +22,9 @@
 	let pollUnreadInterval;
 	let lastMessageTimestamp = null;
 	let wasChatOpen = false;
+	let broadcastMessage = '';
+	let broadcasting = false;
+	let broadcastStatus = ''; // '' | 'success' | 'error'
 
 	// === Lifecycle ===
 	onMount(() => {
@@ -193,6 +196,35 @@
 		}
 	}
 
+	async function sendBroadcast() {
+		if (!broadcastMessage.trim() || broadcasting) return;
+		const content = broadcastMessage.trim();
+		broadcasting = true;
+		broadcastStatus = '';
+		try {
+			const res = await fetch('/api/chat/broadcast', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ content })
+			});
+			if (res.ok) {
+				broadcastMessage = '';
+				broadcastStatus = 'success';
+				setTimeout(() => {
+					view = 'conversations';
+					broadcastStatus = '';
+					fetchConversations();
+				}, 1500);
+			} else {
+				broadcastStatus = 'error';
+			}
+		} catch (e) {
+			broadcastStatus = 'error';
+		} finally {
+			broadcasting = false;
+		}
+	}
+
 	async function openConversation(conv) {
 		activeConversation = conv;
 		view = 'chat';
@@ -326,6 +358,11 @@
 					<h2>Messages</h2>
 				</div>
 				<div class="chat-panel-header-right">
+					{#if user?.role === 'admin'}
+						<button class="chat-icon-btn" on:click={() => { view = 'broadcast'; }} title="Broadcast Message" style="color: var(--primary, #3b82f6)">
+							<span class="material-symbols-outlined">campaign</span>
+						</button>
+					{/if}
 					<button class="chat-icon-btn" on:click={() => { view = 'newChat'; fetchChatUsers(); }} title="New Chat">
 						<span class="material-symbols-outlined">edit_square</span>
 					</button>
@@ -333,12 +370,12 @@
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>
-			{:else if view === 'newChat'}
+			{:else if view === 'newChat' || view === 'broadcast'}
 				<div class="chat-panel-header-left">
 					<button class="chat-icon-btn" on:click={() => { view = 'conversations'; }} title="Back">
 						<span class="material-symbols-outlined">arrow_back</span>
 					</button>
-					<h2>New Chat</h2>
+					<h2>{view === 'broadcast' ? 'Broadcast Message' : 'New Chat'}</h2>
 				</div>
 				<div class="chat-panel-header-right">
 					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
@@ -443,6 +480,51 @@
 						{/each}
 					</div>
 				{/if}
+
+			{:else if view === 'broadcast'}
+				<div class="chat-broadcast-view">
+					<div class="chat-broadcast-header">
+						<div class="chat-broadcast-banner">
+							<span class="material-symbols-outlined">info</span>
+							<p>This message will be sent to <strong>every active user</strong> in the platform as a private chat message from you.</p>
+						</div>
+					</div>
+
+					<div class="chat-broadcast-body">
+						<textarea
+							class="chat-broadcast-textarea"
+							placeholder="Type your announcement here..."
+							bind:value={broadcastMessage}
+							disabled={broadcasting || broadcastStatus === 'success'}
+						></textarea>
+
+						{#if broadcastStatus === 'success'}
+							<div class="chat-status-msg success">
+								<span class="material-symbols-outlined">check_circle</span>
+								Broadcast sent successfully!
+							</div>
+						{:else if broadcastStatus === 'error'}
+							<div class="chat-status-msg error">
+								<span class="material-symbols-outlined">error</span>
+								Failed to send broadcast. Please try again.
+							</div>
+						{/if}
+
+						<button 
+							class="chat-broadcast-send-btn" 
+							disabled={!broadcastMessage.trim() || broadcasting || broadcastStatus === 'success'}
+							on:click={sendBroadcast}
+						>
+							{#if broadcasting}
+								<div class="chat-spinner-sm"></div>
+								Sending...
+							{:else}
+								<span class="material-symbols-outlined">send</span>
+								Send to Everyone
+							{/if}
+						</button>
+					</div>
+				</div>
 
 			{:else if view === 'newChat'}
 				<!-- User Picker -->
@@ -1370,5 +1452,127 @@
 		font-size: 0.65rem;
 		font-weight: 600;
 		opacity: 0.9;
+	}
+
+	/* === Broadcast View === */
+	.chat-broadcast-view {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		background: #f8fafc;
+	}
+
+	.chat-broadcast-header {
+		padding: 24px 24px 12px;
+	}
+
+	.chat-broadcast-banner {
+		display: flex;
+		gap: 12px;
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		padding: 16px;
+		border-radius: 16px;
+		color: #1e40af;
+	}
+
+	.chat-broadcast-banner span {
+		font-size: 20px;
+		color: #3b82f6;
+		flex-shrink: 0;
+	}
+
+	.chat-broadcast-banner p {
+		margin: 0;
+		font-size: 0.85rem;
+		line-height: 1.5;
+	}
+
+	.chat-broadcast-body {
+		flex: 1;
+		padding: 0 24px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.chat-broadcast-textarea {
+		flex: 1;
+		width: 100%;
+		padding: 20px;
+		border: 1px solid #e2e8f0;
+		border-radius: 20px;
+		font-size: 1rem;
+		font-family: inherit;
+		resize: none;
+		outline: none;
+		background: white;
+		color: #0f172a;
+		transition: all 0.2s;
+	}
+
+	.chat-broadcast-textarea:focus {
+		border-color: #3b82f6;
+		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+	}
+
+	.chat-broadcast-send-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		width: 100%;
+		padding: 16px;
+		background: #3b82f6;
+		color: white;
+		border: none;
+		border-radius: 16px;
+		font-size: 1rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+	}
+
+	.chat-broadcast-send-btn:hover:not(:disabled) {
+		background: #2563eb;
+		transform: translateY(-2px);
+		box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+	}
+
+	.chat-broadcast-send-btn:disabled {
+		background: #cbd5e1;
+		color: #94a3b8;
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+
+	.chat-status-msg {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px;
+		border-radius: 12px;
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+
+	.chat-status-msg.success {
+		background: #ecfdf5;
+		color: #059669;
+	}
+
+	.chat-status-msg.error {
+		background: #fef2f2;
+		color: #dc2626;
+	}
+
+	.chat-spinner-sm {
+		width: 18px;
+		height: 18px;
+		border: 2px solid rgba(255,255,255,0.3);
+		border-top-color: white;
+		border-radius: 50%;
+		animation: chatSpin 0.6s linear infinite;
 	}
 </style>

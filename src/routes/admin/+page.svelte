@@ -1,5 +1,6 @@
 <script>
 	import { onMount, onDestroy } from "svelte";
+	import { isChatOpen } from "$lib/stores/chat.js";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 
 	let stats = {};
@@ -400,6 +401,29 @@
 							</p>
 						</div>
 					</a>
+					<!-- Broadcast Message Quick Action -->
+					<button
+						on:click={() => { $isChatOpen = true; }}
+						class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-left hover:border-primary/50 hover:shadow-md transition-all group w-full"
+					>
+						<div
+							class="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-white transition-all"
+						>
+							<span class="material-symbols-outlined"
+								>campaign</span
+							>
+						</div>
+						<div>
+							<p
+								class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+							>
+								Broadcast Message
+							</p>
+							<p class="text-[11px] text-slate-500">
+								Send message to all users
+							</p>
+						</div>
+					</button>
 				</div>
 			</div>
 

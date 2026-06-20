@@ -101,6 +101,7 @@ export async function GET({ params, url }) {
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '50');
 	const offset = (page - 1) * limit;
+	const all = url.searchParams.get('all') === 'true';
 
 	// Build mapping of field keys to definitions
 	const fieldMap = {};
@@ -112,7 +113,7 @@ export async function GET({ params, url }) {
 
 	// Build filters from remaining searchParams
 	const filters = [];
-	const skipParams = ['page', 'limit', 'offset'];
+	const skipParams = ['page', 'limit', 'offset', 'all'];
 	url.searchParams.forEach((val, key) => {
 		if (!skipParams.includes(key) && table[key]) {
 			let coercedVal = val;
@@ -129,7 +130,12 @@ export async function GET({ params, url }) {
 		}
 	});
 
-	const query = db.select().from(table).limit(limit).offset(offset);
+	const query = db.select().from(table);
+	
+	if (!all) {
+		query.limit(limit).offset(offset);
+	}
+	
 	if (filters.length > 0) {
 		query.where(and(...filters));
 	}
@@ -291,15 +297,21 @@ export async function DELETE({ params, url }) {
 
 	const table = schemaMap[tableConfig.schema];
 	const id = url.searchParams.get('id');
+	const all = url.searchParams.get('all') === 'true';
 
-	if (!id) {
-		return json({ error: 'ID required' }, { status: 400 });
+	if (!id && !all) {
+		return json({ error: 'ID or all=true required' }, { status: 400 });
 	}
 
 	try {
-		const pkCol = table.id;
-		await db.delete(table).where(eq(pkCol, id));
-		return json({ success: true });
+		if (all) {
+			await db.delete(table);
+			return json({ success: true, count: 'all' });
+		} else {
+			const pkCol = table.id;
+			await db.delete(table).where(eq(pkCol, id));
+			return json({ success: true });
+		}
 	} catch (error) {
 		console.error(`Admin DELETE error for ${params.table}:`, error.message);
 		return json({ error: error.message }, { status: 400 });

@@ -6,6 +6,7 @@
 	import FileUpload from "$lib/components/UI/FileUpload.svelte";
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import { addToast } from "$lib/stores/toast.js";
+	import Papa from "papaparse";
 
 	// Child table relationships — parent slug → list of child descriptors
 	const CHILD_TABLE_MAP = {
@@ -55,7 +56,10 @@
 
 	// Delete confirmation
 	let showDeleteConfirm = false;
+	let showDeleteAllConfirm = false;
 	let deleteId = null;
+	let deletingAll = false;
+	let exporting = false;
 
 	// Get fields visible in modal
 	function getModalFields(mode) {
@@ -213,6 +217,10 @@
 
 	function openEdit(row) {
 		editRecord = { ...row };
+		// Clear sensitive fields
+		formFields.forEach(f => {
+			if (f.type === 'password') editRecord[f.key] = '';
+		});
 		modalMode = "edit";
 		activeTab = 'main';
 		childRecords = {};
@@ -486,6 +494,81 @@
 		}
 	}
 
+	async function handleDeleteAll() {
+		deletingAll = true;
+		try {
+			const res = await fetch(`/api/admin/${tableName}?all=true`, {
+				method: "DELETE",
+			});
+			if (res.ok) {
+				addToast(`Semua data ${tableConfig?.label || tableName} berhasil dihapus`, "success");
+				showDeleteAllConfirm = false;
+				loadData();
+			} else {
+				const err = await res.json();
+				addToast(err.error || "Gagal menghapus semua data", "error");
+			}
+		} catch {
+			addToast("Terjadi kesalahan", "error");
+		} finally {
+			deletingAll = false;
+		}
+	}
+
+	async function exportToExcel() {
+		if (exporting) return;
+		exporting = true;
+		try {
+			// 1. Fetch all data
+			const res = await fetch(`/api/admin/${tableName}?all=true`);
+			if (!res.ok) throw new Error("Gagal mengambil data untuk export");
+			const resp = await res.json();
+			const allData = resp.data || [];
+
+			if (allData.length === 0) {
+				addToast("Tidak ada data untuk diexport", "info");
+				return;
+			}
+
+			// 2. Map data to export format using column definitions
+			const exportRows = allData.map(row => {
+				const mapped = {};
+				for (const col of columns) {
+					// Use the existing column formatters (which handle dates, booleans, and FKs)
+					let val = row[col.key];
+					if (col.format) {
+						val = col.format(val);
+					}
+					mapped[col.label] = val;
+				}
+				return mapped;
+			});
+
+			// 3. Generate CSV
+			const csv = Papa.unparse(exportRows);
+			
+			// 4. Download file with Excel BOM for UTF-8 compatibility
+			const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+			const link = document.createElement("a");
+			const url = URL.createObjectURL(blob);
+			const timestamp = new Date().toISOString().split('T')[0];
+			
+			link.setAttribute("href", url);
+			link.setAttribute("download", `${tableName}-export-${timestamp}.csv`);
+			link.style.visibility = 'hidden';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			
+			addToast("Export berhasil diunduh", "success");
+		} catch (err) {
+			console.error(err);
+			addToast("Gagal melakukan export", "error");
+		} finally {
+			exporting = false;
+		}
+	}
+
 	// Get option label/value for select fields
 	function getOptionValue(opt) {
 		if (typeof opt === "object" && opt !== null) return opt.value;
@@ -523,7 +606,7 @@
 
 	onMount(() => {
 		refreshInterval = setInterval(() => {
-			if (!showModal && !showDeleteConfirm) {
+			if (!showModal && !showDeleteConfirm && !showDeleteAllConfirm) {
 				loadData(true);
 			}
 		}, 30000);
@@ -551,6 +634,27 @@
 				<span class="material-symbols-outlined text-[18px]">arrow_back</span>
 				Dashboard
 			</a>
+			{#if total > 0}
+				<button 
+					class="px-4 py-2 border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-all"
+					on:click={() => showDeleteAllConfirm = true}
+				>
+					<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+					Hapus Semua
+				</button>
+			{/if}
+			<button 
+				class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50" 
+				on:click={exportToExcel}
+				disabled={exporting || total === 0}
+			>
+				{#if exporting}
+					<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+				{:else}
+					<span class="material-symbols-outlined text-[18px]">download</span>
+				{/if}
+				Export
+			</button>
 			<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all" on:click={openCreate}>
 				<span class="material-symbols-outlined text-[18px]">add</span>
 				Tambah
@@ -669,7 +773,12 @@
 					{:else if field.type === "textarea"}
 						<textarea id="inp-{field.key}" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white resize-none" rows="3" bind:value={editRecord[field.key]} placeholder={field.placeholder || ""}></textarea>
 					{:else if field.type === "password"}
-						<input id="inp-{field.key}" type="password" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} placeholder="Enter password" />
+						<div class="space-y-1.5">
+							<input id="inp-{field.key}" type="password" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} placeholder={field.placeholder || "Enter password"} />
+							{#if modalMode === 'edit'}
+								<p class="text-[10px] text-slate-500 ml-1">Kosongkan jika tidak ingin mengubah password.</p>
+							{/if}
+						</div>
 					{:else if field.type === "date"}
 						<input id="inp-{field.key}" type="date" class="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-lg text-sm transition-all focus:outline-none w-full text-slate-900 dark:text-white" bind:value={editRecord[field.key]} />
 					{:else if field.type === "time"}
@@ -916,15 +1025,46 @@
 	</div>
 </AdminModal>
 
+<!-- Delete All Confirmation -->
+<AdminModal bind:show={showDeleteAllConfirm} title="Konfirmasi Hapus Semua">
+	<div class="flex items-start gap-4">
+		<div class="size-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+			<span class="material-symbols-outlined text-red-600 dark:text-red-400">delete_sweep</span>
+		</div>
+		<div>
+			<h4 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Hapus Semua Data?</h4>
+			<p class="text-slate-500 dark:text-slate-400 text-sm">
+				Anda akan menghapus **seluruh** data pada tabel <span class="font-bold text-slate-900 dark:text-white">{tableConfig?.label || tableName}</span> ({total} record).
+				Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+			</p>
+		</div>
+	</div>
+	
+	<div slot="footer">
+		<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-bold text-sm transition-colors" on:click={() => (showDeleteAllConfirm = false)}>
+			Batal
+		</button>
+		<button class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50" on:click={handleDeleteAll} disabled={deletingAll}>
+			{#if deletingAll}
+				<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+				Menghapus...
+			{:else}
+				<span class="material-symbols-outlined text-[18px]">delete_forever</span>
+				Ya, Hapus Semua
+			{/if}
+		</button>
+	</div>
+</AdminModal>
+
 <!-- Delete Confirmation -->
 <AdminModal bind:show={showDeleteConfirm} title="Konfirmasi Hapus">
 	<div class="flex items-start gap-4">
-		<div class="size-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-			<span class="material-symbols-outlined text-red-600">warning</span>
+		<div class="size-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+			<span class="material-symbols-outlined text-red-600 dark:text-red-400">warning</span>
 		</div>
 		<div>
-			<h4 class="text-lg font-bold text-slate-900 mb-1">Hapus Data?</h4>
-			<p class="text-slate-500 text-sm">
+			<h4 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Hapus Data?</h4>
+			<p class="text-slate-500 dark:text-slate-400 text-sm">
 				Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat
 				dibatalkan dan semua data yang terhubung dapat ikut terhapus atau kehilangan relasi.
 			</p>
@@ -932,7 +1072,7 @@
 	</div>
 	
 	<div slot="footer">
-		<button class="px-4 py-2 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold text-sm transition-colors" on:click={() => (showDeleteConfirm = false)}>
+		<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-bold text-sm transition-colors" on:click={() => (showDeleteConfirm = false)}>
 			Batal
 		</button>
 		<button class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-red-600/30 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all flex items-center gap-2" on:click={handleDelete}>

@@ -713,6 +713,7 @@
 		flex-direction: column;
 		animation: slideInRightFloat 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 		overflow: hidden;
+		pointer-events: auto;
 	}
 
 	@keyframes slideInRightFloat {
@@ -727,10 +728,10 @@
 		justify-content: space-between;
 		padding: 20px 24px;
 		border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-		background: rgba(255, 255, 255, 0.7);
-		backdrop-filter: blur(16px);
+		background: rgba(255, 255, 255, 0.8);
 		flex-shrink: 0;
 		z-index: 10;
+		pointer-events: auto;
 	}
 
 	.chat-panel-header-left {
@@ -776,6 +777,7 @@
 		color: #64748b;
 		cursor: pointer;
 		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+		pointer-events: auto;
 	}
 
 	.chat-icon-btn:hover {
@@ -1334,11 +1336,11 @@
 	/* === Input === */
 	.chat-input-wrapper {
 		padding: 16px 24px 20px;
-		background: rgba(255, 255, 255, 0.85);
-		backdrop-filter: blur(16px);
+		background: rgba(255, 255, 255, 0.9);
 		border-top: 1px solid rgba(226, 232, 240, 0.6);
 		flex-shrink: 0;
 		z-index: 10;
+		pointer-events: auto;
 	}
 
 	.chat-input-box {

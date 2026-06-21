@@ -64,7 +64,7 @@
         chief_complaint_display: "",
     };
 
-    $: activeDoctorsCount = doctors.filter(d => d.has_active_shift).length;
+    $: activeDoctorsCount = doctors.filter((d) => d.has_active_shift).length;
 
     let diseaseHistory = [];
     let allergies = [];
@@ -120,13 +120,22 @@
         { value: "event", label: "Event" },
     ];
 
-    $: provinceOptions = $provinces.map((p) => ({ value: p.code, label: p.name }));
-    $: regencyOptions = $regencies.map((r) => ({ value: r.code, label: r.name }));
+    $: provinceOptions = $provinces.map((p) => ({
+        value: p.code,
+        label: p.name,
+    }));
+    $: regencyOptions = $regencies.map((r) => ({
+        value: r.code,
+        label: r.name,
+    }));
     $: districtOptions = $districts.map((d) => ({
         value: d.code,
         label: d.name,
     }));
-    $: villageOptions = $villages.map((v) => ({ value: v.code, label: v.name }));
+    $: villageOptions = $villages.map((v) => ({
+        value: v.code,
+        label: v.name,
+    }));
 
     const DISEASE_TYPE_OPTIONS = [
         { value: "personal", label: "Pribadi" },
@@ -146,7 +155,7 @@
             doctors = data.doctors || [];
             doctorOptions = doctors.map((d) => ({
                 value: d.id,
-                label: `drg. ${d.name}`,
+                label: `${d.name}`,
                 sublabel: d.doctor_code || "General Dentist",
                 meta: {
                     profile_image_url: d.profile_image_url,
@@ -580,7 +589,8 @@
                 <div class="col-span-full md:col-span-1">
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Patient ID (National ID) <span class="text-red-500">*</span
+                        >Patient ID (National ID) <span class="text-red-500"
+                            >*</span
                         ></label
                     >
                     <input
@@ -1146,10 +1156,16 @@
                                     class="material-symbols-outlined text-primary text-[16px]"
                                     >check_circle</span
                                 >
-                                <span class="font-medium text-slate-800">{item.display}</span>
+                                <span class="font-medium text-slate-800"
+                                    >{item.display}</span
+                                >
                                 {#if item.type}
-                                    <span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">
-                                        {item.type === "family" ? "Keluarga" : "Pribadi"}
+                                    <span
+                                        class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded"
+                                    >
+                                        {item.type === "family"
+                                            ? "Keluarga"
+                                            : "Pribadi"}
                                     </span>
                                 {/if}
                                 <button
@@ -1161,7 +1177,9 @@
                                 </button>
                             </div>
                         {:else}
-                            <div class="flex flex-col md:flex-row gap-4 items-center">
+                            <div
+                                class="flex flex-col md:flex-row gap-4 items-center"
+                            >
                                 <div
                                     class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
                                 >
@@ -1187,10 +1205,12 @@
                                     class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
                                     on:click={() => removeDiseaseHistory(i)}
                                 >
-                                    <span class="material-symbols-outlined text-[18px]"
+                                    <span
+                                        class="material-symbols-outlined text-[18px]"
                                         >delete</span
                                     >
-                                    <span class="md:hidden text-sm font-semibold"
+                                    <span
+                                        class="md:hidden text-sm font-semibold"
                                         >Hapus</span
                                     >
                                 </button>
@@ -1238,9 +1258,13 @@
                                     class="material-symbols-outlined text-primary text-[16px]"
                                     >check_circle</span
                                 >
-                                <span class="font-medium text-slate-800">{item.substance_display}</span>
+                                <span class="font-medium text-slate-800"
+                                    >{item.substance_display}</span
+                                >
                                 {#if item.reaction_display}
-                                    <span class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded">
+                                    <span
+                                        class="text-xs text-slate-400 ml-auto px-2 py-1 bg-slate-200 rounded"
+                                    >
                                         {item.reaction_display}
                                     </span>
                                 {/if}
@@ -1253,7 +1277,9 @@
                                 </button>
                             </div>
                         {:else}
-                            <div class="flex flex-col md:flex-row gap-4 items-center">
+                            <div
+                                class="flex flex-col md:flex-row gap-4 items-center"
+                            >
                                 <div
                                     class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
                                 >
@@ -1271,7 +1297,8 @@
                                         options={reactionOptions}
                                         bind:value={item.reaction_code}
                                         on:select={(e) => {
-                                            item.reaction_display = e.detail.label;
+                                            item.reaction_display =
+                                                e.detail.label;
                                         }}
                                     />
                                 </div>
@@ -1280,8 +1307,14 @@
                                     class="w-full md:w-auto h-11 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors shrink-0 flex items-center justify-center gap-2"
                                     on:click={() => removeAllergy(i)}
                                 >
-                                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                                    <span class="md:hidden text-sm font-semibold">Hapus</span>
+                                    <span
+                                        class="material-symbols-outlined text-[18px]"
+                                        >delete</span
+                                    >
+                                    <span
+                                        class="md:hidden text-sm font-semibold"
+                                        >Hapus</span
+                                    >
                                 </button>
                             </div>
                         {/if}

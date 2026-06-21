@@ -515,16 +515,16 @@ export const ADMIN_TABLES = {
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
 			{ key: 'kode_item', label: 'Kode Item', type: 'text', required: true, maxLength: 50 },
 			{ key: 'name', label: 'Name', type: 'text', required: true },
-			{ 
-				key: 'doctor_ids', 
-				label: 'Doctors', 
-				type: 'm2m', 
+			{
+				key: 'doctor_ids',
+				label: 'Doctors',
+				type: 'm2m',
 				m2mSchema: 'doctorItems',
 				m2mLocalKey: 'item_id',
 				m2mForeignKey: 'doctor_id',
-				fkTable: 'users', 
-				fkLabel: 'name', 
-				fkFilter: { role: 'dokter' } 
+				fkTable: 'users',
+				fkLabel: 'name',
+				fkFilter: { role: 'dokter' }
 			},
 			{ key: 'price', label: 'Price', type: 'number', required: true },
 			{ key: 'item_group', label: 'Item Group', type: 'text', maxLength: 50 },
@@ -574,18 +574,19 @@ export const ADMIN_TABLES = {
 
 // Doctor codes mapping (14 doctors from spec)
 export const DOCTOR_CODES = [
-	{ code: 'BS', name: 'drg. Badi Soerachman, Sp.KG' },
-	{ code: 'MK', name: 'drg. Merrida Kartawidjaja, Sp.KG' },
-	{ code: 'MM', name: 'drg. Maya Mukti Sari, Sp.KG' },
-	{ code: 'MG', name: 'drg. Monique Gabriela' },
-	{ code: 'ER', name: 'drg. Erika Subiyanto, Sp.KGA' },
-	{ code: 'HH', name: 'drg. Henri Hartman, Sp.KGA' },
-	{ code: 'FL', name: 'drg. Felicia Melati, Sp.KGA' },
-	{ code: 'CY', name: 'drg. Cynthia Tanujaya' },
-	{ code: 'AM', name: 'drg. Arismunandar, Sp.BM' },
 	{ code: 'AA', name: 'drg. Asri Arumsari, Sp.BM(K), MMRS' },
-	{ code: 'EK', name: 'drg. Eka Marwansyah Oli\'i, Sp.BM(K)' },
+	{ code: 'AZ', name: 'drg . Y. Azmabasyar R, Sp.BM(K)' },
+	{ code: 'BS', name: 'drg. Badi Soerachman, Sp.KG' },
+	{ code: 'CY', name: 'drg. Cynthia Tanujaya' },
+	{ code: 'EK', name: "drg . Eka Marwansyah Oli’i, Sp.BM(K)" },
+	{ code: 'ER', name: 'drg. Erika Subiyanto, Sp.KGA' },
+	{ code: 'FL', name: 'drg. Felicia Melati, Sp.KGA' },
+	{ code: 'HH', name: 'drg. Henri Hartman, Sp.KGA' },
 	{ code: 'HS', name: 'drg. Helmi Siti Aminah, Sp.Pros' },
+	{ code: 'MG', name: 'drg. Monique Gabrielle, Sp.KG' },
+	{ code: 'MM', name: 'drg. Maya Mukti Sari, Sp.KG' },
+	{ code: 'RW', name: 'drg. Rosy Wihardja, MDSc' },
+	{ code: 'SC', name: 'drg. Stephanus Christian, Sp.BM' },
 	{ code: 'WA', name: 'drg. Wenny Awalia, Sp.Pros' },
 	{ code: 'WD', name: 'drg. Widia Hafsyah, Sp.Perio' }
 ];

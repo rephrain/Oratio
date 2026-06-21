@@ -26,7 +26,7 @@
 	let tablePaymentTypeFilter = "";
 	const PAYMENT_TYPE_OPTIONS = [
 		{ value: "", label: "All Payment Types" },
-		...PAYMENT_TYPES.map(p => ({ value: p.label, label: p.label }))
+		...PAYMENT_TYPES.map((p) => ({ value: p.label, label: p.label })),
 	];
 
 	let filterDoctor = "";
@@ -137,10 +137,10 @@
 				{ value: "", label: "All Doctors" },
 				...docs.map((d) => ({
 					value: d.id,
-					label: `drg. ${d.name}`,
+					label: `${d.name}`,
 					sublabel: d.doctor_code || "General Dentist",
-					meta: { profile_image_url: d.profile_image_url }
-				}))
+					meta: { profile_image_url: d.profile_image_url },
+				})),
 			];
 		} catch (err) {
 			console.error("Failed to load doctors:", err);
@@ -157,8 +157,8 @@
 				...cashiers.map((c) => ({
 					value: c.id,
 					label: c.name,
-					meta: { profile_image_url: c.profile_image_url }
-				}))
+					meta: { profile_image_url: c.profile_image_url },
+				})),
 			];
 		} catch (err) {
 			console.error("Failed to load cashiers:", err);
@@ -355,7 +355,6 @@
 							class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10"
 						>
 							<tr>
-
 								<th
 									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
 									on:click={() => handleSort("patient")}
@@ -472,7 +471,6 @@
 								<tr
 									class="hover:bg-slate-50/50 transition-colors"
 								>
-
 									<td
 										class="px-6 py-4 font-medium max-w-[200px] truncate"
 										title={row.patient_name}
@@ -523,22 +521,38 @@
 											)}</span
 										>
 									</td>
-									<td class="px-6 py-4 text-right whitespace-nowrap">
+									<td
+										class="px-6 py-4 text-right whitespace-nowrap"
+									>
 										{#if row.payment?.proof_document_id}
 											<button
 												class="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors mr-1"
 												title="View Proof of Payment"
-												on:click={() => window.open(`/api/documents/${row.payment.proof_document_id}`, '_blank')}
+												on:click={() =>
+													window.open(
+														`/api/documents/${row.payment.proof_document_id}`,
+														"_blank",
+													)}
 											>
-												<span class="material-symbols-outlined text-lg">image</span>
+												<span
+													class="material-symbols-outlined text-lg"
+													>image</span
+												>
 											</button>
 										{/if}
 										<button
 											class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
 											title="View Receipt PDF"
-											on:click={() => window.open(`/api/payments/${row.payment?.id}/pdf`, '_blank')}
+											on:click={() =>
+												window.open(
+													`/api/payments/${row.payment?.id}/pdf`,
+													"_blank",
+												)}
 										>
-											<span class="material-symbols-outlined text-lg">description</span>
+											<span
+												class="material-symbols-outlined text-lg"
+												>description</span
+											>
 										</button>
 									</td>
 								</tr>

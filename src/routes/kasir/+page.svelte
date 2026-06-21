@@ -134,7 +134,7 @@
 				{ value: "", label: "All Doctors" },
 				...doctors.map((d) => ({
 					value: d.id,
-					label: `drg. ${d.name}`,
+					label: `${d.name}`,
 					sublabel: d.doctor_code || "General Dentist",
 					meta: {
 						profile_image_url: d.profile_image_url,

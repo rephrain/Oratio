@@ -20,6 +20,7 @@
 	let broadcastMessage = '';
 	let broadcasting = false;
 	let broadcastStatus = ''; // '' | 'success' | 'error'
+	let lastMessageTimestamp = null;
 
 	const rtUnsubscribers = [];
 	let wasChatOpen = false;
@@ -449,7 +450,7 @@
 					{/if}
 				</div>
 				<div class="chat-panel-header-right">
-					<button class="chat-icon-btn" on:click|stopPropagation={() => ($isChatOpen = false)} title="Close">
+					<button class="chat-icon-btn" on:click|stopPropagation={() => { console.log('[Chat] Close button clicked'); $isChatOpen = false; }} title="Close">
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>

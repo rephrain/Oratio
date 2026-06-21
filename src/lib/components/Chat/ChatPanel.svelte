@@ -373,15 +373,16 @@
 </script>
 
 {#if $isChatOpen}
-	<!-- Backdrop -->
-	<button 
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div 
 		class="chat-backdrop" 
-		on:click={() => ($isChatOpen = false)}
+		on:click|stopPropagation={() => ($isChatOpen = false)}
 		aria-label="Close chat"
-	></button>
+	></div>
 
 	<!-- Panel -->
-	<div class="chat-panel">
+	<div class="chat-panel" on:click|stopPropagation>
 		<!-- Header -->
 		<div class="chat-panel-header">
 			{#if $chatView === 'conversations'}
@@ -398,7 +399,7 @@
 					<button class="chat-icon-btn" on:click={() => { $chatView = 'newChat'; fetchChatUsers(); }} title="Search Users">
 						<span class="material-symbols-outlined">search</span>
 					</button>
-					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
+					<button class="chat-icon-btn" on:click|stopPropagation={() => ($isChatOpen = false)} title="Close">
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>
@@ -410,7 +411,7 @@
 					<h2>{$chatView === 'broadcast' ? 'Broadcast Message' : 'New Chat'}</h2>
 				</div>
 				<div class="chat-panel-header-right">
-					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
+					<button class="chat-icon-btn" on:click|stopPropagation={() => ($isChatOpen = false)} title="Close">
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>
@@ -448,7 +449,7 @@
 					{/if}
 				</div>
 				<div class="chat-panel-header-right">
-					<button class="chat-icon-btn" on:click={() => ($isChatOpen = false)} title="Close">
+					<button class="chat-icon-btn" on:click|stopPropagation={() => ($isChatOpen = false)} title="Close">
 						<span class="material-symbols-outlined">close</span>
 					</button>
 				</div>
@@ -713,7 +714,6 @@
 		flex-direction: column;
 		animation: slideInRightFloat 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 		overflow: hidden;
-		pointer-events: auto;
 	}
 
 	@keyframes slideInRightFloat {
@@ -731,7 +731,6 @@
 		background: rgba(255, 255, 255, 0.8);
 		flex-shrink: 0;
 		z-index: 10;
-		pointer-events: auto;
 	}
 
 	.chat-panel-header-left {
@@ -777,7 +776,6 @@
 		color: #64748b;
 		cursor: pointer;
 		transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-		pointer-events: auto;
 	}
 
 	.chat-icon-btn:hover {
@@ -1340,7 +1338,6 @@
 		border-top: 1px solid rgba(226, 232, 240, 0.6);
 		flex-shrink: 0;
 		z-index: 10;
-		pointer-events: auto;
 	}
 
 	.chat-input-box {

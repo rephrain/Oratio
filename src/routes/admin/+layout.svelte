@@ -253,7 +253,9 @@
 						>
 						{#if $unreadCount > 0}
 							<span class="chat-unread-indicator"
-								>{$unreadCount > 99 ? "99+" : $unreadCount}</span
+								>{$unreadCount > 99
+									? "99+"
+									: $unreadCount}</span
 							>
 						{/if}
 					</button>
@@ -337,16 +339,6 @@
 								>
 								<span class="font-medium text-sm"
 									>My Profile</span
-								>
-							</button>
-							<button
-								class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors"
-							>
-								<span
-									class="material-symbols-outlined text-xl text-slate-400"
-									>settings</span
-								>
-								<span class="font-medium text-sm">Settings</span
 								>
 							</button>
 							<div

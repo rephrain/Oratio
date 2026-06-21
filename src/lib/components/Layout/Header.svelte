@@ -97,8 +97,6 @@
 </header>
 
 <ProfileModal {user} />
-<ChatPanel {user} />
-<NotificationPanel {user} />
 
 <style>
 	.chat-unread-indicator {

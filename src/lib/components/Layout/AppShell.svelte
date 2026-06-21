@@ -3,6 +3,8 @@
 	import Header from './Header.svelte';
 	import { isSidebarOpen, isSidebarHidden } from '$lib/stores/layout.js';
 	import { connect } from '$lib/stores/realtimeConnection.js';
+	import ChatPanel from '../Chat/ChatPanel.svelte';
+	import NotificationPanel from '../Notifications/NotificationPanel.svelte';
 	import { onMount } from 'svelte';
 
 	export let user;
@@ -25,3 +27,6 @@
 		</div>
 	</div>
 </div>
+
+<ChatPanel {user} />
+<NotificationPanel {user} isAdmin={role === 'admin'} />

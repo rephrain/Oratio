@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import * as schema from '$lib/server/db/schema.js';
 import { eq, desc, ilike, sql, and } from 'drizzle-orm';
 import { ADMIN_TABLES } from '$lib/utils/constants.js';
+import { generatePatientId } from '$lib/utils/formatters.js';
 
 const schemaMap = {
 	users: schema.users,
@@ -71,12 +72,31 @@ function cleanBody(body, tableConfig) {
 			continue;
 		}
 
-		// Handle integer for day_of_week and similar
+		// Handle select options mapping
 		if (fieldDef?.type === 'select' && fieldDef.options?.length > 0) {
 			const firstOpt = fieldDef.options[0];
-			if (typeof firstOpt === 'object' && typeof firstOpt.value === 'number') {
-				cleaned[key] = value === '' || value === null ? null : parseInt(value, 10);
-				continue;
+			if (typeof firstOpt === 'object') {
+				if (typeof firstOpt.value === 'number') {
+					cleaned[key] = value === '' || value === null ? null : parseInt(value, 10);
+					continue;
+				} else if (typeof value === 'string') {
+					// Map string label or value to actual value
+					const matched = fieldDef.options.find(o => 
+						o.label?.toLowerCase() === value.toLowerCase() || 
+						o.value?.toLowerCase() === value.toLowerCase()
+					);
+					if (matched) {
+						cleaned[key] = matched.value;
+						continue;
+					}
+				}
+			} else if (typeof firstOpt === 'string' && typeof value === 'string') {
+				// Map string to string ignoring case
+				const matched = fieldDef.options.find(o => String(o).toLowerCase() === value.toLowerCase());
+				if (matched) {
+					cleaned[key] = matched;
+					continue;
+				}
 			}
 		}
 
@@ -202,6 +222,12 @@ export async function POST({ params, request }) {
 
 	try {
 		const m2mResults = await db.transaction(async (tx) => {
+			if (params.table === 'patients' && !mainBody.id) {
+				const lastPatient = await tx.select({ id: table.id }).from(table).orderBy(desc(table.id)).limit(1);
+				const lastId = lastPatient.length > 0 ? lastPatient[0].id : null;
+				mainBody.id = generatePatientId(lastId);
+			}
+
 			const [record] = await tx.insert(table).values(mainBody).returning();
 			
 			// Handle Many-to-Many synchronization

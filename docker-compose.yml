@@ -10,7 +10,7 @@ services:
     volumes:
       - /volume1/docker/oratio/pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oratio"]
+      test: [ "CMD-SHELL", "pg_isready -U oratio" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,14 +35,14 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
+      ORIGIN: https://oratio.synology.me
     volumes:
       - /volume1/docker/oratio/uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:3000" ]
       interval: 15s
       timeout: 5s
       retries: 4

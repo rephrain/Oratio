@@ -104,3 +104,7 @@ jobs:
           echo "⚠️  Health check timed out — dumping logs:"
           docker logs oratio-app --tail 50
           exit 1
+
+      - name: Cleanup
+        if: always()
+        run: docker system prune -f

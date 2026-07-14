@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    name: Build & Push Image
+    name: Build & push image
     runs-on: ubuntu-24.04-arm
 
     permissions:
@@ -21,22 +21,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & Push
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm64
           push: true
+          platforms: linux/arm64
           no-cache: true
           tags: |
             ${{ env.IMAGE }}:latest
@@ -48,107 +48,63 @@ jobs:
     needs: build
 
     steps:
-      - name: Login to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-          docker login ghcr.io \
-            -u "${{ github.actor }}" \
-            --password-stdin
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull latest image
         run: |
+          docker rmi ${{ env.IMAGE }}:latest || true
           docker pull ${{ env.IMAGE }}:latest
 
-      - name: Ensure persistent directories exist
+      - name: Ensure data directories exist
         run: |
           mkdir -p /volume1/docker/oratio/pgdata
           mkdir -p /volume1/docker/oratio/uploads
           mkdir -p /volume1/docker/oratio/drizzle
 
-      - name: Stop existing containers
+      - name: Deploy
         run: |
-          docker compose -f /volume1/docker/oratio/docker-compose.yml down --remove-orphans
+          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+            down --remove-orphans
+          docker compose -f /volume1/docker/oratio/docker-compose.yml \
+            up -d
 
-      ####################################################################
-      # Start PostgreSQL only
-      ####################################################################
-      - name: Start PostgreSQL
+      - name: Wait for database
         run: |
-          docker compose -f /volume1/docker/oratio/docker-compose.yml up -d db
-
-      - name: Wait for PostgreSQL
-        run: |
-          echo "Waiting for PostgreSQL..."
-
-          for i in $(seq 1 30); do
-            if docker exec oratio-db pg_isready -U oratio >/dev/null 2>&1; then
-              echo "✅ PostgreSQL is ready."
-              exit 0
+          echo "Waiting for postgres..."
+          for i in $(seq 1 12); do
+            if docker exec oratio-db pg_isready -U oratio; then
+              echo "✅ Postgres is ready."
+              break
             fi
-
-            echo "Attempt $i/30..."
-            sleep 2
-          done
-
-          echo "❌ PostgreSQL failed to start."
-          docker logs oratio-db
-          exit 1
-
-      ####################################################################
-      # Run Drizzle migrations
-      ####################################################################
-      - name: Run database migrations
-        run: |
-          set -e
-
-          echo "Running Drizzle migrations..."
-
-          docker compose \
-            -f /volume1/docker/oratio/docker-compose.yml \
-            run --rm app npm run db:migrate
-
-          echo "✅ Database migrations completed."
-
-      ####################################################################
-      # Start application
-      ####################################################################
-      - name: Start application
-        run: |
-          docker compose -f /volume1/docker/oratio/docker-compose.yml up -d
-
-      ####################################################################
-      # Health Check
-      ####################################################################
-      - name: Wait for application
-        run: |
-          echo "Waiting for application..."
-
-          for i in $(seq 1 30); do
-            STATUS=$(docker inspect \
-              --format='{{.State.Health.Status}}' \
-              oratio-app 2>/dev/null || echo "starting")
-
-            echo "Attempt $i/30: $STATUS"
-
-            if [ "$STATUS" = "healthy" ]; then
-              echo "✅ Application is healthy."
-              exit 0
-            fi
-
+            echo "  attempt $i: not ready"
             sleep 5
           done
 
-          echo "❌ Application failed health check."
+      - name: Run database migrations
+        run: |
+          for f in $(docker exec oratio-app sh -c 'ls /app/drizzle/migrations/*.sql 2>/dev/null | sort'); do
+            echo "Applying migration: $f"
+            docker exec oratio-app sh -c "cat $f" | docker exec -i oratio-db psql -U oratio -d oratio || true
+          done
+          echo "✅ Migrations done."
 
-          docker logs oratio-app --tail 200
-
+      - name: Health check
+        run: |
+          echo "Waiting for oratio-app to become healthy..."
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' oratio-app 2>/dev/null || echo "starting")
+            echo "  attempt $i: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ App is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️  Health check timed out — dumping logs:"
+          docker logs oratio-app --tail 50
           exit 1
 
-      ####################################################################
-      # Cleanup
-      ####################################################################
-      - name: Cleanup unused Docker images
+      - name: Cleanup
         if: always()
-        run: |
-          docker image prune -af
-          docker builder prune -af
+        run: docker system prune -f

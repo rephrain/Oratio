@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import * as schema from '$lib/server/db/schema.js';
-import { eq, desc, ilike, sql, and } from 'drizzle-orm';
+import { eq, desc, ilike, sql, and, inArray } from 'drizzle-orm';
 import { ADMIN_TABLES } from '$lib/utils/constants.js';
 import { generatePatientId } from '$lib/utils/formatters.js';
 
@@ -134,19 +134,31 @@ export async function GET({ params, url }) {
 	// Build filters from remaining searchParams
 	const filters = [];
 	const skipParams = ['page', 'limit', 'offset', 'all'];
+	const processedKeys = new Set();
 	url.searchParams.forEach((val, key) => {
-		if (!skipParams.includes(key) && table[key]) {
-			let coercedVal = val;
-			const fieldDef = fieldMap[key];
-			
-			// Simple coercion for boolean and numbers in filters
-			if (fieldDef?.type === 'boolean') {
-				coercedVal = val === 'true';
-			} else if (fieldDef?.type === 'number') {
-				coercedVal = Number(val);
+		if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {
+			processedKeys.add(key);
+			const vals = url.searchParams.getAll(key);
+			let combinedVals = vals;
+			// If passed as a comma-separated string in a single param
+			if (vals.length === 1 && typeof vals[0] === 'string' && vals[0].includes(',')) {
+				combinedVals = vals[0].split(',').map(v => v.trim());
 			}
 
-			filters.push(eq(table[key], coercedVal));
+			const fieldDef = fieldMap[key];
+
+			if (combinedVals.length > 1) {
+				filters.push(inArray(table[key], combinedVals));
+			} else {
+				let coercedVal = combinedVals[0];
+				// Simple coercion for boolean and numbers in filters
+				if (fieldDef?.type === 'boolean') {
+					coercedVal = coercedVal === 'true';
+				} else if (fieldDef?.type === 'number') {
+					coercedVal = Number(coercedVal);
+				}
+				filters.push(eq(table[key], coercedVal));
+			}
 		}
 	});
 

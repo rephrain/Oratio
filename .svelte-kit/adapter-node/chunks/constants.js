@@ -171,7 +171,7 @@ const ADMIN_TABLES = {
       { key: "name", label: "Name", type: "text", required: true },
       { key: "username", label: "Username", type: "text", required: true },
       { key: "password", label: "Password", type: "password", placeholder: "Leave blank to keep current" },
-      { key: "role", label: "Role", type: "select", required: true, options: ["admin", "kasir", "dokter"] },
+      { key: "role", label: "Role", type: "select", required: true, options: ["admin", "kasir", "dokter", "suster"] },
       { key: "doctor_code", label: "Doctor Code", type: "text", maxLength: 5 },
       { key: "profile_image_url", label: "Profile Image URL", type: "image" },
       { key: "is_active", label: "Is Active", type: "boolean", defaultValue: true },
@@ -242,7 +242,7 @@ const ADMIN_TABLES = {
       { key: "pregnancy_status", label: "Status Kehamilan", type: "boolean", defaultValue: false },
       { key: "tekanan_darah", label: "Tekanan Darah", type: "text", maxLength: 20, placeholder: "120/80" },
       { key: "profile_document_id", label: "Profile Document", type: "fk", fkTable: "documents", fkLabel: "file_name" },
-      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name" },
+      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name", fkFilter: { role: "kasir,suster" } },
       { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
       { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
     ]
@@ -316,7 +316,7 @@ const ADMIN_TABLES = {
     fields: [
       { key: "id", label: "ID", type: "text", required: true, maxLength: 30, editReadOnly: true },
       { key: "patient_id", label: "Patient", type: "fk", required: true, fkTable: "patients", fkLabel: "nama_lengkap" },
-      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name" },
+      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name", fkFilter: { role: "kasir,suster" } },
       { key: "doctor_id", label: "Doctor", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
       { key: "queue_number", label: "Queue Number", type: "number" },
       { key: "form_mode", label: "Form Mode", type: "select", options: ["SOAP", "SOAP_WHO"], defaultValue: "SOAP" },
@@ -510,7 +510,7 @@ const ADMIN_TABLES = {
       { key: "note", label: "Note", type: "textarea" },
       { key: "proof_document_id", label: "Proof Document", type: "fk", fkTable: "documents", fkLabel: "file_name" },
       { key: "doctor_id", label: "Doctor", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
-      { key: "cashier_id", label: "Cashier", type: "fk", required: true, fkTable: "users", fkLabel: "name" },
+      { key: "cashier_id", label: "Cashier", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "kasir,suster" } },
       { key: "paid_at", label: "Paid At", type: "datetime" },
       { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
     ]

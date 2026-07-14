@@ -1,6 +1,6 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as encounterItems, y as payments } from "../../../../../chunks/index3.js";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { inArray, eq, and, sql, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 import { g as generatePatientId } from "../../../../../chunks/formatters.js";
 const schemaMap = {
@@ -100,16 +100,27 @@ async function GET({ params, url }) {
   }
   const filters = [];
   const skipParams = ["page", "limit", "offset", "all"];
+  const processedKeys = /* @__PURE__ */ new Set();
   url.searchParams.forEach((val, key) => {
-    if (!skipParams.includes(key) && table[key]) {
-      let coercedVal = val;
-      const fieldDef = fieldMap[key];
-      if (fieldDef?.type === "boolean") {
-        coercedVal = val === "true";
-      } else if (fieldDef?.type === "number") {
-        coercedVal = Number(val);
+    if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {
+      processedKeys.add(key);
+      const vals = url.searchParams.getAll(key);
+      let combinedVals = vals;
+      if (vals.length === 1 && typeof vals[0] === "string" && vals[0].includes(",")) {
+        combinedVals = vals[0].split(",").map((v) => v.trim());
       }
-      filters.push(eq(table[key], coercedVal));
+      const fieldDef = fieldMap[key];
+      if (combinedVals.length > 1) {
+        filters.push(inArray(table[key], combinedVals));
+      } else {
+        let coercedVal = combinedVals[0];
+        if (fieldDef?.type === "boolean") {
+          coercedVal = coercedVal === "true";
+        } else if (fieldDef?.type === "number") {
+          coercedVal = Number(coercedVal);
+        }
+        filters.push(eq(table[key], coercedVal));
+      }
     }
   });
   const query = db.select().from(table);

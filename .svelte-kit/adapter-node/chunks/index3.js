@@ -2,7 +2,7 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { pgEnum, pgTable, uuid, text, varchar, boolean, timestamp, unique, date, integer, bigint, numeric, primaryKey, time } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-const roleEnum = pgEnum("role", ["admin", "kasir", "dokter"]);
+const roleEnum = pgEnum("role", ["admin", "kasir", "dokter", "suster"]);
 const genderEnum = pgEnum("gender", ["male", "female"]);
 const maritalStatusEnum = pgEnum("marital_status", ["S", "M", "W", "D"]);
 const citizenshipEnum = pgEnum("citizenship", ["WNI", "WNA"]);

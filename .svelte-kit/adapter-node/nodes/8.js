@@ -2,7 +2,7 @@
 
 export const index = 8;
 let component_cache;
-export const component = async () => component_cache ??= (await import('../entries/pages/dokter/_page.svelte.js')).default;
-export const imports = ["_app/immutable/nodes/8.a0b7caab.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/each.fc1fbb16.js","_app/immutable/chunks/index.ccebf854.js","_app/immutable/chunks/navigation.afb87a31.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/paths.7522f69a.js","_app/immutable/chunks/realtimeStore.b234c8b0.js","_app/immutable/chunks/realtimeConnection.02b7499f.js","_app/immutable/chunks/formatters.80495444.js"];
-export const stylesheets = ["_app/immutable/assets/DataTable.70755a72.css"];
+export const component = async () => component_cache ??= (await import('../entries/pages/admin/_table_/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/8.e94fda67.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/index.bf6392ca.js","_app/immutable/chunks/globals.7f7f1b26.js","_app/immutable/chunks/each.44dcaf76.js","_app/immutable/chunks/stores.156f02e4.js","_app/immutable/chunks/singletons.3673d942.js","_app/immutable/chunks/index.67c9fa51.js","_app/immutable/chunks/paths.0bf0e0b5.js","_app/immutable/chunks/FileUpload.e3824a72.js","_app/immutable/chunks/constants.3e9850a4.js","_app/immutable/chunks/toast.d7d7982b.js","_app/immutable/chunks/papaparse.min.6ca149d6.js"];
+export const stylesheets = ["_app/immutable/assets/FileUpload.90910384.css"];
 export const fonts = [];

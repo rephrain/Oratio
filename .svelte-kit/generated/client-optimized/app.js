@@ -21,28 +21,35 @@ export const nodes = [
 	() => import('./nodes/17'),
 	() => import('./nodes/18'),
 	() => import('./nodes/19'),
-	() => import('./nodes/20')
+	() => import('./nodes/20'),
+	() => import('./nodes/21'),
+	() => import('./nodes/22'),
+	() => import('./nodes/23'),
+	() => import('./nodes/24')
 ];
 
 export const server_loads = [];
 
 export const dictionary = {
-		"/admin": [5,[2]],
-		"/admin/import": [6,[2]],
-		"/admin/[table]": [7,[2]],
-		"/dokter": [8,[3]],
-		"/dokter/analytics": [9,[3]],
-		"/dokter/history": [10,[3]],
-		"/dokter/patient/[patientId]": [11,[3]],
-		"/dokter/[encounterId]": [12,[3]],
-		"/kasir": [13,[4]],
-		"/kasir/edit-patient": [14,[4]],
-		"/kasir/existing-patient": [15,[4]],
-		"/kasir/new-patient": [16,[4]],
-		"/kasir/patients": [17,[4]],
-		"/kasir/payments": [19,[4]],
-		"/kasir/payment": [18,[4]],
-		"/login": [20]
+		"/admin": [6,[2]],
+		"/admin/import": [7,[2]],
+		"/admin/[table]": [8,[2]],
+		"/dokter": [9,[3]],
+		"/dokter/analytics": [10,[3]],
+		"/dokter/history": [11,[3]],
+		"/dokter/patient/[patientId]": [12,[3]],
+		"/dokter/[encounterId]": [13,[3]],
+		"/kasir": [14,[4]],
+		"/kasir/edit-patient": [15,[4]],
+		"/kasir/existing-patient": [16,[4]],
+		"/kasir/new-patient": [17,[4]],
+		"/kasir/patients": [18,[4]],
+		"/kasir/payments": [20,[4]],
+		"/kasir/payment": [19,[4]],
+		"/login": [21],
+		"/suster": [22,[5]],
+		"/suster/edit-patient": [23,[5]],
+		"/suster/history": [24,[5]]
 	};
 
 export const hooks = {

@@ -2,7 +2,7 @@
 
 export const index = 20;
 let component_cache;
-export const component = async () => component_cache ??= (await import('../entries/pages/login/_page.svelte.js')).default;
-export const imports = ["_app/immutable/nodes/20.abf9acce.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/index.ccebf854.js","_app/immutable/chunks/navigation.afb87a31.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/paths.7522f69a.js"];
-export const stylesheets = ["_app/immutable/assets/20.a530ebe6.css"];
+export const component = async () => component_cache ??= (await import('../entries/pages/kasir/payments/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/20.1c874fad.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/index.bf6392ca.js","_app/immutable/chunks/each.44dcaf76.js","_app/immutable/chunks/paths.0bf0e0b5.js","_app/immutable/chunks/RichSelect.8a1e2e15.js","_app/immutable/chunks/formatters.80495444.js","_app/immutable/chunks/constants.3e9850a4.js"];
+export const stylesheets = ["_app/immutable/assets/RichSelect.e94105dc.css"];
 export const fonts = [];

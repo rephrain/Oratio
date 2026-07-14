@@ -40,6 +40,10 @@
 			{ href: "/dokter/analytics", icon: "📊", label: "Analytics" },
 			{ href: "/dokter/history", icon: "🕒", label: "History" },
 		],
+		suster: [
+			{ href: "/suster/history", icon: "🕒", label: "History" },
+			{ href: "/suster/edit-patient", icon: "✏️", label: "Edit Data Pasien" },
+		],
 	};
 
 	$: items = menuItems[role] || [];
@@ -304,6 +308,77 @@
 				>
 				{#if $isSidebarOpen}
 				<span class="font-medium text-sm whitespace-nowrap">History</span>
+				{/if}
+			</a>
+		</nav>
+		<div class="mt-auto p-4 border-t border-white/10">
+			<ShiftTimer />
+		</div>
+	</aside>
+{:else if role === "suster"}
+	<aside
+		class="sidebar bg-[#4C1D2F] flex flex-col text-white shadow-lg font-display"
+	>
+		<!-- Toggle Button -->
+		<button
+			class="absolute -right-3 top-8 bg-white text-[#4C1D2F] rounded-full shadow-md border border-slate-200 size-6 flex items-center justify-center hover:bg-slate-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-[#E11D48]"
+			on:click={() => ($isSidebarOpen = !$isSidebarOpen)}
+			title="Toggle Sidebar"
+		>
+			<span class="material-symbols-outlined text-[16px]">
+				{$isSidebarOpen ? 'menu_open' : 'menu'}
+			</span>
+		</button>
+		<div class="p-6 flex items-center gap-3 { $isSidebarOpen ? '' : 'justify-center p-4' }">
+			<div
+				class="size-10 bg-[#E11D48] rounded-lg flex items-center justify-center shrink-0"
+			>
+				<span class="material-symbols-outlined text-white"
+					>health_and_safety</span
+				>
+			</div>
+			{#if $isSidebarOpen}
+			<div class="overflow-hidden whitespace-nowrap">
+				<h1 class="font-bold text-lg leading-none">Oratio Clinic</h1>
+				<p
+					class="text-[10px] text-[#FB7185] uppercase tracking-widest mt-1"
+				>
+					Suster Access
+				</p>
+			</div>
+			{/if}
+		</div>
+		<nav class="flex-1 px-4 space-y-2 mt-4 { $isSidebarOpen ? '' : '!px-2' }">
+			<a
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/history')
+					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+				href="/suster/history"
+				title="History"
+			>
+				<span
+					class="material-symbols-outlined {currentPath.startsWith('/suster/history')
+						? ''
+						: 'opacity-70'}">history</span
+				>
+				{#if $isSidebarOpen}
+				<span class="font-medium text-sm whitespace-nowrap">History</span>
+				{/if}
+			</a>
+			<a
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/edit-patient')
+					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+				href="/suster/edit-patient"
+				title="Edit Data Pasien"
+			>
+				<span
+					class="material-symbols-outlined {currentPath.startsWith('/suster/edit-patient')
+						? ''
+						: 'opacity-70'}">edit_note</span
+				>
+				{#if $isSidebarOpen}
+				<span class="font-medium text-sm whitespace-nowrap">Edit Data Pasien</span>
 				{/if}
 			</a>
 		</nav>

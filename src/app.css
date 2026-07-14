@@ -126,6 +126,19 @@
   --page-bg: #EFF6FF;
 }
 
+.role-suster {
+  --primary: #E11D48;
+  --primary-hover: #BE123C;
+  --primary-light: #FFE4E6;
+  --secondary: #FFF1F2;
+  --accent: #FB7185;
+  --accent-light: #FFF1F2;
+  --sidebar-bg: #4C1D2F;
+  --sidebar-text: #FECDD3;
+  --sidebar-active: #E11D48;
+  --page-bg: #FFF1F2;
+}
+
 /* === Global Reset & Base Styles === */
 *,
 *::before,

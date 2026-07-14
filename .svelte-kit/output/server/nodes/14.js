@@ -2,7 +2,7 @@
 
 export const index = 14;
 let component_cache;
-export const component = async () => component_cache ??= (await import('../entries/pages/kasir/edit-patient/_page.svelte.js')).default;
-export const imports = ["_app/immutable/nodes/14.a63388a5.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/index.ccebf854.js","_app/immutable/chunks/globals.7f7f1b26.js","_app/immutable/chunks/each.fc1fbb16.js","_app/immutable/chunks/navigation.afb87a31.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/paths.7522f69a.js","_app/immutable/chunks/stores.d423bea4.js","_app/immutable/chunks/SearchableSelect.35c81739.js","_app/immutable/chunks/RichSelect.bd6f7e7c.js","_app/immutable/chunks/constants.67db754b.js","_app/immutable/chunks/geonames.6c09dc80.js","_app/immutable/chunks/toast.ecaf5d93.js"];
-export const stylesheets = ["_app/immutable/assets/14.38030aa0.css","_app/immutable/assets/RichSelect.e94105dc.css"];
+export const component = async () => component_cache ??= (await import('../entries/pages/kasir/_page.svelte.js')).default;
+export const imports = ["_app/immutable/nodes/14.69e4c01c.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/index.bf6392ca.js","_app/immutable/chunks/each.44dcaf76.js","_app/immutable/chunks/navigation.1211d0de.js","_app/immutable/chunks/singletons.3673d942.js","_app/immutable/chunks/index.67c9fa51.js","_app/immutable/chunks/paths.0bf0e0b5.js","_app/immutable/chunks/RichSelect.8a1e2e15.js","_app/immutable/chunks/realtimeStore.07644e58.js","_app/immutable/chunks/realtimeConnection.94db45ea.js","_app/immutable/chunks/constants.3e9850a4.js","_app/immutable/chunks/formatters.80495444.js"];
+export const stylesheets = ["_app/immutable/assets/DataTable.70755a72.css","_app/immutable/assets/RichSelect.e94105dc.css"];
 export const fonts = [];

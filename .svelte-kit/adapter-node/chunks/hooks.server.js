@@ -38,7 +38,8 @@ const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 const ROLE_PATHS = {
   admin: "/admin",
   kasir: "/kasir",
-  dokter: "/dokter"
+  dokter: "/dokter",
+  suster: "/suster"
 };
 async function handle({ event, resolve }) {
   const path = event.url.pathname;

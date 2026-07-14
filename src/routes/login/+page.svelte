@@ -30,6 +30,7 @@
 				admin: "/admin",
 				kasir: "/kasir",
 				dokter: "/dokter",
+				suster: "/suster",
 			};
 			goto(roleRoutes[data.user.role] || "/");
 		} catch (err) {

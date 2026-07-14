@@ -2,7 +2,7 @@ import { j as json } from "../../../../chunks/index.js";
 import { e as encounters, u as users, d as db, p as patients, t as terminologyMaster, g as documents, h as statusHistory } from "../../../../chunks/index3.js";
 import { sql, eq, and, desc, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { g as generateEncounterId } from "../../../../chunks/formatters.js";
+import { a as generateEncounterId } from "../../../../chunks/formatters.js";
 import { a as emitPatientEvent, b as emitQueueEvent, c as emitDashboardEvent } from "../../../../chunks/realtimeService.js";
 async function GET({ url, locals }) {
   const date = url.searchParams.get("date");

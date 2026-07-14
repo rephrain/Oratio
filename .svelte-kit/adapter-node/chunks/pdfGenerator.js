@@ -917,8 +917,12 @@ async function generateSoapFormPdf(data) {
         <!-- Footer -->
         <div class="avoid-break" style="margin-top:48px; padding-top:24px; border-top:1.5px solid #E2E8F0; position:relative; z-index:1;">
             <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:24px; align-items:end;">
-                <!-- Left (spacer, QR removed) -->
-                <div></div>
+                <!-- QR -->
+                <div style="display:flex; align-items:flex-end; gap:14px;">
+                    <div style="border:1px solid #E2E8F0; border-radius:8px; padding:5px; background:#FFF; flex-shrink:0;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&margin=0&data=${encodeURIComponent(origin)}" alt="QR Code" style="width:72px; height:72px; display:block; opacity:0.85;"/>
+                    </div>
+                </div>
 
                 <!-- Center -->
                 <div style="text-align:center; padding:0 24px;">
@@ -960,7 +964,7 @@ async function generateSoapFormPdf(data) {
   });
   try {
     const page = await browser.newPage();
-    await page.setContent(htmlBody, { waitUntil: "networkidle0", timeout: 15e3 });
+    await page.setContent(htmlBody, { waitUntil: "networkidle0", timeout: 3e4 });
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,

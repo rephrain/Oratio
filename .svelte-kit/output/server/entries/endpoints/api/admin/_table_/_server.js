@@ -1,7 +1,8 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as encounterItems, y as payments } from "../../../../../chunks/index3.js";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
+import { g as generatePatientId } from "../../../../../chunks/formatters.js";
 const schemaMap = {
   users,
   shifts,
@@ -53,9 +54,25 @@ function cleanBody(body, tableConfig) {
     }
     if (fieldDef?.type === "select" && fieldDef.options?.length > 0) {
       const firstOpt = fieldDef.options[0];
-      if (typeof firstOpt === "object" && typeof firstOpt.value === "number") {
-        cleaned[key] = value === "" || value === null ? null : parseInt(value, 10);
-        continue;
+      if (typeof firstOpt === "object") {
+        if (typeof firstOpt.value === "number") {
+          cleaned[key] = value === "" || value === null ? null : parseInt(value, 10);
+          continue;
+        } else if (typeof value === "string") {
+          const matched = fieldDef.options.find(
+            (o) => o.label?.toLowerCase() === value.toLowerCase() || o.value?.toLowerCase() === value.toLowerCase()
+          );
+          if (matched) {
+            cleaned[key] = matched.value;
+            continue;
+          }
+        }
+      } else if (typeof firstOpt === "string" && typeof value === "string") {
+        const matched = fieldDef.options.find((o) => String(o).toLowerCase() === value.toLowerCase());
+        if (matched) {
+          cleaned[key] = matched;
+          continue;
+        }
       }
     }
     cleaned[key] = value;
@@ -74,6 +91,7 @@ async function GET({ params, url }) {
   const page = parseInt(url.searchParams.get("page") || "1");
   const limit = parseInt(url.searchParams.get("limit") || "50");
   const offset = (page - 1) * limit;
+  const all = url.searchParams.get("all") === "true";
   const fieldMap = {};
   if (tableConfig.fields) {
     for (const f of tableConfig.fields) {
@@ -81,7 +99,7 @@ async function GET({ params, url }) {
     }
   }
   const filters = [];
-  const skipParams = ["page", "limit", "offset"];
+  const skipParams = ["page", "limit", "offset", "all"];
   url.searchParams.forEach((val, key) => {
     if (!skipParams.includes(key) && table[key]) {
       let coercedVal = val;
@@ -94,7 +112,10 @@ async function GET({ params, url }) {
       filters.push(eq(table[key], coercedVal));
     }
   });
-  const query = db.select().from(table).limit(limit).offset(offset);
+  const query = db.select().from(table);
+  if (!all) {
+    query.limit(limit).offset(offset);
+  }
   if (filters.length > 0) {
     query.where(and(...filters));
   }
@@ -143,6 +164,11 @@ async function POST({ params, request }) {
   const mainBody = cleanBody(body, tableConfig);
   try {
     const m2mResults = await db.transaction(async (tx) => {
+      if (params.table === "patients" && !mainBody.id) {
+        const lastPatient = await tx.select({ id: table.id }).from(table).orderBy(desc(table.id)).limit(1);
+        const lastId = lastPatient.length > 0 ? lastPatient[0].id : null;
+        mainBody.id = generatePatientId(lastId);
+      }
       const [record] = await tx.insert(table).values(mainBody).returning();
       for (const field of tableConfig.fields || []) {
         if (field.type === "m2m" && body[field.key] && Array.isArray(body[field.key])) {
@@ -219,13 +245,19 @@ async function DELETE({ params, url }) {
   }
   const table = schemaMap[tableConfig.schema];
   const id = url.searchParams.get("id");
-  if (!id) {
-    return json({ error: "ID required" }, { status: 400 });
+  const all = url.searchParams.get("all") === "true";
+  if (!id && !all) {
+    return json({ error: "ID or all=true required" }, { status: 400 });
   }
   try {
-    const pkCol = table.id;
-    await db.delete(table).where(eq(pkCol, id));
-    return json({ success: true });
+    if (all) {
+      await db.delete(table);
+      return json({ success: true, count: "all" });
+    } else {
+      const pkCol = table.id;
+      await db.delete(table).where(eq(pkCol, id));
+      return json({ success: true });
+    }
   } catch (error) {
     console.error(`Admin DELETE error for ${params.table}:`, error.message);
     return json({ error: error.message }, { status: 400 });

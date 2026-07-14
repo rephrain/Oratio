@@ -1,0 +1,1733 @@
+const PAYMENT_TYPES = [
+  { label: "ORATIO BCA DEBIT", code: "EDC-B1" },
+  { label: "ORATIO BCA CREDIT", code: "EDC-B2" },
+  { label: "ORATIO BCA SWITCHING", code: "EDC-B3" },
+  { label: "ORATIO MANDIRI DEBIT", code: "EDC-OO" },
+  { label: "ORATIO MANDIRI CREDIT", code: "EDC-OQ" },
+  { label: "ORATIO MANDIRI SWITCHING", code: "EDC-OP" },
+  { label: "KUO BCA DEBIT", code: "EDC-B4" },
+  { label: "KUO BCA CREDIT", code: "EDC-B5" },
+  { label: "KUO BCA SWITCHING", code: "EDC-B6" },
+  { label: "KUO MANDIRI DEBIT", code: "EDC-KO" },
+  { label: "KUO MANDIRI CREDIT", code: "EDC-KQ" },
+  { label: "KUO MANDIRI SWITCHING", code: "EDC-KP" },
+  { label: "ASURANSI", code: "A-ASS1" },
+  { label: "TUNAI", code: "K-01" },
+  { label: "AR-PIUTANG", code: "" },
+  { label: "QRIS", code: "E-QRIS" },
+  { label: "NO PAYMENT", code: "-" },
+  { label: "TRANSFER BCA 7773778789", code: "B-BCA" },
+  { label: "TRANSFER MANDIRI 1310072789789", code: "B-MDR" }
+];
+const ENCOUNTER_STATUSES = [
+  "Planned",
+  "In Progress",
+  "On Hold",
+  "Discharged",
+  "Completed",
+  "Cancelled",
+  "Discontinued"
+];
+const QUEUE_COLUMNS = [
+  { key: "waiting", label: "Menunggu", statuses: ["Planned"] },
+  { key: "inprogress", label: "Dalam Proses", statuses: ["In Progress", "On Hold"] },
+  { key: "discharged", label: "Selesai Pemeriksaan", statuses: ["Discharged"] },
+  { key: "completed", label: "Selesai", statuses: ["Completed"] }
+];
+const BLOOD_TYPES = ["A", "B", "AB", "O"];
+const ALLERGY_REACTIONS = [
+  { code: "1985008", display: "Vomitus" },
+  { code: "4386001", display: "Bronchospasm" },
+  { code: "9826008", display: "Conjunctivitis" },
+  { code: "23924001", display: "Tight chest" },
+  { code: "24079001", display: "Atopic dermatitis" },
+  { code: "31996006", display: "Vasculitis" },
+  { code: "39579001", display: "Anaphylaxis" },
+  { code: "41291007", display: "Angioedema" },
+  { code: "43116000", display: "Eczema" },
+  { code: "49727002", display: "Cough" },
+  { code: "51599000", display: "Edema of larynx" },
+  { code: "62315008", display: "Diarrhea" },
+  { code: "70076002", display: "Rhinitis" },
+  { code: "73442001", display: "Stevens-Johnson syndrome" },
+  { code: "76067001", display: "Sneezing" },
+  { code: "91175000", display: "Seizure" },
+  { code: "126485001", display: "Urticaria" },
+  { code: "162290004", display: "Dry eyes" },
+  { code: "195967001", display: "Asthma" },
+  { code: "247472004", display: "Wheal" },
+  { code: "267036007", display: "Dyspnea" },
+  { code: "271757001", display: "Papular eruption" },
+  { code: "271759003", display: "Bullous eruption" },
+  { code: "271807003", display: "Eruption of skin" },
+  { code: "410430005", display: "Cardiorespiratory arrest" },
+  { code: "418363000", display: "Itching of skin" },
+  { code: "422587007", display: "Nausea" },
+  { code: "698247007", display: "Cardiac arrhythmia" },
+  { code: "702809001", display: "Drug reaction with eosinophilia and systemic symptoms" },
+  { code: "768962006", display: "Lyell syndrome" }
+];
+const KEADAAN = [
+  { key: "sou", label: "Gigi sehat, normal, tanpa kelainan" },
+  { key: "non", label: "Gigi tidak ada/ tidak diketahui" },
+  { key: "une", label: "Un-erupted" },
+  { key: "pre", label: "Partial erupted" },
+  { key: "imv", label: "Impacted visible" },
+  { key: "ano", label: "Anomali" },
+  { key: "dia", label: "Diastema" },
+  { key: "att", label: "Atrisi" },
+  { key: "abr", label: "Abrasi" },
+  { key: "car", label: "Caries/ Karies" },
+  { key: "cfr", label: "Crown Fracture/ Fraktur Mahkota" },
+  { key: "nvt", label: "Gigi Non-Vital" },
+  { key: "rrx", label: "Sisa Akar" },
+  { key: "mis", label: "Gigi Hilang" },
+  { key: "Pre", label: "tooth present" },
+  { key: "non", label: "no information" },
+  { key: "eru", label: "erupting" },
+  { key: "rrx", label: "Retained root" },
+  { key: "ppx", label: "Parapulpal pin" },
+  { key: "rex", label: "Resorption" },
+  { key: "dex", label: "Denticle" },
+  { key: "dix", label: "Dilacerations" },
+  { key: "frx", label: "Root fracture" },
+  { key: "cav", label: "cavity" },
+  { key: "app", label: "apical periodontitis" },
+  { key: "cal", label: "calculus" },
+  { key: "ero", label: "erosion" },
+  { key: "Flu", label: "fluorosis" },
+  { key: "map", label: "marginal periodontitis" },
+  { key: "pex", label: "perforation" },
+  { key: "M.ver", label: "Mesio version" },
+  { key: "D.ver", label: "Disto version" },
+  { key: "V.ver", label: "Vestibule version" },
+  { key: "L.ver", label: "Linguo version" },
+  { key: "P.ver", label: "Palato version" },
+  { key: "ML.ver", label: "Mesiolinguo version" },
+  { key: "MP.ver", label: "Mesiopalato version" },
+  { key: "DL.ver", label: "Distolabioversion" },
+  { key: "DV.ver", label: "Distovestibulo version" },
+  { key: "DP.ver", label: "Distopalato version" },
+  { key: "spl", label: "splint" }
+];
+const BAHAN_RESTORASI = [
+  { key: "amf", label: "Amalgam Filling" },
+  { key: "gif", label: "GIC/ Silika" },
+  { key: "cof", label: "Composite filling" },
+  { key: "fis", label: "Fissure Sealant" },
+  { key: "gif", label: "glass ionomer filling" },
+  { key: "cef", label: "ceramic filling" },
+  { key: "tcf", label: "tooth coloured filling" },
+  { key: "uif", label: "unidentified filing" },
+  { key: "acr", label: "Acrilic" },
+  { key: "Full Metal", label: "Full Metal" },
+  { key: "Non-precious metal", label: "Non-precious metal" },
+  { key: "Gold Metal", label: "Gold Metal" },
+  { key: "Gold", label: "Gold" },
+  { key: "Metal Porcelain", label: "Metal Porcelain" },
+  { key: "rfx", label: "Root filling" },
+  { key: "Porcelain", label: "Porcelain" },
+  { key: "Ceramic", label: "Ceramic" }
+];
+const RESTORASI = [
+  { key: "fmc", label: "Full Metal Crown" },
+  { key: "poc", label: "Porcelain Crown" },
+  { key: "mpc", label: "Metal Porcelain Crown" },
+  { key: "gmc", label: "Gold Metal Crown" },
+  { key: "rct", label: "Root Canal Treatment / Perawatan Saluran Akar" },
+  { key: "ipx", label: "Implan" },
+  { key: "meb", label: "Metal Bridge" },
+  { key: "pob", label: "Porcelain Bridge" },
+  { key: "pon", label: "Pontic" },
+  { key: "abu", label: "Gigi abutment" },
+  { key: "inl", label: "Inlay" },
+  { key: "onl", label: "Onlay" },
+  { key: "Crown", label: "Crown" },
+  { key: "Bridge", label: "Bridge" },
+  { key: "Dental Veener", label: "Dental Veener" },
+  { key: "Dental Filling", label: "Dental Filling" }
+];
+const BAHAN_PROTESA = [
+  { key: "acr", label: "Acrilic" },
+  { key: "Bahan Metal Protesa", label: "Bahan Metal Protesa" },
+  { key: "Bahan Polycarbonat Protesa", label: "Bahan Polycarbonat Protesa" }
+];
+const PROTESA = [
+  { key: "prd", label: "Partial Denture" },
+  { key: "fld", label: "Full Denture" },
+  { key: "cla", label: "Clasp" },
+  { key: "fud", label: "Full upper denture" },
+  { key: "pld", label: "Partial lower denture" },
+  { key: "pud", label: "Partial upper denture" },
+  { key: "hld", label: "Hybrid lower denture" },
+  { key: "hud", label: "Hybrid upper denture" }
+];
+const ADMIN_TABLES = {
+  "users": {
+    label: "Users",
+    schema: "users",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "name", label: "Name", type: "text", required: true },
+      { key: "username", label: "Username", type: "text", required: true },
+      { key: "password", label: "Password", type: "password", placeholder: "Leave blank to keep current" },
+      { key: "role", label: "Role", type: "select", required: true, options: ["admin", "kasir", "dokter"] },
+      { key: "doctor_code", label: "Doctor Code", type: "text", maxLength: 5 },
+      { key: "profile_image_url", label: "Profile Image URL", type: "image" },
+      { key: "is_active", label: "Is Active", type: "boolean", defaultValue: true },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
+      { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
+    ]
+  },
+  "doctor-shifts": {
+    label: "Doctor Shifts",
+    schema: "shifts",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "user_id", label: "User", type: "fk", required: true, fkTable: "users", fkLabel: "name" },
+      {
+        key: "day_of_week",
+        label: "Day of Week",
+        type: "select",
+        required: true,
+        options: [
+          { value: 0, label: "Minggu" },
+          { value: 1, label: "Senin" },
+          { value: 2, label: "Selasa" },
+          { value: 3, label: "Rabu" },
+          { value: 4, label: "Kamis" },
+          { value: 5, label: "Jumat" },
+          { value: 6, label: "Sabtu" }
+        ]
+      },
+      { key: "start_time", label: "Start Time", type: "time", required: true },
+      { key: "end_time", label: "End Time", type: "time", required: true },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "patients": {
+    label: "Patients",
+    schema: "patients",
+    fields: [
+      { key: "id", label: "ID (O000001 format)", type: "text", required: true, maxLength: 10, editReadOnly: true },
+      { key: "nik", label: "NIK", type: "text", maxLength: 20 },
+      { key: "nama_lengkap", label: "Nama Lengkap", type: "text", required: true },
+      { key: "birth_date", label: "Tanggal Lahir", type: "date", required: true },
+      { key: "birthplace", label: "Tempat Lahir", type: "text" },
+      { key: "gender", label: "Jenis Kelamin", type: "select", options: ["male", "female"] },
+      { key: "nomor_kk", label: "Nomor KK", type: "text", maxLength: 20 },
+      { key: "address", label: "Alamat", type: "textarea" },
+      { key: "province", label: "Provinsi", type: "text" },
+      { key: "city", label: "Kota", type: "text" },
+      { key: "district", label: "Kecamatan", type: "text" },
+      { key: "village", label: "Kelurahan", type: "text" },
+      { key: "rt", label: "RT", type: "text", maxLength: 5 },
+      { key: "rw", label: "RW", type: "text", maxLength: 5 },
+      { key: "handphone", label: "Handphone", type: "text", maxLength: 20 },
+      { key: "email", label: "Email", type: "email" },
+      {
+        key: "marital_status",
+        label: "Status Pernikahan",
+        type: "select",
+        options: [
+          { value: "S", label: "Single" },
+          { value: "M", label: "Married" },
+          { value: "W", label: "Widowed" },
+          { value: "D", label: "Divorced" }
+        ]
+      },
+      { key: "citizenship", label: "Kewarganegaraan", type: "select", options: ["WNI", "WNA"], defaultValue: "WNI" },
+      { key: "blood_type", label: "Golongan Darah", type: "select", options: ["A", "B", "AB", "O"] },
+      { key: "rhesus", label: "Rhesus", type: "select", options: ["+", "-"] },
+      { key: "pregnancy_status", label: "Status Kehamilan", type: "boolean", defaultValue: false },
+      { key: "tekanan_darah", label: "Tekanan Darah", type: "text", maxLength: 20, placeholder: "120/80" },
+      { key: "profile_document_id", label: "Profile Document", type: "fk", fkTable: "documents", fkLabel: "file_name" },
+      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
+      { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
+    ]
+  },
+  "patient-disease-history": {
+    label: "Patient Disease History",
+    schema: "patientDiseaseHistory",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "patient_id", label: "Patient", type: "fk", required: true, fkTable: "patients", fkLabel: "nama_lengkap" },
+      { key: "terminology_id", label: "Terminology", type: "fk", fkTable: "terminology", fkLabel: "display" },
+      { key: "type", label: "Type", type: "select", required: true, options: ["personal", "family"] },
+      { key: "description", label: "Description", type: "textarea" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "patient-allergy": {
+    label: "Patient Allergy",
+    schema: "patientAllergy",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "patient_id", label: "Patient", type: "fk", required: true, fkTable: "patients", fkLabel: "nama_lengkap" },
+      { key: "substance_id", label: "Substance (Terminology)", type: "fk", fkTable: "terminology", fkLabel: "display" },
+      { key: "reaction", label: "Reaction Code", type: "text", maxLength: 50 },
+      { key: "reaction_display", label: "Reaction Display", type: "text" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "patient-medication": {
+    label: "Patient Medication",
+    schema: "patientMedication",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "patient_id", label: "Patient", type: "fk", required: true, fkTable: "patients", fkLabel: "nama_lengkap" },
+      { key: "terminology_id", label: "Medication (Terminology)", type: "fk", fkTable: "terminology", fkLabel: "display" },
+      { key: "dosage_form", label: "Dosage Form", type: "text" },
+      { key: "dosage", label: "Dosage", type: "text" },
+      { key: "note", label: "Note", type: "textarea" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "terminology": {
+    label: "Terminology Master",
+    schema: "terminologyMaster",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "system", label: "System", type: "select", required: true, options: ["SNOMED", "ICD-10", "ICD-9-CM", "KFA"] },
+      { key: "code", label: "Code", type: "text", required: true, maxLength: 30 },
+      { key: "display", label: "Display", type: "text", required: true }
+    ]
+  },
+  "documents": {
+    label: "Documents",
+    schema: "documents",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "patient_id", label: "Patient", type: "fk", fkTable: "patients", fkLabel: "nama_lengkap" },
+      { key: "encounter_id", label: "Encounter", type: "text", maxLength: 30 },
+      { key: "document_type", label: "Document Type", type: "text", maxLength: 50 },
+      { key: "file_name", label: "File Name", type: "text", required: true },
+      { key: "file_path", label: "File Path", type: "text", required: true },
+      { key: "mime_type", label: "MIME Type", type: "text", maxLength: 100 },
+      { key: "file_size", label: "File Size (bytes)", type: "number" },
+      { key: "uploaded_by", label: "Uploaded By", type: "fk", fkTable: "users", fkLabel: "name" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "encounters": {
+    label: "Encounters",
+    schema: "encounters",
+    fields: [
+      { key: "id", label: "ID", type: "text", required: true, maxLength: 30, editReadOnly: true },
+      { key: "patient_id", label: "Patient", type: "fk", required: true, fkTable: "patients", fkLabel: "nama_lengkap" },
+      { key: "kasir_id", label: "Kasir", type: "fk", fkTable: "users", fkLabel: "name" },
+      { key: "doctor_id", label: "Doctor", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
+      { key: "queue_number", label: "Queue Number", type: "number" },
+      { key: "form_mode", label: "Form Mode", type: "select", options: ["SOAP", "SOAP_WHO"], defaultValue: "SOAP" },
+      { key: "status", label: "Status", type: "select", required: true, options: ["Planned", "In Progress", "On Hold", "Discharged", "Completed", "Cancelled", "Discontinued"], defaultValue: "Planned" },
+      { key: "encounter_reason_id", label: "Encounter Reason", type: "fk", fkTable: "terminology", fkLabel: "display" },
+      { key: "reason_type", label: "Reason Type", type: "select", options: ["Finding", "Procedure", "Situation", "Event"] },
+      { key: "subjective", label: "Subjective", type: "textarea" },
+      { key: "objective", label: "Objective", type: "textarea" },
+      { key: "assessment", label: "Assessment", type: "textarea" },
+      { key: "plan", label: "Plan", type: "textarea" },
+      { key: "resep", label: "Resep", type: "textarea" },
+      { key: "keterangan", label: "Keterangan", type: "textarea" },
+      { key: "encounter_referral_id", label: "Referral In", type: "fk", fkTable: "encounter-referrals", fkLabel: "id" },
+      { key: "soap_document_id", label: "SOAP Document", type: "fk", fkTable: "documents", fkLabel: "file_name" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
+      { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
+    ]
+  },
+  "status-history": {
+    label: "Status History",
+    schema: "statusHistory",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "status", label: "Status", type: "select", required: true, options: ["Arrived", "In Progress", "Finished"] },
+      { key: "start_at", label: "Start At", type: "datetime", required: true },
+      { key: "end_at", label: "End At", type: "datetime" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "encounter-odontograms": {
+    label: "Encounter Odontograms",
+    schema: "encounterOdontograms",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "dentition_type", label: "Dentition Type", type: "select", options: ["Adult", "Child"] },
+      { key: "occlusi", label: "Occlusi", type: "select", options: ["Normal Bite", "Cross Bite", "Steep Bite"] },
+      { key: "torus_palatinus", label: "Torus Palatinus", type: "select", options: ["Tidak Ada", "Kecil", "Sedang", "Besar", "Multiple"] },
+      { key: "torus_mandibularis", label: "Torus Mandibularis", type: "select", options: ["Tidak Ada", "Sisi Kiri", "Sisi Kanan", "Kedua Sisi"] },
+      { key: "palatum", label: "Palatum", type: "select", options: ["Dalam", "Sedang", "Rendah"] },
+      { key: "diastema", label: "Diastema", type: "text" },
+      { key: "gigi_anomali", label: "Gigi Anomali", type: "text" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "odontogram-teeth": {
+    label: "Odontogram Teeth",
+    schema: "odontogramTeeth",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "odontogram_id", label: "Odontogram", type: "text", required: true },
+      { key: "tooth_number", label: "Tooth Number", type: "text", required: true, maxLength: 5 },
+      { key: "keadaan", label: "Keadaan", type: "text" },
+      { key: "protesa", label: "Protesa", type: "text" },
+      { key: "bahan_protesa", label: "Bahan Protesa", type: "text" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "odontogram-surfaces": {
+    label: "Odontogram Surfaces",
+    schema: "odontogramSurfaces",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "tooth_id", label: "Tooth", type: "text", required: true },
+      { key: "surface", label: "Surface", type: "select", required: true, options: ["O", "B", "L", "M", "D"] },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "odontogram-restorations": {
+    label: "Odontogram Restorations",
+    schema: "odontogramRestorations",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "tooth_id", label: "Tooth", type: "text", required: true },
+      { key: "restorasi", label: "Restorasi", type: "text" },
+      { key: "bahan_restorasi", label: "Bahan Restorasi", type: "text" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "odontogram-restoration-surfaces": {
+    label: "Restoration ↔ Surface Mapping",
+    schema: "odontogramRestorationSurfaces",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "restoration_id", label: "Restoration", type: "text", required: true },
+      { key: "surface_id", label: "Surface", type: "text", required: true }
+    ]
+  },
+  "odontogram-diagnoses": {
+    label: "Odontogram Diagnoses",
+    schema: "odontogramDiagnoses",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "tooth_id", label: "Tooth", type: "text", required: true },
+      { key: "icd10_id", label: "ICD-10", type: "fk", required: true, fkTable: "terminology", fkLabel: "display" },
+      { key: "is_primary", label: "Is Primary", type: "boolean", defaultValue: false },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "odontogram-procedures": {
+    label: "Odontogram Procedures",
+    schema: "odontogramProcedures",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "tooth_id", label: "Tooth", type: "text", required: true },
+      { key: "icd9cm_id", label: "ICD-9-CM", type: "fk", required: true, fkTable: "terminology", fkLabel: "display" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "encounter-prescriptions": {
+    label: "Encounter Prescriptions",
+    schema: "encounterPrescriptions",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "terminology_id", label: "Medication (Terminology)", type: "fk", fkTable: "terminology", fkLabel: "display" },
+      { key: "dosage_form", label: "Dosage Form", type: "text" },
+      { key: "dosage", label: "Dosage", type: "text" },
+      { key: "quantity", label: "Quantity", type: "number" },
+      { key: "instruction", label: "Instruction", type: "textarea" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "encounter-referrals": {
+    label: "Encounter Referrals",
+    schema: "encounterReferrals",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "doctor_code", label: "Doctor Code", type: "text", required: true, maxLength: 10 },
+      { key: "referral_date", label: "Referral Date", type: "date", required: true },
+      { key: "note", label: "Note", type: "textarea" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "items": {
+    label: "Items",
+    schema: "items",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "kode_item", label: "Kode Item", type: "text", required: true, maxLength: 50 },
+      { key: "name", label: "Name", type: "text", required: true },
+      {
+        key: "doctor_ids",
+        label: "Doctors",
+        type: "m2m",
+        m2mSchema: "doctorItems",
+        m2mLocalKey: "item_id",
+        m2mForeignKey: "doctor_id",
+        fkTable: "users",
+        fkLabel: "name",
+        fkFilter: { role: "dokter" }
+      },
+      { key: "price", label: "Price", type: "number", required: true },
+      { key: "item_group", label: "Item Group", type: "text", maxLength: 50 },
+      { key: "denomination", label: "Denomination", type: "text", maxLength: 50 },
+      { key: "is_active", label: "Is Active", type: "boolean", defaultValue: true },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
+      { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
+    ]
+  },
+  "encounter-items": {
+    label: "Encounter Items",
+    schema: "encounterItems",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "item_id", label: "Item", type: "fk", required: true, fkTable: "items", fkLabel: "name" },
+      { key: "quantity", label: "Quantity", type: "number", required: true, defaultValue: 1 },
+      { key: "price_at_time", label: "Price at Time", type: "number", required: true },
+      { key: "subtotal", label: "Subtotal", type: "number", required: true },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "payments": {
+    label: "Payments",
+    schema: "payments",
+    fields: [
+      { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
+      { key: "encounter_id", label: "Encounter", type: "text", required: true, maxLength: 30 },
+      { key: "payment_mode", label: "Payment Mode", type: "select", required: true, options: ["NORMAL", "VOUCHER"], defaultValue: "NORMAL" },
+      { key: "discount_percent", label: "Discount %", type: "number", defaultValue: 0 },
+      { key: "discount_amount", label: "Discount Amount", type: "number", defaultValue: 0 },
+      { key: "total_sales", label: "Total Sales", type: "number", required: true },
+      { key: "net_sales", label: "Net Sales", type: "number", required: true },
+      { key: "total_paid", label: "Total Paid", type: "number", required: true },
+      { key: "payment_type", label: "Payment Type", type: "text", required: true, maxLength: 50 },
+      { key: "card_number", label: "Card Number", type: "text", maxLength: 30 },
+      { key: "reference_number", label: "Reference Number", type: "text", maxLength: 50 },
+      { key: "note", label: "Note", type: "textarea" },
+      { key: "proof_document_id", label: "Proof Document", type: "fk", fkTable: "documents", fkLabel: "file_name" },
+      { key: "doctor_id", label: "Doctor", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
+      { key: "cashier_id", label: "Cashier", type: "fk", required: true, fkTable: "users", fkLabel: "name" },
+      { key: "paid_at", label: "Paid At", type: "datetime" },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  }
+};
+const COUNTRY_CALLING_CODES = [
+  {
+    "name": "Afghanistan",
+    "dial_code": "+93",
+    "code": "AF"
+  },
+  {
+    "name": "Aland Islands",
+    "dial_code": "+358",
+    "code": "AX"
+  },
+  {
+    "name": "Albania",
+    "dial_code": "+355",
+    "code": "AL"
+  },
+  {
+    "name": "Algeria",
+    "dial_code": "+213",
+    "code": "DZ"
+  },
+  {
+    "name": "AmericanSamoa",
+    "dial_code": "+1684",
+    "code": "AS"
+  },
+  {
+    "name": "Andorra",
+    "dial_code": "+376",
+    "code": "AD"
+  },
+  {
+    "name": "Angola",
+    "dial_code": "+244",
+    "code": "AO"
+  },
+  {
+    "name": "Anguilla",
+    "dial_code": "+1264",
+    "code": "AI"
+  },
+  {
+    "name": "Antarctica",
+    "dial_code": "+672",
+    "code": "AQ"
+  },
+  {
+    "name": "Antigua and Barbuda",
+    "dial_code": "+1268",
+    "code": "AG"
+  },
+  {
+    "name": "Argentina",
+    "dial_code": "+54",
+    "code": "AR"
+  },
+  {
+    "name": "Armenia",
+    "dial_code": "+374",
+    "code": "AM"
+  },
+  {
+    "name": "Aruba",
+    "dial_code": "+297",
+    "code": "AW"
+  },
+  {
+    "name": "Australia",
+    "dial_code": "+61",
+    "code": "AU"
+  },
+  {
+    "name": "Austria",
+    "dial_code": "+43",
+    "code": "AT"
+  },
+  {
+    "name": "Azerbaijan",
+    "dial_code": "+994",
+    "code": "AZ"
+  },
+  {
+    "name": "Bahamas",
+    "dial_code": "+1242",
+    "code": "BS"
+  },
+  {
+    "name": "Bahrain",
+    "dial_code": "+973",
+    "code": "BH"
+  },
+  {
+    "name": "Bangladesh",
+    "dial_code": "+880",
+    "code": "BD"
+  },
+  {
+    "name": "Barbados",
+    "dial_code": "+1246",
+    "code": "BB"
+  },
+  {
+    "name": "Belarus",
+    "dial_code": "+375",
+    "code": "BY"
+  },
+  {
+    "name": "Belgium",
+    "dial_code": "+32",
+    "code": "BE"
+  },
+  {
+    "name": "Belize",
+    "dial_code": "+501",
+    "code": "BZ"
+  },
+  {
+    "name": "Benin",
+    "dial_code": "+229",
+    "code": "BJ"
+  },
+  {
+    "name": "Bermuda",
+    "dial_code": "+1441",
+    "code": "BM"
+  },
+  {
+    "name": "Bhutan",
+    "dial_code": "+975",
+    "code": "BT"
+  },
+  {
+    "name": "Bolivia, Plurinational State of",
+    "dial_code": "+591",
+    "code": "BO"
+  },
+  {
+    "name": "Bosnia and Herzegovina",
+    "dial_code": "+387",
+    "code": "BA"
+  },
+  {
+    "name": "Botswana",
+    "dial_code": "+267",
+    "code": "BW"
+  },
+  {
+    "name": "Brazil",
+    "dial_code": "+55",
+    "code": "BR"
+  },
+  {
+    "name": "British Indian Ocean Territory",
+    "dial_code": "+246",
+    "code": "IO"
+  },
+  {
+    "name": "Brunei Darussalam",
+    "dial_code": "+673",
+    "code": "BN"
+  },
+  {
+    "name": "Bulgaria",
+    "dial_code": "+359",
+    "code": "BG"
+  },
+  {
+    "name": "Burkina Faso",
+    "dial_code": "+226",
+    "code": "BF"
+  },
+  {
+    "name": "Burundi",
+    "dial_code": "+257",
+    "code": "BI"
+  },
+  {
+    "name": "Cambodia",
+    "dial_code": "+855",
+    "code": "KH"
+  },
+  {
+    "name": "Cameroon",
+    "dial_code": "+237",
+    "code": "CM"
+  },
+  {
+    "name": "Canada",
+    "dial_code": "+1",
+    "code": "CA"
+  },
+  {
+    "name": "Cape Verde",
+    "dial_code": "+238",
+    "code": "CV"
+  },
+  {
+    "name": "Cayman Islands",
+    "dial_code": "+ 345",
+    "code": "KY"
+  },
+  {
+    "name": "Central African Republic",
+    "dial_code": "+236",
+    "code": "CF"
+  },
+  {
+    "name": "Chad",
+    "dial_code": "+235",
+    "code": "TD"
+  },
+  {
+    "name": "Chile",
+    "dial_code": "+56",
+    "code": "CL"
+  },
+  {
+    "name": "China",
+    "dial_code": "+86",
+    "code": "CN"
+  },
+  {
+    "name": "Christmas Island",
+    "dial_code": "+61",
+    "code": "CX"
+  },
+  {
+    "name": "Cocos (Keeling) Islands",
+    "dial_code": "+61",
+    "code": "CC"
+  },
+  {
+    "name": "Colombia",
+    "dial_code": "+57",
+    "code": "CO"
+  },
+  {
+    "name": "Comoros",
+    "dial_code": "+269",
+    "code": "KM"
+  },
+  {
+    "name": "Congo",
+    "dial_code": "+242",
+    "code": "CG"
+  },
+  {
+    "name": "Congo, The Democratic Republic of the Congo",
+    "dial_code": "+243",
+    "code": "CD"
+  },
+  {
+    "name": "Cook Islands",
+    "dial_code": "+682",
+    "code": "CK"
+  },
+  {
+    "name": "Costa Rica",
+    "dial_code": "+506",
+    "code": "CR"
+  },
+  {
+    "name": "Cote d'Ivoire",
+    "dial_code": "+225",
+    "code": "CI"
+  },
+  {
+    "name": "Croatia",
+    "dial_code": "+385",
+    "code": "HR"
+  },
+  {
+    "name": "Cuba",
+    "dial_code": "+53",
+    "code": "CU"
+  },
+  {
+    "name": "Cyprus",
+    "dial_code": "+357",
+    "code": "CY"
+  },
+  {
+    "name": "Czech Republic",
+    "dial_code": "+420",
+    "code": "CZ"
+  },
+  {
+    "name": "Denmark",
+    "dial_code": "+45",
+    "code": "DK"
+  },
+  {
+    "name": "Djibouti",
+    "dial_code": "+253",
+    "code": "DJ"
+  },
+  {
+    "name": "Dominica",
+    "dial_code": "+1767",
+    "code": "DM"
+  },
+  {
+    "name": "Dominican Republic",
+    "dial_code": "+1849",
+    "code": "DO"
+  },
+  {
+    "name": "Ecuador",
+    "dial_code": "+593",
+    "code": "EC"
+  },
+  {
+    "name": "Egypt",
+    "dial_code": "+20",
+    "code": "EG"
+  },
+  {
+    "name": "El Salvador",
+    "dial_code": "+503",
+    "code": "SV"
+  },
+  {
+    "name": "Equatorial Guinea",
+    "dial_code": "+240",
+    "code": "GQ"
+  },
+  {
+    "name": "Eritrea",
+    "dial_code": "+291",
+    "code": "ER"
+  },
+  {
+    "name": "Estonia",
+    "dial_code": "+372",
+    "code": "EE"
+  },
+  {
+    "name": "Ethiopia",
+    "dial_code": "+251",
+    "code": "ET"
+  },
+  {
+    "name": "Falkland Islands (Malvinas)",
+    "dial_code": "+500",
+    "code": "FK"
+  },
+  {
+    "name": "Faroe Islands",
+    "dial_code": "+298",
+    "code": "FO"
+  },
+  {
+    "name": "Fiji",
+    "dial_code": "+679",
+    "code": "FJ"
+  },
+  {
+    "name": "Finland",
+    "dial_code": "+358",
+    "code": "FI"
+  },
+  {
+    "name": "France",
+    "dial_code": "+33",
+    "code": "FR"
+  },
+  {
+    "name": "French Guiana",
+    "dial_code": "+594",
+    "code": "GF"
+  },
+  {
+    "name": "French Polynesia",
+    "dial_code": "+689",
+    "code": "PF"
+  },
+  {
+    "name": "Gabon",
+    "dial_code": "+241",
+    "code": "GA"
+  },
+  {
+    "name": "Gambia",
+    "dial_code": "+220",
+    "code": "GM"
+  },
+  {
+    "name": "Georgia",
+    "dial_code": "+995",
+    "code": "GE"
+  },
+  {
+    "name": "Germany",
+    "dial_code": "+49",
+    "code": "DE"
+  },
+  {
+    "name": "Ghana",
+    "dial_code": "+233",
+    "code": "GH"
+  },
+  {
+    "name": "Gibraltar",
+    "dial_code": "+350",
+    "code": "GI"
+  },
+  {
+    "name": "Greece",
+    "dial_code": "+30",
+    "code": "GR"
+  },
+  {
+    "name": "Greenland",
+    "dial_code": "+299",
+    "code": "GL"
+  },
+  {
+    "name": "Grenada",
+    "dial_code": "+1473",
+    "code": "GD"
+  },
+  {
+    "name": "Guadeloupe",
+    "dial_code": "+590",
+    "code": "GP"
+  },
+  {
+    "name": "Guam",
+    "dial_code": "+1671",
+    "code": "GU"
+  },
+  {
+    "name": "Guatemala",
+    "dial_code": "+502",
+    "code": "GT"
+  },
+  {
+    "name": "Guernsey",
+    "dial_code": "+44",
+    "code": "GG"
+  },
+  {
+    "name": "Guinea",
+    "dial_code": "+224",
+    "code": "GN"
+  },
+  {
+    "name": "Guinea-Bissau",
+    "dial_code": "+245",
+    "code": "GW"
+  },
+  {
+    "name": "Guyana",
+    "dial_code": "+595",
+    "code": "GY"
+  },
+  {
+    "name": "Haiti",
+    "dial_code": "+509",
+    "code": "HT"
+  },
+  {
+    "name": "Holy See (Vatican City State)",
+    "dial_code": "+379",
+    "code": "VA"
+  },
+  {
+    "name": "Honduras",
+    "dial_code": "+504",
+    "code": "HN"
+  },
+  {
+    "name": "Hong Kong",
+    "dial_code": "+852",
+    "code": "HK"
+  },
+  {
+    "name": "Hungary",
+    "dial_code": "+36",
+    "code": "HU"
+  },
+  {
+    "name": "Iceland",
+    "dial_code": "+354",
+    "code": "IS"
+  },
+  {
+    "name": "India",
+    "dial_code": "+91",
+    "code": "IN"
+  },
+  {
+    "name": "Indonesia",
+    "dial_code": "+62",
+    "code": "ID"
+  },
+  {
+    "name": "Iran, Islamic Republic of Persian Gulf",
+    "dial_code": "+98",
+    "code": "IR"
+  },
+  {
+    "name": "Iraq",
+    "dial_code": "+964",
+    "code": "IQ"
+  },
+  {
+    "name": "Ireland",
+    "dial_code": "+353",
+    "code": "IE"
+  },
+  {
+    "name": "Isle of Man",
+    "dial_code": "+44",
+    "code": "IM"
+  },
+  {
+    "name": "Israel",
+    "dial_code": "+972",
+    "code": "IL"
+  },
+  {
+    "name": "Italy",
+    "dial_code": "+39",
+    "code": "IT"
+  },
+  {
+    "name": "Jamaica",
+    "dial_code": "+1876",
+    "code": "JM"
+  },
+  {
+    "name": "Japan",
+    "dial_code": "+81",
+    "code": "JP"
+  },
+  {
+    "name": "Jersey",
+    "dial_code": "+44",
+    "code": "JE"
+  },
+  {
+    "name": "Jordan",
+    "dial_code": "+962",
+    "code": "JO"
+  },
+  {
+    "name": "Kazakhstan",
+    "dial_code": "+77",
+    "code": "KZ"
+  },
+  {
+    "name": "Kenya",
+    "dial_code": "+254",
+    "code": "KE"
+  },
+  {
+    "name": "Kiribati",
+    "dial_code": "+686",
+    "code": "KI"
+  },
+  {
+    "name": "Korea, Democratic People's Republic of Korea",
+    "dial_code": "+850",
+    "code": "KP"
+  },
+  {
+    "name": "Korea, Republic of South Korea",
+    "dial_code": "+82",
+    "code": "KR"
+  },
+  {
+    "name": "Kuwait",
+    "dial_code": "+965",
+    "code": "KW"
+  },
+  {
+    "name": "Kyrgyzstan",
+    "dial_code": "+996",
+    "code": "KG"
+  },
+  {
+    "name": "Laos",
+    "dial_code": "+856",
+    "code": "LA"
+  },
+  {
+    "name": "Latvia",
+    "dial_code": "+371",
+    "code": "LV"
+  },
+  {
+    "name": "Lebanon",
+    "dial_code": "+961",
+    "code": "LB"
+  },
+  {
+    "name": "Lesotho",
+    "dial_code": "+266",
+    "code": "LS"
+  },
+  {
+    "name": "Liberia",
+    "dial_code": "+231",
+    "code": "LR"
+  },
+  {
+    "name": "Libyan Arab Jamahiriya",
+    "dial_code": "+218",
+    "code": "LY"
+  },
+  {
+    "name": "Liechtenstein",
+    "dial_code": "+423",
+    "code": "LI"
+  },
+  {
+    "name": "Lithuania",
+    "dial_code": "+370",
+    "code": "LT"
+  },
+  {
+    "name": "Luxembourg",
+    "dial_code": "+352",
+    "code": "LU"
+  },
+  {
+    "name": "Macao",
+    "dial_code": "+853",
+    "code": "MO"
+  },
+  {
+    "name": "Macedonia",
+    "dial_code": "+389",
+    "code": "MK"
+  },
+  {
+    "name": "Madagascar",
+    "dial_code": "+261",
+    "code": "MG"
+  },
+  {
+    "name": "Malawi",
+    "dial_code": "+265",
+    "code": "MW"
+  },
+  {
+    "name": "Malaysia",
+    "dial_code": "+60",
+    "code": "MY"
+  },
+  {
+    "name": "Maldives",
+    "dial_code": "+960",
+    "code": "MV"
+  },
+  {
+    "name": "Mali",
+    "dial_code": "+223",
+    "code": "ML"
+  },
+  {
+    "name": "Malta",
+    "dial_code": "+356",
+    "code": "MT"
+  },
+  {
+    "name": "Marshall Islands",
+    "dial_code": "+692",
+    "code": "MH"
+  },
+  {
+    "name": "Martinique",
+    "dial_code": "+596",
+    "code": "MQ"
+  },
+  {
+    "name": "Mauritania",
+    "dial_code": "+222",
+    "code": "MR"
+  },
+  {
+    "name": "Mauritius",
+    "dial_code": "+230",
+    "code": "MU"
+  },
+  {
+    "name": "Mayotte",
+    "dial_code": "+262",
+    "code": "YT"
+  },
+  {
+    "name": "Mexico",
+    "dial_code": "+52",
+    "code": "MX"
+  },
+  {
+    "name": "Micronesia, Federated States of Micronesia",
+    "dial_code": "+691",
+    "code": "FM"
+  },
+  {
+    "name": "Moldova",
+    "dial_code": "+373",
+    "code": "MD"
+  },
+  {
+    "name": "Monaco",
+    "dial_code": "+377",
+    "code": "MC"
+  },
+  {
+    "name": "Mongolia",
+    "dial_code": "+976",
+    "code": "MN"
+  },
+  {
+    "name": "Montenegro",
+    "dial_code": "+382",
+    "code": "ME"
+  },
+  {
+    "name": "Montserrat",
+    "dial_code": "+1664",
+    "code": "MS"
+  },
+  {
+    "name": "Morocco",
+    "dial_code": "+212",
+    "code": "MA"
+  },
+  {
+    "name": "Mozambique",
+    "dial_code": "+258",
+    "code": "MZ"
+  },
+  {
+    "name": "Myanmar",
+    "dial_code": "+95",
+    "code": "MM"
+  },
+  {
+    "name": "Namibia",
+    "dial_code": "+264",
+    "code": "NA"
+  },
+  {
+    "name": "Nauru",
+    "dial_code": "+674",
+    "code": "NR"
+  },
+  {
+    "name": "Nepal",
+    "dial_code": "+977",
+    "code": "NP"
+  },
+  {
+    "name": "Netherlands",
+    "dial_code": "+31",
+    "code": "NL"
+  },
+  {
+    "name": "Netherlands Antilles",
+    "dial_code": "+599",
+    "code": "AN"
+  },
+  {
+    "name": "New Caledonia",
+    "dial_code": "+687",
+    "code": "NC"
+  },
+  {
+    "name": "New Zealand",
+    "dial_code": "+64",
+    "code": "NZ"
+  },
+  {
+    "name": "Nicaragua",
+    "dial_code": "+505",
+    "code": "NI"
+  },
+  {
+    "name": "Niger",
+    "dial_code": "+227",
+    "code": "NE"
+  },
+  {
+    "name": "Nigeria",
+    "dial_code": "+234",
+    "code": "NG"
+  },
+  {
+    "name": "Niue",
+    "dial_code": "+683",
+    "code": "NU"
+  },
+  {
+    "name": "Norfolk Island",
+    "dial_code": "+672",
+    "code": "NF"
+  },
+  {
+    "name": "Northern Mariana Islands",
+    "dial_code": "+1670",
+    "code": "MP"
+  },
+  {
+    "name": "Norway",
+    "dial_code": "+47",
+    "code": "NO"
+  },
+  {
+    "name": "Oman",
+    "dial_code": "+968",
+    "code": "OM"
+  },
+  {
+    "name": "Pakistan",
+    "dial_code": "+92",
+    "code": "PK"
+  },
+  {
+    "name": "Palau",
+    "dial_code": "+680",
+    "code": "PW"
+  },
+  {
+    "name": "Palestinian Territory, Occupied",
+    "dial_code": "+970",
+    "code": "PS"
+  },
+  {
+    "name": "Panama",
+    "dial_code": "+507",
+    "code": "PA"
+  },
+  {
+    "name": "Papua New Guinea",
+    "dial_code": "+675",
+    "code": "PG"
+  },
+  {
+    "name": "Paraguay",
+    "dial_code": "+595",
+    "code": "PY"
+  },
+  {
+    "name": "Peru",
+    "dial_code": "+51",
+    "code": "PE"
+  },
+  {
+    "name": "Philippines",
+    "dial_code": "+63",
+    "code": "PH"
+  },
+  {
+    "name": "Pitcairn",
+    "dial_code": "+872",
+    "code": "PN"
+  },
+  {
+    "name": "Poland",
+    "dial_code": "+48",
+    "code": "PL"
+  },
+  {
+    "name": "Portugal",
+    "dial_code": "+351",
+    "code": "PT"
+  },
+  {
+    "name": "Puerto Rico",
+    "dial_code": "+1939",
+    "code": "PR"
+  },
+  {
+    "name": "Qatar",
+    "dial_code": "+974",
+    "code": "QA"
+  },
+  {
+    "name": "Romania",
+    "dial_code": "+40",
+    "code": "RO"
+  },
+  {
+    "name": "Russia",
+    "dial_code": "+7",
+    "code": "RU"
+  },
+  {
+    "name": "Rwanda",
+    "dial_code": "+250",
+    "code": "RW"
+  },
+  {
+    "name": "Reunion",
+    "dial_code": "+262",
+    "code": "RE"
+  },
+  {
+    "name": "Saint Barthelemy",
+    "dial_code": "+590",
+    "code": "BL"
+  },
+  {
+    "name": "Saint Helena, Ascension and Tristan Da Cunha",
+    "dial_code": "+290",
+    "code": "SH"
+  },
+  {
+    "name": "Saint Kitts and Nevis",
+    "dial_code": "+1869",
+    "code": "KN"
+  },
+  {
+    "name": "Saint Lucia",
+    "dial_code": "+1758",
+    "code": "LC"
+  },
+  {
+    "name": "Saint Martin",
+    "dial_code": "+590",
+    "code": "MF"
+  },
+  {
+    "name": "Saint Pierre and Miquelon",
+    "dial_code": "+508",
+    "code": "PM"
+  },
+  {
+    "name": "Saint Vincent and the Grenadines",
+    "dial_code": "+1784",
+    "code": "VC"
+  },
+  {
+    "name": "Samoa",
+    "dial_code": "+685",
+    "code": "WS"
+  },
+  {
+    "name": "San Marino",
+    "dial_code": "+378",
+    "code": "SM"
+  },
+  {
+    "name": "Sao Tome and Principe",
+    "dial_code": "+239",
+    "code": "ST"
+  },
+  {
+    "name": "Saudi Arabia",
+    "dial_code": "+966",
+    "code": "SA"
+  },
+  {
+    "name": "Senegal",
+    "dial_code": "+221",
+    "code": "SN"
+  },
+  {
+    "name": "Serbia",
+    "dial_code": "+381",
+    "code": "RS"
+  },
+  {
+    "name": "Seychelles",
+    "dial_code": "+248",
+    "code": "SC"
+  },
+  {
+    "name": "Sierra Leone",
+    "dial_code": "+232",
+    "code": "SL"
+  },
+  {
+    "name": "Singapore",
+    "dial_code": "+65",
+    "code": "SG"
+  },
+  {
+    "name": "Slovakia",
+    "dial_code": "+421",
+    "code": "SK"
+  },
+  {
+    "name": "Slovenia",
+    "dial_code": "+386",
+    "code": "SI"
+  },
+  {
+    "name": "Solomon Islands",
+    "dial_code": "+677",
+    "code": "SB"
+  },
+  {
+    "name": "Somalia",
+    "dial_code": "+252",
+    "code": "SO"
+  },
+  {
+    "name": "South Africa",
+    "dial_code": "+27",
+    "code": "ZA"
+  },
+  {
+    "name": "South Sudan",
+    "dial_code": "+211",
+    "code": "SS"
+  },
+  {
+    "name": "South Georgia and the South Sandwich Islands",
+    "dial_code": "+500",
+    "code": "GS"
+  },
+  {
+    "name": "Spain",
+    "dial_code": "+34",
+    "code": "ES"
+  },
+  {
+    "name": "Sri Lanka",
+    "dial_code": "+94",
+    "code": "LK"
+  },
+  {
+    "name": "Sudan",
+    "dial_code": "+249",
+    "code": "SD"
+  },
+  {
+    "name": "Suriname",
+    "dial_code": "+597",
+    "code": "SR"
+  },
+  {
+    "name": "Svalbard and Jan Mayen",
+    "dial_code": "+47",
+    "code": "SJ"
+  },
+  {
+    "name": "Swaziland",
+    "dial_code": "+268",
+    "code": "SZ"
+  },
+  {
+    "name": "Sweden",
+    "dial_code": "+46",
+    "code": "SE"
+  },
+  {
+    "name": "Switzerland",
+    "dial_code": "+41",
+    "code": "CH"
+  },
+  {
+    "name": "Syrian Arab Republic",
+    "dial_code": "+963",
+    "code": "SY"
+  },
+  {
+    "name": "Taiwan",
+    "dial_code": "+886",
+    "code": "TW"
+  },
+  {
+    "name": "Tajikistan",
+    "dial_code": "+992",
+    "code": "TJ"
+  },
+  {
+    "name": "Tanzania, United Republic of Tanzania",
+    "dial_code": "+255",
+    "code": "TZ"
+  },
+  {
+    "name": "Thailand",
+    "dial_code": "+66",
+    "code": "TH"
+  },
+  {
+    "name": "Timor-Leste",
+    "dial_code": "+670",
+    "code": "TL"
+  },
+  {
+    "name": "Togo",
+    "dial_code": "+228",
+    "code": "TG"
+  },
+  {
+    "name": "Tokelau",
+    "dial_code": "+690",
+    "code": "TK"
+  },
+  {
+    "name": "Tonga",
+    "dial_code": "+676",
+    "code": "TO"
+  },
+  {
+    "name": "Trinidad and Tobago",
+    "dial_code": "+1868",
+    "code": "TT"
+  },
+  {
+    "name": "Tunisia",
+    "dial_code": "+216",
+    "code": "TN"
+  },
+  {
+    "name": "Turkey",
+    "dial_code": "+90",
+    "code": "TR"
+  },
+  {
+    "name": "Turkmenistan",
+    "dial_code": "+993",
+    "code": "TM"
+  },
+  {
+    "name": "Turks and Caicos Islands",
+    "dial_code": "+1649",
+    "code": "TC"
+  },
+  {
+    "name": "Tuvalu",
+    "dial_code": "+688",
+    "code": "TV"
+  },
+  {
+    "name": "Uganda",
+    "dial_code": "+256",
+    "code": "UG"
+  },
+  {
+    "name": "Ukraine",
+    "dial_code": "+380",
+    "code": "UA"
+  },
+  {
+    "name": "United Arab Emirates",
+    "dial_code": "+971",
+    "code": "AE"
+  },
+  {
+    "name": "United Kingdom",
+    "dial_code": "+44",
+    "code": "GB"
+  },
+  {
+    "name": "United States",
+    "dial_code": "+1",
+    "code": "US"
+  },
+  {
+    "name": "Uruguay",
+    "dial_code": "+598",
+    "code": "UY"
+  },
+  {
+    "name": "Uzbekistan",
+    "dial_code": "+998",
+    "code": "UZ"
+  },
+  {
+    "name": "Vanuatu",
+    "dial_code": "+678",
+    "code": "VU"
+  },
+  {
+    "name": "Venezuela, Bolivarian Republic of Venezuela",
+    "dial_code": "+58",
+    "code": "VE"
+  },
+  {
+    "name": "Vietnam",
+    "dial_code": "+84",
+    "code": "VN"
+  },
+  {
+    "name": "Virgin Islands, British",
+    "dial_code": "+1284",
+    "code": "VG"
+  },
+  {
+    "name": "Virgin Islands, U.S.",
+    "dial_code": "+1340",
+    "code": "VI"
+  },
+  {
+    "name": "Wallis and Futuna",
+    "dial_code": "+681",
+    "code": "WF"
+  },
+  {
+    "name": "Yemen",
+    "dial_code": "+967",
+    "code": "YE"
+  },
+  {
+    "name": "Zambia",
+    "dial_code": "+260",
+    "code": "ZM"
+  },
+  {
+    "name": "Zimbabwe",
+    "dial_code": "+263",
+    "code": "ZW"
+  }
+];
+
+export { ADMIN_TABLES as A, BAHAN_PROTESA as B, COUNTRY_CALLING_CODES as C, ENCOUNTER_STATUSES as E, KEADAAN as K, PROTESA as P, QUEUE_COLUMNS as Q, RESTORASI as R, BAHAN_RESTORASI as a, ALLERGY_REACTIONS as b, BLOOD_TYPES as c, PAYMENT_TYPES as d };
+//# sourceMappingURL=constants-7804d9c5.js.map

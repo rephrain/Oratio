@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/suster/edit-patient/+page.svelte";

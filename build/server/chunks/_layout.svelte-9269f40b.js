@@ -1,0 +1,43 @@
+import { c as create_ssr_component, a as subscribe, v as validate_component, f as escape, g as add_attribute } from './ssr-4a5a9ccc.js';
+import { i as isNotificationOpen, u as unreadNotificationCount, a as isChatOpen, b as unreadCount, T as Toast, P as ProfileModal, C as ChatPanel, N as NotificationPanel } from './ChatPanel-94d905bd.js';
+import { S as Sidebar } from './Sidebar-ec15dc52.js';
+import { p as page } from './stores-468b91fe.js';
+import { i as isProfileModalOpen } from './layout-3873cafe.js';
+import './toast-4413a763.js';
+import './index2-bd557b7d.js';
+
+const css = {
+  code: ":root{--tw-primary:#10b981;--tw-secondary:#e0e0e0;--tw-accent:#14b8a6;--tw-forest:#064e3b;--tw-bg-light:#f9fafb;--tw-bg-dark:#064e3b}body{margin:0;padding:0}.custom-scrollbar::-webkit-scrollbar{width:6px;height:6px}.custom-scrollbar::-webkit-scrollbar-track{background:transparent}.custom-scrollbar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}.custom-scrollbar::-webkit-scrollbar-thumb:hover{background:#94a3b8}@keyframes svelte-18j16mz-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}.chat-unread-indicator.svelte-18j16mz{position:absolute;top:0;right:0;background:#ef4444;color:white;font-size:0.6rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid white;line-height:1;animation:svelte-18j16mz-badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)}@keyframes svelte-18j16mz-badgePop{from{transform:scale(0)}to{transform:scale(1)}}.notif-unread-indicator.svelte-18j16mz{position:absolute;top:0;right:0;background:linear-gradient(135deg, #6366f1, #4f46e5);color:white;font-size:0.6rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid white;line-height:1;animation:svelte-18j16mz-badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)}",
+  map: null
+};
+const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let user;
+  let $page, $$unsubscribe_page;
+  let $$unsubscribe_isNotificationOpen;
+  let $unreadNotificationCount, $$unsubscribe_unreadNotificationCount;
+  let $$unsubscribe_isChatOpen;
+  let $unreadCount, $$unsubscribe_unreadCount;
+  let $$unsubscribe_isProfileModalOpen;
+  $$unsubscribe_page = subscribe(page, (value) => $page = value);
+  $$unsubscribe_isNotificationOpen = subscribe(isNotificationOpen, (value) => value);
+  $$unsubscribe_unreadNotificationCount = subscribe(unreadNotificationCount, (value) => $unreadNotificationCount = value);
+  $$unsubscribe_isChatOpen = subscribe(isChatOpen, (value) => value);
+  $$unsubscribe_unreadCount = subscribe(unreadCount, (value) => $unreadCount = value);
+  $$unsubscribe_isProfileModalOpen = subscribe(isProfileModalOpen, (value) => value);
+  let { data } = $$props;
+  if ($$props.data === void 0 && $$bindings.data && data !== void 0)
+    $$bindings.data(data);
+  $$result.css.add(css);
+  user = data?.user;
+  $page.url.pathname;
+  $$unsubscribe_page();
+  $$unsubscribe_isNotificationOpen();
+  $$unsubscribe_unreadNotificationCount();
+  $$unsubscribe_isChatOpen();
+  $$unsubscribe_unreadCount();
+  $$unsubscribe_isProfileModalOpen();
+  return `${$$result.head += `<!-- HEAD_svelte-40bjgf_START -->${$$result.title = `<title>Oratio Clinic - Kasir</title>`, ""}<!-- HEAD_svelte-40bjgf_END -->`, ""} <div class="font-display text-slate-900 bg-background-light flex h-screen overflow-hidden w-full"> ${validate_component(Sidebar, "Sidebar").$$render($$result, { user, role: "kasir" }, {}, {})}  <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10"> <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0"><div class="flex-1 max-w-xl" data-svelte-h="svelte-t1m5dv"><div class="relative group"></div></div> <div class="flex items-center gap-6"><div class="flex items-center gap-4"><button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative transition-colors" id="kasir-notification-toggle-btn"><span class="material-symbols-outlined" data-svelte-h="svelte-8pjcy8">notifications</span> ${$unreadNotificationCount > 0 ? `<span class="notif-unread-indicator svelte-18j16mz">${escape($unreadNotificationCount > 99 ? "99+" : $unreadNotificationCount)}</span>` : ``}</button> <button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative" id="kasir-chat-toggle-btn"><span class="material-symbols-outlined" data-svelte-h="svelte-qf76r">chat_bubble</span> ${$unreadCount > 0 ? `<span class="chat-unread-indicator svelte-18j16mz">${escape($unreadCount > 99 ? "99+" : $unreadCount)}</span>` : ``}</button></div> <div class="h-8 w-px bg-slate-200"></div> <div class="relative"><button class="flex items-center gap-3 focus:outline-none hover:opacity-80 transition-opacity"><div class="text-right"><p class="text-sm font-semibold text-slate-900 leading-none">${escape(user?.name || "Receptionist")}</p> <p class="text-xs text-slate-500 mt-1 capitalize">${escape(user?.role || "kasir")}</p></div> <div class="size-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold uppercase overflow-hidden border border-slate-100">${user?.profile_image_url ? `<img${add_attribute("src", user.profile_image_url, 0)}${add_attribute("alt", user?.name, 0)} class="w-full h-full object-cover">` : `${escape(user?.name?.[0] || "R")}`}</div> <span class="${"material-symbols-outlined text-slate-400 text-sm " + escape("", true) + " transition-transform"}">expand_more</span></button> ${``}</div></div></header> <div class="flex-1 overflow-y-auto custom-scrollbar bg-secondary/30 p-8">${slots.default ? slots.default({}) : ``}</div></main></div> ${validate_component(Toast, "Toast").$$render($$result, {}, {}, {})} ${validate_component(ProfileModal, "ProfileModal").$$render($$result, { user }, {}, {})} ${validate_component(ChatPanel, "ChatPanel").$$render($$result, { user }, {}, {})} ${validate_component(NotificationPanel, "NotificationPanel").$$render($$result, { user }, {}, {})}`;
+});
+
+export { Layout as default };
+//# sourceMappingURL=_layout.svelte-9269f40b.js.map

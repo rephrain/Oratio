@@ -1,7 +1,7 @@
 import { j as json } from "../../../../chunks/index.js";
 import { d as db, p as patients, t as terminologyMaster, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, g as documents } from "../../../../chunks/index3.js";
 import { or, ilike, sql, desc, and, eq, asc } from "drizzle-orm";
-import { a as generatePatientId } from "../../../../chunks/formatters.js";
+import { g as generatePatientId } from "../../../../chunks/formatters.js";
 import { b as generatePatientProfilePdf } from "../../../../chunks/pdfGenerator.js";
 import fs from "fs";
 import path from "path";

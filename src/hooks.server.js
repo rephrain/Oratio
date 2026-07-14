@@ -9,7 +9,8 @@ const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 const ROLE_PATHS = {
 	admin: '/admin',
 	kasir: '/kasir',
-	dokter: '/dokter'
+	dokter: '/dokter',
+	suster: '/suster'
 };
 
 /** @type {import('@sveltejs/kit').Handle} */

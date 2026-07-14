@@ -44,10 +44,10 @@ function generateEncounterId(doctorCode, lastId) {
   return prefix + String(num).padStart(6, "0");
 }
 export {
-  generatePatientId as a,
+  generateEncounterId as a,
   getJakartaDateString as b,
   getJakartaMonthString as c,
   formatCurrency as d,
   formatDate as f,
-  generateEncounterId as g
+  generatePatientId as g
 };

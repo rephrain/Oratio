@@ -119,6 +119,18 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         icon: "🕒",
         label: "History"
       }
+    ],
+    suster: [
+      {
+        href: "/suster/history",
+        icon: "🕒",
+        label: "History"
+      },
+      {
+        href: "/suster/edit-patient",
+        icon: "✏️",
+        label: "Edit Data Pasien"
+      }
     ]
   };
   if ($$props.user === void 0 && $$bindings.user && user !== void 0)
@@ -198,12 +210,30 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   ) + " rounded-lg transition-colors"}" href="/dokter/history" title="History"><span class="${"material-symbols-outlined " + escape(
     currentPath.startsWith("/dokter/history") ? "" : "opacity-70",
     true
-  )}">history</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-l3fwin">History</span>` : ``}</a></nav> <div class="mt-auto p-4 border-t border-white/10">${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}</div></aside>` : `<aside class="sidebar"> <button class="sidebar-toggle-btn absolute -right-3 top-8 bg-white text-gray-700 rounded-full shadow-md border border-gray-200 size-6 flex items-center justify-center hover:bg-gray-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-primary" style="width: 24px; height: 24px; top: 32px; right: -12px; cursor: pointer;" title="Toggle Sidebar"><span class="material-symbols-outlined" style="font-size: 16px;">${escape($isSidebarOpen ? "menu_open" : "menu")}</span></button> <div class="sidebar-header" data-svelte-h="svelte-1lubj6g"><img src="/logo.png" alt="Klinik Utama Oratio" style="max-width: 100%; height: 52px; width: auto; object-fit: contain; "></div> <nav class="sidebar-nav"><div class="sidebar-section" data-svelte-h="svelte-karbua">Menu</div> ${each(items, (item) => {
+  )}">history</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-l3fwin">History</span>` : ``}</a></nav> <div class="mt-auto p-4 border-t border-white/10">${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}</div></aside>` : `${role === "suster" ? `<aside class="sidebar bg-[#4C1D2F] flex flex-col text-white shadow-lg font-display"> <button class="absolute -right-3 top-8 bg-white text-[#4C1D2F] rounded-full shadow-md border border-slate-200 size-6 flex items-center justify-center hover:bg-slate-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-[#E11D48]" title="Toggle Sidebar"><span class="material-symbols-outlined text-[16px]">${escape($isSidebarOpen ? "menu_open" : "menu")}</span></button> <div class="${"p-6 flex items-center gap-3 " + escape($isSidebarOpen ? "" : "justify-center p-4", true)}"><div class="size-10 bg-[#E11D48] rounded-lg flex items-center justify-center shrink-0" data-svelte-h="svelte-erxuf7"><span class="material-symbols-outlined text-white">health_and_safety</span></div> ${$isSidebarOpen ? `<div class="overflow-hidden whitespace-nowrap" data-svelte-h="svelte-1weey0r"><h1 class="font-bold text-lg leading-none">Oratio Clinic</h1> <p class="text-[10px] text-[#FB7185] uppercase tracking-widest mt-1">Suster Access</p></div>` : ``}</div> <nav class="${"flex-1 px-4 space-y-2 mt-4 " + escape($isSidebarOpen ? "" : "!px-2", true)}"><a class="${"flex items-center " + escape(
+    $isSidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3",
+    true
+  ) + " " + escape(
+    currentPath.startsWith("/suster/history") ? "bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]" : "hover:bg-white/10 !text-white/70 hover:!text-white",
+    true
+  ) + " rounded-lg transition-colors"}" href="/suster/history" title="History"><span class="${"material-symbols-outlined " + escape(
+    currentPath.startsWith("/suster/history") ? "" : "opacity-70",
+    true
+  )}">history</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-l3fwin">History</span>` : ``}</a> <a class="${"flex items-center " + escape(
+    $isSidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3",
+    true
+  ) + " " + escape(
+    currentPath.startsWith("/suster/edit-patient") ? "bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]" : "hover:bg-white/10 !text-white/70 hover:!text-white",
+    true
+  ) + " rounded-lg transition-colors"}" href="/suster/edit-patient" title="Edit Data Pasien"><span class="${"material-symbols-outlined " + escape(
+    currentPath.startsWith("/suster/edit-patient") ? "" : "opacity-70",
+    true
+  )}">edit_note</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-1iblxln">Edit Data Pasien</span>` : ``}</a></nav> <div class="mt-auto p-4 border-t border-white/10">${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}</div></aside>` : `<aside class="sidebar"> <button class="sidebar-toggle-btn absolute -right-3 top-8 bg-white text-gray-700 rounded-full shadow-md border border-gray-200 size-6 flex items-center justify-center hover:bg-gray-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-primary" style="width: 24px; height: 24px; top: 32px; right: -12px; cursor: pointer;" title="Toggle Sidebar"><span class="material-symbols-outlined" style="font-size: 16px;">${escape($isSidebarOpen ? "menu_open" : "menu")}</span></button> <div class="sidebar-header" data-svelte-h="svelte-1lubj6g"><img src="/logo.png" alt="Klinik Utama Oratio" style="max-width: 100%; height: 52px; width: auto; object-fit: contain; "></div> <nav class="sidebar-nav"><div class="sidebar-section" data-svelte-h="svelte-karbua">Menu</div> ${each(items, (item) => {
     return `<a${add_attribute("href", item.href, 0)} class="${[
       "sidebar-link",
       currentPath === item.href || item.href !== "/" + role && currentPath.startsWith(item.href) ? "active" : ""
     ].join(" ").trim()}"${add_attribute("title", item.label, 0)}><span class="icon">${escape(item.icon)}</span> <span class="sidebar-link-text">${escape(item.label)}</span> </a>`;
-  })}</nav></aside>`}`}`;
+  })}</nav></aside>`}`}`}`;
 });
 export {
   Sidebar as S

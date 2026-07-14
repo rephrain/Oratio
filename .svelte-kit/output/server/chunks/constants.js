@@ -170,7 +170,7 @@ const ADMIN_TABLES = {
       { key: "id", label: "ID", type: "uuid", readOnly: true, autoGenerate: true },
       { key: "name", label: "Name", type: "text", required: true },
       { key: "username", label: "Username", type: "text", required: true },
-      { key: "password", label: "Password", type: "password", createOnly: true },
+      { key: "password", label: "Password", type: "password", placeholder: "Leave blank to keep current" },
       { key: "role", label: "Role", type: "select", required: true, options: ["admin", "kasir", "dokter"] },
       { key: "doctor_code", label: "Doctor Code", type: "text", maxLength: 5 },
       { key: "profile_image_url", label: "Profile Image URL", type: "image" },

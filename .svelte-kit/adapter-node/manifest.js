@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.7bb28938.js","app":"_app/immutable/entry/app.7eda777c.js","imports":["_app/immutable/entry/start.7bb28938.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/singletons.655657ff.js","_app/immutable/chunks/index.917838c3.js","_app/immutable/chunks/paths.7522f69a.js","_app/immutable/entry/app.7eda777c.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.f96b2c3a.js","_app/immutable/chunks/index.ccebf854.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.f7ec5c5a.js","app":"_app/immutable/entry/app.cb275438.js","imports":["_app/immutable/entry/start.f7ec5c5a.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/singletons.3673d942.js","_app/immutable/chunks/index.67c9fa51.js","_app/immutable/chunks/paths.0bf0e0b5.js","_app/immutable/entry/app.cb275438.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/index.bf6392ca.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -32,28 +32,32 @@ return {
 			__memo(() => import('./nodes/17.js')),
 			__memo(() => import('./nodes/18.js')),
 			__memo(() => import('./nodes/19.js')),
-			__memo(() => import('./nodes/20.js'))
+			__memo(() => import('./nodes/20.js')),
+			__memo(() => import('./nodes/21.js')),
+			__memo(() => import('./nodes/22.js')),
+			__memo(() => import('./nodes/23.js')),
+			__memo(() => import('./nodes/24.js'))
 		],
 		routes: [
 			{
 				id: "/admin",
 				pattern: /^\/admin\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 5 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 6 },
 				endpoint: null
 			},
 			{
 				id: "/admin/import",
 				pattern: /^\/admin\/import\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 6 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 7 },
 				endpoint: null
 			},
 			{
 				id: "/admin/[table]",
 				pattern: /^\/admin\/([^/]+?)\/?$/,
 				params: [{"name":"table","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 7 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 8 },
 				endpoint: null
 			},
 			{
@@ -354,91 +358,112 @@ return {
 				id: "/dokter",
 				pattern: /^\/dokter\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 8 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 9 },
 				endpoint: null
 			},
 			{
 				id: "/dokter/analytics",
 				pattern: /^\/dokter\/analytics\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 9 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 10 },
 				endpoint: null
 			},
 			{
 				id: "/dokter/history",
 				pattern: /^\/dokter\/history\/?$/,
 				params: [],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 10 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 11 },
 				endpoint: null
 			},
 			{
 				id: "/dokter/patient/[patientId]",
 				pattern: /^\/dokter\/patient\/([^/]+?)\/?$/,
 				params: [{"name":"patientId","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 11 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 12 },
 				endpoint: null
 			},
 			{
 				id: "/dokter/[encounterId]",
 				pattern: /^\/dokter\/([^/]+?)\/?$/,
 				params: [{"name":"encounterId","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,3,], errors: [1,,], leaf: 12 },
+				page: { layouts: [0,3,], errors: [1,,], leaf: 13 },
 				endpoint: null
 			},
 			{
 				id: "/kasir",
 				pattern: /^\/kasir\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 13 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/edit-patient",
 				pattern: /^\/kasir\/edit-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 14 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/existing-patient",
 				pattern: /^\/kasir\/existing-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 15 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 16 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/new-patient",
 				pattern: /^\/kasir\/new-patient\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 16 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 17 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/patients",
 				pattern: /^\/kasir\/patients\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 17 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 18 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/payments",
 				pattern: /^\/kasir\/payments\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 19 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 20 },
 				endpoint: null
 			},
 			{
 				id: "/kasir/payment",
 				pattern: /^\/kasir\/payment\/?$/,
 				params: [],
-				page: { layouts: [0,4,], errors: [1,,], leaf: 18 },
+				page: { layouts: [0,4,], errors: [1,,], leaf: 19 },
 				endpoint: null
 			},
 			{
 				id: "/login",
 				pattern: /^\/login\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 20 },
+				page: { layouts: [0,], errors: [1,], leaf: 21 },
+				endpoint: null
+			},
+			{
+				id: "/suster",
+				pattern: /^\/suster\/?$/,
+				params: [],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 22 },
+				endpoint: null
+			},
+			{
+				id: "/suster/edit-patient",
+				pattern: /^\/suster\/edit-patient\/?$/,
+				params: [],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 23 },
+				endpoint: null
+			},
+			{
+				id: "/suster/history",
+				pattern: /^\/suster\/history\/?$/,
+				params: [],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 24 },
 				endpoint: null
 			}
 		],

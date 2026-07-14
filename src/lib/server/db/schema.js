@@ -2,7 +2,7 @@ import { pgTable, uuid, varchar, text, integer, bigint, boolean, timestamp, time
 import { relations, sql } from 'drizzle-orm';
 
 // === Enums (kept from existing where user specified) ===
-export const roleEnum = pgEnum('role', ['admin', 'kasir', 'dokter']);
+export const roleEnum = pgEnum('role', ['admin', 'kasir', 'dokter', 'suster']);
 export const genderEnum = pgEnum('gender', ['male', 'female']);
 export const maritalStatusEnum = pgEnum('marital_status', ['S', 'M', 'W', 'D']);
 export const citizenshipEnum = pgEnum('citizenship', ['WNI', 'WNA']);

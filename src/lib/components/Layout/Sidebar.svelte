@@ -42,7 +42,7 @@
 		],
 		suster: [
 			{ href: "/suster/history", icon: "🕒", label: "History" },
-			{ href: "/suster/edit-patient", icon: "✏️", label: "Edit Data Pasien" },
+			{ href: "/suster/patients", icon: "🏥", label: "Data Pasien" },
 		],
 	};
 
@@ -366,19 +366,19 @@
 				{/if}
 			</a>
 			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/edit-patient')
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/patients')
 					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
 					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/suster/edit-patient"
-				title="Edit Data Pasien"
+				href="/suster/patients"
+				title="Data Pasien"
 			>
 				<span
-					class="material-symbols-outlined {currentPath.startsWith('/suster/edit-patient')
+					class="material-symbols-outlined {currentPath.startsWith('/suster/patients')
 						? ''
-						: 'opacity-70'}">edit_note</span
+						: 'opacity-70'}">patient_list</span
 				>
 				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Edit Data Pasien</span>
+				<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
 				{/if}
 			</a>
 		</nav>

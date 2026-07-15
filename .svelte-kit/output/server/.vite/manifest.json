@@ -3623,12 +3623,12 @@
     "src": "src/routes/suster/+layout.svelte"
   },
   "src/routes/suster/+page.css": {
-    "file": "_app/immutable/assets/_page.824d7c95.css",
+    "file": "_app/immutable/assets/_page.86b55c57.css",
     "src": "src/routes/suster/+page.css"
   },
   "src/routes/suster/+page.svelte": {
     "css": [
-      "_app/immutable/assets/_page.824d7c95.css"
+      "_app/immutable/assets/_page.86b55c57.css"
     ],
     "file": "entries/pages/suster/_page.svelte.js",
     "imports": [
@@ -3667,5 +3667,14 @@
     ],
     "isEntry": true,
     "src": "src/routes/suster/history/+page.svelte"
+  },
+  "src/routes/suster/patients/+page.svelte": {
+    "file": "entries/pages/suster/patients/_page.svelte.js",
+    "imports": [
+      "_ssr.js",
+      "_SearchableSelect.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/suster/patients/+page.svelte"
   }
 }

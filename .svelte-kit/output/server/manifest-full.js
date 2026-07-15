@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.5533e039.js","app":"_app/immutable/entry/app.27e06f97.js","imports":["_app/immutable/entry/start.5533e039.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/singletons.1f7328cd.js","_app/immutable/chunks/index.67c9fa51.js","_app/immutable/chunks/paths.7e516e97.js","_app/immutable/entry/app.27e06f97.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.2a238cd3.js","_app/immutable/chunks/index.bf6392ca.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.14b4d8b0.js","app":"_app/immutable/entry/app.ec415063.js","imports":["_app/immutable/entry/start.14b4d8b0.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/singletons.6a4a1e45.js","_app/immutable/chunks/index.87639c41.js","_app/immutable/chunks/paths.a9ab9f33.js","_app/immutable/entry/app.ec415063.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/index.53af2136.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -36,7 +36,8 @@ return {
 			__memo(() => import('./nodes/21.js')),
 			__memo(() => import('./nodes/22.js')),
 			__memo(() => import('./nodes/23.js')),
-			__memo(() => import('./nodes/24.js'))
+			__memo(() => import('./nodes/24.js')),
+			__memo(() => import('./nodes/25.js'))
 		],
 		routes: [
 			{
@@ -464,6 +465,13 @@ return {
 				pattern: /^\/suster\/history\/?$/,
 				params: [],
 				page: { layouts: [0,5,], errors: [1,,], leaf: 24 },
+				endpoint: null
+			},
+			{
+				id: "/suster/patients",
+				pattern: /^\/suster\/patients\/?$/,
+				params: [],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 25 },
 				endpoint: null
 			}
 		],

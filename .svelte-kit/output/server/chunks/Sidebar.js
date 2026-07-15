@@ -127,9 +127,9 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         label: "History"
       },
       {
-        href: "/suster/edit-patient",
-        icon: "✏️",
-        label: "Edit Data Pasien"
+        href: "/suster/patients",
+        icon: "🏥",
+        label: "Data Pasien"
       }
     ]
   };
@@ -223,12 +223,12 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     $isSidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3",
     true
   ) + " " + escape(
-    currentPath.startsWith("/suster/edit-patient") ? "bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]" : "hover:bg-white/10 !text-white/70 hover:!text-white",
+    currentPath.startsWith("/suster/patients") ? "bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]" : "hover:bg-white/10 !text-white/70 hover:!text-white",
     true
-  ) + " rounded-lg transition-colors"}" href="/suster/edit-patient" title="Edit Data Pasien"><span class="${"material-symbols-outlined " + escape(
-    currentPath.startsWith("/suster/edit-patient") ? "" : "opacity-70",
+  ) + " rounded-lg transition-colors"}" href="/suster/patients" title="Data Pasien"><span class="${"material-symbols-outlined " + escape(
+    currentPath.startsWith("/suster/patients") ? "" : "opacity-70",
     true
-  )}">edit_note</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-1iblxln">Edit Data Pasien</span>` : ``}</a></nav> <div class="mt-auto p-4 border-t border-white/10">${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}</div></aside>` : `<aside class="sidebar"> <button class="sidebar-toggle-btn absolute -right-3 top-8 bg-white text-gray-700 rounded-full shadow-md border border-gray-200 size-6 flex items-center justify-center hover:bg-gray-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-primary" style="width: 24px; height: 24px; top: 32px; right: -12px; cursor: pointer;" title="Toggle Sidebar"><span class="material-symbols-outlined" style="font-size: 16px;">${escape($isSidebarOpen ? "menu_open" : "menu")}</span></button> <div class="sidebar-header" data-svelte-h="svelte-1lubj6g"><img src="/logo.png" alt="Klinik Utama Oratio" style="max-width: 100%; height: 52px; width: auto; object-fit: contain; "></div> <nav class="sidebar-nav"><div class="sidebar-section" data-svelte-h="svelte-karbua">Menu</div> ${each(items, (item) => {
+  )}">patient_list</span> ${$isSidebarOpen ? `<span class="font-medium text-sm whitespace-nowrap" data-svelte-h="svelte-1v72szr">Data Pasien</span>` : ``}</a></nav> <div class="mt-auto p-4 border-t border-white/10">${validate_component(ShiftTimer, "ShiftTimer").$$render($$result, {}, {}, {})}</div></aside>` : `<aside class="sidebar"> <button class="sidebar-toggle-btn absolute -right-3 top-8 bg-white text-gray-700 rounded-full shadow-md border border-gray-200 size-6 flex items-center justify-center hover:bg-gray-50 transition-colors z-50 focus:outline-none focus:ring-2 focus:ring-primary" style="width: 24px; height: 24px; top: 32px; right: -12px; cursor: pointer;" title="Toggle Sidebar"><span class="material-symbols-outlined" style="font-size: 16px;">${escape($isSidebarOpen ? "menu_open" : "menu")}</span></button> <div class="sidebar-header" data-svelte-h="svelte-1lubj6g"><img src="/logo.png" alt="Klinik Utama Oratio" style="max-width: 100%; height: 52px; width: auto; object-fit: contain; "></div> <nav class="sidebar-nav"><div class="sidebar-section" data-svelte-h="svelte-karbua">Menu</div> ${each(items, (item) => {
     return `<a${add_attribute("href", item.href, 0)} class="${[
       "sidebar-link",
       currentPath === item.href || item.href !== "/" + role && currentPath.startsWith(item.href) ? "active" : ""

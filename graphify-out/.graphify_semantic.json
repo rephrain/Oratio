@@ -1,0 +1,439 @@
+{
+  "nodes": [
+    {
+      "id": "_github_workflows_deploy_workflow",
+      "label": "Build & Deploy Workflow",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_github_workflows_deploy_job_build",
+      "label": "Build Job",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_github_workflows_deploy_job_deploy",
+      "label": "Deploy Job",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "build_logs_pdfmake_error",
+      "label": "pdfmake Import Build Failure",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build-logs.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_server_pdf_module",
+      "label": "pdf.js Server Module",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build-logs.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "build_log_const_tag_error",
+      "label": "Svelte const Tag Build Failure",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_dokter_analytics__page_svelte",
+      "label": "dokter/analytics/+page.svelte",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "build_log2_await_error",
+      "label": "Svelte auth.js await Build Failure",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log2.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_server_auth_hashpassword",
+      "label": "hashPassword function",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log2.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "build_output_app_css_error",
+      "label": "Rollup app.css Resolve Build Failure",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_output.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_routes_admin__layout_svelte",
+      "label": "admin/+layout.svelte",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_output.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docker_compose_db_service",
+      "label": "DB Service (oratio-db)",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docker_compose_app_service",
+      "label": "App Service (oratio-app)",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "logs_duplicate_key_error",
+      "label": "Postgres duplicate key error log",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\logs.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "drizzle_schema_encounter_items",
+      "label": "encounter_items DB table",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\logs.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "query_encounter_status_data",
+      "label": "Encounter query logs",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\query.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_app_html",
+      "label": "app.html Template",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\src\\app.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_app_tailwind_theme",
+      "label": "Tailwind Theme Configuration",
+      "file_type": "code",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\src\\app.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "test_avg_query_result",
+      "label": "Test average query result",
+      "file_type": "document",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\test_avg.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "static_logo_oratio_logo",
+      "label": "Klinik Utama Oratio Logo",
+      "file_type": "image",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "static_logo_oratio_brand",
+      "label": "Oratio Brand Identity",
+      "file_type": "concept",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "static_logo_klinik_utama_concept",
+      "label": "Klinik Utama (Main Clinic) Status",
+      "file_type": "concept",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_github_workflows_deploy_workflow",
+      "target": "_github_workflows_deploy_job_build",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_github_workflows_deploy_workflow",
+      "target": "_github_workflows_deploy_job_deploy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_github_workflows_deploy_job_deploy",
+      "target": "docker_compose_app_service",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_github_workflows_deploy_job_deploy",
+      "target": "docker_compose_db_service",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "build_logs_pdfmake_error",
+      "target": "src_lib_server_pdf_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build-logs.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "build_log_const_tag_error",
+      "target": "src_routes_dokter_analytics__page_svelte",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "build_log2_await_error",
+      "target": "src_lib_server_auth_hashpassword",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_log2.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "build_output_app_css_error",
+      "target": "src_routes_admin__layout_svelte",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build_output.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docker_compose_app_service",
+      "target": "docker_compose_db_service",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\docker-compose.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "logs_duplicate_key_error",
+      "target": "drizzle_schema_encounter_items",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\logs.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "query_encounter_status_data",
+      "target": "drizzle_schema_encounter_items",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\query.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_html",
+      "target": "src_app_tailwind_theme",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\src\\app.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_html",
+      "target": "src_routes_admin__layout_svelte",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\src\\app.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "test_avg_query_result",
+      "target": "query_encounter_status_data",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\test_avg.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "static_logo_oratio_logo",
+      "target": "static_logo_oratio_brand",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "static_logo_oratio_logo",
+      "target": "static_logo_klinik_utama_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "nas_deployment_flow",
+      "label": "NAS Docker Deployment Architecture",
+      "nodes": [
+        "_github_workflows_deploy_job_deploy",
+        "docker_compose_db_service",
+        "docker_compose_app_service"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\.github\\workflows\\deploy.yml"
+    },
+    {
+      "id": "oratio_build_failures",
+      "label": "Oratio Compilation and Build Failures",
+      "nodes": [
+        "build_logs_pdfmake_error",
+        "build_log_const_tag_error",
+        "build_log2_await_error",
+        "build_output_app_css_error"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\build-logs.txt"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

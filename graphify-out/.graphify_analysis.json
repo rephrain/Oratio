@@ -1,0 +1,1127 @@
+{
+  "communities": {
+    "0": [
+      "src_lib_server_db_schema",
+      "src_lib_server_db_schema_bloodtypeenum",
+      "src_lib_server_db_schema_chatconversations",
+      "src_lib_server_db_schema_chatconversationsrelations",
+      "src_lib_server_db_schema_chatmessages",
+      "src_lib_server_db_schema_chatmessagesrelations",
+      "src_lib_server_db_schema_citizenshipenum",
+      "src_lib_server_db_schema_doctoritems",
+      "src_lib_server_db_schema_doctoritemsrelations",
+      "src_lib_server_db_schema_documents",
+      "src_lib_server_db_schema_documentsrelations",
+      "src_lib_server_db_schema_encounteritems",
+      "src_lib_server_db_schema_encounteritemsrelations",
+      "src_lib_server_db_schema_encounterodontograms",
+      "src_lib_server_db_schema_encounterodontogramsrelations",
+      "src_lib_server_db_schema_encounterprescriptions",
+      "src_lib_server_db_schema_encounterprescriptionsrelations",
+      "src_lib_server_db_schema_encounterreferrals",
+      "src_lib_server_db_schema_encounterreferralsrelations",
+      "src_lib_server_db_schema_encounters",
+      "src_lib_server_db_schema_encountersrelations",
+      "src_lib_server_db_schema_encounterstatusenum",
+      "src_lib_server_db_schema_formmodeenum",
+      "src_lib_server_db_schema_genderenum",
+      "src_lib_server_db_schema_items",
+      "src_lib_server_db_schema_itemsrelations",
+      "src_lib_server_db_schema_maritalstatusenum",
+      "src_lib_server_db_schema_notificationreads",
+      "src_lib_server_db_schema_notificationreadsrelations",
+      "src_lib_server_db_schema_notifications",
+      "src_lib_server_db_schema_notificationsrelations",
+      "src_lib_server_db_schema_odontogramdiagnoses",
+      "src_lib_server_db_schema_odontogramdiagnosesrelations",
+      "src_lib_server_db_schema_odontogramprocedures",
+      "src_lib_server_db_schema_odontogramproceduresrelations",
+      "src_lib_server_db_schema_odontogramrestorations",
+      "src_lib_server_db_schema_odontogramrestorationsrelations",
+      "src_lib_server_db_schema_odontogramrestorationsurfaces",
+      "src_lib_server_db_schema_odontogramrestorationsurfacesrelations",
+      "src_lib_server_db_schema_odontogramsurfaces",
+      "src_lib_server_db_schema_odontogramsurfacesrelations",
+      "src_lib_server_db_schema_odontogramteeth",
+      "src_lib_server_db_schema_odontogramteethrelations",
+      "src_lib_server_db_schema_patientallergy",
+      "src_lib_server_db_schema_patientallergyrelations",
+      "src_lib_server_db_schema_patientdiseasehistory",
+      "src_lib_server_db_schema_patientdiseasehistoryrelations",
+      "src_lib_server_db_schema_patientmedication",
+      "src_lib_server_db_schema_patientmedicationrelations",
+      "src_lib_server_db_schema_patients",
+      "src_lib_server_db_schema_patientsrelations",
+      "src_lib_server_db_schema_paymentmodeenum",
+      "src_lib_server_db_schema_payments",
+      "src_lib_server_db_schema_paymentsrelations",
+      "src_lib_server_db_schema_rhesusenum",
+      "src_lib_server_db_schema_roleenum",
+      "src_lib_server_db_schema_shifts",
+      "src_lib_server_db_schema_shiftsrelations",
+      "src_lib_server_db_schema_statushistory",
+      "src_lib_server_db_schema_statushistoryrelations",
+      "src_lib_server_db_schema_statushistorystatusenum",
+      "src_lib_server_db_schema_terminologymaster",
+      "src_lib_server_db_schema_terminologymasterrelations",
+      "src_lib_server_db_schema_terminologysystemenum",
+      "src_lib_server_db_schema_users",
+      "src_lib_server_db_schema_usersrelations"
+    ],
+    "1": [
+      "admindatatable_svelte",
+      "adminmodal_svelte",
+      "constants_js",
+      "datatable_svelte",
+      "fileupload_svelte",
+      "formatters_js",
+      "geonames",
+      "navigation",
+      "realtimestore_js",
+      "richselect_svelte",
+      "searchableselect_svelte",
+      "src_lib_components_forms_searchableselect",
+      "src_lib_components_odontogram_singletoothmap",
+      "src_lib_components_odontogram_toothdetailpanel",
+      "src_lib_components_ui_toast",
+      "src_routes_admin_page",
+      "src_routes_admin_page_for",
+      "src_routes_admin_table_page",
+      "src_routes_admin_table_page_if",
+      "src_routes_dokter_analytics_page",
+      "src_routes_dokter_analytics_page_active",
+      "src_routes_dokter_analytics_page_fmtdate",
+      "src_routes_dokter_history_page",
+      "src_routes_dokter_patient_patientid_page",
+      "src_routes_kasir_edit_patient_page",
+      "src_routes_kasir_edit_patient_page_handledistrictselect",
+      "src_routes_kasir_edit_patient_page_handleprovinceselect",
+      "src_routes_kasir_edit_patient_page_handleregencyselect",
+      "src_routes_kasir_edit_patient_page_handlevillageselect",
+      "src_routes_kasir_edit_patient_page_onbirthplaceblur",
+      "src_routes_kasir_edit_patient_page_onbirthplaceinput",
+      "src_routes_kasir_edit_patient_page_selectbirthplace",
+      "src_routes_kasir_edit_patient_page_validatephone",
+      "src_routes_kasir_existing_patient_page",
+      "src_routes_kasir_existing_patient_page_calculateage",
+      "src_routes_kasir_existing_patient_page_clearselection",
+      "src_routes_kasir_existing_patient_page_handlepatientselect",
+      "src_routes_kasir_existing_patient_page_handlesubmit",
+      "src_routes_kasir_existing_patient_page_loaddoctors",
+      "src_routes_kasir_existing_patient_page_searchcomplaint",
+      "src_routes_kasir_existing_patient_page_searchpatient",
+      "src_routes_kasir_page",
+      "src_routes_kasir_page_loaddoctors",
+      "src_routes_kasir_page_loadencounters",
+      "src_routes_kasir_page_setupencountersrealtime",
+      "src_routes_kasir_page_tablecolumns",
+      "src_routes_kasir_patients_page",
+      "src_routes_kasir_payment_page",
+      "src_routes_kasir_payments_page",
+      "src_routes_login_page",
+      "src_routes_suster_edit_patient_page",
+      "src_routes_suster_edit_patient_page_handledistrictselect",
+      "src_routes_suster_edit_patient_page_handleprovinceselect",
+      "src_routes_suster_edit_patient_page_handleregencyselect",
+      "src_routes_suster_edit_patient_page_handlevillageselect",
+      "src_routes_suster_edit_patient_page_onbirthplaceblur",
+      "src_routes_suster_edit_patient_page_onbirthplaceinput",
+      "src_routes_suster_edit_patient_page_selectbirthplace",
+      "src_routes_suster_edit_patient_page_validatephone",
+      "src_routes_suster_history_page",
+      "src_routes_suster_patients_page",
+      "toast_js",
+      "validators_js",
+      "wilayah_js"
+    ],
+    "2": [
+      "src_routes_kasir_new_patient_page",
+      "src_routes_kasir_new_patient_page_addallergy",
+      "src_routes_kasir_new_patient_page_adddiseasehistory",
+      "src_routes_kasir_new_patient_page_addmedication",
+      "src_routes_kasir_new_patient_page_allergies",
+      "src_routes_kasir_new_patient_page_birthplacesuggestions",
+      "src_routes_kasir_new_patient_page_citizenship_options",
+      "src_routes_kasir_new_patient_page_disease_type_options",
+      "src_routes_kasir_new_patient_page_diseasehistory",
+      "src_routes_kasir_new_patient_page_doctoroptions",
+      "src_routes_kasir_new_patient_page_gender_options",
+      "src_routes_kasir_new_patient_page_handledistrictselect",
+      "src_routes_kasir_new_patient_page_handleprovinceselect",
+      "src_routes_kasir_new_patient_page_handleregencyselect",
+      "src_routes_kasir_new_patient_page_handlesubmit",
+      "src_routes_kasir_new_patient_page_handlevillageselect",
+      "src_routes_kasir_new_patient_page_loaddoctors",
+      "src_routes_kasir_new_patient_page_marital_options",
+      "src_routes_kasir_new_patient_page_medications",
+      "src_routes_kasir_new_patient_page_medicationsearchresults",
+      "src_routes_kasir_new_patient_page_onallergyselected",
+      "src_routes_kasir_new_patient_page_onbirthplaceblur",
+      "src_routes_kasir_new_patient_page_onbirthplaceinput",
+      "src_routes_kasir_new_patient_page_ondiseaseselected",
+      "src_routes_kasir_new_patient_page_reason_options",
+      "src_routes_kasir_new_patient_page_removeallergy",
+      "src_routes_kasir_new_patient_page_removediseasehistory",
+      "src_routes_kasir_new_patient_page_removemedication",
+      "src_routes_kasir_new_patient_page_rhesus_options",
+      "src_routes_kasir_new_patient_page_searchallergy",
+      "src_routes_kasir_new_patient_page_searchcomplaint",
+      "src_routes_kasir_new_patient_page_searchfamilydisease",
+      "src_routes_kasir_new_patient_page_searchpersonaldisease",
+      "src_routes_kasir_new_patient_page_selectbirthplace",
+      "src_routes_kasir_new_patient_page_selectmedicationresult",
+      "src_routes_kasir_new_patient_page_triggermedicationsearch",
+      "src_routes_kasir_new_patient_page_validatephone"
+    ],
+    "3": [
+      "argon2",
+      "drizzle_orm",
+      "flag_icons",
+      "jose",
+      "package",
+      "package_dependencies",
+      "package_dependencies_argon2",
+      "package_dependencies_chart_js",
+      "package_dependencies_drizzle_orm",
+      "package_dependencies_flag_icons",
+      "package_dependencies_jose",
+      "package_dependencies_libphonenumber_js",
+      "package_dependencies_papaparse",
+      "package_dependencies_pdfmake",
+      "package_dependencies_postgres",
+      "package_dependencies_puppeteer",
+      "package_json_chart_js",
+      "package_json_libphonenumber_js",
+      "package_json_papaparse",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_db_generate",
+      "package_scripts_db_push",
+      "package_scripts_db_seed",
+      "package_scripts_dev",
+      "package_scripts_preview",
+      "package_type",
+      "package_version",
+      "pdfmake",
+      "postgres",
+      "puppeteer"
+    ],
+    "4": [
+      "appshell_svelte",
+      "auth_js",
+      "chat_js",
+      "chatpanel_svelte",
+      "connectionstatus_svelte",
+      "layout_js",
+      "notificationpanel_svelte",
+      "notifications_js",
+      "profilemodal_svelte",
+      "realtimeconnection_js",
+      "sidebar_svelte",
+      "src_lib_components_chat_chatpanel",
+      "src_lib_components_chat_chatpanel_onpanelopen",
+      "src_lib_components_forms_richselect",
+      "src_lib_components_layout_appshell",
+      "src_lib_components_layout_header",
+      "src_lib_components_layout_shifttimer",
+      "src_lib_components_layout_sidebar",
+      "src_lib_components_layout_sidebar_active",
+      "src_lib_components_notifications_notificationpanel",
+      "src_lib_components_profile_profilemodal",
+      "src_lib_components_realtime_connectionstatus",
+      "src_routes_admin_layout_svelte_src_routes_admin_layout",
+      "src_routes_dokter_layout_svelte_src_routes_dokter_layout",
+      "src_routes_kasir_layout_svelte_src_routes_kasir_layout",
+      "src_routes_suster_layout_svelte_src_routes_suster_layout",
+      "stores",
+      "toast_svelte",
+      "transition"
+    ],
+    "5": [
+      "src_lib_server_realtime_authorizationrules",
+      "src_lib_server_realtime_authorizationrules_cansubscribe",
+      "src_lib_server_realtime_connectionmanager",
+      "src_lib_server_realtime_connectionmanager_connectionmanager",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_addconnection",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_constructor",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_getconnectionidforuser",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_getstats",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_removeconnection",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_sendevent",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_sendheartbeats",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_subscribe",
+      "src_lib_server_realtime_connectionmanager_connectionmanager_unsubscribe",
+      "src_lib_server_realtime_realtimeeventbus",
+      "src_lib_server_realtime_realtimeeventbus_eventbus",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus_constructor",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus_getstats",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus_publish",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus_publishtomany",
+      "src_lib_server_realtime_realtimeeventbus_realtimeeventbus_subscribe",
+      "src_lib_server_realtime_realtimeservice",
+      "src_lib_server_realtime_realtimeservice_emitchatevent",
+      "src_lib_server_realtime_realtimeservice_emitdashboardevent",
+      "src_lib_server_realtime_realtimeservice_emitencounterevent",
+      "src_lib_server_realtime_realtimeservice_emitnotificationevent",
+      "src_lib_server_realtime_realtimeservice_emitpatientevent",
+      "src_lib_server_realtime_realtimeservice_emitqueueevent"
+    ],
+    "6": [
+      "modal_svelte",
+      "odontogramchart_svelte",
+      "src_routes_dokter_encounterid_page",
+      "src_routes_dokter_encounterid_page_addencounteritem",
+      "src_routes_dokter_encounterid_page_calculateage",
+      "src_routes_dokter_encounterid_page_deletephoto",
+      "src_routes_dokter_encounterid_page_formatdate",
+      "src_routes_dokter_encounterid_page_handlephotoupload",
+      "src_routes_dokter_encounterid_page_handletoothclick",
+      "src_routes_dokter_encounterid_page_hascondition",
+      "src_routes_dokter_encounterid_page_loaddoctors",
+      "src_routes_dokter_encounterid_page_lookuplabel",
+      "src_routes_dokter_encounterid_page_onnewitemselect",
+      "src_routes_dokter_encounterid_page_putonhold",
+      "src_routes_dokter_encounterid_page_removeencounteritem",
+      "src_routes_dokter_encounterid_page_removereferral",
+      "src_routes_dokter_encounterid_page_rendertoothsvg",
+      "src_routes_dokter_encounterid_page_resetodontogram",
+      "src_routes_dokter_encounterid_page_saveform",
+      "src_routes_dokter_encounterid_page_savetoothdetail",
+      "src_routes_dokter_encounterid_page_searchclinicalfinding",
+      "src_routes_dokter_encounterid_page_searchreason",
+      "src_routes_dokter_encounterid_page_searchterminology",
+      "src_routes_dokter_encounterid_page_updatenewitemsubtotal",
+      "toothdetailpanel_svelte"
+    ],
+    "7": [
+      "src_lib_server_pdfgenerator",
+      "src_lib_server_pdfgenerator_buildodontogrammap",
+      "src_lib_server_pdfgenerator_calculateage",
+      "src_lib_server_pdfgenerator_citizen_map",
+      "src_lib_server_pdfgenerator_fmt",
+      "src_lib_server_pdfgenerator_fmtaddress",
+      "src_lib_server_pdfgenerator_fmtbpstatus",
+      "src_lib_server_pdfgenerator_fmtcitizen",
+      "src_lib_server_pdfgenerator_fmtdate",
+      "src_lib_server_pdfgenerator_fmtgender",
+      "src_lib_server_pdfgenerator_fmtmarital",
+      "src_lib_server_pdfgenerator_fmtnow",
+      "src_lib_server_pdfgenerator_fmtpregnancy",
+      "src_lib_server_pdfgenerator_fmtrhesus",
+      "src_lib_server_pdfgenerator_gender_map",
+      "src_lib_server_pdfgenerator_generatepatientprofilepdf",
+      "src_lib_server_pdfgenerator_generatepaymentreceiptpdf",
+      "src_lib_server_pdfgenerator_generatesoapformpdf",
+      "src_lib_server_pdfgenerator_generatesoapwhoformpdf",
+      "src_lib_server_pdfgenerator_getlogobase64",
+      "src_lib_server_pdfgenerator_marital_map",
+      "src_lib_server_pdfgenerator_parsesurfaces",
+      "src_lib_server_pdfgenerator_renderodontogramcharthtml",
+      "src_lib_server_pdfgenerator_rendertoothsvg",
+      "src_lib_server_pdfgenerator_resolvepath"
+    ],
+    "8": [
+      "src_lib_utils_constants",
+      "src_lib_utils_constants_admin_tables",
+      "src_lib_utils_constants_allergy_reactions",
+      "src_lib_utils_constants_bahan_protesa",
+      "src_lib_utils_constants_bahan_restorasi",
+      "src_lib_utils_constants_blood_types",
+      "src_lib_utils_constants_country_calling_codes",
+      "src_lib_utils_constants_days_of_week",
+      "src_lib_utils_constants_deciduous_teeth",
+      "src_lib_utils_constants_doctor_codes",
+      "src_lib_utils_constants_encounter_statuses",
+      "src_lib_utils_constants_keadaan",
+      "src_lib_utils_constants_occlusi_options",
+      "src_lib_utils_constants_palatum_options",
+      "src_lib_utils_constants_payment_types",
+      "src_lib_utils_constants_permanent_teeth",
+      "src_lib_utils_constants_protesa",
+      "src_lib_utils_constants_queue_columns",
+      "src_lib_utils_constants_reason_categories",
+      "src_lib_utils_constants_restorasi",
+      "src_lib_utils_constants_status_colors",
+      "src_lib_utils_constants_tooth_surfaces",
+      "src_lib_utils_constants_torus_mandibularis_options",
+      "src_lib_utils_constants_torus_palatinus_options"
+    ],
+    "9": [
+      "autoprefixer",
+      "drizzle_kit",
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_drizzle_kit",
+      "package_devdependencies_postcss",
+      "package_devdependencies_svelte",
+      "package_devdependencies_sveltejs_adapter_node",
+      "package_devdependencies_sveltejs_kit",
+      "package_devdependencies_sveltejs_vite_plugin_svelte",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_container_queries",
+      "package_devdependencies_tailwindcss_forms",
+      "package_devdependencies_vite",
+      "package_json_svelte",
+      "postcss",
+      "sveltejs_adapter_node",
+      "sveltejs_kit",
+      "sveltejs_vite_plugin_svelte",
+      "tailwindcss",
+      "tailwindcss_container_queries",
+      "tailwindcss_forms",
+      "vite"
+    ],
+    "10": [
+      "src_lib_utils_formatters",
+      "src_lib_utils_formatters_formatcurrency",
+      "src_lib_utils_formatters_formatdate",
+      "src_lib_utils_formatters_formatdatetime",
+      "src_lib_utils_formatters_formatelapsedtime",
+      "src_lib_utils_formatters_formattime",
+      "src_lib_utils_formatters_generateencounterid",
+      "src_lib_utils_formatters_generatepatientid",
+      "src_lib_utils_formatters_generatesoapwhotext",
+      "src_lib_utils_formatters_getjakartadatestring",
+      "src_lib_utils_formatters_getjakartadatestringfromdate",
+      "src_lib_utils_formatters_getjakartamonthstring",
+      "src_lib_utils_formatters_getshiftcountdown",
+      "src_lib_utils_formatters_getwaittimeclass",
+      "src_lib_utils_formatters_getwhatsappurl",
+      "src_lib_utils_formatters_truncate"
+    ],
+    "11": [
+      "src_routes_dokter_page",
+      "src_routes_dokter_page_calculateage",
+      "src_routes_dokter_page_formatdate",
+      "src_routes_dokter_page_handlesort",
+      "src_routes_dokter_page_loadencounters",
+      "src_routes_dokter_page_loadreferrals",
+      "src_routes_dokter_page_loadshifts",
+      "src_routes_dokter_page_loadstats",
+      "src_routes_dokter_page_selectencounter",
+      "src_routes_dokter_page_selectreferral",
+      "src_routes_dokter_page_sendwa",
+      "src_routes_dokter_page_setupencountersrealtime",
+      "src_routes_dokter_page_setupreferralsrealtime",
+      "src_routes_dokter_page_startencounter",
+      "src_routes_dokter_page_togglehistory",
+      "src_routes_dokter_page_updateshift"
+    ],
+    "12": [
+      "src_lib_stores_realtimeconnection",
+      "src_lib_stores_realtimeconnection_connect",
+      "src_lib_stores_realtimeconnection_connectionid",
+      "src_lib_stores_realtimeconnection_connectionstatus",
+      "src_lib_stores_realtimeconnection_disconnect",
+      "src_lib_stores_realtimeconnection_eventhandlers",
+      "src_lib_stores_realtimeconnection_handlesseevent",
+      "src_lib_stores_realtimeconnection_onevent",
+      "src_lib_stores_realtimeconnection_schedulereconnect",
+      "src_lib_stores_realtimeconnection_subscribe",
+      "src_lib_stores_realtimeconnection_subscribedrooms",
+      "src_lib_stores_realtimeconnection_unsubscribe",
+      "src_lib_stores_realtimestore",
+      "src_lib_stores_realtimestore_createrealtimedetail",
+      "src_lib_stores_realtimestore_createrealtimelist"
+    ],
+    "13": [
+      "adminfileupload_svelte",
+      "src_lib_server_csv",
+      "src_lib_server_csv_generatecsv",
+      "src_lib_server_csv_parsecsv",
+      "src_lib_server_csv_validatecsvdata",
+      "src_routes_admin_import_page",
+      "src_routes_admin_import_page_doimport",
+      "src_routes_admin_import_page_getfkdisplaylabel",
+      "src_routes_admin_import_page_getm2mdisplaylabels",
+      "src_routes_admin_import_page_handlefile",
+      "src_routes_admin_import_page_parsepreview",
+      "src_routes_admin_import_page_reset",
+      "src_routes_admin_import_page_togglem2m",
+      "src_routes_admin_table_page_field"
+    ],
+    "14": [
+      "src_lib_stores_wilayah",
+      "src_lib_stores_wilayah_districts",
+      "src_lib_stores_wilayah_loadingdistrict",
+      "src_lib_stores_wilayah_loadingprovince",
+      "src_lib_stores_wilayah_loadingregency",
+      "src_lib_stores_wilayah_loadingvillage",
+      "src_lib_stores_wilayah_provinces",
+      "src_lib_stores_wilayah_regencies",
+      "src_lib_stores_wilayah_villages"
+    ],
+    "15": [
+      "src_lib_server_satusehat",
+      "src_lib_server_satusehat_getbaseurl",
+      "src_lib_server_satusehat_getconfig",
+      "src_lib_server_satusehat_getenv",
+      "src_lib_server_satusehat_gettoken",
+      "src_lib_server_satusehat_satusehat_config",
+      "src_lib_server_satusehat_searchkfa",
+      "src_lib_server_satusehat_validateenv"
+    ],
+    "16": [
+      "src_lib_server_snowstorm",
+      "src_lib_server_snowstorm_expandvalueset",
+      "src_lib_server_snowstorm_searchallergysubstances",
+      "src_lib_server_snowstorm_searchchiefcomplaint",
+      "src_lib_server_snowstorm_searchconcepts",
+      "src_lib_server_snowstorm_searchfamilydiseasehistory",
+      "src_lib_server_snowstorm_searchpersonaldiseasehistory",
+      "src_lib_server_snowstorm_searchreasonbycategory"
+    ],
+    "17": [
+      "src_routes_api_admin_table_server",
+      "src_routes_api_admin_table_server_auto_managed_fields",
+      "src_routes_api_admin_table_server_cleanbody",
+      "src_routes_api_admin_table_server_delete",
+      "src_routes_api_admin_table_server_get",
+      "src_routes_api_admin_table_server_post",
+      "src_routes_api_admin_table_server_put",
+      "src_routes_api_admin_table_server_schemamap"
+    ],
+    "18": [
+      "src_lib_utils_validators",
+      "src_lib_utils_validators_validatebloodpressure",
+      "src_lib_utils_validators_validateemail",
+      "src_lib_utils_validators_validatenik",
+      "src_lib_utils_validators_validatepatientform",
+      "src_lib_utils_validators_validatephone",
+      "src_lib_utils_validators_validaterequired"
+    ],
+    "19": [
+      "src_lib_api_wilayah",
+      "src_lib_api_wilayah_fetchdistricts",
+      "src_lib_api_wilayah_fetchprovinces",
+      "src_lib_api_wilayah_fetchregencies",
+      "src_lib_api_wilayah_fetchvillages",
+      "src_lib_api_wilayah_wilayahfetch"
+    ],
+    "20": [
+      "src_lib_server_auth",
+      "src_lib_server_auth_createtoken",
+      "src_lib_server_auth_hashpasswordasync",
+      "src_lib_server_auth_jwt_secret",
+      "src_lib_server_auth_verifypassword",
+      "src_lib_server_auth_verifytoken"
+    ],
+    "21": [
+      "src_lib_server_pdf",
+      "src_lib_server_pdf_createprinter",
+      "src_lib_server_pdf_fontsdir",
+      "src_lib_server_pdf_generateodontogrampdf",
+      "src_lib_server_pdf_generatepatientprofilepdf",
+      "src_lib_server_pdf_generatesoappdf"
+    ],
+    "22": [
+      "src_lib_stores_auth",
+      "src_lib_stores_auth_currentuser",
+      "src_lib_stores_auth_isauthenticated",
+      "src_lib_stores_auth_loaduser",
+      "src_lib_stores_auth_logout",
+      "src_lib_stores_auth_userrole"
+    ],
+    "23": [
+      "src_lib_stores_layout",
+      "src_lib_stores_layout_headertitle",
+      "src_lib_stores_layout_ispatientprofileopen",
+      "src_lib_stores_layout_isprofilemodalopen",
+      "src_lib_stores_layout_issidebarhidden",
+      "src_lib_stores_layout_issidebaropen"
+    ],
+    "24": [
+      "_github_workflows_deploy_job_build",
+      "_github_workflows_deploy_job_deploy",
+      "_github_workflows_deploy_workflow",
+      "docker_compose_app_service",
+      "docker_compose_db_service"
+    ],
+    "25": [
+      "build_output_app_css_error",
+      "src_app_html",
+      "src_app_tailwind_theme",
+      "src_routes_admin__layout_svelte"
+    ],
+    "26": [
+      "drizzle_schema_encounter_items",
+      "logs_duplicate_key_error",
+      "query_encounter_status_data",
+      "test_avg_query_result"
+    ],
+    "27": [
+      "src_hooks_server",
+      "src_hooks_server_handle",
+      "src_hooks_server_public_paths",
+      "src_hooks_server_role_paths"
+    ],
+    "28": [
+      "src_lib_stores_chat",
+      "src_lib_stores_chat_chatview",
+      "src_lib_stores_chat_ischatopen",
+      "src_lib_stores_chat_unreadcount"
+    ],
+    "29": [
+      "src_lib_stores_notifications",
+      "src_lib_stores_notifications_isnotificationopen",
+      "src_lib_stores_notifications_notifications",
+      "src_lib_stores_notifications_unreadnotificationcount"
+    ],
+    "30": [
+      "src_lib_stores_toast",
+      "src_lib_stores_toast_addtoast",
+      "src_lib_stores_toast_removetoast",
+      "src_lib_stores_toast_toasts"
+    ],
+    "31": [
+      "d_rephrain_personal_project_oratio_oratio_src_app_css",
+      "flag_icons_min_css",
+      "src_routes_layout"
+    ],
+    "32": [
+      "src_lib_server_db_index",
+      "src_lib_server_db_index_client",
+      "src_lib_server_db_index_db"
+    ],
+    "33": [
+      "src_routes_api_admin_notifications_server",
+      "src_routes_api_admin_notifications_server_get",
+      "src_routes_api_admin_notifications_server_post"
+    ],
+    "34": [
+      "src_routes_api_chat_conversations_server",
+      "src_routes_api_chat_conversations_server_get",
+      "src_routes_api_chat_conversations_server_post"
+    ],
+    "35": [
+      "src_routes_api_chat_messages_server",
+      "src_routes_api_chat_messages_server_get",
+      "src_routes_api_chat_messages_server_post"
+    ],
+    "36": [
+      "src_routes_api_documents_id_server",
+      "src_routes_api_documents_id_server_delete",
+      "src_routes_api_documents_id_server_get"
+    ],
+    "37": [
+      "src_routes_api_encounters_id_server",
+      "src_routes_api_encounters_id_server_get",
+      "src_routes_api_encounters_id_server_put"
+    ],
+    "38": [
+      "src_routes_api_encounters_server",
+      "src_routes_api_encounters_server_get",
+      "src_routes_api_encounters_server_post"
+    ],
+    "39": [
+      "src_routes_api_patients_id_pdf_server",
+      "src_routes_api_patients_id_pdf_server_get",
+      "src_routes_api_patients_id_pdf_server_post"
+    ],
+    "40": [
+      "src_routes_api_patients_id_server",
+      "src_routes_api_patients_id_server_get",
+      "src_routes_api_patients_id_server_put"
+    ],
+    "41": [
+      "src_routes_api_patients_server",
+      "src_routes_api_patients_server_get",
+      "src_routes_api_patients_server_post"
+    ],
+    "42": [
+      "src_routes_api_payments_server",
+      "src_routes_api_payments_server_get",
+      "src_routes_api_payments_server_post"
+    ],
+    "43": [
+      "static_logo_klinik_utama_concept",
+      "static_logo_oratio_brand",
+      "static_logo_oratio_logo"
+    ],
+    "44": [
+      "build_log2_await_error",
+      "src_lib_server_auth_hashpassword"
+    ],
+    "45": [
+      "build_log_const_tag_error",
+      "src_routes_dokter_analytics__page_svelte"
+    ],
+    "46": [
+      "build_logs_pdfmake_error",
+      "src_lib_server_pdf_module"
+    ],
+    "47": [
+      "scratch_test_referrals",
+      "scratch_test_referrals_testreferrals"
+    ],
+    "48": [
+      "src_lib_api_geonames",
+      "src_lib_api_geonames_searchplaces"
+    ],
+    "49": [
+      "src_lib_components_odontogram_odontogramchart",
+      "src_lib_components_odontogram_toothdiagram"
+    ],
+    "50": [
+      "src_lib_components_odontogram_toothdetailmodal",
+      "src_lib_components_ui_modal"
+    ],
+    "51": [
+      "src_lib_components_queue_queueboard",
+      "src_lib_components_queue_queuecard"
+    ],
+    "52": [
+      "src_lib_server_cron",
+      "src_lib_server_cron_runendofdaycron"
+    ],
+    "53": [
+      "src_routes_admin_layout_js_src_routes_admin_layout",
+      "src_routes_admin_layout_load"
+    ],
+    "54": [
+      "src_routes_api_admin_dashboard_server",
+      "src_routes_api_admin_dashboard_server_get"
+    ],
+    "55": [
+      "src_routes_api_admin_notifications_id_read_server",
+      "src_routes_api_admin_notifications_id_read_server_post"
+    ],
+    "56": [
+      "src_routes_api_admin_notifications_read_all_server",
+      "src_routes_api_admin_notifications_read_all_server_post"
+    ],
+    "57": [
+      "src_routes_api_analytics_server",
+      "src_routes_api_analytics_server_get"
+    ],
+    "58": [
+      "src_routes_api_auth_login_server",
+      "src_routes_api_auth_login_server_post"
+    ],
+    "59": [
+      "src_routes_api_auth_logout_server",
+      "src_routes_api_auth_logout_server_post"
+    ],
+    "60": [
+      "src_routes_api_auth_me_server",
+      "src_routes_api_auth_me_server_get"
+    ],
+    "61": [
+      "src_routes_api_auth_profile_server",
+      "src_routes_api_auth_profile_server_put"
+    ],
+    "62": [
+      "src_routes_api_auth_shifts_server",
+      "src_routes_api_auth_shifts_server_get"
+    ],
+    "63": [
+      "src_routes_api_cashiers_server",
+      "src_routes_api_cashiers_server_get"
+    ],
+    "64": [
+      "src_routes_api_chat_broadcast_server",
+      "src_routes_api_chat_broadcast_server_post"
+    ],
+    "65": [
+      "src_routes_api_chat_messages_read_server",
+      "src_routes_api_chat_messages_read_server_post"
+    ],
+    "66": [
+      "src_routes_api_chat_unread_server",
+      "src_routes_api_chat_unread_server_get"
+    ],
+    "67": [
+      "src_routes_api_chat_users_server",
+      "src_routes_api_chat_users_server_get"
+    ],
+    "68": [
+      "src_routes_api_dashboard_dokter_referrals_server",
+      "src_routes_api_dashboard_dokter_referrals_server_get"
+    ],
+    "69": [
+      "src_routes_api_dashboard_dokter_stats_server",
+      "src_routes_api_dashboard_dokter_stats_server_get"
+    ],
+    "70": [
+      "src_routes_api_debug_tz_server",
+      "src_routes_api_debug_tz_server_get"
+    ],
+    "71": [
+      "src_routes_api_doctors_server",
+      "src_routes_api_doctors_server_get"
+    ],
+    "72": [
+      "src_routes_api_documents_server",
+      "src_routes_api_documents_server_post"
+    ],
+    "73": [
+      "src_routes_api_encounters_id_pdf_server",
+      "src_routes_api_encounters_id_pdf_server_get"
+    ],
+    "74": [
+      "src_routes_api_geonames_server",
+      "src_routes_api_geonames_server_get"
+    ],
+    "75": [
+      "src_routes_api_kfa_server",
+      "src_routes_api_kfa_server_get"
+    ],
+    "76": [
+      "src_routes_api_patients_id_medical_background_server",
+      "src_routes_api_patients_id_medical_background_server_get"
+    ],
+    "77": [
+      "src_routes_api_payments_id_pdf_server",
+      "src_routes_api_payments_id_pdf_server_get"
+    ],
+    "78": [
+      "src_routes_api_pdf_server",
+      "src_routes_api_pdf_server_get"
+    ],
+    "79": [
+      "src_routes_api_realtime_stream_server",
+      "src_routes_api_realtime_stream_server_get"
+    ],
+    "80": [
+      "src_routes_api_realtime_subscribe_server",
+      "src_routes_api_realtime_subscribe_server_post"
+    ],
+    "81": [
+      "src_routes_api_snowstorm_server",
+      "src_routes_api_snowstorm_server_get"
+    ],
+    "82": [
+      "src_routes_api_terminologies_server",
+      "src_routes_api_terminologies_server_get"
+    ],
+    "83": [
+      "src_routes_api_test_ssr_server",
+      "src_routes_api_test_ssr_server_get"
+    ],
+    "84": [
+      "src_routes_api_wilayah_server",
+      "src_routes_api_wilayah_server_get"
+    ],
+    "85": [
+      "src_routes_dokter_layout_js_src_routes_dokter_layout",
+      "src_routes_dokter_layout_load"
+    ],
+    "86": [
+      "src_routes_kasir_layout_js_src_routes_kasir_layout",
+      "src_routes_kasir_layout_load"
+    ],
+    "87": [
+      "src_routes_suster_layout_js_src_routes_suster_layout",
+      "src_routes_suster_layout_load"
+    ],
+    "88": [
+      "svelte_config",
+      "svelte_config_config"
+    ],
+    "89": [
+      "terminologyservice",
+      "terminologyservice_encoded"
+    ],
+    "90": [
+      "chart_js_chart_js"
+    ],
+    "91": [
+      "drizzle_config"
+    ],
+    "92": [
+      "hashing"
+    ],
+    "93": [
+      "libphonenumber_js_libphonenumber_js"
+    ],
+    "94": [
+      "papaparse_papaparse"
+    ],
+    "95": [
+      "scratch_append_pdf"
+    ],
+    "96": [
+      "src_lib_components_tables_admindatatable"
+    ],
+    "97": [
+      "src_lib_components_tables_datatable"
+    ],
+    "98": [
+      "src_lib_components_ui_adminfileupload"
+    ],
+    "99": [
+      "src_lib_components_ui_adminmodal"
+    ],
+    "100": [
+      "src_lib_components_ui_fileupload"
+    ],
+    "101": [
+      "src_routes_suster_page"
+    ],
+    "102": [
+      "svelte_svelte"
+    ],
+    "103": [
+      "vite_config"
+    ],
+    "104": [
+      "vite_config_js_timestamp_1780078212674_358f7f1479754"
+    ]
+  },
+  "cohesion": {
+    "0": 0.030303030303030304,
+    "1": 0.05009920634920635,
+    "2": 0.05405405405405406,
+    "3": 0.06060606060606061,
+    "4": 0.1330049261083744,
+    "5": 0.09788359788359788,
+    "6": 0.08333333333333333,
+    "7": 0.18333333333333332,
+    "8": 0.08333333333333333,
+    "9": 0.08695652173913043,
+    "10": 0.14166666666666666,
+    "11": 0.16666666666666666,
+    "12": 0.23809523809523808,
+    "13": 0.16483516483516483,
+    "14": 0.2222222222222222,
+    "15": 0.4642857142857143,
+    "16": 0.5,
+    "17": 0.35714285714285715,
+    "18": 0.5238095238095238,
+    "19": 0.6,
+    "20": 0.3333333333333333,
+    "21": 0.3333333333333333,
+    "22": 0.3333333333333333,
+    "23": 0.3333333333333333,
+    "24": 0.5,
+    "25": 0.5,
+    "26": 0.5,
+    "27": 0.6666666666666666,
+    "28": 0.5,
+    "29": 0.5,
+    "30": 0.5,
+    "31": 0.6666666666666666,
+    "32": 0.6666666666666666,
+    "33": 0.6666666666666666,
+    "34": 0.6666666666666666,
+    "35": 0.6666666666666666,
+    "36": 0.6666666666666666,
+    "37": 0.6666666666666666,
+    "38": 0.6666666666666666,
+    "39": 0.6666666666666666,
+    "40": 0.6666666666666666,
+    "41": 0.6666666666666666,
+    "42": 0.6666666666666666,
+    "43": 0.6666666666666666,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0
+  },
+  "gods": [
+    {
+      "id": "constants_js",
+      "label": "$lib/utils/constants.js",
+      "degree": 17
+    },
+    {
+      "id": "formatters_js",
+      "label": "$lib/utils/formatters.js",
+      "degree": 13
+    },
+    {
+      "id": "src_lib_server_pdfgenerator_generatepatientprofilepdf",
+      "label": "generatePatientProfilePdf()",
+      "degree": 12
+    },
+    {
+      "id": "toast_js",
+      "label": "$lib/stores/toast.js",
+      "degree": 11
+    },
+    {
+      "id": "src_lib_server_realtime_connectionmanager_connectionmanager",
+      "label": "ConnectionManager",
+      "degree": 10
+    },
+    {
+      "id": "richselect_svelte",
+      "label": "$lib/components/Forms/RichSelect.svelte",
+      "degree": 10
+    },
+    {
+      "id": "layout_js",
+      "label": "$lib/stores/layout.js",
+      "degree": 9
+    },
+    {
+      "id": "src_lib_server_pdfgenerator_generatesoapwhoformpdf",
+      "label": "generateSoapWhoFormPdf()",
+      "degree": 9
+    },
+    {
+      "id": "searchableselect_svelte",
+      "label": "$lib/components/Forms/SearchableSelect.svelte",
+      "degree": 8
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 7
+    }
+  ],
+  "surprises": [
+    {
+      "source": "app.html Template",
+      "target": "admin/+layout.svelte",
+      "source_files": [
+        "src/app.html",
+        "build_output.txt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Encounter query logs",
+      "target": "encounter_items DB table",
+      "source_files": [
+        "query.txt",
+        "logs.txt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Test average query result",
+      "target": "Encounter query logs",
+      "source_files": [
+        "test_avg.txt",
+        "query.txt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Deploy Job",
+      "target": "App Service (oratio-app)",
+      "source_files": [
+        ".github/workflows/deploy.yml",
+        "docker-compose.yml"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "Deploy Job",
+      "target": "DB Service (oratio-db)",
+      "source_files": [
+        ".github/workflows/deploy.yml",
+        "docker-compose.yml"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `$lib/utils/constants.js` connect `Community 1` to `Community 2`, `Community 4`, `Community 6`, `Community 11`, `Community 13`?",
+      "why": "High betweenness centrality (0.027) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `$lib/stores/toast.js` connect `Community 1` to `Community 2`, `Community 13`, `Community 6`?",
+      "why": "High betweenness centrality (0.009) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `$lib/stores/layout.js` connect `Community 4` to `Community 1`, `Community 6`?",
+      "why": "High betweenness centrality (0.005) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `version`, `private` to the rest of the system?",
+      "why": "197 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.030303030303030304 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05009920634920635 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

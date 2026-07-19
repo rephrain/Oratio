@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "static_logo_oratio_logo",
+      "label": "Klinik Utama Oratio Logo",
+      "file_type": "image",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "static_logo_oratio_brand",
+      "label": "Oratio Brand Identity",
+      "file_type": "concept",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "static_logo_klinik_utama_concept",
+      "label": "Klinik Utama (Main Clinic) Status",
+      "file_type": "concept",
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "static_logo_oratio_logo",
+      "target": "static_logo_oratio_brand",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "static_logo_oratio_logo",
+      "target": "static_logo_klinik_utama_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\Rephrain\\PERSONAL PROJECT\\ORATIO\\Oratio\\static\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

@@ -261,8 +261,25 @@ export async function POST({ params, request }) {
 		});
 		return json({ record: m2mResults }, { status: 201 });
 	} catch (error) {
-		console.error(`Admin POST error for ${params.table}:`, error.message);
-		return json({ error: error.message }, { status: 400 });
+		console.error(`Admin POST error for ${params.table}:`);
+
+		console.dir(error, { depth: null });
+
+		if (error?.cause) {
+			console.error("CAUSE:");
+			console.dir(error.cause, { depth: null });
+		}
+
+		return json(
+			{
+				error: error.message,
+				cause: error.cause ?? null,
+				code: error.code ?? null,
+				detail: error.detail ?? null,
+				constraint: error.constraint ?? null,
+			},
+			{ status: 400 }
+		);
 	}
 }
 
@@ -321,8 +338,25 @@ export async function PUT({ params, request }) {
 		});
 		return json({ record: result });
 	} catch (error) {
-		console.error(`Admin PUT error for ${params.table}:`, error.message);
-		return json({ error: error.message }, { status: 400 });
+		console.error(`Admin PUT error for ${params.table}:`);
+
+		console.dir(error, { depth: null });
+
+		if (error?.cause) {
+			console.error("CAUSE:");
+			console.dir(error.cause, { depth: null });
+		}
+
+		return json(
+			{
+				error: error.message,
+				cause: error.cause ?? null,
+				code: error.code ?? null,
+				detail: error.detail ?? null,
+				constraint: error.constraint ?? null,
+			},
+			{ status: 400 }
+		);
 	}
 }
 
@@ -351,7 +385,24 @@ export async function DELETE({ params, url }) {
 			return json({ success: true });
 		}
 	} catch (error) {
-		console.error(`Admin DELETE error for ${params.table}:`, error.message);
-		return json({ error: error.message }, { status: 400 });
+		console.error(`Admin DELETE error for ${params.table}:`);
+
+		console.dir(error, { depth: null });
+
+		if (error?.cause) {
+			console.error("CAUSE:");
+			console.dir(error.cause, { depth: null });
+		}
+
+		return json(
+			{
+				error: error.message,
+				cause: error.cause ?? null,
+				code: error.code ?? null,
+				detail: error.detail ?? null,
+				constraint: error.constraint ?? null,
+			},
+			{ status: 400 }
+		);
 	}
 }

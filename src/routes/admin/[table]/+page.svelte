@@ -35,6 +35,7 @@
 	let data = [];
 	let total = 0;
 	let currentPage = 1;
+	let searchTerm = "";
 	let loading = true;
 	let columns = [];
 
@@ -126,8 +127,16 @@
 	async function loadData(isBg = false) {
 		if (!isBg) loading = true;
 		try {
+			const params = new URLSearchParams({
+				page: String(currentPage),
+				limit: "20",
+			});
+			if (searchTerm.trim()) {
+				params.set("q", searchTerm.trim());
+			}
+
 			const res = await fetch(
-				`/api/admin/${tableName}?page=${currentPage}&limit=20`,
+				`/api/admin/${tableName}?${params.toString()}`,
 			);
 			const resp = await res.json();
 			data = resp.data || [];
@@ -202,6 +211,12 @@
 		} finally {
 			if (!isBg) loading = false;
 		}
+	}
+
+	function handleSearch(event) {
+		searchTerm = event.detail.term || "";
+		currentPage = 1;
+		loadData();
 	}
 
 	function openCreate() {
@@ -600,6 +615,7 @@
 
 	$: if (tableName) {
 		currentPage = 1;
+		searchTerm = "";
 		fkLookups = {};
 		loadData();
 	}
@@ -673,7 +689,7 @@
 			currentPage = e.detail.page;
 			loadData();
 		}}
-		on:search={(e) => loadData()}
+		on:search={handleSearch}
 		on:rowclick={(e) => openEdit(e.detail.row)}
 	>
 		<tr slot="row-extra" let:row>

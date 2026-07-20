@@ -178,6 +178,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let data = [];
   let total = 0;
   let currentPage = 1;
+  let searchTerm = "";
   let loading = true;
   let columns = [];
   let showModal = false;
@@ -202,7 +203,11 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     if (!isBg)
       loading = true;
     try {
-      const res = await fetch(`/api/admin/${tableName}?page=${currentPage}&limit=20`);
+      const params = new URLSearchParams({ page: String(currentPage), limit: "20" });
+      if (searchTerm.trim()) {
+        params.set("q", searchTerm.trim());
+      }
+      const res = await fetch(`/api/admin/${tableName}?${params.toString()}`);
       const resp = await res.json();
       data = resp.data || [];
       total = resp.total || 0;
@@ -287,6 +292,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     {
       if (tableName) {
         currentPage = 1;
+        searchTerm = "";
         fkLookups = {};
         loadData();
       }

@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import * as schema from '$lib/server/db/schema.js';
-import { eq, desc, ilike, sql, and, inArray } from 'drizzle-orm';
+import { eq, desc, sql, and, inArray, or } from 'drizzle-orm';
 import { ADMIN_TABLES } from '$lib/utils/constants.js';
 import { generatePatientId } from '$lib/utils/formatters.js';
 
@@ -122,6 +122,7 @@ export async function GET({ params, url }) {
 	const limit = parseInt(url.searchParams.get('limit') || '50');
 	const offset = (page - 1) * limit;
 	const all = url.searchParams.get('all') === 'true';
+	const searchTerm = (url.searchParams.get('q') || '').trim();
 
 	// Build mapping of field keys to definitions
 	const fieldMap = {};
@@ -133,7 +134,7 @@ export async function GET({ params, url }) {
 
 	// Build filters from remaining searchParams
 	const filters = [];
-	const skipParams = ['page', 'limit', 'offset', 'all'];
+	const skipParams = ['page', 'limit', 'offset', 'all', 'q'];
 	const processedKeys = new Set();
 	url.searchParams.forEach((val, key) => {
 		if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {
@@ -161,6 +162,22 @@ export async function GET({ params, url }) {
 			}
 		}
 	});
+
+	if (searchTerm) {
+		const searchableFields = (tableConfig.fields || []).filter((field) =>
+			field.type !== 'password' &&
+			field.type !== 'm2m' &&
+			table[field.key]
+		);
+		const searchPattern = `%${searchTerm}%`;
+		const searchFilters = searchableFields.map((field) =>
+			sql`CAST(${table[field.key]} AS TEXT) ILIKE ${searchPattern}`
+		);
+
+		if (searchFilters.length > 0) {
+			filters.push(or(...searchFilters));
+		}
+	}
 
 	const query = db.select().from(table);
 	

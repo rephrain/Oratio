@@ -178,6 +178,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let data = [];
   let total = 0;
   let currentPage = 1;
+  let searchTerm = "";
   let loading = true;
   let columns = [];
   let showModal = false;
@@ -185,6 +186,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let editRecord = {};
   let uploadingField = null;
   let fkLookups = {};
+  let fkLoading = {};
   let activeTab = "main";
   let childRecords = {};
   let showDeleteConfirm = false;
@@ -198,11 +200,42 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       return true;
     });
   }
+  async function loadFkLookup(fkTable, filter = null) {
+    const cacheKey = filter ? `${fkTable}?${new URLSearchParams(filter).toString()}` : fkTable;
+    if (fkLookups[cacheKey] || fkLoading[cacheKey])
+      return;
+    fkLoading[cacheKey] = true;
+    try {
+      let url = `/api/admin/${fkTable}?limit=500`;
+      if (filter) {
+        const params = new URLSearchParams(filter);
+        url += `&${params.toString()}`;
+      }
+      const res = await fetch(url);
+      const resp = await res.json();
+      fkLookups[cacheKey] = resp.data || [];
+      fkLookups = fkLookups;
+    } catch (err) {
+      console.error(`Failed to load FK data for ${fkTable}:`, err);
+      fkLookups[cacheKey] = [];
+    } finally {
+      fkLoading[cacheKey] = false;
+    }
+  }
+  async function loadAllFkLookups() {
+    const lookups = formFields.filter((f) => f.type === "fk" || f.type === "m2m").map((f) => ({ table: f.fkTable, filter: f.fkFilter }));
+    await Promise.all(lookups.map((l) => loadFkLookup(l.table, l.filter)));
+  }
   async function loadData(isBg = false) {
     if (!isBg)
       loading = true;
     try {
-      const res = await fetch(`/api/admin/${tableName}?page=${currentPage}&limit=20`);
+      await loadAllFkLookups();
+      const params = new URLSearchParams({ page: String(currentPage), limit: "20" });
+      if (searchTerm.trim()) {
+        params.set("q", searchTerm.trim());
+      }
+      const res = await fetch(`/api/admin/${tableName}?${params.toString()}`);
       const resp = await res.json();
       data = resp.data || [];
       total = resp.total || 0;
@@ -222,6 +255,11 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
               } catch {
                 return val;
               }
+            }
+            if (f.type === "fk") {
+              const lookup = fkLookups[getCacheKey(f)] || [];
+              const found = lookup.find((l) => l.id === val);
+              return found ? found[f.fkLabel] || String(val) : String(val);
             }
             return String(val);
           }
@@ -287,6 +325,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     {
       if (tableName) {
         currentPage = 1;
+        searchTerm = "";
         fkLookups = {};
         loadData();
       }

@@ -355,7 +355,7 @@ export const ADMIN_TABLES = {
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
 			{ key: 'patient_id', label: 'Patient', type: 'fk', fkTable: 'patients', fkLabel: 'nama_lengkap' },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'document_type', label: 'Document Type', type: 'text', maxLength: 50 },
 			{ key: 'file_name', label: 'File Name', type: 'text', required: true },
 			{ key: 'file_path', label: 'File Path', type: 'text', required: true },
@@ -395,7 +395,7 @@ export const ADMIN_TABLES = {
 		schema: 'statusHistory',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'status', label: 'Status', type: 'select', required: true, options: ['Arrived', 'In Progress', 'Finished'] },
 			{ key: 'start_at', label: 'Start At', type: 'datetime', required: true },
 			{ key: 'end_at', label: 'End At', type: 'datetime' },
@@ -407,7 +407,7 @@ export const ADMIN_TABLES = {
 		schema: 'encounterOdontograms',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'dentition_type', label: 'Dentition Type', type: 'select', options: ['Adult', 'Child'] },
 			{ key: 'occlusi', label: 'Occlusi', type: 'select', options: ['Normal Bite', 'Cross Bite', 'Steep Bite'] },
 			{ key: 'torus_palatinus', label: 'Torus Palatinus', type: 'select', options: ['Tidak Ada', 'Kecil', 'Sedang', 'Besar', 'Multiple'] },
@@ -487,7 +487,7 @@ export const ADMIN_TABLES = {
 		schema: 'encounterPrescriptions',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'terminology_id', label: 'Medication (Terminology)', type: 'fk', fkTable: 'terminology', fkLabel: 'display' },
 			{ key: 'dosage_form', label: 'Dosage Form', type: 'text' },
 			{ key: 'dosage', label: 'Dosage', type: 'text' },
@@ -501,7 +501,7 @@ export const ADMIN_TABLES = {
 		schema: 'encounterReferrals',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'doctor_code', label: 'Doctor Code', type: 'text', required: true, maxLength: 10 },
 			{ key: 'referral_date', label: 'Referral Date', type: 'date', required: true },
 			{ key: 'note', label: 'Note', type: 'textarea' },
@@ -539,7 +539,7 @@ export const ADMIN_TABLES = {
 		schema: 'encounterItems',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'item_id', label: 'Item', type: 'fk', required: true, fkTable: 'items', fkLabel: 'name' },
 			{ key: 'quantity', label: 'Quantity', type: 'number', required: true, defaultValue: 1 },
 			{ key: 'price_at_time', label: 'Price at Time', type: 'number', required: true },
@@ -552,7 +552,7 @@ export const ADMIN_TABLES = {
 		schema: 'payments',
 		fields: [
 			{ key: 'id', label: 'ID', type: 'uuid', readOnly: true, autoGenerate: true },
-			{ key: 'encounter_id', label: 'Encounter', type: 'text', required: true, maxLength: 30 },
+			{ key: 'encounter_id', label: 'Encounter', type: 'fk', required: true, fkTable: 'encounters', fkLabel: 'id' },
 			{ key: 'payment_mode', label: 'Payment Mode', type: 'select', required: true, options: ['NORMAL', 'VOUCHER'], defaultValue: 'NORMAL' },
 			{ key: 'discount_percent', label: 'Discount %', type: 'number', defaultValue: 0 },
 			{ key: 'discount_amount', label: 'Discount Amount', type: 'number', defaultValue: 0 },

@@ -127,6 +127,7 @@
 	async function loadData(isBg = false) {
 		if (!isBg) loading = true;
 		try {
+			await loadAllFkLookups();
 			const params = new URLSearchParams({
 				page: String(currentPage),
 				limit: "20",
@@ -161,6 +162,12 @@
 								} catch {
 									return val;
 								}
+							}
+							// Format foreign key
+							if (f.type === "fk") {
+								const lookup = fkLookups[getCacheKey(f)] || [];
+								const found = lookup.find((l) => l.id === val);
+								return found ? (found[f.fkLabel] || String(val)) : String(val);
 							}
 							return String(val);
 						},

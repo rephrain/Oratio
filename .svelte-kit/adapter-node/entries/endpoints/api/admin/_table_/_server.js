@@ -1,6 +1,6 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as encounterItems, y as payments } from "../../../../../chunks/index3.js";
-import { inArray, eq, and, sql, desc } from "drizzle-orm";
+import { inArray, eq, sql, or, and, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 import { g as generatePatientId } from "../../../../../chunks/formatters.js";
 const schemaMap = {
@@ -92,6 +92,7 @@ async function GET({ params, url }) {
   const limit = parseInt(url.searchParams.get("limit") || "50");
   const offset = (page - 1) * limit;
   const all = url.searchParams.get("all") === "true";
+  const searchTerm = (url.searchParams.get("q") || "").trim();
   const fieldMap = {};
   if (tableConfig.fields) {
     for (const f of tableConfig.fields) {
@@ -99,7 +100,7 @@ async function GET({ params, url }) {
     }
   }
   const filters = [];
-  const skipParams = ["page", "limit", "offset", "all"];
+  const skipParams = ["page", "limit", "offset", "all", "q"];
   const processedKeys = /* @__PURE__ */ new Set();
   url.searchParams.forEach((val, key) => {
     if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {
@@ -123,6 +124,18 @@ async function GET({ params, url }) {
       }
     }
   });
+  if (searchTerm) {
+    const searchableFields = (tableConfig.fields || []).filter(
+      (field) => field.type !== "password" && field.type !== "m2m" && table[field.key]
+    );
+    const searchPattern = `%${searchTerm}%`;
+    const searchFilters = searchableFields.map(
+      (field) => sql`CAST(${table[field.key]} AS TEXT) ILIKE ${searchPattern}`
+    );
+    if (searchFilters.length > 0) {
+      filters.push(or(...searchFilters));
+    }
+  }
   const query = db.select().from(table);
   if (!all) {
     query.limit(limit).offset(offset);
@@ -199,8 +212,22 @@ async function POST({ params, request }) {
     });
     return json({ record: m2mResults }, { status: 201 });
   } catch (error) {
-    console.error(`Admin POST error for ${params.table}:`, error.message);
-    return json({ error: error.message }, { status: 400 });
+    console.error(`Admin POST error for ${params.table}:`);
+    console.dir(error, { depth: null });
+    if (error?.cause) {
+      console.error("CAUSE:");
+      console.dir(error.cause, { depth: null });
+    }
+    return json(
+      {
+        error: error.message,
+        cause: error.cause ?? null,
+        code: error.code ?? null,
+        detail: error.detail ?? null,
+        constraint: error.constraint ?? null
+      },
+      { status: 400 }
+    );
   }
 }
 async function PUT({ params, request }) {
@@ -245,8 +272,22 @@ async function PUT({ params, request }) {
     });
     return json({ record: result });
   } catch (error) {
-    console.error(`Admin PUT error for ${params.table}:`, error.message);
-    return json({ error: error.message }, { status: 400 });
+    console.error(`Admin PUT error for ${params.table}:`);
+    console.dir(error, { depth: null });
+    if (error?.cause) {
+      console.error("CAUSE:");
+      console.dir(error.cause, { depth: null });
+    }
+    return json(
+      {
+        error: error.message,
+        cause: error.cause ?? null,
+        code: error.code ?? null,
+        detail: error.detail ?? null,
+        constraint: error.constraint ?? null
+      },
+      { status: 400 }
+    );
   }
 }
 async function DELETE({ params, url }) {
@@ -270,8 +311,22 @@ async function DELETE({ params, url }) {
       return json({ success: true });
     }
   } catch (error) {
-    console.error(`Admin DELETE error for ${params.table}:`, error.message);
-    return json({ error: error.message }, { status: 400 });
+    console.error(`Admin DELETE error for ${params.table}:`);
+    console.dir(error, { depth: null });
+    if (error?.cause) {
+      console.error("CAUSE:");
+      console.dir(error.cause, { depth: null });
+    }
+    return json(
+      {
+        error: error.message,
+        cause: error.cause ?? null,
+        code: error.code ?? null,
+        detail: error.detail ?? null,
+        constraint: error.constraint ?? null
+      },
+      { status: 400 }
+    );
   }
 }
 export {

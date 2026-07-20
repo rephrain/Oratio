@@ -1,5 +1,70 @@
 {
-  "generated_at": "2026-07-19T04:18:28.492436+00:00",
-  "nodes": {},
+  "generated_at": "2026-07-20T11:24:41.588688+00:00",
+  "nodes": {
+    "src_lib_server_db_schema": {
+      "code_fingerprint": "95a1c566d2dd7c0bca580aad3bc927c38e342e0d66a6bdcf071578169fa68cc0",
+      "label": "schema.js",
+      "last": "2026-07-19T04:20:19.386799+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-19T04:20:19.386799+00:00",
+          "outcome": "useful",
+          "q": "Review replacing doctor-item ownership with specialization ownership. Analyze database, backend, API, authorization impact, migration plan, and historical encounter safety."
+        }
+      ],
+      "score": 0.97052904,
+      "source_file": "src/lib/server/db/schema.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_lib_server_db_schema_doctoritems": {
+      "code_fingerprint": "95a1c566d2dd7c0bca580aad3bc927c38e342e0d66a6bdcf071578169fa68cc0",
+      "label": "doctorItems",
+      "last": "2026-07-19T04:20:19.386799+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-19T04:20:19.386799+00:00",
+          "outcome": "useful",
+          "q": "Review replacing doctor-item ownership with specialization ownership. Analyze database, backend, API, authorization impact, migration plan, and historical encounter safety."
+        }
+      ],
+      "score": 0.97052904,
+      "source_file": "src/lib/server/db/schema.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_lib_server_db_schema_encounteritems": {
+      "code_fingerprint": "95a1c566d2dd7c0bca580aad3bc927c38e342e0d66a6bdcf071578169fa68cc0",
+      "label": "encounterItems",
+      "last": "2026-07-19T04:20:19.386799+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-19T04:20:19.386799+00:00",
+          "outcome": "useful",
+          "q": "Review replacing doctor-item ownership with specialization ownership. Analyze database, backend, API, authorization impact, migration plan, and historical encounter safety."
+        }
+      ],
+      "score": 0.97052904,
+      "source_file": "src/lib/server/db/schema.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_lib_server_realtime_authorizationrules": {
+      "code_fingerprint": "55dd4456120238394fa94754271adfa9e43a5dfcb065d4d75c9de082ae8a96ae",
+      "label": "authorizationRules.js",
+      "last": "2026-07-19T04:20:19.386799+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-19T04:20:19.386799+00:00",
+          "outcome": "useful",
+          "q": "Review replacing doctor-item ownership with specialization ownership. Analyze database, backend, API, authorization impact, migration plan, and historical encounter safety."
+        }
+      ],
+      "score": 0.97052904,
+      "source_file": "src/lib/server/realtime/authorizationRules.js",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
   "version": 1
 }

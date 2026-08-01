@@ -513,6 +513,39 @@ export const notificationReads = pgTable('notification_reads', {
 
 
 // =============================================================
+// 21. REFRESH TOKENS (family-based session rotation)
+// =============================================================
+export const refreshTokens = pgTable('refresh_tokens', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	family_id: uuid('family_id').notNull(),
+	token_hash: text('token_hash').notNull(),
+	expires_at: timestamp('expires_at').notNull(),
+	revoked_at: timestamp('revoked_at'),
+	replaced_at: timestamp('replaced_at'),
+	replaced_by_id: uuid('replaced_by_id'),
+	user_agent: text('user_agent'),
+	ip_address: varchar('ip_address', { length: 45 }),
+	created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+
+// =============================================================
+// 22. AUTH AUDIT LOGS (security monitoring & compliance)
+// =============================================================
+export const authAuditLogs = pgTable('auth_audit_logs', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	user_id: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+	event_type: varchar('event_type', { length: 50 }).notNull(),
+	ip_address: varchar('ip_address', { length: 45 }),
+	user_agent: text('user_agent'),
+	details: text('details'),
+	created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+
+
+// =============================================================
 // RELATIONS
 // =============================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -528,7 +561,9 @@ export const usersRelations = relations(users, ({ many }) => ({
 	conversationsAsA: many(chatConversations, { relationName: 'participant_a_conversations' }),
 	conversationsAsB: many(chatConversations, { relationName: 'participant_b_conversations' }),
 	notifications: many(notifications),
-	notificationReads: many(notificationReads)
+	notificationReads: many(notificationReads),
+	refreshTokens: many(refreshTokens),
+	authAuditLogs: many(authAuditLogs)
 }));
 
 export const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
@@ -685,4 +720,12 @@ export const notificationsRelations = relations(notifications, ({ one, many }) =
 export const notificationReadsRelations = relations(notificationReads, ({ one }) => ({
 	notification: one(notifications, { fields: [notificationReads.notification_id], references: [notifications.id] }),
 	user: one(users, { fields: [notificationReads.user_id], references: [users.id] })
+}));
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+	user: one(users, { fields: [refreshTokens.user_id], references: [users.id] })
+}));
+
+export const authAuditLogsRelations = relations(authAuditLogs, ({ one }) => ({
+	user: one(users, { fields: [authAuditLogs.user_id], references: [users.id] })
 }));

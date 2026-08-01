@@ -1,10 +1,12 @@
 import { db } from '$lib/server/db/index.js';
 import { encounters } from '$lib/server/db/schema.js';
 import { eq, and, lt, inArray } from 'drizzle-orm';
+import { cleanupExpiredRefreshTokens } from '$lib/server/auth.js';
 
 // End-of-day cleanup:
 // - Planned (no doctor interaction) → Cancelled
 // - In Progress or On Hold → Discontinued
+// - Expired refresh tokens → Cleaned up
 
 export async function runEndOfDayCron() {
 	// today in Jakarta timezone
@@ -34,7 +36,10 @@ export async function runEndOfDayCron() {
 			)
 			.returning();
 
-		console.log(`[CRON] End-of-day: ${cancelled.length} cancelled, ${discontinued.length} discontinued`);
+		// Clean up expired refresh tokens from DB
+		const cleanedTokens = await cleanupExpiredRefreshTokens();
+
+		console.log(`[CRON] End-of-day: ${cancelled.length} cancelled, ${discontinued.length} discontinued, ${cleanedTokens ? cleanedTokens.length || 'expired' : 0} refresh tokens cleaned`);
 		return { cancelled: cancelled.length, discontinued: discontinued.length };
 	} catch (error) {
 		console.error('[CRON] Error:', error);

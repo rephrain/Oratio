@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, u as users, z as chatConversations, A as chatMessages } from "../../../../../chunks/index3.js";
+import { d as db, u as users, A as chatConversations, B as chatMessages } from "../../../../../chunks/index3.js";
 import { and, eq, ne } from "drizzle-orm";
 import { e as emitChatEvent } from "../../../../../chunks/realtimeService.js";
 async function POST({ request, locals }) {

@@ -2371,6 +2371,9 @@
   },
   "src/lib/server/auth.js": {
     "file": "chunks/auth.js",
+    "imports": [
+      "_index3.js"
+    ],
     "isDynamicEntry": true,
     "src": "src/lib/server/auth.js"
   },
@@ -3061,7 +3064,9 @@
   "src/routes/api/auth/logout/+server.js": {
     "file": "entries/endpoints/api/auth/logout/_server.js",
     "imports": [
-      "_index.js"
+      "_index.js",
+      "_index3.js",
+      "src/lib/server/auth.js"
     ],
     "isEntry": true,
     "src": "src/routes/api/auth/logout/+server.js"
@@ -3083,6 +3088,15 @@
     ],
     "isEntry": true,
     "src": "src/routes/api/auth/profile/+server.js"
+  },
+  "src/routes/api/auth/refresh/+server.js": {
+    "file": "entries/endpoints/api/auth/refresh/_server.js",
+    "imports": [
+      "_index.js",
+      "src/lib/server/auth.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/api/auth/refresh/+server.js"
   },
   "src/routes/api/auth/shifts/+server.js": {
     "file": "entries/endpoints/api/auth/shifts/_server.js",

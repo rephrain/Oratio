@@ -37,10 +37,13 @@ function generatePatientId(lastId) {
 function generateEncounterId(doctorCode, lastId) {
   const now = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
   const prefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${doctorCode}`;
-  if (!lastId || !lastId.startsWith(prefix)) {
-    return prefix + "000001";
+  let num = 1;
+  if (lastId) {
+    const match = lastId.match(/(\d+)$/);
+    if (match) {
+      num = parseInt(match[1], 10) + 1;
+    }
   }
-  const num = parseInt(lastId.substring(prefix.length)) + 1;
   return prefix + String(num).padStart(6, "0");
 }
 export {

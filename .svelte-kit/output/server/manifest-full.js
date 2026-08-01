@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.555abae8.js","app":"_app/immutable/entry/app.ba1163e6.js","imports":["_app/immutable/entry/start.555abae8.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/singletons.7afe083a.js","_app/immutable/chunks/index.87639c41.js","_app/immutable/chunks/paths.8b61cc7c.js","_app/immutable/entry/app.ba1163e6.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/index.53af2136.js"],"stylesheets":[],"fonts":[]},
+		client: null,
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -130,6 +130,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/auth/profile/_server.js'))
+			},
+			{
+				id: "/api/auth/refresh",
+				pattern: /^\/api\/auth\/refresh\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/auth/refresh/_server.js'))
 			},
 			{
 				id: "/api/auth/shifts",

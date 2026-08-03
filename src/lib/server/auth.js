@@ -22,7 +22,7 @@ function getJwtSecret() {
 	_jwtSecret = new TextEncoder().encode(raw || 'dev-secret-change-in-production');
 	return _jwtSecret;
 }
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '8h';
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const CONCURRENCY_GRACE_PERIOD_MS = 15 * 1000; // 15 seconds grace window for concurrent refreshes
 

@@ -3,11 +3,17 @@ import argon2 from "argon2";
 import crypto from "node:crypto";
 import { d as db, z as refreshTokens, u as users, C as authAuditLogs } from "./index3.js";
 import { eq, and, isNull, lt } from "drizzle-orm";
-const JWT_SECRET_STRING = process.env.JWT_SECRET;
-if (!JWT_SECRET_STRING && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET environment variable is required in production");
+let _jwtSecret = null;
+function getJwtSecret() {
+  if (_jwtSecret)
+    return _jwtSecret;
+  const raw = process.env.JWT_SECRET;
+  if (!raw && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET environment variable is required in production");
+  }
+  _jwtSecret = new TextEncoder().encode(raw || "dev-secret-change-in-production");
+  return _jwtSecret;
 }
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_STRING || "dev-secret-change-in-production");
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1e3;
 const CONCURRENCY_GRACE_PERIOD_MS = 15 * 1e3;
@@ -21,11 +27,11 @@ async function createToken(user) {
     profile_image_url: user.profile_image_url || null,
     jti
   };
-  return await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(ACCESS_TOKEN_EXPIRY).sign(JWT_SECRET);
+  return await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(ACCESS_TOKEN_EXPIRY).sign(getJwtSecret());
 }
 async function verifyToken(token) {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload;
   } catch {
     return null;

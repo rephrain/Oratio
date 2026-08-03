@@ -38,8 +38,6 @@ jobs:
           push: true
           platforms: linux/arm64
           no-cache: true
-          build-args: |
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}

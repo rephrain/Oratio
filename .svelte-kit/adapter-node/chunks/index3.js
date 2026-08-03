@@ -324,6 +324,28 @@ const notificationReads = pgTable("notification_reads", {
 }, (table) => ({
   uniqueNotificationUser: unique("uq_notification_read").on(table.notification_id, table.user_id)
 }));
+const refreshTokens = pgTable("refresh_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  family_id: uuid("family_id").notNull(),
+  token_hash: text("token_hash").notNull(),
+  expires_at: timestamp("expires_at").notNull(),
+  revoked_at: timestamp("revoked_at"),
+  replaced_at: timestamp("replaced_at"),
+  replaced_by_id: uuid("replaced_by_id"),
+  user_agent: text("user_agent"),
+  ip_address: varchar("ip_address", { length: 45 }),
+  created_at: timestamp("created_at").defaultNow().notNull()
+});
+const authAuditLogs = pgTable("auth_audit_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  user_id: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  event_type: varchar("event_type", { length: 50 }).notNull(),
+  ip_address: varchar("ip_address", { length: 45 }),
+  user_agent: text("user_agent"),
+  details: text("details"),
+  created_at: timestamp("created_at").defaultNow().notNull()
+});
 const usersRelations = relations(users, ({ many }) => ({
   shifts: many(shifts),
   doctor_encounters: many(encounters, { relationName: "doctor_to_encounters" }),
@@ -337,7 +359,9 @@ const usersRelations = relations(users, ({ many }) => ({
   conversationsAsA: many(chatConversations, { relationName: "participant_a_conversations" }),
   conversationsAsB: many(chatConversations, { relationName: "participant_b_conversations" }),
   notifications: many(notifications),
-  notificationReads: many(notificationReads)
+  notificationReads: many(notificationReads),
+  refreshTokens: many(refreshTokens),
+  authAuditLogs: many(authAuditLogs)
 }));
 const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
   diseaseHistories: many(patientDiseaseHistory),
@@ -469,8 +493,16 @@ const notificationReadsRelations = relations(notificationReads, ({ one }) => ({
   notification: one(notifications, { fields: [notificationReads.notification_id], references: [notifications.id] }),
   user: one(users, { fields: [notificationReads.user_id], references: [users.id] })
 }));
+const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, { fields: [refreshTokens.user_id], references: [users.id] })
+}));
+const authAuditLogsRelations = relations(authAuditLogs, ({ one }) => ({
+  user: one(users, { fields: [authAuditLogs.user_id], references: [users.id] })
+}));
 const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
+  authAuditLogs,
+  authAuditLogsRelations,
   bloodTypeEnum,
   chatConversations,
   chatConversationsRelations,
@@ -524,6 +556,8 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   paymentModeEnum,
   payments,
   paymentsRelations,
+  refreshTokens,
+  refreshTokensRelations,
   rhesusEnum,
   roleEnum,
   shifts,
@@ -541,7 +575,9 @@ const connectionString = process.env.DATABASE_URL || "postgresql://oratio:Pwd%26
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 export {
-  chatMessages as A,
+  chatConversations as A,
+  chatMessages as B,
+  authAuditLogs as C,
   notificationReads as a,
   patientDiseaseHistory as b,
   patientAllergy as c,
@@ -567,5 +603,5 @@ export {
   items as w,
   encounterItems as x,
   payments as y,
-  chatConversations as z
+  refreshTokens as z
 };

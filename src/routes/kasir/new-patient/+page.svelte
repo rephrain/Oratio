@@ -589,9 +589,7 @@
                 <div class="col-span-full md:col-span-1">
                     <label
                         class="block text-sm font-semibold text-slate-700 mb-2"
-                        >Patient ID (National ID) <span class="text-red-500"
-                            >*</span
-                        ></label
+                        >Patient ID (National ID) <span class="text-xs text-slate-400 font-normal">(Opsional)</span></label
                     >
                     <input
                         class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.nik

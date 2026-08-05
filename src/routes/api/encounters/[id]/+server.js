@@ -640,3 +640,52 @@ export async function PUT({ params, request }) {
 
 	return json({ encounter: updated });
 }
+
+// DELETE /api/encounters/[id] - cancel/remove encounter queue if not yet treated by doctor
+export async function DELETE({ params, locals }) {
+	try {
+		const [encounter] = await db.select({
+			id: encounters.id,
+			status: encounters.status
+		})
+			.from(encounters)
+			.where(eq(encounters.id, params.id))
+			.limit(1);
+
+		if (!encounter) {
+			return json({ message: 'Encounter not found' }, { status: 404 });
+		}
+
+		// Only allow deleting/cancelling if doctor hasn't started treatment (Planned or Arrived)
+		const deletableStatuses = ['Planned', 'Arrived'];
+		if (!deletableStatuses.includes(encounter.status)) {
+			return json({
+				message: `Tidak dapat menghapus antrian yang sudah atau sedang diproses oleh dokter (Status: ${encounter.status})`
+			}, { status: 400 });
+		}
+
+		// Close open status_history entries
+		await db.update(statusHistory)
+			.set({ end_at: new Date() })
+			.where(and(
+				eq(statusHistory.encounter_id, params.id),
+				sql`${statusHistory.end_at} IS NULL`
+			));
+
+		// Update status to Cancelled
+		const [updated] = await db.update(encounters)
+			.set({ status: 'Cancelled', updated_at: new Date() })
+			.where(eq(encounters.id, params.id))
+			.returning();
+
+		const userId = locals?.user?.id;
+		emitEncounterEvent('status_changed', params.id, { status: 'Cancelled' }, userId);
+		emitQueueEvent('queue_cancelled', { id: params.id }, userId);
+
+		return json({ success: true, message: 'Antrian berhasil dibatalkan/dihapus', encounter: updated });
+	} catch (err) {
+		console.error("DELETE /api/encounters/[id] error:", err);
+		return json({ message: 'Internal Server Error', error: String(err) }, { status: 500 });
+	}
+}
+

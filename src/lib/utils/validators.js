@@ -29,9 +29,9 @@ export function validateBloodPressure(bp) {
 export function validatePatientForm(data) {
 	const errors = {};
 
-	const nikErr = validateRequired(data.nik, 'NIK');
-	if (nikErr) errors.nik = nikErr;
-	else if (!validateNIK(data.nik)) errors.nik = 'NIK harus 16 digit';
+	if (data.nik && data.nik.trim()) {
+		if (!validateNIK(data.nik.trim())) errors.nik = 'NIK harus 16 digit';
+	}
 
 	const namaErr = validateRequired(data.nama_lengkap, 'Nama Lengkap');
 	if (namaErr) errors.nama_lengkap = namaErr;

@@ -22,6 +22,40 @@
 	let filterDoctor = "";
 	let doctorOptions = [];
 
+	let showCancelModal = false;
+	let selectedCancelEncounter = null;
+	let cancelling = false;
+
+	function openCancelModal(item) {
+		selectedCancelEncounter = item;
+		showCancelModal = true;
+	}
+
+	async function confirmCancelQueue() {
+		if (!selectedCancelEncounter || cancelling) return;
+		cancelling = true;
+		try {
+			const res = await fetch(`/api/encounters/${selectedCancelEncounter.encounter.id}`, {
+				method: "DELETE"
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				alert(data.message || "Gagal menghapus antrian");
+				return;
+			}
+			encounters = encounters.filter(
+				(e) => e.encounter.id !== selectedCancelEncounter.encounter.id
+			);
+			showCancelModal = false;
+			selectedCancelEncounter = null;
+		} catch (err) {
+			console.error("Failed to cancel queue:", err);
+			alert("Terjadi kesalahan saat menghapus antrian.");
+		} finally {
+			cancelling = false;
+		}
+	}
+
 	// Table View filters
 	let tableDoctorFilter = "";
 	let tableStatusFilter = "";
@@ -406,8 +440,16 @@
 										Dr. {item.doctor_name || "-"}
 									</p>
 									<div
-										class="flex justify-end gap-2 border-t border-slate-50 pt-3"
+										class="flex justify-between items-center border-t border-slate-100 pt-3"
 									>
+										<button
+											class="text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+											on:click={() => openCancelModal(item)}
+											title="Hapus / Batalkan Antrian"
+										>
+											<span class="material-symbols-outlined text-[14px]">delete</span>
+											Hapus Antrian
+										</button>
 										<button
 											class="text-xs font-semibold text-primary hover:underline"
 											>Start Session</button
@@ -630,6 +672,10 @@
 									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('dur')}
 									><div class="flex items-center gap-1">Duration<span class="material-symbols-outlined text-[14px] {sortKey === 'dur' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'dur' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
 								>
+								<th
+									class="px-6 py-4 font-semibold text-slate-700 select-none"
+									>Aksi</th
+								>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-slate-100">
@@ -700,11 +746,24 @@
 											row.encounter?.created_at,
 										)}
 									</td>
+									<td class="px-6 py-4">
+										{#if ["Planned", "Arrived"].includes(status)}
+											<button
+												class="text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors flex items-center gap-1"
+												on:click={() => openCancelModal(row)}
+											>
+												<span class="material-symbols-outlined text-sm">delete</span>
+												Batalkan
+											</button>
+										{:else}
+											<span class="text-xs text-slate-400 font-mono">-</span>
+										{/if}
+									</td>
 								</tr>
 							{:else}
 								<tr>
 									<td
-										colspan="7"
+										colspan="8"
 										class="px-6 py-8 text-center text-slate-400"
 									>
 										Tidak ada data appointment.
@@ -748,6 +807,73 @@
 		</div>
 	{/if}
 </div>
+
+{#if showCancelModal && selectedCancelEncounter}
+	<div
+		class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+	>
+		<div
+			class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100"
+		>
+			<div class="flex items-center gap-3 text-rose-600 mb-3">
+				<div
+					class="size-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0"
+				>
+					<span class="material-symbols-outlined text-xl">warning</span>
+				</div>
+				<div>
+					<h3 class="font-bold text-slate-900 text-lg">Hapus Antrian</h3>
+					<p class="text-xs text-slate-500">
+						Konfirmasi pembatalan antrian pasien
+					</p>
+				</div>
+			</div>
+
+			<p
+				class="text-sm text-slate-600 my-4 bg-slate-50 p-3 rounded-lg border border-slate-100"
+			>
+				Apakah Anda yakin ingin menghapus antrian untuk pasien
+				<strong class="text-slate-900"
+					>{selectedCancelEncounter.patient_name ||
+						selectedCancelEncounter.patient?.nama_lengkap ||
+						"Pasien"}</strong
+				>
+				(Queue #{selectedCancelEncounter.encounter?.queue_number || "-"})?
+			</p>
+
+			<div class="flex justify-end gap-3 mt-6">
+				<button
+					class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+					disabled={cancelling}
+					on:click={() => {
+						showCancelModal = false;
+						selectedCancelEncounter = null;
+					}}
+				>
+					Batal
+				</button>
+				<button
+					class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+					disabled={cancelling}
+					on:click={confirmCancelQueue}
+				>
+					{#if cancelling}
+						<span
+							class="material-symbols-outlined text-sm animate-spin"
+							>refresh</span
+						>
+						Memproses...
+					{:else}
+						<span class="material-symbols-outlined text-sm"
+							>delete</span
+						>
+						Ya, Hapus Antrian
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	/* No styles needed, tailwind handles scrollbars mapped from layout */

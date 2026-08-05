@@ -81,7 +81,7 @@ export async function PUT({ params, request, locals }) {
 
 		// 2. Update patient table
 		const [patient] = await db.update(patients).set({
-			nik: body.nik,
+			nik: body.nik && body.nik.trim() ? body.nik.trim() : null,
 			nama_lengkap: body.nama_lengkap,
 			birth_date: body.birth_date,
 			birthplace: body.birthplace,

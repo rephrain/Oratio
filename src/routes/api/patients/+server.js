@@ -54,7 +54,7 @@ export async function POST({ request, locals }) {
 
 	const [patient] = await db.insert(patients).values({
 		id: newId,
-		nik: body.nik,
+		nik: body.nik && body.nik.trim() ? body.nik.trim() : null,
 		nama_lengkap: body.nama_lengkap,
 		birth_date: body.birth_date,
 		birthplace: body.birthplace,

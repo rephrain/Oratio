@@ -10,6 +10,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { emitEncounterEvent, emitQueueEvent } from '$lib/server/realtime/realtimeService.js';
+import { getOrCreateTerminology } from '$lib/server/db/terminology.js';
 
 // GET /api/encounters/[id] - full encounter detail
 export async function GET({ params }) {
@@ -244,25 +245,8 @@ export async function PUT({ params, request }) {
 
 	// Handle encounter_reason FK update
 	if (body.reason_code !== undefined) {
-		if (body.reason_code) {
-			const [existing] = await db.select()
-				.from(terminologyMaster)
-				.where(and(
-					eq(terminologyMaster.code, body.reason_code),
-					eq(terminologyMaster.system, 'SNOMED')
-				))
-				.limit(1);
-
-			if (existing) {
-				updateData.encounter_reason_id = existing.id;
-			} else if (body.reason_display) {
-				const [inserted] = await db.insert(terminologyMaster).values({
-					code: body.reason_code,
-					display: body.reason_display,
-					system: 'SNOMED'
-				}).returning();
-				updateData.encounter_reason_id = inserted.id;
-			}
+		if (body.reason_code && body.reason_display) {
+			updateData.encounter_reason_id = await getOrCreateTerminology(body.reason_code, body.reason_display, 'SNOMED');
 		} else {
 			updateData.encounter_reason_id = null;
 		}
@@ -343,24 +327,7 @@ export async function PUT({ params, request }) {
 
 			let termId = null;
 			if (kfaCode && productName) {
-				const [existing] = await db.select()
-					.from(terminologyMaster)
-					.where(and(
-						eq(terminologyMaster.code, kfaCode),
-						eq(terminologyMaster.system, 'KFA')
-					))
-					.limit(1);
-
-				if (existing) {
-					termId = existing.id;
-				} else {
-					const [inserted] = await db.insert(terminologyMaster).values({
-						code: kfaCode,
-						display: productName,
-						system: 'KFA'
-					}).returning();
-					termId = inserted.id;
-				}
+				termId = await getOrCreateTerminology(kfaCode, productName, 'KFA');
 			}
 
 			await db.insert(encounterPrescriptions).values({
@@ -405,46 +372,14 @@ export async function PUT({ params, request }) {
 			for (const d of body.odontogram.details) {
 				// Resolve icd10_id from code if only code+display provided (no UUID)
 				let icd10Id = d.icd10_id || null;
-				if (!icd10Id && d.diagnosis_code) {
-					const [existing] = await db.select()
-						.from(terminologyMaster)
-						.where(and(
-							eq(terminologyMaster.code, d.diagnosis_code),
-							eq(terminologyMaster.system, 'ICD-10')
-						))
-						.limit(1);
-					if (existing) {
-						icd10Id = existing.id;
-					} else if (d.diagnosis_display) {
-						const [inserted] = await db.insert(terminologyMaster).values({
-							code: d.diagnosis_code,
-							display: d.diagnosis_display,
-							system: 'ICD-10'
-						}).returning();
-						icd10Id = inserted.id;
-					}
+				if (!icd10Id && d.diagnosis_code && d.diagnosis_display) {
+					icd10Id = await getOrCreateTerminology(d.diagnosis_code, d.diagnosis_display, 'ICD-10');
 				}
 
 				// Resolve icd9cm_id from code if only code+display provided (no UUID)
 				let icd9cmId = d.icd9cm_id || null;
-				if (!icd9cmId && d.procedure_code) {
-					const [existing] = await db.select()
-						.from(terminologyMaster)
-						.where(and(
-							eq(terminologyMaster.code, d.procedure_code),
-							eq(terminologyMaster.system, 'ICD-9-CM')
-						))
-						.limit(1);
-					if (existing) {
-						icd9cmId = existing.id;
-					} else if (d.procedure_display) {
-						const [inserted] = await db.insert(terminologyMaster).values({
-							code: d.procedure_code,
-							display: d.procedure_display,
-							system: 'ICD-9-CM'
-						}).returning();
-						icd9cmId = inserted.id;
-					}
+				if (!icd9cmId && d.procedure_code && d.procedure_display) {
+					icd9cmId = await getOrCreateTerminology(d.procedure_code, d.procedure_display, 'ICD-9-CM');
 				}
 
 				// Insert into odontogramTeeth
@@ -502,19 +437,8 @@ export async function PUT({ params, request }) {
 				if (Array.isArray(d.diagnoses) && d.diagnoses.length > 0) {
 					for (const diag of d.diagnoses) {
 						let tempIcd10Id = diag.icd10_id || null;
-						if (!tempIcd10Id && diag.diagnosis_code) {
-							const [existing] = await db.select()
-								.from(terminologyMaster)
-								.where(and(eq(terminologyMaster.code, diag.diagnosis_code), eq(terminologyMaster.system, 'ICD-10')))
-								.limit(1);
-							if (existing) {
-								tempIcd10Id = existing.id;
-							} else if (diag.diagnosis_display) {
-								const [inserted] = await db.insert(terminologyMaster).values({
-									code: diag.diagnosis_code, display: diag.diagnosis_display, system: 'ICD-10'
-								}).returning();
-								tempIcd10Id = inserted.id;
-							}
+						if (!tempIcd10Id && diag.diagnosis_code && diag.diagnosis_display) {
+							tempIcd10Id = await getOrCreateTerminology(diag.diagnosis_code, diag.diagnosis_display, 'ICD-10');
 						}
 						if (tempIcd10Id) {
 							await db.insert(odontogramDiagnoses).values({
@@ -537,19 +461,8 @@ export async function PUT({ params, request }) {
 				if (Array.isArray(d.procedures) && d.procedures.length > 0) {
 					for (const proc of d.procedures) {
 						let tempIcd9cmId = proc.icd9cm_id || null;
-						if (!tempIcd9cmId && proc.procedure_code) {
-							const [existing] = await db.select()
-								.from(terminologyMaster)
-								.where(and(eq(terminologyMaster.code, proc.procedure_code), eq(terminologyMaster.system, 'ICD-9-CM')))
-								.limit(1);
-							if (existing) {
-								tempIcd9cmId = existing.id;
-							} else if (proc.procedure_display) {
-								const [inserted] = await db.insert(terminologyMaster).values({
-									code: proc.procedure_code, display: proc.procedure_display, system: 'ICD-9-CM'
-								}).returning();
-								tempIcd9cmId = inserted.id;
-							}
+						if (!tempIcd9cmId && proc.procedure_code && proc.procedure_display) {
+							tempIcd9cmId = await getOrCreateTerminology(proc.procedure_code, proc.procedure_display, 'ICD-9-CM');
 						}
 						if (tempIcd9cmId) {
 							await db.insert(odontogramProcedures).values({

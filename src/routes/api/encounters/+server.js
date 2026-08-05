@@ -7,6 +7,7 @@ import {
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { generateEncounterId } from '$lib/utils/formatters.js';
+import { getOrCreateTerminology } from '$lib/server/db/terminology.js';
 import { emitQueueEvent, emitDashboardEvent, emitPatientEvent } from '$lib/server/realtime/realtimeService.js';
 
 // GET /api/encounters
@@ -130,24 +131,7 @@ export async function POST({ request, locals }) {
 	const complaintCode = body.chief_complaint_code;
 	const complaintDisplay = body.chief_complaint_display;
 	if (complaintCode && complaintDisplay) {
-		const [existing] = await db.select()
-			.from(terminologyMaster)
-			.where(and(
-				eq(terminologyMaster.code, complaintCode),
-				eq(terminologyMaster.system, 'SNOMED')
-			))
-			.limit(1);
-
-		if (existing) {
-			encounterReasonId = existing.id;
-		} else {
-			const [inserted] = await db.insert(terminologyMaster).values({
-				code: complaintCode,
-				display: complaintDisplay,
-				system: 'SNOMED'
-			}).returning();
-			encounterReasonId = inserted.id;
-		}
+		encounterReasonId = await getOrCreateTerminology(complaintCode, complaintDisplay, 'SNOMED');
 	}
 
 	const [encounter] = await db.insert(encounters).values({

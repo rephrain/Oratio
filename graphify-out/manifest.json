@@ -480,14 +480,14 @@
     "semantic_hash": "079179adc5eca0dba45a8db7e254d7d3"
   },
   "src/routes/api/encounters/+server.js": {
-    "mtime": 1782128978.6865425,
-    "ast_hash": "2d40f3a744fd3a6a4a8471f124de3e4a",
-    "semantic_hash": "2d40f3a744fd3a6a4a8471f124de3e4a"
+    "mtime": 1785959191.3034856,
+    "ast_hash": "4465700f746f040b23cb2fecabc6c9af",
+    "semantic_hash": "4465700f746f040b23cb2fecabc6c9af"
   },
   "src/routes/api/encounters/[id]/+server.js": {
-    "mtime": 1785956678.2855947,
-    "ast_hash": "49d2b3e86760e30d96f3376ee14fd748",
-    "semantic_hash": "49d2b3e86760e30d96f3376ee14fd748"
+    "mtime": 1785959319.8520567,
+    "ast_hash": "682f9adac51743fda832aba40952c9fe",
+    "semantic_hash": "682f9adac51743fda832aba40952c9fe"
   },
   "src/routes/api/encounters/[id]/pdf/+server.js": {
     "mtime": 1776670878.5502234,
@@ -505,14 +505,14 @@
     "semantic_hash": "8554d4318d3787b7a5556e06fb31544e"
   },
   "src/routes/api/patients/+server.js": {
-    "mtime": 1785956983.744182,
-    "ast_hash": "5ca4c862c2ebd20f30196ed264c3c22a",
-    "semantic_hash": "5ca4c862c2ebd20f30196ed264c3c22a"
+    "mtime": 1785959257.5468316,
+    "ast_hash": "b219bf35c83a9b3e8be44c56eb8dd8ba",
+    "semantic_hash": "b219bf35c83a9b3e8be44c56eb8dd8ba"
   },
   "src/routes/api/patients/[id]/+server.js": {
-    "mtime": 1785956996.2198756,
-    "ast_hash": "03e0b12fb761a5a3224bee3da401b98b",
-    "semantic_hash": "03e0b12fb761a5a3224bee3da401b98b"
+    "mtime": 1785959280.7573545,
+    "ast_hash": "5cd55c9a7df735efa76d44fee28f2ce5",
+    "semantic_hash": "5cd55c9a7df735efa76d44fee28f2ce5"
   },
   "src/routes/api/patients/[id]/medical-background/+server.js": {
     "mtime": 1775202439.811898,
@@ -703,5 +703,10 @@
     "mtime": 1780078212.6765304,
     "ast_hash": "1885e7b999b57b17843ad3e705ca9883",
     "semantic_hash": "1885e7b999b57b17843ad3e705ca9883"
+  },
+  "src/lib/server/db/terminology.js": {
+    "mtime": 1785959163.4651787,
+    "ast_hash": "aa0583fcdb05150707f3c2919e57ce6e",
+    "semantic_hash": "aa0583fcdb05150707f3c2919e57ce6e"
   }
 }

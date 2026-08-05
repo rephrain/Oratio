@@ -6,6 +6,7 @@ import { generatePatientProfilePdf } from '$lib/server/pdfGenerator.js';
 import fs from 'fs';
 import path from 'path';
 import { emitPatientEvent } from '$lib/server/realtime/realtimeService.js';
+import { getOrCreateTerminology } from '$lib/server/db/terminology.js';
 
 // GET /api/patients/[id]
 export async function GET({ params }) {
@@ -113,25 +114,7 @@ export async function PUT({ params, request, locals }) {
 			for (const h of body.disease_history) {
 				if (!h.code || !h.display) continue;
 
-				let termId;
-				const [existing] = await db.select()
-					.from(terminologyMaster)
-					.where(and(
-						eq(terminologyMaster.code, h.code),
-						eq(terminologyMaster.system, h.system || 'SNOMED')
-					))
-					.limit(1);
-
-				if (existing) {
-					termId = existing.id;
-				} else {
-					const [inserted] = await db.insert(terminologyMaster).values({
-						code: h.code,
-						display: h.display,
-						system: h.system || 'SNOMED'
-					}).returning();
-					termId = inserted.id;
-				}
+				const termId = await getOrCreateTerminology(h.code, h.display, h.system || 'SNOMED');
 
 				await db.insert(patientDiseaseHistory).values({
 					patient_id: id,
@@ -148,25 +131,7 @@ export async function PUT({ params, request, locals }) {
 			for (const a of body.allergies) {
 				if (!a.substance_code || !a.substance_display) continue;
 
-				let substanceId = null;
-				const [existing] = await db.select()
-					.from(terminologyMaster)
-					.where(and(
-						eq(terminologyMaster.code, a.substance_code),
-						eq(terminologyMaster.system, 'SNOMED')
-					))
-					.limit(1);
-
-				if (existing) {
-					substanceId = existing.id;
-				} else {
-					const [inserted] = await db.insert(terminologyMaster).values({
-						code: a.substance_code,
-						display: a.substance_display,
-						system: 'SNOMED'
-					}).returning();
-					substanceId = inserted.id;
-				}
+				const substanceId = await getOrCreateTerminology(a.substance_code, a.substance_display, 'SNOMED');
 
 				await db.insert(patientAllergy).values({
 					patient_id: id,
@@ -187,24 +152,7 @@ export async function PUT({ params, request, locals }) {
 
 				let termId = null;
 				if (kfaCode && productName) {
-					const [existing] = await db.select()
-						.from(terminologyMaster)
-						.where(and(
-							eq(terminologyMaster.code, kfaCode),
-							eq(terminologyMaster.system, 'KFA')
-						))
-						.limit(1);
-
-					if (existing) {
-						termId = existing.id;
-					} else {
-						const [inserted] = await db.insert(terminologyMaster).values({
-							code: kfaCode,
-							display: productName,
-							system: 'KFA'
-						}).returning();
-						termId = inserted.id;
-					}
+					termId = await getOrCreateTerminology(kfaCode, productName, 'KFA');
 				}
 
 				await db.insert(patientMedication).values({

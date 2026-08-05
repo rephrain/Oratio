@@ -3,49 +3,64 @@ import { terminologyMaster } from '$lib/server/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 /**
- * Get or create a terminology_master record.
- * Uses INSERT ... ON CONFLICT DO NOTHING to avoid unique constraint violations
- * when concurrent requests try to insert the same (system, code) pair.
+ * Get or create a terminology_master record safely.
+ * Returns existing record ID if found.
+ * If insert fails (e.g. due to unique constraint or concurrent insert), catches error and re-queries.
  *
- * @param {string} code - The terminology code (e.g. SNOMED code, ICD-10 code, KFA code)
+ * @param {string} code - The terminology code
  * @param {string} display - The human-readable display name
  * @param {string} system - The terminology system ('SNOMED' | 'ICD-10' | 'ICD-9-CM' | 'KFA')
- * @returns {Promise<string>} The UUID of the terminology_master record
+ * @returns {Promise<string|null>} The UUID of the terminology_master record
  */
 export async function getOrCreateTerminology(code, display, system) {
-	// 1. Try to find existing record first (fast path for most cases)
-	const [existing] = await db.select()
-		.from(terminologyMaster)
-		.where(and(
-			eq(terminologyMaster.code, code),
-			eq(terminologyMaster.system, system)
-		))
-		.limit(1);
+	if (!code || !display) return null;
 
-	if (existing) {
-		return existing.id;
+	const codeStr = String(code).trim();
+	const displayStr = String(display).trim();
+	const sysStr = String(system || 'SNOMED').trim();
+
+	try {
+		// 1. Try to find existing record first (fast path)
+		const [existing] = await db.select()
+			.from(terminologyMaster)
+			.where(and(
+				eq(terminologyMaster.code, codeStr),
+				eq(terminologyMaster.system, sysStr)
+			))
+			.limit(1);
+
+		if (existing) {
+			return existing.id;
+		}
+
+		// 2. Not found — try to insert new record
+		const [inserted] = await db.insert(terminologyMaster).values({
+			code: codeStr,
+			display: displayStr,
+			system: sysStr
+		}).returning();
+
+		if (inserted?.id) {
+			return inserted.id;
+		}
+	} catch (err) {
+		console.warn(`[getOrCreateTerminology] Insert error for ${sysStr}:${codeStr}, attempting fallback lookup:`, err?.message || err);
 	}
 
-	// 2. Not found — try to insert with ON CONFLICT DO NOTHING
-	//    This handles the race condition where another request inserted
-	//    the same (system, code) between our SELECT and INSERT.
-	const [inserted] = await db.insert(terminologyMaster)
-		.values({ code, display, system })
-		.onConflictDoNothing({ target: [terminologyMaster.system, terminologyMaster.code] })
-		.returning();
+	// 3. Fallback: query database again if insert threw an exception
+	try {
+		const [fallback] = await db.select()
+			.from(terminologyMaster)
+			.where(and(
+				eq(terminologyMaster.code, codeStr),
+				eq(terminologyMaster.system, sysStr)
+			))
+			.limit(1);
 
-	if (inserted) {
-		return inserted.id;
+		return fallback?.id || null;
+	} catch (err) {
+		console.error(`[getOrCreateTerminology] Fallback lookup failed for ${sysStr}:${codeStr}:`, err);
+		return null;
 	}
-
-	// 3. ON CONFLICT fired (another concurrent insert won the race) — re-fetch
-	const [raced] = await db.select()
-		.from(terminologyMaster)
-		.where(and(
-			eq(terminologyMaster.code, code),
-			eq(terminologyMaster.system, system)
-		))
-		.limit(1);
-
-	return raced.id;
 }
+

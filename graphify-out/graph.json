@@ -6342,6 +6342,106 @@
       "id": "src_routes_suster_edit_patient_page_validatephone"
     },
     {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "+server.js",
+      "id": "src_routes_api_encounters_id_server"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L16",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "get()",
+      "id": "src_routes_api_encounters_id_server_get"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L231",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "put()",
+      "id": "src_routes_api_encounters_id_server_put"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L558",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "delete()",
+      "id": "src_routes_api_encounters_id_server_delete"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 43,
+      "norm_label": "+server.js",
+      "id": "src_routes_api_patients_server"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/+server.js",
+      "source_location": "L13",
+      "_origin": "ast",
+      "community": 43,
+      "norm_label": "get()",
+      "id": "src_routes_api_patients_server_get"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/+server.js",
+      "source_location": "L45",
+      "_origin": "ast",
+      "community": 43,
+      "norm_label": "post()",
+      "id": "src_routes_api_patients_server_post"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/[id]/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 42,
+      "norm_label": "+server.js",
+      "id": "src_routes_api_patients_id_server"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/[id]/+server.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "community": 42,
+      "norm_label": "get()",
+      "id": "src_routes_api_patients_id_server_get"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/routes/api/patients/[id]/+server.js",
+      "source_location": "L72",
+      "_origin": "ast",
+      "community": 42,
+      "norm_label": "put()",
+      "id": "src_routes_api_patients_id_server_put"
+    },
+    {
       "label": "terminology.js",
       "file_type": "code",
       "source_file": "src/lib/server/db/terminology.js",
@@ -6390,106 +6490,6 @@
       "id": "src_routes_api_encounters_server_post",
       "community": 40,
       "norm_label": "post()"
-    },
-    {
-      "label": "+server.js",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_routes_api_encounters_id_server",
-      "community": 33,
-      "norm_label": "+server.js"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L16",
-      "_origin": "ast",
-      "id": "src_routes_api_encounters_id_server_get",
-      "community": 33,
-      "norm_label": "get()"
-    },
-    {
-      "label": "PUT()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L231",
-      "_origin": "ast",
-      "id": "src_routes_api_encounters_id_server_put",
-      "community": 33,
-      "norm_label": "put()"
-    },
-    {
-      "label": "DELETE()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L558",
-      "_origin": "ast",
-      "id": "src_routes_api_encounters_id_server_delete",
-      "community": 33,
-      "norm_label": "delete()"
-    },
-    {
-      "label": "+server.js",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/+server.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_server",
-      "community": 43,
-      "norm_label": "+server.js"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/+server.js",
-      "source_location": "L13",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_server_get",
-      "community": 43,
-      "norm_label": "get()"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/+server.js",
-      "source_location": "L45",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_server_post",
-      "community": 43,
-      "norm_label": "post()"
-    },
-    {
-      "label": "+server.js",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/[id]/+server.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_id_server",
-      "community": 42,
-      "norm_label": "+server.js"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/[id]/+server.js",
-      "source_location": "L12",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_id_server_get",
-      "community": 42,
-      "norm_label": "get()"
-    },
-    {
-      "label": "PUT()",
-      "file_type": "code",
-      "source_file": "src/routes/api/patients/[id]/+server.js",
-      "source_location": "L72",
-      "_origin": "ast",
-      "id": "src_routes_api_patients_id_server_put",
-      "community": 42,
-      "norm_label": "put()"
     }
   ],
   "links": [
@@ -13205,6 +13205,83 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L558",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_delete"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L231",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_put"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/patients/+server.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_patients_server",
+      "target": "src_routes_api_patients_server_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/patients/+server.js",
+      "source_location": "L45",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_patients_server",
+      "target": "src_routes_api_patients_server_post"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/patients/[id]/+server.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_patients_id_server",
+      "target": "src_routes_api_patients_id_server_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/patients/[id]/+server.js",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "src_routes_api_patients_id_server",
+      "target": "src_routes_api_patients_id_server_put"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/lib/server/db/terminology.js",
       "source_location": "L15",
       "weight": 1.0,
@@ -13233,83 +13310,6 @@
       "_origin": "ast",
       "source": "src_routes_api_encounters_server",
       "target": "src_routes_api_encounters_server_post",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L558",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_delete",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_get",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L231",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_put",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/patients/+server.js",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_patients_server",
-      "target": "src_routes_api_patients_server_get",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/patients/+server.js",
-      "source_location": "L45",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_patients_server",
-      "target": "src_routes_api_patients_server_post",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/patients/[id]/+server.js",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_patients_id_server",
-      "target": "src_routes_api_patients_id_server_get",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/patients/[id]/+server.js",
-      "source_location": "L72",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_routes_api_patients_id_server",
-      "target": "src_routes_api_patients_id_server_put",
       "confidence_score": 1.0
     }
   ],
@@ -13342,5 +13342,5 @@
       "source_file": "build-logs.txt"
     }
   ],
-  "built_at_commit": "f8c9b726725eae1c4b5c026ed8f22ca1056ffb2d"
+  "built_at_commit": "71c8e0b7e2cc7c81080c2c21c633757a0b8a534f"
 }

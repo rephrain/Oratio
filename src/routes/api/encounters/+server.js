@@ -102,79 +102,83 @@ export async function GET({ url, locals }) {
 
 // POST /api/encounters - create encounter (auto-queue)
 export async function POST({ request, locals }) {
-	const body = await request.json();
+	try {
+		const body = await request.json();
 
-	// Get doctor info
-	const [doctor] = await db.select().from(users).where(eq(users.id, body.doctor_id)).limit(1);
-	if (!doctor || doctor.role !== 'dokter') {
-		return json({ error: 'Invalid doctor' }, { status: 400 });
+		// Get doctor info
+		const [doctor] = await db.select().from(users).where(eq(users.id, body.doctor_id)).limit(1);
+		if (!doctor || doctor.role !== 'dokter') {
+			return json({ error: 'Invalid doctor' }, { status: 400 });
+		}
+
+		// Generate encounter ID
+		const [lastEnc] = await db.select({ id: encounters.id })
+			.from(encounters)
+			.where(eq(encounters.doctor_id, body.doctor_id))
+			.orderBy(desc(encounters.id))
+			.limit(1);
+
+		const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
+
+		// Get next queue number for today
+		const [{ maxQueue }] = await db.select({
+			maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
+		}).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
+
+		const queueNumber = Number(maxQueue) + 1;
+
+		// Resolve encounter reason → terminology_master FK
+		let encounterReasonId = null;
+		const complaintCode = body.chief_complaint_code;
+		const complaintDisplay = body.chief_complaint_display;
+		if (complaintCode && complaintDisplay) {
+			encounterReasonId = await getOrCreateTerminology(complaintCode, complaintDisplay, 'SNOMED');
+		}
+
+		const [encounter] = await db.insert(encounters).values({
+			id: encId,
+			patient_id: body.patient_id,
+			kasir_id: locals?.user?.id || null,
+			doctor_id: body.doctor_id,
+			queue_number: queueNumber,
+			form_mode: body.form_mode || 'SOAP',
+			status: 'Planned',
+			encounter_reason_id: encounterReasonId,
+			reason_type: body.reason_type || null
+		}).returning();
+
+		// Update patient BP if provided
+		if (body.tekanan_darah) {
+			await db.update(patients)
+				.set({ tekanan_darah: body.tekanan_darah })
+				.where(eq(patients.id, body.patient_id));
+			
+			// Emit patient update event
+			emitPatientEvent('patient_updated', body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
+		}
+
+		// Create initial status history
+		await db.insert(statusHistory).values({
+			encounter_id: encId,
+			status: 'Arrived',
+			start_at: new Date()
+		});
+
+		// Emit real-time events
+		const eventPayload = {
+			encounter,
+			patient_name: body.patient_name || 'Patient',
+			doctor_name: doctor.name,
+			queue_number: queueNumber
+		};
+		emitQueueEvent('queue_created', eventPayload, locals?.user?.id);
+		emitDashboardEvent('encounter_created', eventPayload, locals?.user?.id);
+
+		return json({ encounter, queue_number: queueNumber }, { status: 201 });
+	} catch (err) {
+		console.error("POST /api/encounters error:", err);
+		return json({ error: 'Internal Error', message: String(err?.message || err) }, { status: 500 });
 	}
-
-	// Generate encounter ID
-	const [lastEnc] = await db.select({ id: encounters.id })
-		.from(encounters)
-		.where(eq(encounters.doctor_id, body.doctor_id))
-		.orderBy(desc(encounters.id))
-		.limit(1);
-
-	const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
-
-	// Get next queue number for today
-	const [{ maxQueue }] = await db.select({
-		maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
-	}).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
-
-	const queueNumber = Number(maxQueue) + 1;
-
-	// Resolve encounter reason → terminology_master FK
-	let encounterReasonId = null;
-	const complaintCode = body.chief_complaint_code;
-	const complaintDisplay = body.chief_complaint_display;
-	if (complaintCode && complaintDisplay) {
-		encounterReasonId = await getOrCreateTerminology(complaintCode, complaintDisplay, 'SNOMED');
-	}
-
-	const [encounter] = await db.insert(encounters).values({
-		id: encId,
-		patient_id: body.patient_id,
-		kasir_id: locals?.user?.id || null,
-		doctor_id: body.doctor_id,
-		queue_number: queueNumber,
-		form_mode: body.form_mode || 'SOAP',
-		status: 'Planned',
-		encounter_reason_id: encounterReasonId,
-		reason_type: body.reason_type || null
-	}).returning();
-
-
-
-	// Update patient BP if provided
-	if (body.tekanan_darah) {
-		await db.update(patients)
-			.set({ tekanan_darah: body.tekanan_darah })
-			.where(eq(patients.id, body.patient_id));
-		
-		// Emit patient update event
-		emitPatientEvent('patient_updated', body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
-	}
-
-	// Create initial status history
-	await db.insert(statusHistory).values({
-		encounter_id: encId,
-		status: 'Arrived',
-		start_at: new Date()
-	});
-
-	// Emit real-time events
-	const eventPayload = {
-		encounter,
-		patient_name: body.patient_name || 'Patient', // Assuming patient_name is passed or could be fetched
-		doctor_name: doctor.name,
-		queue_number: queueNumber
-	};
-	emitQueueEvent('queue_created', eventPayload, locals?.user?.id);
-	emitDashboardEvent('encounter_created', eventPayload, locals?.user?.id);
-
-	return json({ encounter, queue_number: queueNumber }, { status: 201 });
 }
+
 

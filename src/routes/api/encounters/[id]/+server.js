@@ -554,7 +554,7 @@ export async function PUT({ params, request }) {
 	return json({ encounter: updated });
 }
 
-// DELETE /api/encounters/[id] - cancel/remove encounter queue if not yet treated by doctor
+// DELETE /api/encounters/[id] - hard delete encounter record if not yet treated by doctor
 export async function DELETE({ params, locals }) {
 	try {
 		const [encounter] = await db.select({
@@ -569,7 +569,7 @@ export async function DELETE({ params, locals }) {
 			return json({ message: 'Encounter not found' }, { status: 404 });
 		}
 
-		// Only allow deleting/cancelling if doctor hasn't started treatment (Planned or Arrived)
+		// Only allow deleting if doctor hasn't started treatment (Planned or Arrived)
 		const deletableStatuses = ['Planned', 'Arrived'];
 		if (!deletableStatuses.includes(encounter.status)) {
 			return json({
@@ -577,28 +577,18 @@ export async function DELETE({ params, locals }) {
 			}, { status: 400 });
 		}
 
-		// Close open status_history entries
-		await db.update(statusHistory)
-			.set({ end_at: new Date() })
-			.where(and(
-				eq(statusHistory.encounter_id, params.id),
-				sql`${statusHistory.end_at} IS NULL`
-			));
-
-		// Update status to Cancelled
-		const [updated] = await db.update(encounters)
-			.set({ status: 'Cancelled', updated_at: new Date() })
-			.where(eq(encounters.id, params.id))
-			.returning();
+		// Hard delete the encounter record from the database
+		await db.delete(encounters).where(eq(encounters.id, params.id));
 
 		const userId = locals?.user?.id;
-		emitEncounterEvent('status_changed', params.id, { status: 'Cancelled' }, userId);
+		emitEncounterEvent('status_changed', params.id, { status: 'Deleted' }, userId);
 		emitQueueEvent('queue_cancelled', { id: params.id }, userId);
 
-		return json({ success: true, message: 'Antrian berhasil dibatalkan/dihapus', encounter: updated });
+		return json({ success: true, message: 'Antrian dan rekam encounter berhasil dihapus dari database' });
 	} catch (err) {
 		console.error("DELETE /api/encounters/[id] error:", err);
 		return json({ message: 'Internal Server Error', error: String(err) }, { status: 500 });
 	}
 }
+
 

@@ -6344,46 +6344,6 @@
     {
       "label": "+server.js",
       "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 33,
-      "norm_label": "+server.js",
-      "id": "src_routes_api_encounters_id_server"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L16",
-      "_origin": "ast",
-      "community": 33,
-      "norm_label": "get()",
-      "id": "src_routes_api_encounters_id_server_get"
-    },
-    {
-      "label": "PUT()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L231",
-      "_origin": "ast",
-      "community": 33,
-      "norm_label": "put()",
-      "id": "src_routes_api_encounters_id_server_put"
-    },
-    {
-      "label": "DELETE()",
-      "file_type": "code",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L558",
-      "_origin": "ast",
-      "community": 33,
-      "norm_label": "delete()",
-      "id": "src_routes_api_encounters_id_server_delete"
-    },
-    {
-      "label": "+server.js",
-      "file_type": "code",
       "source_file": "src/routes/api/patients/+server.js",
       "source_location": "L1",
       "_origin": "ast",
@@ -6447,9 +6407,9 @@
       "source_file": "src/lib/server/db/terminology.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_lib_server_db_terminology",
       "community": 58,
-      "norm_label": "terminology.js"
+      "norm_label": "terminology.js",
+      "id": "src_lib_server_db_terminology"
     },
     {
       "label": "getOrCreateTerminology()",
@@ -6457,9 +6417,9 @@
       "source_file": "src/lib/server/db/terminology.js",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "src_lib_server_db_terminology_getorcreateterminology",
       "community": 58,
-      "norm_label": "getorcreateterminology()"
+      "norm_label": "getorcreateterminology()",
+      "id": "src_lib_server_db_terminology_getorcreateterminology"
     },
     {
       "label": "+server.js",
@@ -6467,9 +6427,9 @@
       "source_file": "src/routes/api/encounters/+server.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "src_routes_api_encounters_server",
       "community": 40,
-      "norm_label": "+server.js"
+      "norm_label": "+server.js",
+      "id": "src_routes_api_encounters_server"
     },
     {
       "label": "GET()",
@@ -6477,9 +6437,9 @@
       "source_file": "src/routes/api/encounters/+server.js",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "src_routes_api_encounters_server_get",
       "community": 40,
-      "norm_label": "get()"
+      "norm_label": "get()",
+      "id": "src_routes_api_encounters_server_get"
     },
     {
       "label": "POST()",
@@ -6487,9 +6447,49 @@
       "source_file": "src/routes/api/encounters/+server.js",
       "source_location": "L104",
       "_origin": "ast",
-      "id": "src_routes_api_encounters_server_post",
       "community": 40,
-      "norm_label": "post()"
+      "norm_label": "post()",
+      "id": "src_routes_api_encounters_server_post"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_id_server",
+      "community": 33,
+      "norm_label": "+server.js"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_id_server_get",
+      "community": 33,
+      "norm_label": "get()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L231",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_id_server_put",
+      "community": 33,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L558",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_id_server_delete",
+      "community": 33,
+      "norm_label": "delete()"
     }
   ],
   "links": [
@@ -13205,39 +13205,6 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L558",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_delete"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_get"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/api/encounters/[id]/+server.js",
-      "source_location": "L231",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "src_routes_api_encounters_id_server",
-      "target": "src_routes_api_encounters_id_server_put"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "src/routes/api/patients/+server.js",
       "source_location": "L13",
       "weight": 1.0,
@@ -13286,9 +13253,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_lib_server_db_terminology",
-      "target": "src_lib_server_db_terminology_getorcreateterminology",
-      "confidence_score": 1.0
+      "target": "src_lib_server_db_terminology_getorcreateterminology"
     },
     {
       "relation": "contains",
@@ -13297,9 +13264,9 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_routes_api_encounters_server",
-      "target": "src_routes_api_encounters_server_get",
-      "confidence_score": 1.0
+      "target": "src_routes_api_encounters_server_get"
     },
     {
       "relation": "contains",
@@ -13308,8 +13275,41 @@
       "source_location": "L104",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "src_routes_api_encounters_server",
-      "target": "src_routes_api_encounters_server_post",
+      "target": "src_routes_api_encounters_server_post"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L558",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_delete",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/[id]/+server.js",
+      "source_location": "L231",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_id_server",
+      "target": "src_routes_api_encounters_id_server_put",
       "confidence_score": 1.0
     }
   ],
@@ -13342,5 +13342,5 @@
       "source_file": "build-logs.txt"
     }
   ],
-  "built_at_commit": "71c8e0b7e2cc7c81080c2c21c633757a0b8a534f"
+  "built_at_commit": "7fb85f1706ee49fd41baba90abd8b1beaa1e341e"
 }

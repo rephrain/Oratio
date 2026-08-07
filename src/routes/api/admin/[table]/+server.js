@@ -27,7 +27,8 @@ const schemaMap = {
 	encounterReferrals: schema.encounterReferrals,
 	items: schema.items,
 	encounterItems: schema.encounterItems,
-	payments: schema.payments
+	payments: schema.payments,
+	dokterSuster: schema.dokterSuster
 };
 
 // Fields that should never be sent to the DB from client
@@ -81,8 +82,8 @@ function cleanBody(body, tableConfig) {
 					continue;
 				} else if (typeof value === 'string') {
 					// Map string label or value to actual value
-					const matched = fieldDef.options.find(o => 
-						o.label?.toLowerCase() === value.toLowerCase() || 
+					const matched = fieldDef.options.find(o =>
+						o.label?.toLowerCase() === value.toLowerCase() ||
 						o.value?.toLowerCase() === value.toLowerCase()
 					);
 					if (matched) {
@@ -180,11 +181,11 @@ export async function GET({ params, url }) {
 	}
 
 	const query = db.select().from(table);
-	
+
 	if (!all) {
 		query.limit(limit).offset(offset);
 	}
-	
+
 	if (filters.length > 0) {
 		query.where(and(...filters));
 	}
@@ -201,7 +202,7 @@ export async function GET({ params, url }) {
 				const associations = await db.select()
 					.from(junctionTable)
 					.where(sql`${junctionTable[field.m2mLocalKey]} IN ${ids}`);
-				
+
 				// Group associations by local ID
 				const grouped = {};
 				for (const assoc of associations) {
@@ -209,7 +210,7 @@ export async function GET({ params, url }) {
 					if (!grouped[localId]) grouped[localId] = [];
 					grouped[localId].push(assoc[field.m2mForeignKey]);
 				}
-				
+
 				// Attach to rows
 				for (const row of data) {
 					row[field.key] = grouped[row.id] || [];
@@ -258,7 +259,7 @@ export async function POST({ params, request }) {
 			}
 
 			const [record] = await tx.insert(table).values(mainBody).returning();
-			
+
 			// Handle Many-to-Many synchronization
 			for (const field of tableConfig.fields || []) {
 				if (field.type === 'm2m' && body[field.key] && Array.isArray(body[field.key])) {
@@ -339,7 +340,7 @@ export async function PUT({ params, request }) {
 					if (junctionTable) {
 						// 1. Delete all existing links for this record
 						await tx.delete(junctionTable).where(eq(junctionTable[field.m2mLocalKey], id));
-						
+
 						// 2. Insert new links
 						const inserts = restData[field.key].map(foreignId => ({
 							[field.m2mLocalKey]: id,

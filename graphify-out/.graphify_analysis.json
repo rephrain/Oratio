@@ -14,6 +14,8 @@
       "src_lib_server_db_schema_doctoritemsrelations",
       "src_lib_server_db_schema_documents",
       "src_lib_server_db_schema_documentsrelations",
+      "src_lib_server_db_schema_doktersuster",
+      "src_lib_server_db_schema_doktersusterrelations",
       "src_lib_server_db_schema_encounteritems",
       "src_lib_server_db_schema_encounteritemsrelations",
       "src_lib_server_db_schema_encounterodontograms",
@@ -891,7 +893,7 @@
     ]
   },
   "cohesion": {
-    "0": 0.02857142857142857,
+    "0": 0.027777777777777776,
     "1": 0.05405405405405406,
     "2": 0.06060606060606061,
     "3": 0.09788359788359788,

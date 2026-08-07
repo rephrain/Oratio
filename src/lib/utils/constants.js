@@ -265,6 +265,16 @@ export const ADMIN_TABLES = {
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
 		]
 	},
+	'dokter-suster': {
+		label: 'Dokter - Suster Assignment',
+		schema: 'dokterSuster',
+		compositePK: true,
+		fields: [
+			{ key: 'dokter_id', label: 'Dokter', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'dokter' } },
+			{ key: 'suster_id', label: 'Suster', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'suster' } },
+			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
+		]
+	},
 	'patients': {
 		label: 'Patients',
 		schema: 'patients',

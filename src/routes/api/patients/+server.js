@@ -45,13 +45,25 @@ export async function GET({ url }) {
 export async function POST({ request, locals }) {
 	const body = await request.json();
 
-	// Generate next patient ID
-	const [last] = await db.select({ id: patients.id })
-		.from(patients)
-		.orderBy(desc(patients.id))
-		.limit(1);
+	// Generate next patient ID using numeric MAX to prevent primary key collision
+	const [{ maxNum }] = await db.select({
+		maxNum: sql`COALESCE(MAX(CASE WHEN ${patients.id} ~ '^O[0-9]+$' THEN CAST(SUBSTRING(${patients.id}, 2) AS INTEGER) ELSE 0 END), 0)`
+	}).from(patients);
 
-	const newId = generatePatientId(last?.id);
+	let nextNum = Number(maxNum) + 1;
+	let newId = 'O' + String(nextNum).padStart(6, '0');
+
+	// Loop to ensure ID is strictly unique in database
+	while (true) {
+		const [existing] = await db.select({ id: patients.id })
+			.from(patients)
+			.where(eq(patients.id, newId))
+			.limit(1);
+
+		if (!existing) break;
+		nextNum++;
+		newId = 'O' + String(nextNum).padStart(6, '0');
+	}
 
 	const [patient] = await db.insert(patients).values({
 		id: newId,

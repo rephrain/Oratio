@@ -1052,11 +1052,6 @@
       "degree": 7
     },
     {
-      "id": "src_lib_server_pdfgenerator_getlogobase64",
-      "label": "getLogoBase64()",
-      "degree": 6
-    },
-    {
       "id": "src_lib_server_realtime_realtimeeventbus_realtimeeventbus",
       "label": "RealtimeEventBus",
       "degree": 6
@@ -1069,6 +1064,11 @@
     {
       "id": "src_lib_utils_validators_validatepatientform",
       "label": "validatePatientForm()",
+      "degree": 6
+    },
+    {
+      "id": "src_lib_server_pdfgenerator_getlogobase64",
+      "label": "getLogoBase64()",
       "degree": 6
     }
   ],

@@ -641,8 +641,8 @@ export async function generatePatientProfilePdf(data) {
     try {
         const page = await browser.newPage();
 
-        // Set content and wait for network to be idle to ensure Tailwind CSS and fonts are loaded
-        await page.setContent(htmlBody, { waitUntil: 'networkidle0', timeout: 30000 });
+        // Set content with domcontentloaded to prevent networkidle0 timeouts on external font/image requests
+        await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
         const pdfBuffer = await page.pdf({
             format: 'A4',
@@ -986,7 +986,7 @@ export async function generateSoapFormPdf(data) {
 
     try {
         const page = await browser.newPage();
-        await page.setContent(htmlBody, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -1669,7 +1669,7 @@ export async function generateSoapWhoFormPdf(data) {
 
     try {
         const page = await browser.newPage();
-        await page.setContent(htmlBody, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -1873,7 +1873,7 @@ export async function generatePaymentReceiptPdf(data) {
 
     try {
         const page = await browser.newPage();
-        await page.setContent(htmlBody, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,

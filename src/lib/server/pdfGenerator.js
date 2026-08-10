@@ -641,8 +641,15 @@ export async function generatePatientProfilePdf(data) {
     try {
         const page = await browser.newPage();
 
-        // Set content with domcontentloaded to prevent networkidle0 timeouts on external font/image requests
+        page.on('requestfailed', req => console.error('[PDF REQUEST FAILED]', req.url(), req.failure()?.errorText || ''));
+        page.on('response', res => { if (res.status() >= 400) console.error('[PDF RESPONSE ERROR]', res.status(), res.url()); });
+
         await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.evaluate(async () => {
+            if (typeof document !== 'undefined' && document.fonts) {
+                await document.fonts.ready;
+            }
+        });
 
         const pdfBuffer = await page.pdf({
             format: 'A4',
@@ -986,7 +993,15 @@ export async function generateSoapFormPdf(data) {
 
     try {
         const page = await browser.newPage();
+        page.on('requestfailed', req => console.error('[PDF REQUEST FAILED]', req.url(), req.failure()?.errorText || ''));
+        page.on('response', res => { if (res.status() >= 400) console.error('[PDF RESPONSE ERROR]', res.status(), res.url()); });
+
         await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.evaluate(async () => {
+            if (typeof document !== 'undefined' && document.fonts) {
+                await document.fonts.ready;
+            }
+        });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -1669,7 +1684,15 @@ export async function generateSoapWhoFormPdf(data) {
 
     try {
         const page = await browser.newPage();
+        page.on('requestfailed', req => console.error('[PDF REQUEST FAILED]', req.url(), req.failure()?.errorText || ''));
+        page.on('response', res => { if (res.status() >= 400) console.error('[PDF RESPONSE ERROR]', res.status(), res.url()); });
+
         await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.evaluate(async () => {
+            if (typeof document !== 'undefined' && document.fonts) {
+                await document.fonts.ready;
+            }
+        });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -1873,7 +1896,15 @@ export async function generatePaymentReceiptPdf(data) {
 
     try {
         const page = await browser.newPage();
+        page.on('requestfailed', req => console.error('[PDF REQUEST FAILED]', req.url(), req.failure()?.errorText || ''));
+        page.on('response', res => { if (res.status() >= 400) console.error('[PDF RESPONSE ERROR]', res.status(), res.url()); });
+
         await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.evaluate(async () => {
+            if (typeof document !== 'undefined' && document.fonts) {
+                await document.fonts.ready;
+            }
+        });
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,

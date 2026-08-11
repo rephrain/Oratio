@@ -78,7 +78,28 @@ function getLogoBase64() {
     return 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
 }
 
+// Temporary flag to disable Puppeteer PDF generation across all actions
+const DISABLE_PDF_GENERATION = true;
+
+const MINIMAL_PDF = Buffer.from(
+	'%PDF-1.4\n' +
+	'1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj\n' +
+	'2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj\n' +
+	'3 0 obj <</Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792]>> endobj\n' +
+	'xref\n' +
+	'0 4\n' +
+	'0000000000 65535 f \n' +
+	'0000000009 00000 n \n' +
+	'0000000052 00000 n \n' +
+	'0000000111 00000 n \n' +
+	'trailer <</Size 4 /Root 1 0 R>>\n' +
+	'startxref\n' +
+	'190\n' +
+	'%%EOF'
+);
+
 export async function generatePatientProfilePdf(data) {
+    if (DISABLE_PDF_GENERATION) return MINIMAL_PDF;
     const { patient, allergies = [], diseases = [], medications = [], origin } = data;
     const logo = getLogoBase64();
     const bpStatus = fmtBpStatus(patient.tekanan_darah);
@@ -669,6 +690,7 @@ export async function generatePatientProfilePdf(data) {
 }
 
 export async function generateSoapFormPdf(data) {
+    if (DISABLE_PDF_GENERATION) return MINIMAL_PDF;
     const { encounter, patient, doctor, prescriptions = [], referrals = [], items = [], origin, rxText } = data;
     const logo = getLogoBase64();
     const sysRef = `ORATIO-CLINIC-ENC-${encounter.id}`;
@@ -1249,6 +1271,7 @@ function renderOdontogramChartHtml(odontogramMap) {
 }
 
 export async function generateSoapWhoFormPdf(data) {
+    if (DISABLE_PDF_GENERATION) return MINIMAL_PDF;
     const { encounter, patient, doctor, prescriptions = [], referrals = [], items = [], origin, rxText, odontograms = [], odontogramDetails = [] } = data;
     const logo = getLogoBase64();
     const sysRef = `ORATIO-CLINIC-WHO-${encounter.id}`;
@@ -1707,6 +1730,7 @@ export async function generateSoapWhoFormPdf(data) {
 
 
 export async function generatePaymentReceiptPdf(data) {
+    if (DISABLE_PDF_GENERATION) return MINIMAL_PDF;
     const { payment, encounter, patient, doctor, cashier, items = [], origin } = data;
     const logo = getLogoBase64();
     const sysRef = `INV-${new Date().getFullYear()}-${payment.id.toString().split('-')[0].toUpperCase()}`;

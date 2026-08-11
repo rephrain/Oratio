@@ -235,9 +235,9 @@
     "semantic_hash": "2857d7dbd4ea2a648eae73ea7ad62d48"
   },
   "src/lib/server/pdfGenerator.js": {
-    "mtime": 1786390497.875023,
-    "ast_hash": "ed71f68780080fb222eb3dfac0b3ca04",
-    "semantic_hash": "ed71f68780080fb222eb3dfac0b3ca04"
+    "mtime": 1786417073.825891,
+    "ast_hash": "489f69eb7851c84fa7c7fd7a205c11b1",
+    "semantic_hash": "489f69eb7851c84fa7c7fd7a205c11b1"
   },
   "src/lib/server/realtime/authorizationRules.js": {
     "mtime": 1782128978.6272216,
@@ -480,9 +480,9 @@
     "semantic_hash": "079179adc5eca0dba45a8db7e254d7d3"
   },
   "src/routes/api/encounters/+server.js": {
-    "mtime": 1785960829.7601514,
-    "ast_hash": "1393f46812cc82c5b82d9e259e1b0188",
-    "semantic_hash": "1393f46812cc82c5b82d9e259e1b0188"
+    "mtime": 1786417702.6092458,
+    "ast_hash": "c20d7ceb9e7d85225b6d77daab3dd60a",
+    "semantic_hash": "c20d7ceb9e7d85225b6d77daab3dd60a"
   },
   "src/routes/api/encounters/[id]/+server.js": {
     "mtime": 1786032544.1677635,

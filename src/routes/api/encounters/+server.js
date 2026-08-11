@@ -111,14 +111,28 @@ export async function POST({ request, locals }) {
 			return json({ error: 'Invalid doctor' }, { status: 400 });
 		}
 
-		// Generate encounter ID
-		const [lastEnc] = await db.select({ id: encounters.id })
-			.from(encounters)
-			.where(eq(encounters.doctor_id, body.doctor_id))
-			.orderBy(desc(encounters.id))
-			.limit(1);
+		// Generate encounter ID using numeric MAX to prevent primary key collision
+		const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+		const encPrefix = `${jakartaNow.getFullYear()}${String(jakartaNow.getMonth() + 1).padStart(2, '0')}${doctor.doctor_code}`;
 
-		const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
+		const [{ maxSeq }] = await db.select({
+			maxSeq: sql`COALESCE(MAX(CASE WHEN ${encounters.id} LIKE ${encPrefix + '%'} THEN CAST(SUBSTRING(${encounters.id}, ${encPrefix.length + 1}) AS INTEGER) ELSE 0 END), 0)`
+		}).from(encounters);
+
+		let nextSeq = Number(maxSeq) + 1;
+		let encId = encPrefix + String(nextSeq).padStart(6, '0');
+
+		// Loop to ensure ID is strictly unique in database
+		while (true) {
+			const [existing] = await db.select({ id: encounters.id })
+				.from(encounters)
+				.where(eq(encounters.id, encId))
+				.limit(1);
+
+			if (!existing) break;
+			nextSeq++;
+			encId = encPrefix + String(nextSeq).padStart(6, '0');
+		}
 
 		// Get next queue number for today
 		const [{ maxQueue }] = await db.select({

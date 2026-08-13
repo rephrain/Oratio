@@ -479,7 +479,7 @@
 									</td>
 									<td class="px-6 py-4 text-slate-600">
 										{row.doctor_name
-											? `Dr. ${row.doctor_name}`
+											? `${row.doctor_name}`
 											: "-"}
 									</td>
 									<td class="px-6 py-4">

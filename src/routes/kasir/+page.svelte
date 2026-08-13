@@ -13,7 +13,6 @@
 		getJakartaDateString,
 	} from "$lib/utils/formatters.js";
 
-
 	let encountersStore;
 	let encounters = [];
 	let loading = true;
@@ -35,16 +34,19 @@
 		if (!selectedCancelEncounter || cancelling) return;
 		cancelling = true;
 		try {
-			const res = await fetch(`/api/encounters/${selectedCancelEncounter.encounter.id}`, {
-				method: "DELETE"
-			});
+			const res = await fetch(
+				`/api/encounters/${selectedCancelEncounter.encounter.id}`,
+				{
+					method: "DELETE",
+				},
+			);
 			const data = await res.json();
 			if (!res.ok) {
 				alert(data.message || "Gagal menghapus antrian");
 				return;
 			}
 			encounters = encounters.filter(
-				(e) => e.encounter.id !== selectedCancelEncounter.encounter.id
+				(e) => e.encounter.id !== selectedCancelEncounter.encounter.id,
 			);
 			showCancelModal = false;
 			selectedCancelEncounter = null;
@@ -94,17 +96,32 @@
 	$: sortedTableEncounters = [...filteredTableEncounters].sort((a, b) => {
 		if (!sortKey) return 0;
 		let valA, valB;
-		if (sortKey === 'queue') { valA = a.encounter?.queue_number || 0; valB = b.encounter?.queue_number || 0; }
-		else if (sortKey === 'patient') { valA = a.patient_name || ''; valB = b.patient_name || ''; }
-		else if (sortKey === 'patient_id') { valA = a.patient?.id || ''; valB = b.patient?.id || ''; }
-		else if (sortKey === 'doctor') { valA = a.doctor_name || ''; valB = b.doctor_name || ''; }
-		else if (sortKey === 'status') { valA = a.encounter?.status || ''; valB = b.encounter?.status || ''; }
-		else if (sortKey === 'time') { valA = new Date(a.encounter?.created_at || 0).getTime(); valB = new Date(b.encounter?.created_at || 0).getTime(); }
-		else if (sortKey === 'dur') { valA = new Date(a.encounter?.created_at || 0).getTime(); valB = new Date(b.encounter?.created_at || 0).getTime(); }
-		
-		if (typeof valA === 'string') valA = valA.toLowerCase();
-		if (typeof valB === 'string') valB = valB.toLowerCase();
-		
+		if (sortKey === "queue") {
+			valA = a.encounter?.queue_number || 0;
+			valB = b.encounter?.queue_number || 0;
+		} else if (sortKey === "patient") {
+			valA = a.patient_name || "";
+			valB = b.patient_name || "";
+		} else if (sortKey === "patient_id") {
+			valA = a.patient?.id || "";
+			valB = b.patient?.id || "";
+		} else if (sortKey === "doctor") {
+			valA = a.doctor_name || "";
+			valB = b.doctor_name || "";
+		} else if (sortKey === "status") {
+			valA = a.encounter?.status || "";
+			valB = b.encounter?.status || "";
+		} else if (sortKey === "time") {
+			valA = new Date(a.encounter?.created_at || 0).getTime();
+			valB = new Date(b.encounter?.created_at || 0).getTime();
+		} else if (sortKey === "dur") {
+			valA = new Date(a.encounter?.created_at || 0).getTime();
+			valB = new Date(b.encounter?.created_at || 0).getTime();
+		}
+
+		if (typeof valA === "string") valA = valA.toLowerCase();
+		if (typeof valB === "string") valB = valB.toLowerCase();
+
 		if (valA < valB) return sortDesc ? 1 : -1;
 		if (valA > valB) return sortDesc ? -1 : 1;
 		return 0;
@@ -141,13 +158,36 @@
 			rooms: ["queue"],
 			events: {
 				queue_created: (list, data) => [data, ...list],
-				queue_updated: (list, data) => list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e),
-				queue_completed: (list, data) => list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e),
-				queue_cancelled: (list, data) => list.filter(e => e.encounter.id !== data.id)
-			}
+				queue_updated: (list, data) =>
+					list.map((e) =>
+						e.encounter.id === data.id
+							? {
+									...e,
+									encounter: {
+										...e.encounter,
+										status: data.status,
+									},
+								}
+							: e,
+					),
+				queue_completed: (list, data) =>
+					list.map((e) =>
+						e.encounter.id === data.id
+							? {
+									...e,
+									encounter: {
+										...e.encounter,
+										status: data.status,
+									},
+								}
+							: e,
+					),
+				queue_cancelled: (list, data) =>
+					list.filter((e) => e.encounter.id !== data.id),
+			},
 		});
 
-		encountersStore.subscribe(val => {
+		encountersStore.subscribe((val) => {
 			encounters = val;
 			loading = false;
 		});
@@ -175,7 +215,7 @@
 						has_active_shift: d.has_active_shift,
 						is_doctor: true,
 					},
-				}))
+				})),
 			];
 		} catch (err) {
 			console.error("Failed to load doctors:", err);
@@ -437,17 +477,21 @@
 											class="material-symbols-outlined text-[14px]"
 											>medical_services</span
 										>
-										Dr. {item.doctor_name || "-"}
+										{item.doctor_name || "-"}
 									</p>
 									<div
 										class="flex justify-between items-center border-t border-slate-100 pt-3"
 									>
 										<button
 											class="text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
-											on:click={() => openCancelModal(item)}
+											on:click={() =>
+												openCancelModal(item)}
 											title="Hapus / Batalkan Antrian"
 										>
-											<span class="material-symbols-outlined text-[14px]">delete</span>
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>delete</span
+											>
 											Hapus Antrian
 										</button>
 										<button
@@ -503,7 +547,7 @@
 											class="material-symbols-outlined text-[14px]"
 											>medical_services</span
 										>
-										Dr. {item.doctor_name || "-"}
+										{item.doctor_name || "-"}
 									</p>
 									<div
 										class="w-full bg-slate-100 h-1 rounded-full overflow-hidden"
@@ -545,11 +589,14 @@
 											class="material-symbols-outlined text-[14px]"
 											>medical_services</span
 										>
-										Dr. {item.doctor_name || "-"}
+										{item.doctor_name || "-"}
 									</p>
 									<button
 										class="w-full bg-accent text-white text-xs font-bold py-2 rounded shadow-sm hover:brightness-105 transition-all"
-										on:click={() => goto(`/kasir/payment?id=${item.encounter.id}`)}
+										on:click={() =>
+											goto(
+												`/kasir/payment?id=${item.encounter.id}`,
+											)}
 									>
 										Process Billing
 									</button>
@@ -645,32 +692,123 @@
 						>
 							<tr>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('queue')}
-									><div class="flex items-center gap-1">Queue #<span class="material-symbols-outlined text-[14px] {sortKey === 'queue' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'queue' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("queue")}
+									><div class="flex items-center gap-1">
+										Queue #<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'queue'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "queue"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient')}
-									><div class="flex items-center gap-1">Patient Name<span class="material-symbols-outlined text-[14px] {sortKey === 'patient' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("patient")}
+									><div class="flex items-center gap-1">
+										Patient Name<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'patient'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "patient"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient_id')}
-									><div class="flex items-center gap-1">Patient ID<span class="material-symbols-outlined text-[14px] {sortKey === 'patient_id' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient_id' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("patient_id")}
+									><div class="flex items-center gap-1">
+										Patient ID<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'patient_id'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "patient_id"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('doctor')}
-									><div class="flex items-center gap-1">Doctor<span class="material-symbols-outlined text-[14px] {sortKey === 'doctor' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'doctor' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("doctor")}
+									><div class="flex items-center gap-1">
+										Doctor<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'doctor'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "doctor"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('status')}
-									><div class="flex items-center gap-1">Status<span class="material-symbols-outlined text-[14px] {sortKey === 'status' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'status' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("status")}
+									><div class="flex items-center gap-1">
+										Status<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'status'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "status"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('time')}
-									><div class="flex items-center gap-1">Arrived Time<span class="material-symbols-outlined text-[14px] {sortKey === 'time' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'time' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("time")}
+									><div class="flex items-center gap-1">
+										Arrived Time<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'time'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "time"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
-									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('dur')}
-									><div class="flex items-center gap-1">Duration<span class="material-symbols-outlined text-[14px] {sortKey === 'dur' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'dur' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div></th
+									class="px-6 py-4 font-semibold text-slate-700 cursor-pointer hover:text-primary transition-colors select-none group"
+									on:click={() => handleSort("dur")}
+									><div class="flex items-center gap-1">
+										Duration<span
+											class="material-symbols-outlined text-[14px] {sortKey ===
+											'dur'
+												? 'text-primary'
+												: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+											>{sortKey === "dur"
+												? sortDesc
+													? "arrow_downward"
+													: "arrow_upward"
+												: "unfold_more"}</span
+										>
+									</div></th
 								>
 								<th
 									class="px-6 py-4 font-semibold text-slate-700 select-none"
@@ -702,7 +840,7 @@
 									</td>
 									<td class="px-6 py-4 text-slate-600">
 										{row.doctor_name
-											? `Dr. ${row.doctor_name}`
+											? `${row.doctor_name}`
 											: "-"}
 									</td>
 									<td class="px-6 py-4">
@@ -750,13 +888,20 @@
 										{#if ["Planned", "Arrived"].includes(status)}
 											<button
 												class="text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors flex items-center gap-1"
-												on:click={() => openCancelModal(row)}
+												on:click={() =>
+													openCancelModal(row)}
 											>
-												<span class="material-symbols-outlined text-sm">delete</span>
+												<span
+													class="material-symbols-outlined text-sm"
+													>delete</span
+												>
 												Batalkan
 											</button>
 										{:else}
-											<span class="text-xs text-slate-400 font-mono">-</span>
+											<span
+												class="text-xs text-slate-400 font-mono"
+												>-</span
+											>
 										{/if}
 									</td>
 								</tr>
@@ -819,10 +964,14 @@
 				<div
 					class="size-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0"
 				>
-					<span class="material-symbols-outlined text-xl">warning</span>
+					<span class="material-symbols-outlined text-xl"
+						>warning</span
+					>
 				</div>
 				<div>
-					<h3 class="font-bold text-slate-900 text-lg">Hapus Antrian</h3>
+					<h3 class="font-bold text-slate-900 text-lg">
+						Hapus Antrian
+					</h3>
 					<p class="text-xs text-slate-500">
 						Konfirmasi pembatalan antrian pasien
 					</p>
@@ -838,7 +987,8 @@
 						selectedCancelEncounter.patient?.nama_lengkap ||
 						"Pasien"}</strong
 				>
-				(Queue #{selectedCancelEncounter.encounter?.queue_number || "-"})?
+				(Queue #{selectedCancelEncounter.encounter?.queue_number ||
+					"-"})?
 			</p>
 
 			<div class="flex justify-end gap-3 mt-6">

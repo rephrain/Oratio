@@ -16,7 +16,6 @@
 	export let data;
 	$: user = data?.user;
 
-
 	let encountersStore;
 	let encounters = [];
 	let loading = true;
@@ -38,29 +37,52 @@
 	async function setupEncountersRealtime() {
 		if (encountersStore) encountersStore.destroy();
 
-		encountersStore = createRealtimeList(`/api/encounters?date=${filterDate}`, {
-			rooms: ["queue"],
-			events: {
-				queue_created: (list, data) => {
-					loadStats(); // Refresh stats on new patient
-					return [data, ...list];
+		encountersStore = createRealtimeList(
+			`/api/encounters?date=${filterDate}`,
+			{
+				rooms: ["queue"],
+				events: {
+					queue_created: (list, data) => {
+						loadStats(); // Refresh stats on new patient
+						return [data, ...list];
+					},
+					queue_updated: (list, data) => {
+						loadStats();
+						return list.map((e) =>
+							e.encounter.id === data.id
+								? {
+										...e,
+										encounter: {
+											...e.encounter,
+											status: data.status,
+										},
+									}
+								: e,
+						);
+					},
+					queue_completed: (list, data) => {
+						loadStats();
+						return list.map((e) =>
+							e.encounter.id === data.id
+								? {
+										...e,
+										encounter: {
+											...e.encounter,
+											status: data.status,
+										},
+									}
+								: e,
+						);
+					},
+					queue_cancelled: (list, data) => {
+						loadStats();
+						return list.filter((e) => e.encounter.id !== data.id);
+					},
 				},
-				queue_updated: (list, data) => {
-					loadStats();
-					return list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e);
-				},
-				queue_completed: (list, data) => {
-					loadStats();
-					return list.map(e => e.encounter.id === data.id ? { ...e, encounter: { ...e.encounter, status: data.status } } : e);
-				},
-				queue_cancelled: (list, data) => {
-					loadStats();
-					return list.filter(e => e.encounter.id !== data.id);
-				}
-			}
-		});
+			},
+		);
 
-		encountersStore.subscribe(val => {
+		encountersStore.subscribe((val) => {
 			encounters = val;
 			loading = false;
 		});
@@ -158,21 +180,21 @@
 	let referralsStore;
 	async function setupReferralsRealtime() {
 		if (referralsStore) referralsStore.destroy();
-		
+
 		referralsStore = createRealtimeList("/api/dashboard/dokter/referrals", {
 			// Referrals are basically special notifications
 			rooms: [`user_${user?.id}`],
 			events: {
 				notification_created: (list, data) => {
-					if (data.type === 'referral') {
+					if (data.type === "referral") {
 						return [data.payload, ...list];
 					}
 					return list;
-				}
-			}
+				},
+			},
 		});
 
-		referralsStore.subscribe(val => {
+		referralsStore.subscribe((val) => {
 			referrals = val;
 			loadingReferrals = false;
 		});
@@ -199,14 +221,23 @@
 	$: sortedReferrals = [...referrals].sort((a, b) => {
 		if (!sortKey) return 0;
 		let valA, valB;
-		if (sortKey === 'doctor') { valA = a.sender_name || ''; valB = b.sender_name || ''; }
-		else if (sortKey === 'date') { valA = new Date(a.referral_date || 0).getTime(); valB = new Date(b.referral_date || 0).getTime(); }
-		else if (sortKey === 'patient') { valA = a.patient_name || ''; valB = b.patient_name || ''; }
-		else if (sortKey === 'note') { valA = a.note || ''; valB = b.note || ''; }
-		
-		if (typeof valA === 'string') valA = valA.toLowerCase();
-		if (typeof valB === 'string') valB = valB.toLowerCase();
-		
+		if (sortKey === "doctor") {
+			valA = a.sender_name || "";
+			valB = b.sender_name || "";
+		} else if (sortKey === "date") {
+			valA = new Date(a.referral_date || 0).getTime();
+			valB = new Date(b.referral_date || 0).getTime();
+		} else if (sortKey === "patient") {
+			valA = a.patient_name || "";
+			valB = b.patient_name || "";
+		} else if (sortKey === "note") {
+			valA = a.note || "";
+			valB = b.note || "";
+		}
+
+		if (typeof valA === "string") valA = valA.toLowerCase();
+		if (typeof valB === "string") valB = valB.toLowerCase();
+
 		if (valA < valB) return sortDesc ? 1 : -1;
 		if (valA > valB) return sortDesc ? -1 : 1;
 		return 0;
@@ -268,14 +299,14 @@
 		const virtualRow = {
 			patient_name: ref.patient_name || "Unknown Patient",
 			patient: { id: ref.patient_id },
-			encounter: { 
-				id: ref.id, 
+			encounter: {
+				id: ref.id,
 				patient_id: ref.patient_id,
-				status: 'Referral',
-				reason_type: 'situation' // Default for referrals
+				status: "Referral",
+				reason_type: "situation", // Default for referrals
 			},
-			encounter_reason_display: `Referral from ${ref.sender_name}: ${ref.note || 'No note'}`,
-			isReferral: true
+			encounter_reason_display: `Referral from ${ref.sender_name}: ${ref.note || "No note"}`,
+			isReferral: true,
 		};
 		await selectEncounter(virtualRow);
 	}
@@ -302,22 +333,25 @@
 	}
 
 	let waSentSet = new Set();
-	
+
 	function sendWA(row, event) {
 		if (event) event.stopPropagation();
-		
+
 		const phone = row.patient?.handphone || row.patient?.handphone;
 		if (!phone) return;
 
 		const patientName = row.patient_name || "Pasien";
-		const queueNum = String(row.encounter?.queue_number || "").padStart(2, "0");
-		const doctorName = user?.name ? `Dr. ${user.name}` : "Dokter";
-		
+		const queueNum = String(row.encounter?.queue_number || "").padStart(
+			2,
+			"0",
+		);
+		const doctorName = user?.name ? `${user.name}` : "Dokter";
+
 		const text = `Halo *${patientName}*,\n\nGiliran antrian Anda (Nomor *${queueNum}*) telah tiba. Silakan masuk ke ruangan pemeriksaan *${doctorName}* sekarang.\n\n_Pesan otomatis dari Oratio Clinic._`;
-		
+
 		const url = getWhatsAppUrl(phone) + "?text=" + encodeURIComponent(text);
-		window.open(url, '_blank');
-		
+		window.open(url, "_blank");
+
 		waSentSet = new Set([...waSentSet, row.encounter?.id]);
 	}
 
@@ -455,7 +489,9 @@
 						Patients Today
 					</p>
 					<div class="flex items-center gap-2 mt-1">
-						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
 							{stats.patientsToday || 0}
 						</h3>
 						{#if stats.patientsTodayChange !== undefined}
@@ -463,11 +499,23 @@
 							{@const isZero = chg === 0}
 							{@const isPos = chg > 0}
 							{#if isZero}
-								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
 							{:else}
-								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
-										{isPos ? 'trending_up' : 'trending_down'}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
 									</span>
 								</span>
 							{/if}
@@ -494,19 +542,36 @@
 						Avg. Wait Time
 					</p>
 					<div class="flex items-center gap-2 mt-1">
-						<h3 class="text-3xl font-black text-blue-900 leading-tight">
-							{stats.avgWaitMinutes || 0}<span class="text-sm font-bold text-slate-400 ml-1">m</span>
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.avgWaitMinutes || 0}<span
+								class="text-sm font-bold text-slate-400 ml-1"
+								>m</span
+							>
 						</h3>
 						{#if stats.avgWaitMinutesChange !== undefined}
 							{@const chg = stats.avgWaitMinutesChange}
 							{@const isZero = chg === 0}
 							{@const isPos = chg > 0}
 							{#if isZero}
-								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
 							{:else}
-								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
-										{isPos ? 'trending_up' : 'trending_down'}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
 									</span>
 								</span>
 							{/if}
@@ -533,19 +598,36 @@
 						Avg. Treatment Time
 					</p>
 					<div class="flex items-center gap-2 mt-1">
-						<h3 class="text-3xl font-black text-blue-900 leading-tight">
-							{stats.avgTreatmentMinutes || 0}<span class="text-sm font-bold text-slate-400 ml-1">m</span>
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.avgTreatmentMinutes || 0}<span
+								class="text-sm font-bold text-slate-400 ml-1"
+								>m</span
+							>
 						</h3>
 						{#if stats.avgTreatmentMinutesChange !== undefined}
 							{@const chg = stats.avgTreatmentMinutesChange}
 							{@const isZero = chg === 0}
 							{@const isPos = chg > 0}
 							{#if isZero}
-								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
 							{:else}
-								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
-										{isPos ? 'trending_up' : 'trending_down'}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
 									</span>
 								</span>
 							{/if}
@@ -572,21 +654,39 @@
 						Completed
 					</p>
 					<div class="flex items-center gap-2 mt-1">
-						<h3 class="text-3xl font-black text-blue-900 leading-tight">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
 							{stats.completedToday || 0}
-							<span class="text-sm font-bold text-slate-300 mx-1">/</span>
-							<span class="text-xl text-slate-400">{stats.patientsToday || 0}</span>
+							<span class="text-sm font-bold text-slate-300 mx-1"
+								>/</span
+							>
+							<span class="text-xl text-slate-400"
+								>{stats.patientsToday || 0}</span
+							>
 						</h3>
 						{#if stats.completedTodayChange !== undefined}
 							{@const chg = stats.completedTodayChange}
 							{@const isZero = chg === 0}
 							{@const isPos = chg > 0}
 							{#if isZero}
-								<span class="text-slate-400 text-xs font-bold flex items-center">-</span>
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
 							{:else}
-								<span class="{isPos ? 'text-green-500' : 'text-red-500'} text-xs font-bold flex items-center">
-									{isPos ? '+' : '-'}{Math.abs(chg)}% <span class="material-symbols-outlined text-[14px]">
-										{isPos ? 'trending_up' : 'trending_down'}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
 									</span>
 								</span>
 							{/if}
@@ -707,7 +807,9 @@
 								<div
 									class="flex justify-between items-start mb-4"
 								>
-									<div class="flex items-center gap-3 relative z-10 w-full pr-16">
+									<div
+										class="flex items-center gap-3 relative z-10 w-full pr-16"
+									>
 										<div
 											class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl {config.queueBg}"
 										>
@@ -716,14 +818,17 @@
 													index + 1,
 											).padStart(2, "0")}
 										</div>
-										
+
 										{#if row.patient?.handphone && !waSentSet.has(row.encounter?.id)}
 											<button
 												class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all transform hover:scale-105"
 												on:click={(e) => sendWA(row, e)}
 												title="Kirim Panggilan WhatsApp"
 											>
-												<span class="material-symbols-outlined text-[20px]">chat</span>
+												<span
+													class="material-symbols-outlined text-[20px]"
+													>chat</span
+												>
 											</button>
 										{/if}
 									</div>
@@ -843,17 +948,77 @@
 				<table class="w-full text-left">
 					<thead>
 						<tr class="bg-slate-50/50">
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('doctor')}>
-							    <div class="flex items-center gap-1">Sender Doctor<span class="material-symbols-outlined text-[14px] {sortKey === 'doctor' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'doctor' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("doctor")}
+							>
+								<div class="flex items-center gap-1">
+									Sender Doctor<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'doctor'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "doctor"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
 							</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('date')}>
-							    <div class="flex items-center gap-1">Date<span class="material-symbols-outlined text-[14px] {sortKey === 'date' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'date' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("date")}
+							>
+								<div class="flex items-center gap-1">
+									Date<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'date'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "date"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
 							</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('patient')}>
-							    <div class="flex items-center gap-1">Patient Name<span class="material-symbols-outlined text-[14px] {sortKey === 'patient' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'patient' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("patient")}
+							>
+								<div class="flex items-center gap-1">
+									Patient Name<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'patient'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "patient"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
 							</th>
-							<th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group" on:click={() => handleSort('note')}>
-							    <div class="flex items-center gap-1">Note<span class="material-symbols-outlined text-[14px] {sortKey === 'note' ? 'text-primary' : 'text-slate-300 opacity-0 group-hover:opacity-100'}">{sortKey === 'note' ? (sortDesc ? 'arrow_downward' : 'arrow_upward') : 'unfold_more'}</span></div>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("note")}
+							>
+								<div class="flex items-center gap-1">
+									Note<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'note'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "note"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
 							</th>
 						</tr>
 					</thead>
@@ -888,7 +1053,8 @@
 														class="w-full h-full object-cover"
 													/>
 												{:else}
-												    {ref.sender_name?.[0] || "D"}
+													{ref.sender_name?.[0] ||
+														"D"}
 												{/if}
 											</div>
 											<div>
@@ -974,7 +1140,10 @@
 							>
 								<span
 									class="text-3xl font-black {selectedStatusConfig.text} drop-shadow-sm"
-									>{(selectedEncounterData.patient_name || "P")
+									>{(
+										selectedEncounterData.patient_name ||
+										"P"
+									)
 										.substring(0, 2)
 										.toUpperCase()}</span
 								>
@@ -1005,7 +1174,10 @@
 								target="_blank"
 								class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
 							>
-								<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+								<span
+									class="material-symbols-outlined text-[16px]"
+									>picture_as_pdf</span
+								>
 								View PDF Record
 							</a>
 						</div>
@@ -1599,7 +1771,9 @@
 												class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-[11px] text-slate-700 space-y-2 relative z-10 leading-relaxed shadow-inner"
 											>
 												{#if hist.encounter?.subjective}
-													<div class="whitespace-pre-wrap">
+													<div
+														class="whitespace-pre-wrap"
+													>
 														<strong
 															class="text-blue-900 font-black"
 															>S:</strong
@@ -1609,7 +1783,9 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.objective}
-													<div class="whitespace-pre-wrap">
+													<div
+														class="whitespace-pre-wrap"
+													>
 														<strong
 															class="text-blue-900 font-black"
 															>O:</strong
@@ -1619,7 +1795,9 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.assessment}
-													<div class="whitespace-pre-wrap">
+													<div
+														class="whitespace-pre-wrap"
+													>
 														<strong
 															class="text-blue-900 font-black"
 															>A:</strong
@@ -1629,7 +1807,9 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.plan}
-													<div class="whitespace-pre-wrap">
+													<div
+														class="whitespace-pre-wrap"
+													>
 														<strong
 															class="text-blue-900 font-black"
 															>P:</strong
@@ -1638,7 +1818,9 @@
 													</div>
 												{/if}
 												{#if hist.encounter?.resep}
-													<div class="whitespace-pre-wrap">
+													<div
+														class="whitespace-pre-wrap"
+													>
 														<strong
 															class="text-blue-900 font-black"
 															>R:</strong
@@ -1704,7 +1886,9 @@
 					<span class="material-symbols-outlined text-[20px]"
 						>play_arrow</span
 					>
-					{selectedEncounterData.isReferral ? "Select from Queue to Treat" : "Start New Encounter"}
+					{selectedEncounterData.isReferral
+						? "Select from Queue to Treat"
+						: "Start New Encounter"}
 				</button>
 			</div>
 		{:else}

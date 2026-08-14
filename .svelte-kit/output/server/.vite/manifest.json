@@ -160,6 +160,12 @@
       "_ssr.js"
     ]
   },
+  "_terminology.js": {
+    "file": "chunks/terminology.js",
+    "imports": [
+      "_index3.js"
+    ]
+  },
   "_toast.js": {
     "file": "chunks/toast.js",
     "imports": [
@@ -3230,7 +3236,7 @@
     "imports": [
       "_index.js",
       "_index3.js",
-      "_formatters.js",
+      "_terminology.js",
       "_realtimeService.js"
     ],
     "isEntry": true,
@@ -3241,7 +3247,8 @@
     "imports": [
       "_index.js",
       "_index3.js",
-      "_realtimeService.js"
+      "_realtimeService.js",
+      "_terminology.js"
     ],
     "isEntry": true,
     "src": "src/routes/api/encounters/[id]/+server.js"
@@ -3278,9 +3285,9 @@
     "imports": [
       "_index.js",
       "_index3.js",
-      "_formatters.js",
       "_pdfGenerator.js",
-      "_realtimeService.js"
+      "_realtimeService.js",
+      "_terminology.js"
     ],
     "isEntry": true,
     "src": "src/routes/api/patients/+server.js"
@@ -3291,7 +3298,8 @@
       "_index.js",
       "_index3.js",
       "_pdfGenerator.js",
-      "_realtimeService.js"
+      "_realtimeService.js",
+      "_terminology.js"
     ],
     "isEntry": true,
     "src": "src/routes/api/patients/[id]/+server.js"

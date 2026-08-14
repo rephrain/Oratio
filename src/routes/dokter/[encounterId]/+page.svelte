@@ -137,18 +137,15 @@
 		})),
 	];
 
-	$: itemOptions = [
-		{ value: "", label: "Pilih Item" },
-		...availableItems.map((ai) => ({
-			value: ai.id,
-			label: ai.name,
-			sublabel: ai.item_group || "Umum",
-			meta: {
-				icon: "medical_services",
-				iconColor: "text-primary",
-			},
-		})),
-	];
+	$: itemOptions = availableItems.map((ai) => ({
+		value: ai.id,
+		label: ai.name,
+		sublabel: `${ai.item_group || "Umum"} • Rp ${parseFloat(ai.price || 0).toLocaleString("id-ID")}`,
+		meta: {
+			icon: "medical_services",
+			iconColor: "bg-primary/10 text-primary",
+		},
+	}));
 
 	$: if (encounter?.patient_name && encounter?.encounter?.patient_id) {
 		const title = `${encounter.patient_name} (${encounter.encounter.patient_id})`;
@@ -2572,64 +2569,68 @@
 							>
 							Item Tindakan
 						</h3>
-					</div>
-					<div
+										<div
 						class="flex flex-col md:flex-row gap-3 items-end p-4 mb-4 bg-white rounded-xl border border-slate-200 shadow-sm"
 					>
-						<div class="w-full md:flex-1">
+						<div class="w-full md:flex-1 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-2.5 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
-								>Pilih Item</label
+								>Cari & Pilih Item</label
 							>
-							<RichSelect
+							<SearchableSelect
 								options={itemOptions}
 								bind:value={newItem.item_id}
 								on:select={(e) =>
 									onNewItemSelect(e.detail.value)}
-								placeholder="-- Pilih Item --"
+								on:clear={() => onNewItemSelect("")}
+								placeholder="Ketik untuk mencari item..."
 							/>
 						</div>
-						<div class="w-full md:w-12">
+						<div class="w-full md:w-16">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Qty</label
 							>
 							<input
 								type="number"
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white text-center font-medium"
 								bind:value={newItem.quantity}
 								min="1"
 								on:input={updateNewItemSubtotal}
 							/>
 						</div>
-						<div class="w-full md:w-28">
+						<div class="w-full md:w-32">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
-								>Harga</label
+								>Harga (Rp)</label
 							>
 							<input
-								class="w-full rounded-xl border-slate-200 bg-slate-100/50 text-sm text-slate-500"
-								value={newItem.price_at_time}
-								disabled
+								type="number"
+								min="0"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white font-medium text-slate-700"
+								bind:value={newItem.price_at_time}
+								on:input={updateNewItemSubtotal}
+								placeholder="0"
 							/>
 						</div>
 						<div class="w-full md:w-40 flex gap-3 items-end">
 							<div class="flex-1">
 								<label
 									class="text-xs font-bold text-slate-500 mb-1 block"
-									>Subtotal</label
+									>Subtotal (Rp)</label
 								>
 								<input
 									class="w-full rounded-xl border-slate-200 bg-slate-100/50 text-sm font-bold text-slate-700"
-									value={newItem.subtotal}
+									value={newItem.subtotal?.toLocaleString("id-ID") || 0}
 									disabled
 								/>
 							</div>
 							<div>
 								<button
 									type="button"
-									class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors"
+									class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
 									on:click={addEncounterItem}
+									title="Tambah Item"
 								>
 									<span
 										class="material-symbols-outlined text-[20px]"
@@ -2644,36 +2645,71 @@
 					<div class="space-y-3">
 						{#each encounterItems as item, i}
 							<div
-								class="flex items-center gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm"
+								class="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm"
 							>
-								<span
-									class="material-symbols-outlined text-slate-400"
-									>shopping_cart</span
-								>
-								<div class="flex-1">
-									<p class="text-sm font-bold">
-										{item.item_name || "Item Tindakan"}
-									</p>
-									<p class="text-xs text-slate-500">
-										Harga: Rp {item.price_at_time?.toLocaleString(
-											"id-ID",
-										) || 0} | Qty: {item.quantity} |
-										<strong class="text-primary"
-											>Subtotal: Rp {item.subtotal?.toLocaleString(
-												"id-ID",
-											) || 0}</strong
-										>
-									</p>
-								</div>
-								<button
-									type="button"
-									class="text-slate-400 hover:text-red-500 transition-colors"
-									on:click={() => removeEncounterItem(i)}
-								>
-									<span class="material-symbols-outlined"
-										>delete</span
+								<div class="flex items-center gap-3 flex-1 min-w-0">
+									<div
+										class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"
 									>
-								</button>
+										<span
+											class="material-symbols-outlined text-[20px]"
+											>shopping_cart</span
+										>
+									</div>
+									<div class="min-w-0 flex-1">
+										<p class="text-sm font-bold text-slate-800 truncate">
+											{item.item_name || "Item Tindakan"}
+										</p>
+										<p class="text-xs text-slate-400">
+											Master Price: Rp {(availableItems.find(ai => ai.id === item.item_id)?.price || item.price_at_time || 0).toLocaleString("id-ID")}
+										</p>
+									</div>
+								</div>
+
+								<div class="flex items-center gap-3 flex-wrap">
+									<div class="flex items-center gap-1.5">
+										<span class="text-xs text-slate-400 font-medium">Qty:</span>
+										<input
+											type="number"
+											min="1"
+											class="w-16 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-center font-bold"
+											bind:value={item.quantity}
+											on:input={() => {
+												item.subtotal = (item.quantity || 1) * (item.price_at_time || 0);
+												encounterItems = [...encounterItems];
+											}}
+										/>
+									</div>
+									<div class="flex items-center gap-1.5">
+										<span class="text-xs text-slate-400 font-medium">Harga:</span>
+										<input
+											type="number"
+											min="0"
+											class="w-28 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-right font-bold text-slate-700"
+											bind:value={item.price_at_time}
+											on:input={() => {
+												item.subtotal = (item.quantity || 1) * (item.price_at_time || 0);
+												encounterItems = [...encounterItems];
+											}}
+										/>
+									</div>
+									<div class="text-right min-w-[90px]">
+										<span class="text-[10px] text-slate-400 block uppercase font-semibold">Subtotal</span>
+										<strong class="text-xs text-primary font-bold">
+											Rp {(item.subtotal || 0).toLocaleString("id-ID")}
+										</strong>
+									</div>
+									<button
+										type="button"
+										class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+										on:click={() => removeEncounterItem(i)}
+										title="Hapus Item"
+									>
+										<span class="material-symbols-outlined text-[20px]"
+											>delete</span
+										>
+									</button>
+								</div>
 							</div>
 						{/each}
 						{#if encounterItems.length === 0}
@@ -2683,7 +2719,7 @@
 								Belum ada item tindakan
 							</p>
 						{/if}
-					</div>
+					</div>		</div>
 				</section>
 
 				<!-- Clinical Photo Section -->

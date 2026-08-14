@@ -2,7 +2,7 @@ import { j as json } from "../../../../chunks/index.js";
 import { e as encounters, u as users, d as db, p as patients, t as terminologyMaster, g as documents, h as statusHistory } from "../../../../chunks/index3.js";
 import { sql, eq, and, desc, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { a as generateEncounterId } from "../../../../chunks/formatters.js";
+import { g as getOrCreateTerminology } from "../../../../chunks/terminology.js";
 import { a as emitPatientEvent, b as emitQueueEvent, c as emitDashboardEvent } from "../../../../chunks/realtimeService.js";
 async function GET({ url, locals }) {
   const date = url.searchParams.get("date");
@@ -72,66 +72,69 @@ async function GET({ url, locals }) {
   return json({ data: mergedData });
 }
 async function POST({ request, locals }) {
-  const body = await request.json();
-  const [doctor] = await db.select().from(users).where(eq(users.id, body.doctor_id)).limit(1);
-  if (!doctor || doctor.role !== "dokter") {
-    return json({ error: "Invalid doctor" }, { status: 400 });
-  }
-  const [lastEnc] = await db.select({ id: encounters.id }).from(encounters).where(eq(encounters.doctor_id, body.doctor_id)).orderBy(desc(encounters.id)).limit(1);
-  const encId = generateEncounterId(doctor.doctor_code, lastEnc?.id);
-  const [{ maxQueue }] = await db.select({
-    maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
-  }).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
-  const queueNumber = Number(maxQueue) + 1;
-  let encounterReasonId = null;
-  const complaintCode = body.chief_complaint_code;
-  const complaintDisplay = body.chief_complaint_display;
-  if (complaintCode && complaintDisplay) {
-    const [existing] = await db.select().from(terminologyMaster).where(and(
-      eq(terminologyMaster.code, complaintCode),
-      eq(terminologyMaster.system, "SNOMED")
-    )).limit(1);
-    if (existing) {
-      encounterReasonId = existing.id;
-    } else {
-      const [inserted] = await db.insert(terminologyMaster).values({
-        code: complaintCode,
-        display: complaintDisplay,
-        system: "SNOMED"
-      }).returning();
-      encounterReasonId = inserted.id;
+  try {
+    const body = await request.json();
+    const [doctor] = await db.select().from(users).where(eq(users.id, body.doctor_id)).limit(1);
+    if (!doctor || doctor.role !== "dokter") {
+      return json({ error: "Invalid doctor" }, { status: 400 });
     }
+    const jakartaNow = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    const encPrefix = `${jakartaNow.getFullYear()}${String(jakartaNow.getMonth() + 1).padStart(2, "0")}${doctor.doctor_code}`;
+    const [{ maxSeq }] = await db.select({
+      maxSeq: sql`COALESCE(MAX(CASE WHEN ${encounters.id} LIKE ${encPrefix + "%"} THEN CAST(SUBSTRING(${encounters.id}, ${encPrefix.length + 1}) AS INTEGER) ELSE 0 END), 0)`
+    }).from(encounters);
+    let nextSeq = Number(maxSeq) + 1;
+    let encId = encPrefix + String(nextSeq).padStart(6, "0");
+    while (true) {
+      const [existing] = await db.select({ id: encounters.id }).from(encounters).where(eq(encounters.id, encId)).limit(1);
+      if (!existing)
+        break;
+      nextSeq++;
+      encId = encPrefix + String(nextSeq).padStart(6, "0");
+    }
+    const [{ maxQueue }] = await db.select({
+      maxQueue: sql`COALESCE(MAX(${encounters.queue_number}), 0)`
+    }).from(encounters).where(sql`DATE(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Jakarta')::date`);
+    const queueNumber = Number(maxQueue) + 1;
+    let encounterReasonId = null;
+    const complaintCode = body.chief_complaint_code;
+    const complaintDisplay = body.chief_complaint_display;
+    if (complaintCode && complaintDisplay) {
+      encounterReasonId = await getOrCreateTerminology(complaintCode, complaintDisplay, "SNOMED");
+    }
+    const [encounter] = await db.insert(encounters).values({
+      id: encId,
+      patient_id: body.patient_id,
+      kasir_id: locals?.user?.id || null,
+      doctor_id: body.doctor_id,
+      queue_number: queueNumber,
+      form_mode: body.form_mode || "SOAP",
+      status: "Planned",
+      encounter_reason_id: encounterReasonId,
+      reason_type: body.reason_type || null
+    }).returning();
+    if (body.tekanan_darah) {
+      await db.update(patients).set({ tekanan_darah: body.tekanan_darah }).where(eq(patients.id, body.patient_id));
+      emitPatientEvent("patient_updated", body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
+    }
+    await db.insert(statusHistory).values({
+      encounter_id: encId,
+      status: "Arrived",
+      start_at: /* @__PURE__ */ new Date()
+    });
+    const eventPayload = {
+      encounter,
+      patient_name: body.patient_name || "Patient",
+      doctor_name: doctor.name,
+      queue_number: queueNumber
+    };
+    emitQueueEvent("queue_created", eventPayload, locals?.user?.id);
+    emitDashboardEvent("encounter_created", eventPayload, locals?.user?.id);
+    return json({ encounter, queue_number: queueNumber }, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/encounters error:", err);
+    return json({ error: "Internal Error", message: String(err?.message || err) }, { status: 500 });
   }
-  const [encounter] = await db.insert(encounters).values({
-    id: encId,
-    patient_id: body.patient_id,
-    kasir_id: locals?.user?.id || null,
-    doctor_id: body.doctor_id,
-    queue_number: queueNumber,
-    form_mode: body.form_mode || "SOAP",
-    status: "Planned",
-    encounter_reason_id: encounterReasonId,
-    reason_type: body.reason_type || null
-  }).returning();
-  if (body.tekanan_darah) {
-    await db.update(patients).set({ tekanan_darah: body.tekanan_darah }).where(eq(patients.id, body.patient_id));
-    emitPatientEvent("patient_updated", body.patient_id, { tekanan_darah: body.tekanan_darah }, locals?.user?.id);
-  }
-  await db.insert(statusHistory).values({
-    encounter_id: encId,
-    status: "Arrived",
-    start_at: /* @__PURE__ */ new Date()
-  });
-  const eventPayload = {
-    encounter,
-    patient_name: body.patient_name || "Patient",
-    // Assuming patient_name is passed or could be fetched
-    doctor_name: doctor.name,
-    queue_number: queueNumber
-  };
-  emitQueueEvent("queue_created", eventPayload, locals?.user?.id);
-  emitDashboardEvent("encounter_created", eventPayload, locals?.user?.id);
-  return json({ encounter, queue_number: queueNumber }, { status: 201 });
 }
 export {
   GET,

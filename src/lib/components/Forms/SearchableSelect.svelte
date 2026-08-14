@@ -127,10 +127,14 @@
 					{#each filteredOptions as option}
 						<div class="search-result-item" on:click={() => selectOption(option)}>
 							<div class="flex items-center gap-3 w-full">
-								{#if option.meta && (option.meta.profile_image_url !== undefined || option.meta.is_doctor)}
+								{#if option.meta && (option.meta.profile_image_url !== undefined || option.meta.is_doctor || option.meta.icon)}
 									<div class="relative shrink-0">
 										{#if option.meta.profile_image_url}
 											<img src={option.meta.profile_image_url} alt={option.label} class="w-10 h-10 rounded-full object-cover border border-slate-100 shadow-sm" />
+										{:else if option.meta.icon}
+											<div class="w-10 h-10 rounded-full {option.meta.iconColor || 'bg-slate-100 text-slate-500'} flex items-center justify-center font-bold">
+												<span class="material-symbols-outlined text-[20px]">{option.meta.icon}</span>
+											</div>
 										{:else}
 											<div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-[10px] border border-primary/20">
 												{option.label.substring(0, 2).toUpperCase()}

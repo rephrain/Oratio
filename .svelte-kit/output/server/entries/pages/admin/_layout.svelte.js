@@ -68,7 +68,19 @@ const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   )}" href="/admin/doctor-shifts"><span class="material-symbols-outlined" data-svelte-h="svelte-12u6m5a">schedule</span> <span class="${"text-sm " + escape(
     currentPath.startsWith("/admin/doctor-shifts") ? "font-semibold" : "font-medium",
     true
-  )}">Doctor Shifts</span></a> <div class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-3 py-4 mt-4" data-svelte-h="svelte-6cr7gn">System</div> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
+  )}">Doctor Shifts</span></a> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
+    currentPath.startsWith("/admin/dokter-suster") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
+    true
+  )}" href="/admin/dokter-suster"><span class="material-symbols-outlined" data-svelte-h="svelte-hm4qa2">badge</span> <span class="${"text-sm " + escape(
+    currentPath.startsWith("/admin/dokter-suster") ? "font-semibold" : "font-medium",
+    true
+  )}">Dokter ↔ Suster</span></a> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
+    currentPath.startsWith("/admin/doctor-items") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
+    true
+  )}" href="/admin/doctor-items"><span class="material-symbols-outlined" data-svelte-h="svelte-ur2rnn">medication_liquid</span> <span class="${"text-sm " + escape(
+    currentPath.startsWith("/admin/doctor-items") ? "font-semibold" : "font-medium",
+    true
+  )}">Dokter ↔ Item</span></a> <div class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-3 py-4 mt-4" data-svelte-h="svelte-6cr7gn">System</div> <a class="${"flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all " + escape(
     currentPath.startsWith("/admin/payments") ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-white/5 hover:text-white",
     true
   )}" href="/admin/payments"><span class="material-symbols-outlined" data-svelte-h="svelte-c6s5rw">payments</span> <span class="${"text-sm " + escape(

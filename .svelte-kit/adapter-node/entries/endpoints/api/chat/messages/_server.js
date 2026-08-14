@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, A as chatConversations, B as chatMessages, u as users } from "../../../../../chunks/index3.js";
+import { d as db, C as chatConversations, D as chatMessages, u as users } from "../../../../../chunks/index3.js";
 import { and, eq, or, gt, asc } from "drizzle-orm";
 import { e as emitChatEvent } from "../../../../../chunks/realtimeService.js";
 async function GET({ url, locals }) {

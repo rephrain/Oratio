@@ -351,18 +351,15 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         }
       }))
     ];
-    [
-      { value: "", label: "Pilih Item" },
-      ...availableItems.map((ai) => ({
-        value: ai.id,
-        label: ai.name,
-        sublabel: ai.item_group || "Umum",
-        meta: {
-          icon: "medical_services",
-          iconColor: "text-primary"
-        }
-      }))
-    ];
+    availableItems.map((ai) => ({
+      value: ai.id,
+      label: ai.name,
+      sublabel: `${ai.item_group || "Umum"} • Rp ${parseFloat(ai.price || 0).toLocaleString("id-ID")}`,
+      meta: {
+        icon: "medical_services",
+        iconColor: "bg-primary/10 text-primary"
+      }
+    }));
     (() => {
       const status = encounter?.encounter?.status;
       const map = {

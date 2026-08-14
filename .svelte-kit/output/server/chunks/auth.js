@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import argon2 from "argon2";
 import crypto from "node:crypto";
-import { d as db, z as refreshTokens, u as users, C as authAuditLogs } from "./index3.js";
+import { d as db, B as refreshTokens, u as users, E as authAuditLogs } from "./index3.js";
 import { eq, and, isNull, lt } from "drizzle-orm";
 let _jwtSecret = null;
 function getJwtSecret() {
@@ -14,7 +14,7 @@ function getJwtSecret() {
   _jwtSecret = new TextEncoder().encode(raw || "dev-secret-change-in-production");
   return _jwtSecret;
 }
-const ACCESS_TOKEN_EXPIRY = "15m";
+const ACCESS_TOKEN_EXPIRY = "8h";
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1e3;
 const CONCURRENCY_GRACE_PERIOD_MS = 15 * 1e3;
 async function createToken(user) {

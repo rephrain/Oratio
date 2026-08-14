@@ -127,6 +127,40 @@
 						: 'font-medium'}">Doctor Shifts</span
 				>
 			</a>
+			<a
+				class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {currentPath.startsWith(
+					'/admin/dokter-suster',
+				)
+					? 'bg-primary/10 text-primary border border-primary/20'
+					: 'hover:bg-white/5 hover:text-white'}"
+				href="/admin/dokter-suster"
+			>
+				<span class="material-symbols-outlined">badge</span>
+				<span
+					class="text-sm {currentPath.startsWith(
+						'/admin/dokter-suster',
+					)
+						? 'font-semibold'
+						: 'font-medium'}">Dokter ↔ Suster</span
+				>
+			</a>
+			<a
+				class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {currentPath.startsWith(
+					'/admin/doctor-items',
+				)
+					? 'bg-primary/10 text-primary border border-primary/20'
+					: 'hover:bg-white/5 hover:text-white'}"
+				href="/admin/doctor-items"
+			>
+				<span class="material-symbols-outlined">medication_liquid</span>
+				<span
+					class="text-sm {currentPath.startsWith(
+						'/admin/doctor-items',
+					)
+						? 'font-semibold'
+						: 'font-medium'}">Dokter ↔ Item</span
+				>
+			</a>
 
 			<div
 				class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-3 py-4 mt-4"

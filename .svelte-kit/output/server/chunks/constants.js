@@ -175,6 +175,27 @@ const ADMIN_TABLES = {
       { key: "doctor_code", label: "Doctor Code", type: "text", maxLength: 5 },
       { key: "profile_image_url", label: "Profile Image URL", type: "image" },
       { key: "is_active", label: "Is Active", type: "boolean", defaultValue: true },
+      {
+        key: "suster_ids",
+        label: "Suster Pendamping",
+        type: "m2m",
+        m2mSchema: "dokterSuster",
+        m2mLocalKey: "dokter_id",
+        m2mForeignKey: "suster_id",
+        fkTable: "users",
+        fkLabel: "name",
+        fkFilter: { role: "suster" }
+      },
+      {
+        key: "doctor_item_ids",
+        label: "Item Tindakan Dokter",
+        type: "m2m",
+        m2mSchema: "doctorItems",
+        m2mLocalKey: "doctor_id",
+        m2mForeignKey: "item_id",
+        fkTable: "items",
+        fkLabel: "name"
+      },
       { key: "created_at", label: "Created At", type: "datetime", readOnly: true },
       { key: "updated_at", label: "Updated At", type: "datetime", readOnly: true }
     ]
@@ -203,6 +224,27 @@ const ADMIN_TABLES = {
       { key: "start_time", label: "Start Time", type: "time", required: true },
       { key: "end_time", label: "End Time", type: "time", required: true },
       { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "dokter-suster": {
+    label: "Dokter - Suster Assignment",
+    schema: "dokterSuster",
+    compositePK: true,
+    pkKeys: ["dokter_id", "suster_id"],
+    fields: [
+      { key: "dokter_id", label: "Dokter", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
+      { key: "suster_id", label: "Suster", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "suster" } },
+      { key: "created_at", label: "Created At", type: "datetime", readOnly: true }
+    ]
+  },
+  "doctor-items": {
+    label: "Dokter - Item Assignment",
+    schema: "doctorItems",
+    compositePK: true,
+    pkKeys: ["doctor_id", "item_id"],
+    fields: [
+      { key: "doctor_id", label: "Dokter", type: "fk", required: true, fkTable: "users", fkLabel: "name", fkFilter: { role: "dokter" } },
+      { key: "item_id", label: "Item Tindakan", type: "fk", required: true, fkTable: "items", fkLabel: "name" }
     ]
   },
   "patients": {

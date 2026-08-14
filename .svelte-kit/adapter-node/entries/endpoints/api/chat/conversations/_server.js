@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, A as chatConversations, s as shifts, u as users, B as chatMessages } from "../../../../../chunks/index3.js";
+import { d as db, C as chatConversations, s as shifts, u as users, D as chatMessages } from "../../../../../chunks/index3.js";
 import { or, eq, desc, sql, and, ne, isNull } from "drizzle-orm";
 async function GET({ locals }) {
   if (!locals.user) {

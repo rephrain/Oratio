@@ -34,23 +34,10 @@ function generatePatientId(lastId) {
   const num = parseInt(lastId.substring(1)) + 1;
   return "O" + String(num).padStart(6, "0");
 }
-function generateEncounterId(doctorCode, lastId) {
-  const now = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-  const prefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${doctorCode}`;
-  let num = 1;
-  if (lastId) {
-    const match = lastId.match(/(\d+)$/);
-    if (match) {
-      num = parseInt(match[1], 10) + 1;
-    }
-  }
-  return prefix + String(num).padStart(6, "0");
-}
 export {
-  generateEncounterId as a,
-  getJakartaDateString as b,
-  getJakartaMonthString as c,
-  formatCurrency as d,
+  getJakartaDateString as a,
+  getJakartaMonthString as b,
+  formatCurrency as c,
   formatDate as f,
   generatePatientId as g
 };

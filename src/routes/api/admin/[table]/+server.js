@@ -26,6 +26,7 @@ const schemaMap = {
 	encounterPrescriptions: schema.encounterPrescriptions,
 	encounterReferrals: schema.encounterReferrals,
 	items: schema.items,
+	doctorItems: schema.doctorItems,
 	encounterItems: schema.encounterItems,
 	payments: schema.payments,
 	dokterSuster: schema.dokterSuster
@@ -192,6 +193,14 @@ export async function GET({ params, url }) {
 
 	const data = await query;
 
+	// Attach synthetic 'id' for composite PK tables
+	if (tableConfig.compositePK && data.length > 0) {
+		const pkKeys = tableConfig.pkKeys || ['dokter_id', 'suster_id'];
+		for (const row of data) {
+			row.id = pkKeys.map(k => row[k]).join(':');
+		}
+	}
+
 	// Fetch M2M values for each row if needed
 	const m2mFields = tableConfig.fields?.filter(f => f.type === 'm2m') || [];
 	if (m2mFields.length > 0 && data.length > 0) {
@@ -250,6 +259,18 @@ export async function POST({ params, request }) {
 	// Clean data
 	const mainBody = cleanBody(body, tableConfig);
 
+	// Check composite PK duplicate
+	if (tableConfig.compositePK) {
+		const pkKeys = tableConfig.pkKeys || ['dokter_id', 'suster_id'];
+		const conds = pkKeys.map(k => mainBody[k] ? eq(table[k], mainBody[k]) : null).filter(Boolean);
+		if (conds.length === pkKeys.length) {
+			const existing = await db.select().from(table).where(and(...conds)).limit(1);
+			if (existing.length > 0) {
+				return json({ error: 'Penugasan / pemetaan ini sudah ada (duplicate entry).' }, { status: 400 });
+			}
+		}
+	}
+
 	try {
 		const m2mResults = await db.transaction(async (tx) => {
 			if (params.table === 'patients' && !mainBody.id) {
@@ -259,6 +280,10 @@ export async function POST({ params, request }) {
 			}
 
 			const [record] = await tx.insert(table).values(mainBody).returning();
+			if (tableConfig.compositePK && record) {
+				const pkKeys = tableConfig.pkKeys || ['dokter_id', 'suster_id'];
+				record.id = pkKeys.map(k => record[k]).join(':');
+			}
 
 			// Handle Many-to-Many synchronization
 			for (const field of tableConfig.fields || []) {
@@ -279,22 +304,12 @@ export async function POST({ params, request }) {
 		});
 		return json({ record: m2mResults }, { status: 201 });
 	} catch (error) {
-		console.error(`Admin POST error for ${params.table}:`);
-
-		console.dir(error, { depth: null });
-
-		if (error?.cause) {
-			console.error("CAUSE:");
-			console.dir(error.cause, { depth: null });
-		}
-
+		console.error(`Admin POST error for ${params.table}:`, error);
 		return json(
 			{
-				error: error.message,
+				error: error.code === '23505' ? 'Record / assignment ini sudah ada di database.' : error.message,
 				cause: error.cause ?? null,
 				code: error.code ?? null,
-				detail: error.detail ?? null,
-				constraint: error.constraint ?? null,
 			},
 			{ status: 400 }
 		);
@@ -325,13 +340,22 @@ export async function PUT({ params, request }) {
 		delete restData.password;
 	}
 
-	// Clean data (excluding m2m fields from main table update)
+	// Clean data
 	const updateData = cleanBody(restData, tableConfig);
 
 	try {
 		const result = await db.transaction(async (tx) => {
-			const pkCol = table.id;
-			const [record] = await tx.update(table).set(updateData).where(eq(pkCol, id)).returning();
+			let record;
+			if (tableConfig.compositePK) {
+				const pkKeys = tableConfig.pkKeys || ['dokter_id', 'suster_id'];
+				const parts = String(id).split(':');
+				const whereConds = pkKeys.map((k, idx) => eq(table[k], parts[idx] || updateData[k]));
+				[record] = await tx.update(table).set(updateData).where(and(...whereConds)).returning();
+				if (record) record.id = pkKeys.map(k => record[k]).join(':');
+			} else {
+				const pkCol = table.id;
+				[record] = await tx.update(table).set(updateData).where(eq(pkCol, id)).returning();
+			}
 
 			// Handle Many-to-Many synchronization
 			for (const field of tableConfig.fields || []) {
@@ -356,22 +380,12 @@ export async function PUT({ params, request }) {
 		});
 		return json({ record: result });
 	} catch (error) {
-		console.error(`Admin PUT error for ${params.table}:`);
-
-		console.dir(error, { depth: null });
-
-		if (error?.cause) {
-			console.error("CAUSE:");
-			console.dir(error.cause, { depth: null });
-		}
-
+		console.error(`Admin PUT error for ${params.table}:`, error);
 		return json(
 			{
 				error: error.message,
 				cause: error.cause ?? null,
 				code: error.code ?? null,
-				detail: error.detail ?? null,
-				constraint: error.constraint ?? null,
 			},
 			{ status: 400 }
 		);
@@ -397,28 +411,27 @@ export async function DELETE({ params, url }) {
 		if (all) {
 			await db.delete(table);
 			return json({ success: true, count: 'all' });
+		} else if (tableConfig.compositePK) {
+			const pkKeys = tableConfig.pkKeys || ['dokter_id', 'suster_id'];
+			let parts = String(id).split(':');
+			if (parts.length < pkKeys.length) {
+				parts = pkKeys.map(k => url.searchParams.get(k) || '');
+			}
+			const whereConds = pkKeys.map((k, idx) => eq(table[k], parts[idx]));
+			await db.delete(table).where(and(...whereConds));
+			return json({ success: true });
 		} else {
 			const pkCol = table.id;
 			await db.delete(table).where(eq(pkCol, id));
 			return json({ success: true });
 		}
 	} catch (error) {
-		console.error(`Admin DELETE error for ${params.table}:`);
-
-		console.dir(error, { depth: null });
-
-		if (error?.cause) {
-			console.error("CAUSE:");
-			console.dir(error.cause, { depth: null });
-		}
-
+		console.error(`Admin DELETE error for ${params.table}:`, error);
 		return json(
 			{
 				error: error.message,
 				cause: error.cause ?? null,
 				code: error.code ?? null,
-				detail: error.detail ?? null,
-				constraint: error.constraint ?? null,
 			},
 			{ status: 400 }
 		);

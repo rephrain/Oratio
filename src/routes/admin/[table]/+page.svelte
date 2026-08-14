@@ -11,7 +11,12 @@
 	// Child table relationships — parent slug → list of child descriptors
 	const CHILD_TABLE_MAP = {
 		'users': [
-			{ childTable: 'doctor-shifts', fkKey: 'user_id', label: 'Shift Dokter' }
+			{ childTable: 'doctor-shifts', fkKey: 'user_id', label: 'Shift Dokter' },
+			{ childTable: 'dokter-suster', fkKey: 'dokter_id', label: 'Suster Pendamping' },
+			{ childTable: 'doctor-items',  fkKey: 'doctor_id', label: 'Item Tindakan Dokter' }
+		],
+		'items': [
+			{ childTable: 'doctor-items',  fkKey: 'item_id', label: 'Dokter Pengguna' }
 		],
 		'patients': [
 			{ childTable: 'patient-disease-history', fkKey: 'patient_id', label: 'Riwayat Penyakit' },

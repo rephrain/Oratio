@@ -1,5 +1,5 @@
 import { e as eventBus } from "./realtimeEventBus.js";
-import { d as db, e as encounters, A as chatConversations } from "./index3.js";
+import { d as db, e as encounters, C as chatConversations } from "./index3.js";
 import { eq } from "drizzle-orm";
 async function canSubscribe(room, user) {
   if (!room || !user?.id)

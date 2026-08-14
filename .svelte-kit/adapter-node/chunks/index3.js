@@ -292,6 +292,13 @@ const shifts = pgTable("shifts", {
   end_time: time("end_time").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull()
 });
+const dokterSuster = pgTable("dokter_suster", {
+  dokter_id: uuid("dokter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  suster_id: uuid("suster_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  created_at: timestamp("created_at").defaultNow().notNull()
+}, (table) => ({
+  pk: primaryKey({ columns: [table.dokter_id, table.suster_id] })
+}));
 const chatConversations = pgTable("chat_conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
   participant_a: uuid("participant_a").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -361,7 +368,9 @@ const usersRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
   notificationReads: many(notificationReads),
   refreshTokens: many(refreshTokens),
-  authAuditLogs: many(authAuditLogs)
+  authAuditLogs: many(authAuditLogs),
+  susterAssigned: many(dokterSuster, { relationName: "dokter_to_suster" }),
+  dokterAssigned: many(dokterSuster, { relationName: "suster_to_dokter" })
 }));
 const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
   diseaseHistories: many(patientDiseaseHistory),
@@ -499,6 +508,10 @@ const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
 const authAuditLogsRelations = relations(authAuditLogs, ({ one }) => ({
   user: one(users, { fields: [authAuditLogs.user_id], references: [users.id] })
 }));
+const dokterSusterRelations = relations(dokterSuster, ({ one }) => ({
+  dokter: one(users, { fields: [dokterSuster.dokter_id], references: [users.id], relationName: "dokter_to_suster" }),
+  suster: one(users, { fields: [dokterSuster.suster_id], references: [users.id], relationName: "suster_to_dokter" })
+}));
 const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   authAuditLogs,
@@ -513,6 +526,8 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   doctorItemsRelations,
   documents,
   documentsRelations,
+  dokterSuster,
+  dokterSusterRelations,
   encounterItems,
   encounterItemsRelations,
   encounterOdontograms,
@@ -575,9 +590,11 @@ const connectionString = process.env.DATABASE_URL || "postgresql://oratio:Pwd%26
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 export {
-  chatConversations as A,
-  chatMessages as B,
-  authAuditLogs as C,
+  dokterSuster as A,
+  refreshTokens as B,
+  chatConversations as C,
+  chatMessages as D,
+  authAuditLogs as E,
   notificationReads as a,
   patientDiseaseHistory as b,
   patientAllergy as c,
@@ -601,7 +618,7 @@ export {
   users as u,
   encounterReferrals as v,
   items as w,
-  encounterItems as x,
-  payments as y,
-  refreshTokens as z
+  doctorItems as x,
+  encounterItems as y,
+  payments as z
 };

@@ -1,11 +1,11 @@
 import { j as json } from "../../../../chunks/index.js";
-import { d as db, p as patients, t as terminologyMaster, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, g as documents } from "../../../../chunks/index3.js";
-import { or, ilike, sql, desc, and, eq, asc } from "drizzle-orm";
-import { g as generatePatientId } from "../../../../chunks/formatters.js";
+import { d as db, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, g as documents } from "../../../../chunks/index3.js";
+import { or, ilike, sql, eq, asc, desc } from "drizzle-orm";
 import { b as generatePatientProfilePdf } from "../../../../chunks/pdfGenerator.js";
 import fs from "fs";
 import path from "path";
 import { a as emitPatientEvent } from "../../../../chunks/realtimeService.js";
+import { g as getOrCreateTerminology } from "../../../../chunks/terminology.js";
 async function GET({ url }) {
   const search = url.searchParams.get("search") || "";
   const page = parseInt(url.searchParams.get("page") || "1");
@@ -31,11 +31,21 @@ async function GET({ url }) {
 }
 async function POST({ request, locals }) {
   const body = await request.json();
-  const [last] = await db.select({ id: patients.id }).from(patients).orderBy(desc(patients.id)).limit(1);
-  const newId = generatePatientId(last?.id);
+  const [{ maxNum }] = await db.select({
+    maxNum: sql`COALESCE(MAX(CASE WHEN ${patients.id} ~ '^O[0-9]+$' THEN CAST(SUBSTRING(${patients.id}, 2) AS INTEGER) ELSE 0 END), 0)`
+  }).from(patients);
+  let nextNum = Number(maxNum) + 1;
+  let newId = "O" + String(nextNum).padStart(6, "0");
+  while (true) {
+    const [existing] = await db.select({ id: patients.id }).from(patients).where(eq(patients.id, newId)).limit(1);
+    if (!existing)
+      break;
+    nextNum++;
+    newId = "O" + String(nextNum).padStart(6, "0");
+  }
   const [patient] = await db.insert(patients).values({
     id: newId,
-    nik: body.nik,
+    nik: body.nik && body.nik.trim() ? body.nik.trim() : null,
     nama_lengkap: body.nama_lengkap,
     birth_date: body.birth_date,
     birthplace: body.birthplace,
@@ -62,21 +72,7 @@ async function POST({ request, locals }) {
     for (const h of body.disease_history) {
       if (!h.code || !h.display)
         continue;
-      let termId;
-      const [existing] = await db.select().from(terminologyMaster).where(and(
-        eq(terminologyMaster.code, h.code),
-        eq(terminologyMaster.system, h.system || "SNOMED")
-      )).limit(1);
-      if (existing) {
-        termId = existing.id;
-      } else {
-        const [inserted] = await db.insert(terminologyMaster).values({
-          code: h.code,
-          display: h.display,
-          system: h.system || "SNOMED"
-        }).returning();
-        termId = inserted.id;
-      }
+      const termId = await getOrCreateTerminology(h.code, h.display, h.system || "SNOMED");
       await db.insert(patientDiseaseHistory).values({
         patient_id: newId,
         type: h.type || "personal",
@@ -89,21 +85,7 @@ async function POST({ request, locals }) {
     for (const a of body.allergies) {
       if (!a.substance_code || !a.substance_display)
         continue;
-      let substanceId = null;
-      const [existing] = await db.select().from(terminologyMaster).where(and(
-        eq(terminologyMaster.code, a.substance_code),
-        eq(terminologyMaster.system, "SNOMED")
-      )).limit(1);
-      if (existing) {
-        substanceId = existing.id;
-      } else {
-        const [inserted] = await db.insert(terminologyMaster).values({
-          code: a.substance_code,
-          display: a.substance_display,
-          system: "SNOMED"
-        }).returning();
-        substanceId = inserted.id;
-      }
+      const substanceId = await getOrCreateTerminology(a.substance_code, a.substance_display, "SNOMED");
       await db.insert(patientAllergy).values({
         patient_id: newId,
         substance_id: substanceId,
@@ -119,20 +101,7 @@ async function POST({ request, locals }) {
       const dosageForm = m.dosage_form || null;
       let termId = null;
       if (kfaCode && productName) {
-        const [existing] = await db.select().from(terminologyMaster).where(and(
-          eq(terminologyMaster.code, kfaCode),
-          eq(terminologyMaster.system, "KFA")
-        )).limit(1);
-        if (existing) {
-          termId = existing.id;
-        } else {
-          const [inserted] = await db.insert(terminologyMaster).values({
-            code: kfaCode,
-            display: productName,
-            system: "KFA"
-          }).returning();
-          termId = inserted.id;
-        }
+        termId = await getOrCreateTerminology(kfaCode, productName, "KFA");
       }
       await db.insert(patientMedication).values({
         patient_id: newId,

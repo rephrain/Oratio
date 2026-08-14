@@ -133,6 +133,23 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         childTable: "doctor-shifts",
         fkKey: "user_id",
         label: "Shift Dokter"
+      },
+      {
+        childTable: "dokter-suster",
+        fkKey: "dokter_id",
+        label: "Suster Pendamping"
+      },
+      {
+        childTable: "doctor-items",
+        fkKey: "doctor_id",
+        label: "Item Tindakan Dokter"
+      }
+    ],
+    "items": [
+      {
+        childTable: "doctor-items",
+        fkKey: "item_id",
+        label: "Dokter Pengguna"
       }
     ],
     "patients": [

@@ -1,8 +1,9 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, e as encounters, p as patients, u as users, t as terminologyMaster, v as encounterReferrals, x as encounterItems, w as items, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, h as statusHistory, g as documents, r as encounterPrescriptions } from "../../../../../chunks/index3.js";
+import { d as db, e as encounters, p as patients, u as users, t as terminologyMaster, v as encounterReferrals, y as encounterItems, w as items, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, h as statusHistory, g as documents, r as encounterPrescriptions } from "../../../../../chunks/index3.js";
 import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { d as emitEncounterEvent, b as emitQueueEvent } from "../../../../../chunks/realtimeService.js";
+import { g as getOrCreateTerminology } from "../../../../../chunks/terminology.js";
 async function GET({ params }) {
   try {
     const [encounter] = await db.select({
@@ -186,21 +187,8 @@ async function PUT({ params, request }) {
   if (body.form_mode !== void 0)
     updateData.form_mode = body.form_mode;
   if (body.reason_code !== void 0) {
-    if (body.reason_code) {
-      const [existing] = await db.select().from(terminologyMaster).where(and(
-        eq(terminologyMaster.code, body.reason_code),
-        eq(terminologyMaster.system, "SNOMED")
-      )).limit(1);
-      if (existing) {
-        updateData.encounter_reason_id = existing.id;
-      } else if (body.reason_display) {
-        const [inserted] = await db.insert(terminologyMaster).values({
-          code: body.reason_code,
-          display: body.reason_display,
-          system: "SNOMED"
-        }).returning();
-        updateData.encounter_reason_id = inserted.id;
-      }
+    if (body.reason_code && body.reason_display) {
+      updateData.encounter_reason_id = await getOrCreateTerminology(body.reason_code, body.reason_display, "SNOMED");
     } else {
       updateData.encounter_reason_id = null;
     }
@@ -251,20 +239,7 @@ async function PUT({ params, request }) {
       const productName = rx.product_name;
       let termId = null;
       if (kfaCode && productName) {
-        const [existing] = await db.select().from(terminologyMaster).where(and(
-          eq(terminologyMaster.code, kfaCode),
-          eq(terminologyMaster.system, "KFA")
-        )).limit(1);
-        if (existing) {
-          termId = existing.id;
-        } else {
-          const [inserted] = await db.insert(terminologyMaster).values({
-            code: kfaCode,
-            display: productName,
-            system: "KFA"
-          }).returning();
-          termId = inserted.id;
-        }
+        termId = await getOrCreateTerminology(kfaCode, productName, "KFA");
       }
       await db.insert(encounterPrescriptions).values({
         encounter_id: params.id,
@@ -302,38 +277,12 @@ async function PUT({ params, request }) {
     if (body.odontogram.details) {
       for (const d of body.odontogram.details) {
         let icd10Id = d.icd10_id || null;
-        if (!icd10Id && d.diagnosis_code) {
-          const [existing] = await db.select().from(terminologyMaster).where(and(
-            eq(terminologyMaster.code, d.diagnosis_code),
-            eq(terminologyMaster.system, "ICD-10")
-          )).limit(1);
-          if (existing) {
-            icd10Id = existing.id;
-          } else if (d.diagnosis_display) {
-            const [inserted] = await db.insert(terminologyMaster).values({
-              code: d.diagnosis_code,
-              display: d.diagnosis_display,
-              system: "ICD-10"
-            }).returning();
-            icd10Id = inserted.id;
-          }
+        if (!icd10Id && d.diagnosis_code && d.diagnosis_display) {
+          icd10Id = await getOrCreateTerminology(d.diagnosis_code, d.diagnosis_display, "ICD-10");
         }
         let icd9cmId = d.icd9cm_id || null;
-        if (!icd9cmId && d.procedure_code) {
-          const [existing] = await db.select().from(terminologyMaster).where(and(
-            eq(terminologyMaster.code, d.procedure_code),
-            eq(terminologyMaster.system, "ICD-9-CM")
-          )).limit(1);
-          if (existing) {
-            icd9cmId = existing.id;
-          } else if (d.procedure_display) {
-            const [inserted] = await db.insert(terminologyMaster).values({
-              code: d.procedure_code,
-              display: d.procedure_display,
-              system: "ICD-9-CM"
-            }).returning();
-            icd9cmId = inserted.id;
-          }
+        if (!icd9cmId && d.procedure_code && d.procedure_display) {
+          icd9cmId = await getOrCreateTerminology(d.procedure_code, d.procedure_display, "ICD-9-CM");
         }
         const [tooth] = await db.insert(odontogramTeeth).values({
           odontogram_id: odonto.id,
@@ -380,18 +329,8 @@ async function PUT({ params, request }) {
         if (Array.isArray(d.diagnoses) && d.diagnoses.length > 0) {
           for (const diag of d.diagnoses) {
             let tempIcd10Id = diag.icd10_id || null;
-            if (!tempIcd10Id && diag.diagnosis_code) {
-              const [existing] = await db.select().from(terminologyMaster).where(and(eq(terminologyMaster.code, diag.diagnosis_code), eq(terminologyMaster.system, "ICD-10"))).limit(1);
-              if (existing) {
-                tempIcd10Id = existing.id;
-              } else if (diag.diagnosis_display) {
-                const [inserted] = await db.insert(terminologyMaster).values({
-                  code: diag.diagnosis_code,
-                  display: diag.diagnosis_display,
-                  system: "ICD-10"
-                }).returning();
-                tempIcd10Id = inserted.id;
-              }
+            if (!tempIcd10Id && diag.diagnosis_code && diag.diagnosis_display) {
+              tempIcd10Id = await getOrCreateTerminology(diag.diagnosis_code, diag.diagnosis_display, "ICD-10");
             }
             if (tempIcd10Id) {
               await db.insert(odontogramDiagnoses).values({
@@ -411,18 +350,8 @@ async function PUT({ params, request }) {
         if (Array.isArray(d.procedures) && d.procedures.length > 0) {
           for (const proc of d.procedures) {
             let tempIcd9cmId = proc.icd9cm_id || null;
-            if (!tempIcd9cmId && proc.procedure_code) {
-              const [existing] = await db.select().from(terminologyMaster).where(and(eq(terminologyMaster.code, proc.procedure_code), eq(terminologyMaster.system, "ICD-9-CM"))).limit(1);
-              if (existing) {
-                tempIcd9cmId = existing.id;
-              } else if (proc.procedure_display) {
-                const [inserted] = await db.insert(terminologyMaster).values({
-                  code: proc.procedure_code,
-                  display: proc.procedure_display,
-                  system: "ICD-9-CM"
-                }).returning();
-                tempIcd9cmId = inserted.id;
-              }
+            if (!tempIcd9cmId && proc.procedure_code && proc.procedure_display) {
+              tempIcd9cmId = await getOrCreateTerminology(proc.procedure_code, proc.procedure_display, "ICD-9-CM");
             }
             if (tempIcd9cmId) {
               await db.insert(odontogramProcedures).values({
@@ -496,7 +425,33 @@ async function PUT({ params, request }) {
   }
   return json({ encounter: updated });
 }
+async function DELETE({ params, locals: locals2 }) {
+  try {
+    const [encounter] = await db.select({
+      id: encounters.id,
+      status: encounters.status
+    }).from(encounters).where(eq(encounters.id, params.id)).limit(1);
+    if (!encounter) {
+      return json({ message: "Encounter not found" }, { status: 404 });
+    }
+    const deletableStatuses = ["Planned", "Arrived"];
+    if (!deletableStatuses.includes(encounter.status)) {
+      return json({
+        message: `Tidak dapat menghapus antrian yang sudah atau sedang diproses oleh dokter (Status: ${encounter.status})`
+      }, { status: 400 });
+    }
+    await db.delete(encounters).where(eq(encounters.id, params.id));
+    const userId = locals2?.user?.id;
+    emitEncounterEvent("status_changed", params.id, { status: "Deleted" }, userId);
+    emitQueueEvent("queue_cancelled", { id: params.id }, userId);
+    return json({ success: true, message: "Antrian dan rekam encounter berhasil dihapus dari database" });
+  } catch (err) {
+    console.error("DELETE /api/encounters/[id] error:", err);
+    return json({ message: "Internal Server Error", error: String(err) }, { status: 500 });
+  }
+}
 export {
+  DELETE,
   GET,
   PUT
 };

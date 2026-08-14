@@ -1,4 +1,4 @@
-import { u as users, d as db, y as payments, e as encounters, p as patients, x as encounterItems, w as items } from "../../../../../../chunks/index3.js";
+import { u as users, d as db, z as payments, e as encounters, p as patients, y as encounterItems, w as items } from "../../../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { c as generatePaymentReceiptPdf } from "../../../../../../chunks/pdfGenerator.js";
@@ -21,20 +21,12 @@ async function GET({ params, url }) {
     item: encounterItems,
     item_name: items.name
   }).from(encounterItems).leftJoin(items, eq(encounterItems.item_id, items.id)).where(eq(encounterItems.encounter_id, payment.encounter_id));
-  const eItems = eItemsRaw.map((r) => ({
+  eItemsRaw.map((r) => ({
     ...r.item,
     item_name: r.item_name
   }));
-  const origin = url.origin;
-  const pdfBuffer = await generatePaymentReceiptPdf({
-    payment,
-    encounter,
-    patient,
-    doctor,
-    cashier,
-    items: eItems,
-    origin
-  });
+  url.origin;
+  const pdfBuffer = await generatePaymentReceiptPdf();
   return new Response(pdfBuffer, {
     headers: {
       "Content-Type": "application/pdf",

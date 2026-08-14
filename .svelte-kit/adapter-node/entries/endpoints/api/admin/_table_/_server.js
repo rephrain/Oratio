@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as encounterItems, y as payments } from "../../../../../chunks/index3.js";
+import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as doctorItems, y as encounterItems, z as payments, A as dokterSuster } from "../../../../../chunks/index3.js";
 import { inArray, eq, sql, or, and, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 import { g as generatePatientId } from "../../../../../chunks/formatters.js";
@@ -24,8 +24,10 @@ const schemaMap = {
   encounterPrescriptions,
   encounterReferrals,
   items,
+  doctorItems,
   encounterItems,
-  payments
+  payments,
+  dokterSuster
 };
 const AUTO_MANAGED_FIELDS = ["created_at", "updated_at"];
 function cleanBody(body, tableConfig) {
@@ -144,6 +146,12 @@ async function GET({ params, url }) {
     query.where(and(...filters));
   }
   const data = await query;
+  if (tableConfig.compositePK && data.length > 0) {
+    const pkKeys = tableConfig.pkKeys || ["dokter_id", "suster_id"];
+    for (const row of data) {
+      row.id = pkKeys.map((k) => row[k]).join(":");
+    }
+  }
   const m2mFields = tableConfig.fields?.filter((f) => f.type === "m2m") || [];
   if (m2mFields.length > 0 && data.length > 0) {
     for (const field of m2mFields) {
@@ -186,6 +194,16 @@ async function POST({ params, request }) {
     delete body.password;
   }
   const mainBody = cleanBody(body, tableConfig);
+  if (tableConfig.compositePK) {
+    const pkKeys = tableConfig.pkKeys || ["dokter_id", "suster_id"];
+    const conds = pkKeys.map((k) => mainBody[k] ? eq(table[k], mainBody[k]) : null).filter(Boolean);
+    if (conds.length === pkKeys.length) {
+      const existing = await db.select().from(table).where(and(...conds)).limit(1);
+      if (existing.length > 0) {
+        return json({ error: "Penugasan / pemetaan ini sudah ada (duplicate entry)." }, { status: 400 });
+      }
+    }
+  }
   try {
     const m2mResults = await db.transaction(async (tx) => {
       if (params.table === "patients" && !mainBody.id) {
@@ -194,6 +212,10 @@ async function POST({ params, request }) {
         mainBody.id = generatePatientId(lastId);
       }
       const [record] = await tx.insert(table).values(mainBody).returning();
+      if (tableConfig.compositePK && record) {
+        const pkKeys = tableConfig.pkKeys || ["dokter_id", "suster_id"];
+        record.id = pkKeys.map((k) => record[k]).join(":");
+      }
       for (const field of tableConfig.fields || []) {
         if (field.type === "m2m" && body[field.key] && Array.isArray(body[field.key])) {
           const junctionTable = schemaMap[field.m2mSchema];
@@ -212,19 +234,12 @@ async function POST({ params, request }) {
     });
     return json({ record: m2mResults }, { status: 201 });
   } catch (error) {
-    console.error(`Admin POST error for ${params.table}:`);
-    console.dir(error, { depth: null });
-    if (error?.cause) {
-      console.error("CAUSE:");
-      console.dir(error.cause, { depth: null });
-    }
+    console.error(`Admin POST error for ${params.table}:`, error);
     return json(
       {
-        error: error.message,
+        error: error.code === "23505" ? "Record / assignment ini sudah ada di database." : error.message,
         cause: error.cause ?? null,
-        code: error.code ?? null,
-        detail: error.detail ?? null,
-        constraint: error.constraint ?? null
+        code: error.code ?? null
       },
       { status: 400 }
     );
@@ -251,8 +266,18 @@ async function PUT({ params, request }) {
   const updateData = cleanBody(restData, tableConfig);
   try {
     const result = await db.transaction(async (tx) => {
-      const pkCol = table.id;
-      const [record] = await tx.update(table).set(updateData).where(eq(pkCol, id)).returning();
+      let record;
+      if (tableConfig.compositePK) {
+        const pkKeys = tableConfig.pkKeys || ["dokter_id", "suster_id"];
+        const parts = String(id).split(":");
+        const whereConds = pkKeys.map((k, idx) => eq(table[k], parts[idx] || updateData[k]));
+        [record] = await tx.update(table).set(updateData).where(and(...whereConds)).returning();
+        if (record)
+          record.id = pkKeys.map((k) => record[k]).join(":");
+      } else {
+        const pkCol = table.id;
+        [record] = await tx.update(table).set(updateData).where(eq(pkCol, id)).returning();
+      }
       for (const field of tableConfig.fields || []) {
         if (field.type === "m2m" && restData[field.key] && Array.isArray(restData[field.key])) {
           const junctionTable = schemaMap[field.m2mSchema];
@@ -272,19 +297,12 @@ async function PUT({ params, request }) {
     });
     return json({ record: result });
   } catch (error) {
-    console.error(`Admin PUT error for ${params.table}:`);
-    console.dir(error, { depth: null });
-    if (error?.cause) {
-      console.error("CAUSE:");
-      console.dir(error.cause, { depth: null });
-    }
+    console.error(`Admin PUT error for ${params.table}:`, error);
     return json(
       {
         error: error.message,
         cause: error.cause ?? null,
-        code: error.code ?? null,
-        detail: error.detail ?? null,
-        constraint: error.constraint ?? null
+        code: error.code ?? null
       },
       { status: 400 }
     );
@@ -305,25 +323,27 @@ async function DELETE({ params, url }) {
     if (all) {
       await db.delete(table);
       return json({ success: true, count: "all" });
+    } else if (tableConfig.compositePK) {
+      const pkKeys = tableConfig.pkKeys || ["dokter_id", "suster_id"];
+      let parts = String(id).split(":");
+      if (parts.length < pkKeys.length) {
+        parts = pkKeys.map((k) => url.searchParams.get(k) || "");
+      }
+      const whereConds = pkKeys.map((k, idx) => eq(table[k], parts[idx]));
+      await db.delete(table).where(and(...whereConds));
+      return json({ success: true });
     } else {
       const pkCol = table.id;
       await db.delete(table).where(eq(pkCol, id));
       return json({ success: true });
     }
   } catch (error) {
-    console.error(`Admin DELETE error for ${params.table}:`);
-    console.dir(error, { depth: null });
-    if (error?.cause) {
-      console.error("CAUSE:");
-      console.dir(error.cause, { depth: null });
-    }
+    console.error(`Admin DELETE error for ${params.table}:`, error);
     return json(
       {
         error: error.message,
         cause: error.cause ?? null,
-        code: error.code ?? null,
-        detail: error.detail ?? null,
-        constraint: error.constraint ?? null
+        code: error.code ?? null
       },
       { status: 400 }
     );

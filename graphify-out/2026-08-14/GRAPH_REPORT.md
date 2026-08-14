@@ -1,7 +1,7 @@
 # Graph Report - Oratio  (2026-08-14)
 
 ## Corpus Check
-- 155 files · ~176,877 words
+- 155 files · ~177,218 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

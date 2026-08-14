@@ -2563,16 +2563,19 @@
 					class="bg-primary/5 rounded-2xl p-6 border border-primary/10 mb-6"
 				>
 					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-base font-bold flex items-center gap-2">
+						<h3 class="text-base font-bold flex items-center gap-2 text-slate-800">
 							<span class="material-symbols-outlined text-primary"
 								>shopping_cart</span
 							>
 							Item Tindakan
 						</h3>
-										<div
-						class="flex flex-col md:flex-row gap-3 items-end p-4 mb-4 bg-white rounded-xl border border-slate-200 shadow-sm"
+					</div>
+
+					<!-- Form Input Row -->
+					<div
+						class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-4 mb-4 bg-white rounded-2xl border border-slate-200 shadow-sm"
 					>
-						<div class="w-full md:flex-1 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-2.5 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary">
+						<div class="md:col-span-5 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-2.5 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50/50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Cari & Pilih Item</label
@@ -2586,20 +2589,20 @@
 								placeholder="Ketik untuk mencari item..."
 							/>
 						</div>
-						<div class="w-full md:w-16">
+						<div class="md:col-span-2">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Qty</label
 							>
 							<input
 								type="number"
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white text-center font-medium"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50 text-center font-bold"
 								bind:value={newItem.quantity}
 								min="1"
 								on:input={updateNewItemSubtotal}
 							/>
 						</div>
-						<div class="w-full md:w-32">
+						<div class="md:col-span-2">
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Harga (Rp)</label
@@ -2607,52 +2610,50 @@
 							<input
 								type="number"
 								min="0"
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white font-medium text-slate-700"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white font-semibold text-slate-700"
 								bind:value={newItem.price_at_time}
 								on:input={updateNewItemSubtotal}
 								placeholder="0"
 							/>
 						</div>
-						<div class="w-full md:w-40 flex gap-3 items-end">
-							<div class="flex-1">
+						<div class="md:col-span-3 flex gap-2 items-end">
+							<div class="flex-1 min-w-0">
 								<label
 									class="text-xs font-bold text-slate-500 mb-1 block"
 									>Subtotal (Rp)</label
 								>
 								<input
-									class="w-full rounded-xl border-slate-200 bg-slate-100/50 text-sm font-bold text-slate-700"
+									class="w-full rounded-xl border-slate-200 bg-slate-100/70 text-sm font-bold text-primary truncate"
 									value={newItem.subtotal?.toLocaleString("id-ID") || 0}
 									disabled
 								/>
 							</div>
-							<div>
-								<button
-									type="button"
-									class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
-									on:click={addEncounterItem}
-									title="Tambah Item"
+							<button
+								type="button"
+								class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm shrink-0"
+								on:click={addEncounterItem}
+								title="Tambah Item"
+							>
+								<span
+									class="material-symbols-outlined text-[20px]"
+									>add</span
 								>
-									<span
-										class="material-symbols-outlined text-[20px]"
-										>add</span
-									>
-								</button>
-							</div>
+							</button>
 						</div>
 					</div>
 
-					<!-- Added Items Chips -->
+					<!-- Added Items List -->
 					<div class="space-y-3">
 						{#each encounterItems as item, i}
 							<div
-								class="flex flex-col sm:flex-row sm:items-center gap-4 p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm"
+								class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-primary/20 transition-all"
 							>
 								<div class="flex items-center gap-3 flex-1 min-w-0">
 									<div
-										class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"
+										class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"
 									>
 										<span
-											class="material-symbols-outlined text-[20px]"
+											class="material-symbols-outlined text-[22px]"
 											>shopping_cart</span
 										>
 									</div>
@@ -2661,12 +2662,12 @@
 											{item.item_name || "Item Tindakan"}
 										</p>
 										<p class="text-xs text-slate-400">
-											Master Price: Rp {(availableItems.find(ai => ai.id === item.item_id)?.price || item.price_at_time || 0).toLocaleString("id-ID")}
+											Harga Master: Rp {(availableItems.find(ai => ai.id === item.item_id)?.price || item.price_at_time || 0).toLocaleString("id-ID")}
 										</p>
 									</div>
 								</div>
 
-								<div class="flex items-center gap-3 flex-wrap">
+								<div class="flex items-center gap-4 flex-wrap">
 									<div class="flex items-center gap-1.5">
 										<span class="text-xs text-slate-400 font-medium">Qty:</span>
 										<input
@@ -2693,7 +2694,7 @@
 											}}
 										/>
 									</div>
-									<div class="text-right min-w-[90px]">
+									<div class="text-right min-w-[100px]">
 										<span class="text-[10px] text-slate-400 block uppercase font-semibold">Subtotal</span>
 										<strong class="text-xs text-primary font-bold">
 											Rp {(item.subtotal || 0).toLocaleString("id-ID")}
@@ -2701,7 +2702,7 @@
 									</div>
 									<button
 										type="button"
-										class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+										class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
 										on:click={() => removeEncounterItem(i)}
 										title="Hapus Item"
 									>
@@ -2719,7 +2720,7 @@
 								Belum ada item tindakan
 							</p>
 						{/if}
-					</div>		</div>
+					</div>
 				</section>
 
 				<!-- Clinical Photo Section -->

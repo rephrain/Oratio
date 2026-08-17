@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../../chunks/index.js";
-import { d as db, e as encounters, p as patients, u as users, r as encounterPrescriptions, t as terminologyMaster, v as encounterReferrals, y as encounterItems, w as items, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures } from "../../../../../../chunks/index3.js";
+import { d as db, e as encounters, p as patients, u as users, v as encounterPrescriptions, t as terminologyMaster, w as encounterReferrals, y as encounterItems, x as items, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures } from "../../../../../../chunks/index3.js";
 import { alias } from "drizzle-orm/pg-core";
 import { eq } from "drizzle-orm";
 import { g as generateSoapWhoFormPdf, a as generateSoapFormPdf } from "../../../../../../chunks/pdfGenerator.js";

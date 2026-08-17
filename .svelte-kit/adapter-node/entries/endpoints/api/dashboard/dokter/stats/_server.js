@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../../chunks/index.js";
-import { e as encounters, h as statusHistory, d as db } from "../../../../../../chunks/index3.js";
+import { e as encounters, i as statusHistory, d as db } from "../../../../../../chunks/index3.js";
 import { sql, and, eq, notInArray } from "drizzle-orm";
 async function GET({ locals, url }) {
   if (!locals.user?.id || locals.user.role !== "dokter") {

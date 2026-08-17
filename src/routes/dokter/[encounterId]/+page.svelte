@@ -497,14 +497,17 @@
 
 			console.log("encounter:", encounter);
 
-			// Load available items for this doctor
+			// Load available items for this doctor based on doctor_items relations
 			try {
-				const itemsRes = await fetch(
-					`/api/admin/items?doctor_id=${data.encounter.doctor_id}`,
-				);
-				if (itemsRes.ok) {
-					const itemsData = await itemsRes.json();
-					availableItems = itemsData.data || [];
+				const docId = data.encounter?.doctor_id || data.encounter?.encounter?.doctor_id;
+				if (docId) {
+					const itemsRes = await fetch(
+						`/api/admin/items?doctor_id=${docId}`,
+					);
+					if (itemsRes.ok) {
+						const itemsData = await itemsRes.json();
+						availableItems = itemsData.data || [];
+					}
 				}
 			} catch {}
 

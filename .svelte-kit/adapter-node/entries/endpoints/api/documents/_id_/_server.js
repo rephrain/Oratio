@@ -1,7 +1,7 @@
 import { e as error, j as json } from "../../../../../chunks/index.js";
 import { readFile } from "fs/promises";
 import "path";
-import { d as db, g as documents } from "../../../../../chunks/index3.js";
+import { d as db, h as documents } from "../../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 async function GET({ params }) {
   const [doc] = await db.select().from(documents).where(eq(documents.id, params.id)).limit(1);

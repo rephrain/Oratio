@@ -1,5 +1,5 @@
 import { j as json } from "../../../../chunks/index.js";
-import { d as db, p as patients, b as patientDiseaseHistory, t as terminologyMaster, c as patientAllergy, f as patientMedication, e as encounters, u as users, r as encounterPrescriptions, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures } from "../../../../chunks/index3.js";
+import { d as db, p as patients, c as patientDiseaseHistory, t as terminologyMaster, f as patientAllergy, g as patientMedication, e as encounters, u as users, v as encounterPrescriptions, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures } from "../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import "pdfmake";

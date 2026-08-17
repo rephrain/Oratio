@@ -1,7 +1,7 @@
 import { j as json } from "../../../../../chunks/index.js";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
-import { d as db, g as documents, u as users } from "../../../../../chunks/index3.js";
+import { d as db, h as documents, u as users } from "../../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 import { hashPasswordAsync, createToken } from "../../../../../chunks/auth.js";
 async function PUT({ request, locals, cookies }) {

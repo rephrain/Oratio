@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, e as encounters, p as patients, u as users, t as terminologyMaster, v as encounterReferrals, y as encounterItems, w as items, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, h as statusHistory, g as documents, r as encounterPrescriptions } from "../../../../../chunks/index3.js";
+import { d as db, e as encounters, p as patients, u as users, t as terminologyMaster, w as encounterReferrals, y as encounterItems, x as items, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures, i as statusHistory, h as documents, v as encounterPrescriptions } from "../../../../../chunks/index3.js";
 import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { d as emitEncounterEvent, b as emitQueueEvent } from "../../../../../chunks/realtimeService.js";

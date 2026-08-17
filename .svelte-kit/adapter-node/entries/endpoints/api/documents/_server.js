@@ -1,7 +1,7 @@
 import { j as json } from "../../../../chunks/index.js";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
-import { d as db, g as documents } from "../../../../chunks/index3.js";
+import { d as db, h as documents } from "../../../../chunks/index3.js";
 async function POST({ request, locals }) {
   try {
     const formData = await request.formData();

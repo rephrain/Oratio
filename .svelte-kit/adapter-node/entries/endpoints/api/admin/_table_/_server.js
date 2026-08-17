@@ -1,6 +1,6 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, u as users, s as shifts, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, t as terminologyMaster, g as documents, e as encounters, h as statusHistory, i as encounterOdontograms, o as odontogramTeeth, j as odontogramSurfaces, k as odontogramRestorations, l as odontogramRestorationSurfaces, m as odontogramDiagnoses, q as odontogramProcedures, r as encounterPrescriptions, v as encounterReferrals, w as items, x as doctorItems, y as encounterItems, z as payments, A as dokterSuster } from "../../../../../chunks/index3.js";
-import { inArray, eq, sql, or, and, desc } from "drizzle-orm";
+import { d as db, b as doctorItems, u as users, s as shifts, p as patients, c as patientDiseaseHistory, f as patientAllergy, g as patientMedication, t as terminologyMaster, h as documents, e as encounters, i as statusHistory, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures, v as encounterPrescriptions, w as encounterReferrals, x as items, y as encounterItems, z as payments, A as dokterSuster } from "../../../../../chunks/index3.js";
+import { eq, inArray, sql, or, and, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 import { g as generatePatientId } from "../../../../../chunks/formatters.js";
 const schemaMap = {
@@ -102,7 +102,17 @@ async function GET({ params, url }) {
     }
   }
   const filters = [];
-  const skipParams = ["page", "limit", "offset", "all", "q"];
+  const skipParams = ["page", "limit", "offset", "all", "q", "doctor_id"];
+  const doctorIdParam = url.searchParams.get("doctor_id");
+  if (params.table === "items" && doctorIdParam) {
+    const assignedItemRows = await db.select({ item_id: doctorItems.item_id }).from(doctorItems).where(eq(doctorItems.doctor_id, doctorIdParam));
+    const assignedItemIds = assignedItemRows.map((r) => r.item_id);
+    if (assignedItemIds.length > 0) {
+      filters.push(inArray(table.id, assignedItemIds));
+    } else {
+      filters.push(sql`1=0`);
+    }
+  }
   const processedKeys = /* @__PURE__ */ new Set();
   url.searchParams.forEach((val, key) => {
     if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {

@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../../chunks/index.js";
-import { d as db, c as patientAllergy, t as terminologyMaster, b as patientDiseaseHistory, f as patientMedication } from "../../../../../../chunks/index3.js";
+import { d as db, f as patientAllergy, t as terminologyMaster, c as patientDiseaseHistory, g as patientMedication } from "../../../../../../chunks/index3.js";
 import { eq } from "drizzle-orm";
 async function GET({ params }) {
   const { id } = params;

@@ -1,5 +1,5 @@
 import { j as json } from "../../../../chunks/index.js";
-import { d as db, p as patients, b as patientDiseaseHistory, c as patientAllergy, f as patientMedication, g as documents } from "../../../../chunks/index3.js";
+import { d as db, p as patients, c as patientDiseaseHistory, f as patientAllergy, g as patientMedication, h as documents } from "../../../../chunks/index3.js";
 import { or, ilike, sql, eq, asc, desc } from "drizzle-orm";
 import { b as generatePatientProfilePdf } from "../../../../chunks/pdfGenerator.js";
 import fs from "fs";

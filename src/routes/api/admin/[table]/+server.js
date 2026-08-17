@@ -136,7 +136,23 @@ export async function GET({ params, url }) {
 
 	// Build filters from remaining searchParams
 	const filters = [];
-	const skipParams = ['page', 'limit', 'offset', 'all', 'q'];
+	const skipParams = ['page', 'limit', 'offset', 'all', 'q', 'doctor_id'];
+
+	// Filter items by doctor_id via doctor_items junction table
+	const doctorIdParam = url.searchParams.get('doctor_id');
+	if (params.table === 'items' && doctorIdParam) {
+		const assignedItemRows = await db
+			.select({ item_id: schema.doctorItems.item_id })
+			.from(schema.doctorItems)
+			.where(eq(schema.doctorItems.doctor_id, doctorIdParam));
+
+		const assignedItemIds = assignedItemRows.map((r) => r.item_id);
+		if (assignedItemIds.length > 0) {
+			filters.push(inArray(table.id, assignedItemIds));
+		} else {
+			filters.push(sql`1=0`);
+		}
+	}
 	const processedKeys = new Set();
 	url.searchParams.forEach((val, key) => {
 		if (!skipParams.includes(key) && table[key] && !processedKeys.has(key)) {

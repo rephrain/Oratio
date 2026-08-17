@@ -502,7 +502,7 @@
 				const docId = data.encounter?.doctor_id || data.encounter?.encounter?.doctor_id;
 				if (docId) {
 					const itemsRes = await fetch(
-						`/api/admin/items?doctor_id=${docId}`,
+						`/api/admin/items?doctor_id=${docId}&all=true`,
 					);
 					if (itemsRes.ok) {
 						const itemsData = await itemsRes.json();

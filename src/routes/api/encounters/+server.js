@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import {
 	encounters, statusHistory, encounterOdontograms,
-	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster, documents
+	encounterPrescriptions, encounterReferrals, encounterItems, patients, users, terminologyMaster, documents, doctorSuster
 } from '$lib/server/db/schema.js';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -38,6 +38,19 @@ export async function GET({ url, locals }) {
 	// For dokter role, only show their own encounters unless searching for a specific patient's history or explicitly requesting 'all' or another doctor
 	if (locals.user?.role === 'dokter' && !patientId && !doctorId) {
 		conditions.push(eq(encounters.doctor_id, locals.user.id));
+	}
+
+	// For suster role, show encounters for all their assigned doctors
+	if (locals.user?.role === 'suster' && !patientId && !doctorId) {
+		const assignedDoctors = await db.select({ doctor_id: doctorSuster.doctor_id })
+			.from(doctorSuster)
+			.where(eq(doctorSuster.suster_id, locals.user.id));
+		const assignedDoctorIds = assignedDoctors.map(d => d.doctor_id);
+		if (assignedDoctorIds.length > 0) {
+			conditions.push(inArray(encounters.doctor_id, assignedDoctorIds));
+		} else {
+			return json({ data: [] });
+		}
 	}
 
 	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

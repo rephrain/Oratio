@@ -10,7 +10,7 @@ return {
 	assets: new Set(["fonts/Roboto-BoldItalic.ttf","fonts/Roboto-Italic.ttf","fonts/Roboto-Medium.ttf","fonts/Roboto-Regular.ttf","logo.png"]),
 	mimeTypes: {".ttf":"font/ttf",".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.cbb5d4c6.js","app":"_app/immutable/entry/app.e594aedd.js","imports":["_app/immutable/entry/start.cbb5d4c6.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/singletons.e888a464.js","_app/immutable/chunks/index.87639c41.js","_app/immutable/chunks/paths.96392b08.js","_app/immutable/entry/app.e594aedd.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/index.53af2136.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.1f5860f5.js","app":"_app/immutable/entry/app.68698bc9.js","imports":["_app/immutable/entry/start.1f5860f5.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/singletons.0288d15a.js","_app/immutable/chunks/index.87639c41.js","_app/immutable/chunks/paths.3ee9e420.js","_app/immutable/entry/app.68698bc9.js","_app/immutable/chunks/preload-helper.a4192956.js","_app/immutable/chunks/scheduler.58399093.js","_app/immutable/chunks/index.53af2136.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -37,7 +37,9 @@ return {
 			__memo(() => import('./nodes/22.js')),
 			__memo(() => import('./nodes/23.js')),
 			__memo(() => import('./nodes/24.js')),
-			__memo(() => import('./nodes/25.js'))
+			__memo(() => import('./nodes/25.js')),
+			__memo(() => import('./nodes/26.js')),
+			__memo(() => import('./nodes/27.js'))
 		],
 		routes: [
 			{
@@ -209,6 +211,27 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/dokter/stats/_server.js'))
 			},
 			{
+				id: "/api/dashboard/suster/doctors",
+				pattern: /^\/api\/dashboard\/suster\/doctors\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/suster/doctors/_server.js'))
+			},
+			{
+				id: "/api/dashboard/suster/referrals",
+				pattern: /^\/api\/dashboard\/suster\/referrals\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/suster/referrals/_server.js'))
+			},
+			{
+				id: "/api/dashboard/suster/stats",
+				pattern: /^\/api\/dashboard\/suster\/stats\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/dashboard/suster/stats/_server.js'))
+			},
+			{
 				id: "/api/debug-tz",
 				pattern: /^\/api\/debug-tz\/?$/,
 				params: [],
@@ -242,6 +265,13 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/encounters/_server.js'))
+			},
+			{
+				id: "/api/encounters/lock",
+				pattern: /^\/api\/encounters\/lock\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/encounters/lock/_server.js'))
 			},
 			{
 				id: "/api/encounters/[id]",
@@ -478,7 +508,21 @@ return {
 				id: "/suster/patients",
 				pattern: /^\/suster\/patients\/?$/,
 				params: [],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 26 },
+				endpoint: null
+			},
+			{
+				id: "/suster/patient/[patientId]",
+				pattern: /^\/suster\/patient\/([^/]+?)\/?$/,
+				params: [{"name":"patientId","optional":false,"rest":false,"chained":false}],
 				page: { layouts: [0,5,], errors: [1,,], leaf: 25 },
+				endpoint: null
+			},
+			{
+				id: "/suster/[encounterId]",
+				pattern: /^\/suster\/([^/]+?)\/?$/,
+				params: [{"name":"encounterId","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,5,], errors: [1,,], leaf: 27 },
 				endpoint: null
 			}
 		],

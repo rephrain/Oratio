@@ -377,7 +377,7 @@ export const encounterReferrals = pgTable('encounter_referrals', {
 export const items = pgTable('items', {
 	id: uuid('id').defaultRandom().primaryKey(),
 
-    kode_item: varchar('kode_item', { length: 50 }).notNull(),
+	kode_item: varchar('kode_item', { length: 50 }).notNull(),
 
 	name: varchar('name', { length: 255 }).notNull(),
 	price: numeric('price', { precision: 12, scale: 2 }).notNull(),
@@ -466,12 +466,12 @@ export const shifts = pgTable('shifts', {
 // =============================================================
 // 17.5. DOKTER - SUSTER (Many-to-Many Relationship)
 // =============================================================
-export const dokterSuster = pgTable('dokter_suster', {
-	dokter_id: uuid('dokter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+export const doctorSuster = pgTable('doctor_suster', {
+	doctor_id: uuid('doctor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	suster_id: uuid('suster_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	created_at: timestamp('created_at').defaultNow().notNull()
 }, (table) => ({
-	pk: primaryKey({ columns: [table.dokter_id, table.suster_id] })
+	pk: primaryKey({ columns: [table.doctor_id, table.suster_id] })
 }));
 
 
@@ -575,8 +575,8 @@ export const usersRelations = relations(users, ({ many }) => ({
 	notificationReads: many(notificationReads),
 	refreshTokens: many(refreshTokens),
 	authAuditLogs: many(authAuditLogs),
-	susterAssigned: many(dokterSuster, { relationName: 'dokter_to_suster' }),
-	dokterAssigned: many(dokterSuster, { relationName: 'suster_to_dokter' })
+	susterAssigned: many(doctorSuster, { relationName: 'doctor_to_suster' }),
+	doctorAssigned: many(doctorSuster, { relationName: 'suster_to_doctor' })
 }));
 
 export const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
@@ -743,7 +743,7 @@ export const authAuditLogsRelations = relations(authAuditLogs, ({ one }) => ({
 	user: one(users, { fields: [authAuditLogs.user_id], references: [users.id] })
 }));
 
-export const dokterSusterRelations = relations(dokterSuster, ({ one }) => ({
-	dokter: one(users, { fields: [dokterSuster.dokter_id], references: [users.id], relationName: 'dokter_to_suster' }),
-	suster: one(users, { fields: [dokterSuster.suster_id], references: [users.id], relationName: 'suster_to_dokter' })
+export const doctorSusterRelations = relations(doctorSuster, ({ one }) => ({
+	doctor: one(users, { fields: [doctorSuster.doctor_id], references: [users.id], relationName: 'doctor_to_suster' }),
+	suster: one(users, { fields: [doctorSuster.suster_id], references: [users.id], relationName: 'suster_to_doctor' })
 }));

@@ -1,131 +1,150 @@
-import { c as create_ssr_component, o as onDestroy, f as add_attribute, e as escape, g as each } from "../../../chunks/ssr.js";
-const _page_svelte_svelte_type_style_lang = "";
-const css = {
-  code: "@keyframes svelte-83o9qe-fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes svelte-83o9qe-scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}@keyframes svelte-83o9qe-float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) scale(1.05)}}.animate-fade-in-up.svelte-83o9qe{animation:svelte-83o9qe-fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards}.animate-scale-in.svelte-83o9qe{animation:svelte-83o9qe-scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards}.animate-float.svelte-83o9qe{animation:svelte-83o9qe-float 10s ease-in-out infinite}.animate-float-slow.svelte-83o9qe{animation:svelte-83o9qe-float 14s ease-in-out infinite;animation-delay:2s}.delay-100.svelte-83o9qe{animation-delay:100ms}.delay-200.svelte-83o9qe{animation-delay:200ms}.delay-300.svelte-83o9qe{animation-delay:300ms}.delay-400.svelte-83o9qe{animation-delay:400ms}.opacity-0.svelte-83o9qe{opacity:0}@media(prefers-reduced-motion: reduce){.animate-fade-in-up.svelte-83o9qe,.animate-scale-in.svelte-83o9qe,.animate-float.svelte-83o9qe,.animate-float-slow.svelte-83o9qe{animation:none !important;opacity:1 !important;transform:none !important}}",
-  map: null
-};
+import { c as create_ssr_component, o as onDestroy, e as escape, v as validate_component, g as each, f as add_attribute } from "../../../chunks/ssr.js";
+/* empty css                                                       */import { R as RichSelect } from "../../../chunks/RichSelect.js";
+import { a as getJakartaDateString, f as formatDate } from "../../../chunks/formatters.js";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let user;
-  let formattedDate;
-  let formattedTime;
+  let filteredEncounters;
+  let sortedReferrals;
   let { data } = $$props;
-  let greeting = "";
-  let glCanvas;
-  let now = /* @__PURE__ */ new Date();
-  const todayStats = [
-    {
-      icon: "groups",
-      value: "8",
-      label: "Patients Today"
-    },
-    {
-      icon: "fact_check",
-      value: "3",
-      label: "Charts Pending Review"
-    },
-    {
-      icon: "event_upcoming",
-      value: "10:30",
-      label: "Next Appointment · Room 3"
-    }
-  ];
-  const accentStyles = {
-    primary: {
-      blob: "bg-primary/5",
-      iconBg: "bg-primary/10",
-      iconText: "text-primary",
-      hoverBorder: "hover:border-primary/30",
-      hoverShadow: "hover:shadow-[0_8px_30px_rgba(225,29,72,0.15)]",
-      hoverTitle: "group-hover:text-primary",
-      ctaText: "text-primary"
-    },
-    teal: {
-      blob: "bg-teal-500/5",
-      iconBg: "bg-teal-500/10",
-      iconText: "text-teal-600",
-      hoverBorder: "hover:border-teal-600/30",
-      hoverShadow: "hover:shadow-[0_8px_30px_rgba(13,148,136,0.15)]",
-      hoverTitle: "group-hover:text-teal-600",
-      ctaText: "text-teal-600"
-    },
-    sky: {
-      blob: "bg-sky-500/5",
-      iconBg: "bg-sky-500/10",
-      iconText: "text-sky-600",
-      hoverBorder: "hover:border-sky-600/30",
-      hoverShadow: "hover:shadow-[0_8px_30px_rgba(2,132,199,0.15)]",
-      hoverTitle: "group-hover:text-sky-600",
-      ctaText: "text-sky-600"
-    },
-    amber: {
-      blob: "bg-amber-500/5",
-      iconBg: "bg-amber-500/10",
-      iconText: "text-amber-600",
-      hoverBorder: "hover:border-amber-600/30",
-      hoverShadow: "hover:shadow-[0_8px_30px_rgba(217,119,6,0.15)]",
-      hoverTitle: "group-hover:text-amber-600",
-      ctaText: "text-amber-600"
-    }
+  let doctorOptions = [];
+  let selectedDoctorId = "all";
+  let loadingDoctors = true;
+  let encounters = [];
+  let filterDate = getJakartaDateString();
+  let stats = {
+    patientsToday: 0,
+    completedToday: 0,
+    avgWaitMinutes: 0,
+    avgTreatmentMinutes: 0
   };
-  const quickActions = [
-    {
-      href: "/suster/history",
-      icon: "history",
-      title: "Encounter History",
-      description: "Access recent patient records, review detailed SOAP notes, and manage ongoing clinical encounters.",
-      cta: "View Records",
-      accent: "primary",
-      delay: "delay-100"
-    },
-    {
-      href: "/suster/patients",
-      icon: "patient_list",
-      title: "Patient Registry",
-      description: "Browse the complete patient database, verify medical histories, and update critical allergy information.",
-      cta: "Manage Registry",
-      accent: "teal",
-      delay: "delay-200"
-    },
-    {
-      href: "/suster/schedule",
-      icon: "calendar_today",
-      title: "Today's Schedule",
-      description: "View today's full appointment list, confirm arrivals, and prepare treatment rooms ahead of time.",
-      cta: "View Schedule",
-      accent: "sky",
-      delay: "delay-300"
-    },
-    {
-      href: "/suster/sterilization",
-      icon: "sanitizer",
-      title: "Sterilization Log",
-      description: "Record and verify instrument sterilization cycles to keep every treatment room compliant and safe.",
-      cta: "Open Log",
-      accent: "amber",
-      delay: "delay-400"
-    }
-  ];
+  let referrals = [];
+  let selectedEncounterData = null;
   onDestroy(() => {
   });
   if ($$props.data === void 0 && $$bindings.data && data !== void 0)
     $$bindings.data(data);
-  $$result.css.add(css);
-  user = data?.user;
-  formattedDate = now.toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  });
-  formattedTime = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-  return `${$$result.head += `<!-- HEAD_svelte-c7aonc_START -->${$$result.title = `<title>Suster Dashboard — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-c7aonc_END -->`, ""}  <canvas aria-hidden="true" class="fixed inset-0 w-full h-full -z-10 dark:opacity-5 transition-opacity duration-500"${add_attribute("this", glCanvas, 0)}></canvas> <div class="flex-1 p-6 lg:p-12 max-w-7xl mx-auto w-full animate-fade-in-up opacity-0 svelte-83o9qe"> <section aria-labelledby="welcome-heading" class="relative overflow-hidden rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0px_8px_32px_rgba(225,29,72,0.08)] mb-8 p-8 lg:p-12 animate-scale-in opacity-0 svelte-83o9qe"><div class="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none animate-float svelte-83o9qe"></div> <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-48 h-48 bg-teal-500/20 rounded-full blur-2xl pointer-events-none animate-float-slow svelte-83o9qe"></div> <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8"><div class="max-w-2xl"><div class="flex flex-wrap items-center gap-2 mb-6"><div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary" data-svelte-h="svelte-1gbyxzq"><span class="material-symbols-outlined text-[16px]">medical_services</span> <span class="text-xs font-bold uppercase tracking-wider">Clinical Dashboard</span></div> <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"><span class="material-symbols-outlined text-[16px]" data-svelte-h="svelte-1xxm79w">calendar_today</span> <span class="text-xs font-semibold">${escape(formattedDate)}</span></div></div> <h2 id="welcome-heading" class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight leading-tight">${escape(greeting)}, <span class="text-primary">${escape(user?.name || "Suster")}</span></h2> <p class="text-lg text-slate-600 dark:text-slate-400" data-svelte-h="svelte-89mv68">Your shift is currently active. You have access to patient histories and editing capabilities for today&#39;s encounters.</p></div>  <div class="hidden lg:flex flex-col items-center justify-center gap-2 w-48 h-48 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-xl flex-shrink-0 p-6"><span class="relative flex h-3 w-3 mb-1" data-svelte-h="svelte-1u837hs"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span> <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></span> <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider" data-svelte-h="svelte-519z7i">Shift Active</p> <p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight" aria-label="Current time">${escape(formattedTime)}</p> <p class="text-xs text-slate-500 dark:text-slate-400 text-center leading-snug">WIB · ${escape(user?.name ? "On duty" : "Nurse station")}</p></div></div></section>  <section aria-labelledby="glance-heading" class="mb-12"><h3 id="glance-heading" class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 animate-fade-in-up opacity-0 delay-100 svelte-83o9qe" data-svelte-h="svelte-167xtap"><span class="material-symbols-outlined text-primary text-[20px]">insights</span>
-			Today at a Glance</h3> <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">${each(todayStats, (stat, i) => {
-    return `<div class="flex items-center gap-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-xl p-5 border border-slate-200/50 dark:border-slate-700/50 shadow-[0px_4px_20px_rgba(225,29,72,0.04)] animate-fade-in-up opacity-0 svelte-83o9qe" style="${"animation-delay: " + escape(150 + i * 100, true) + "ms"}"><div class="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0"><span class="material-symbols-outlined text-[22px]">${escape(stat.icon)}</span></div> <div class="min-w-0"><p class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums">${escape(stat.value)}</p> <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 truncate">${escape(stat.label)}</p></div> </div>`;
-  })}</div></section>  <section aria-labelledby="operations-heading"><h3 id="operations-heading" class="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2 animate-fade-in-up opacity-0 delay-100 svelte-83o9qe" data-svelte-h="svelte-n4wz7y"><span class="material-symbols-outlined text-primary">bolt</span>
-			Quick Operations</h3> <div class="grid grid-cols-1 md:grid-cols-2 gap-6">${each(quickActions, (action) => {
-    let s = accentStyles[action.accent];
-    return ` <a${add_attribute("href", action.href, 0)} class="${"group relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-6 lg:p-8 shadow-[0px_4px_20px_rgba(225,29,72,0.04)] border border-slate-200/50 dark:border-slate-700/50 " + escape(s.hoverBorder, true) + " transition-all duration-300 hover:-translate-y-1 " + escape(s.hoverShadow, true) + " flex flex-col h-full animate-fade-in-up opacity-0 " + escape(action.delay, true) + " svelte-83o9qe"}"><div class="${"absolute top-0 right-0 w-32 h-32 " + escape(s.blob, true) + " rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 svelte-83o9qe"}"></div> <div class="${"w-14 h-14 rounded-xl " + escape(s.iconBg, true) + " flex items-center justify-center mb-6 " + escape(s.iconText, true) + " group-hover:animate-pulse transition-all svelte-83o9qe"}"><span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">${escape(action.icon)}</span></div> <h4 class="${"text-xl font-bold text-slate-900 dark:text-white mb-2 " + escape(s.hoverTitle, true) + " transition-colors svelte-83o9qe"}">${escape(action.title)}</h4> <p class="text-base text-slate-500 dark:text-slate-400 mb-8 flex-1">${escape(action.description)}</p> <div class="${"flex items-center " + escape(s.ctaText, true) + " text-sm font-bold mt-auto svelte-83o9qe"}">${escape(action.cta)} <span class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform" data-svelte-h="svelte-1t1kprj">arrow_forward</span></div> </a>`;
-  })}</div></section> </div>`;
+  let $$settled;
+  let $$rendered;
+  let previous_head = $$result.head;
+  do {
+    $$settled = true;
+    $$result.head = previous_head;
+    data?.user;
+    encounters.filter((e) => ["Planned", "Arrived", "On Hold"].includes(e.encounter?.status));
+    encounters.filter((e) => e.encounter?.status === "In Progress");
+    encounters.filter((e) => ["Discharged", "Completed"].includes(e.encounter?.status));
+    filteredEncounters = selectedDoctorId === "all" ? encounters : encounters.filter((e) => e.encounter?.doctor_id === selectedDoctorId);
+    sortedReferrals = [...referrals].sort((a, b) => {
+      return 0;
+    });
+    (() => {
+      const status = selectedEncounterData?.encounter?.status;
+      const map = {
+        "In Progress": {
+          badge: "bg-blue-500",
+          bg: "from-blue-100 to-blue-50",
+          text: "text-blue-600"
+        },
+        Arrived: {
+          badge: "bg-emerald-500",
+          bg: "from-emerald-100 to-emerald-50",
+          text: "text-emerald-600"
+        },
+        Planned: {
+          badge: "bg-amber-400",
+          bg: "from-amber-100 to-amber-50",
+          text: "text-amber-600"
+        },
+        "On Hold": {
+          badge: "bg-rose-400",
+          bg: "from-rose-100 to-rose-50",
+          text: "text-rose-600"
+        },
+        Referral: {
+          badge: "bg-purple-500",
+          bg: "from-purple-100 to-purple-50",
+          text: "text-purple-600"
+        },
+        Discharged: {
+          badge: "bg-emerald-500",
+          bg: "from-emerald-100 to-emerald-50",
+          text: "text-emerald-600"
+        },
+        Completed: {
+          badge: "bg-emerald-500",
+          bg: "from-emerald-100 to-emerald-50",
+          text: "text-emerald-600"
+        }
+      };
+      return map[status] || {
+        badge: "bg-slate-400",
+        bg: "from-slate-100 to-slate-50",
+        text: "text-slate-600"
+      };
+    })();
+    $$rendered = `${$$result.head += `<!-- HEAD_svelte-bju4w_START -->${$$result.title = `<title>Dashboard Suster — Oratio Clinic</title>`, ""}<!-- HEAD_svelte-bju4w_END -->`, ""} <div class="-m-6 flex h-[calc(100vh-73px)] bg-slate-50 overflow-hidden font-sans relative"><section class="${"flex-1 min-w-0 " + escape(
+      "mr-0",
+      true
+    ) + " transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden custom-scrollbar p-6"}"> <div class="flex items-center justify-between mb-6 gap-4"><div class="flex-shrink-0" style="min-width: 240px;">${validate_component(RichSelect, "RichSelect").$$render(
+      $$result,
+      {
+        options: doctorOptions,
+        placeholder: "Filter Dokter...",
+        loading: loadingDoctors,
+        wrapperClass: "",
+        value: selectedDoctorId
+      },
+      {
+        value: ($$value) => {
+          selectedDoctorId = $$value;
+          $$settled = false;
+        }
+      },
+      {}
+    )}</div> <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${escape((/* @__PURE__ */ new Date(filterDate + "T00:00:00")).toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }))}</p></div>  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10"> <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2" data-svelte-h="svelte-n3dbfh">Patients Today</p> <div class="flex items-center gap-2 mt-1"><h3 class="text-3xl font-black text-blue-900 leading-tight">${escape(0)}</h3> ${stats.patientsTodayChange !== void 0 ? (() => {
+      let chg = stats.patientsTodayChange, isZero = chg === 0, isPos = chg > 0;
+      return `   ${isZero ? `<span class="text-slate-400 text-xs font-bold flex items-center" data-svelte-h="svelte-dl2mnr">-</span>` : `<span class="${escape(isPos ? "text-green-500" : "text-red-500", true) + " text-xs font-bold flex items-center"}">${escape(isPos ? "+" : "-")}${escape(Math.abs(chg))}%
+									<span class="material-symbols-outlined text-[14px]">${escape(isPos ? "trending_up" : "trending_down")}</span></span>`}`;
+    })() : ``}</div></div> <div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" data-svelte-h="svelte-wezqd5"><span class="material-symbols-outlined text-2xl">patient_list</span></div></div>  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2" data-svelte-h="svelte-9uoe3q">Avg. Wait Time</p> <div class="flex items-center gap-2 mt-1"><h3 class="text-3xl font-black text-blue-900 leading-tight">${escape(0)}<span class="text-sm font-bold text-slate-400 ml-1" data-svelte-h="svelte-zszoup">m</span></h3> ${stats.avgWaitMinutesChange !== void 0 ? (() => {
+      let chg = stats.avgWaitMinutesChange, isZero = chg === 0, isPos = chg > 0;
+      return `   ${isZero ? `<span class="text-slate-400 text-xs font-bold flex items-center" data-svelte-h="svelte-dl2mnr">-</span>` : `<span class="${escape(isPos ? "text-green-500" : "text-red-500", true) + " text-xs font-bold flex items-center"}">${escape(isPos ? "+" : "-")}${escape(Math.abs(chg))}%
+									<span class="material-symbols-outlined text-[14px]">${escape(isPos ? "trending_up" : "trending_down")}</span></span>`}`;
+    })() : ``}</div></div> <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" data-svelte-h="svelte-1gc7yba"><span class="material-symbols-outlined text-2xl">hourglass_empty</span></div></div>  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2" data-svelte-h="svelte-hgtcxp">Avg. Treatment Time</p> <div class="flex items-center gap-2 mt-1"><h3 class="text-3xl font-black text-blue-900 leading-tight">${escape(0)}<span class="text-sm font-bold text-slate-400 ml-1" data-svelte-h="svelte-zszoup">m</span></h3> ${stats.avgTreatmentMinutesChange !== void 0 ? (() => {
+      let chg = stats.avgTreatmentMinutesChange, isZero = chg === 0, isPos = chg > 0;
+      return `   ${isZero ? `<span class="text-slate-400 text-xs font-bold flex items-center" data-svelte-h="svelte-dl2mnr">-</span>` : `<span class="${escape(isPos ? "text-green-500" : "text-red-500", true) + " text-xs font-bold flex items-center"}">${escape(isPos ? "+" : "-")}${escape(Math.abs(chg))}%
+									<span class="material-symbols-outlined text-[14px]">${escape(isPos ? "trending_up" : "trending_down")}</span></span>`}`;
+    })() : ``}</div></div> <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" data-svelte-h="svelte-lisvrf"><span class="material-symbols-outlined text-2xl">schedule</span></div></div>  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2" data-svelte-h="svelte-7cr58r">Completed</p> <div class="flex items-center gap-2 mt-1"><h3 class="text-3xl font-black text-blue-900 leading-tight">${escape(0)} <span class="text-sm font-bold text-slate-300 mx-1" data-svelte-h="svelte-1j0d7k6">/</span> <span class="text-xl text-slate-400">${escape(0)}</span></h3> ${stats.completedTodayChange !== void 0 ? (() => {
+      let chg = stats.completedTodayChange, isZero = chg === 0, isPos = chg > 0;
+      return `   ${isZero ? `<span class="text-slate-400 text-xs font-bold flex items-center" data-svelte-h="svelte-dl2mnr">-</span>` : `<span class="${escape(isPos ? "text-green-500" : "text-red-500", true) + " text-xs font-bold flex items-center"}">${escape(isPos ? "+" : "-")}${escape(Math.abs(chg))}%
+									<span class="material-symbols-outlined text-[14px]">${escape(isPos ? "trending_up" : "trending_down")}</span></span>`}`;
+    })() : ``}</div></div> <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" data-svelte-h="svelte-3i1pyv"><span class="material-symbols-outlined text-2xl">check_circle</span></div></div></div>  <div class="mb-10" style="display: grid; grid-template-columns: minmax(0, 1fr);"><div class="flex items-center justify-between mb-6"><h3 class="text-lg font-bold text-blue-900 flex items-center gap-2" data-svelte-h="svelte-1rri4ys"><span class="material-symbols-outlined text-primary">pending_actions</span>
+					Active Patient Queue</h3> <span class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md">${escape(filteredEncounters.filter((e) => ["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status)).length)} IN QUEUE</span></div> ${`<div style="text-align: center; padding: 2rem;" data-svelte-h="svelte-1hiyi91"><div class="spinner spinner-lg" style="margin: 0 auto;"></div></div>`}</div>  <div><div class="flex items-center justify-between mb-6" data-svelte-h="svelte-u7njmg"><h3 class="text-lg font-bold text-blue-900 flex items-center gap-2"><span class="material-symbols-outlined text-primary">inbox</span>
+					Referral Inbox</h3> <button class="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline">View All</button></div> <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden"><table class="w-full text-left"><thead><tr class="bg-slate-50/50"><th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"><div class="flex items-center gap-1">Sender Doctor<span class="${"material-symbols-outlined text-[14px] " + escape(
+      "text-slate-300 opacity-0 group-hover:opacity-100",
+      true
+    )}">${escape("unfold_more")}</span></div></th> <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"><div class="flex items-center gap-1">Date<span class="${"material-symbols-outlined text-[14px] " + escape(
+      "text-slate-300 opacity-0 group-hover:opacity-100",
+      true
+    )}">${escape("unfold_more")}</span></div></th> <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"><div class="flex items-center gap-1">Patient Name<span class="${"material-symbols-outlined text-[14px] " + escape(
+      "text-slate-300 opacity-0 group-hover:opacity-100",
+      true
+    )}">${escape("unfold_more")}</span></div></th> <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"><div class="flex items-center gap-1">Note<span class="${"material-symbols-outlined text-[14px] " + escape(
+      "text-slate-300 opacity-0 group-hover:opacity-100",
+      true
+    )}">${escape("unfold_more")}</span></div></th></tr></thead> <tbody class="divide-y divide-slate-50">${`${referrals.length > 0 ? `${each(sortedReferrals, (ref) => {
+      return `<tr class="hover:bg-slate-50 transition-colors cursor-pointer group"><td class="px-6 py-5"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm overflow-hidden">${ref.sender_profile_image ? `<img${add_attribute("src", ref.sender_profile_image, 0)}${add_attribute("alt", ref.sender_name, 0)} class="w-full h-full object-cover">` : `${escape(ref.sender_name?.[0] || "D")}`}</div> <div><div class="text-sm font-bold text-slate-900">${escape(ref.sender_name)}</div> <div class="text-[10px] text-slate-400" data-svelte-h="svelte-1c1eu56">Sender Doctor
+												</div></div> </div></td> <td class="px-6 py-5 text-xs text-slate-600 font-medium">${escape(formatDate(ref.referral_date))}</td> <td class="px-6 py-5"><div class="text-sm font-bold text-slate-900">${escape(ref.patient_name)}</div> <div class="text-[10px] text-slate-400">ID: ${escape(ref.patient_id)} </div></td> <td class="px-6 py-5"><p class="text-sm text-slate-500 line-clamp-1 italic">&quot;${escape(ref.note || "No note")}&quot;
+										</p></td> </tr>`;
+    })}` : `<tr data-svelte-h="svelte-1k97pf4"><td colspan="4" class="px-6 py-10 text-center text-slate-400 text-sm font-medium">Tidak ada rujukan masuk saat ini.</td></tr>`}`}</tbody></table></div></div></section>  <aside class="${"fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-slate-200 z-[40] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out " + escape(
+      "translate-x-full",
+      true
+    )}">${`<div class="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400" data-svelte-h="svelte-1ggzdzk"><span class="material-symbols-outlined text-6xl mb-4 text-slate-200">person_search</span> <h3 class="text-lg font-bold text-slate-500 mb-2">No Patient Selected</h3> <p class="text-xs">Select a patient from the active queue to view details</p></div>`}</aside>  ${``}</div>`;
+  } while (!$$settled);
+  return $$rendered;
 });
 export {
   Page as default

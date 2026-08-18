@@ -1,6 +1,6 @@
 import { j as json } from "../../../../chunks/index.js";
-import { e as encounters, u as users, d as db, p as patients, t as terminologyMaster, h as documents, i as statusHistory } from "../../../../chunks/index3.js";
-import { sql, eq, and, desc, inArray } from "drizzle-orm";
+import { e as encounters, d as db, A as doctorSuster, u as users, p as patients, t as terminologyMaster, h as documents, i as statusHistory } from "../../../../chunks/index3.js";
+import { sql, eq, inArray, and, desc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { g as getOrCreateTerminology } from "../../../../chunks/terminology.js";
 import { a as emitPatientEvent, b as emitQueueEvent, c as emitDashboardEvent } from "../../../../chunks/realtimeService.js";
@@ -29,6 +29,15 @@ async function GET({ url, locals }) {
     conditions.push(eq(encounters.patient_id, patientId));
   if (locals.user?.role === "dokter" && !patientId && !doctorId) {
     conditions.push(eq(encounters.doctor_id, locals.user.id));
+  }
+  if (locals.user?.role === "suster" && !patientId && !doctorId) {
+    const assignedDoctors = await db.select({ doctor_id: doctorSuster.doctor_id }).from(doctorSuster).where(eq(doctorSuster.suster_id, locals.user.id));
+    const assignedDoctorIds = assignedDoctors.map((d) => d.doctor_id);
+    if (assignedDoctorIds.length > 0) {
+      conditions.push(inArray(encounters.doctor_id, assignedDoctorIds));
+    } else {
+      return json({ data: [] });
+    }
   }
   const whereClause = conditions.length > 0 ? and(...conditions) : void 0;
   const doctors = alias(users, "doctors");

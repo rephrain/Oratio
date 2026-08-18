@@ -1088,13 +1088,35 @@
 		goto("/dokter");
 	}
 
+	let lockHeartbeat;
+
 	onMount(() => {
 		loadDoctors();
 		loadEncounter();
 		setupEncounterRealtime();
+
+		// Acquire & heartbeat lock
+		fetch('/api/encounters/lock', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ encounterId })
+		});
+		lockHeartbeat = setInterval(() => {
+			fetch('/api/encounters/lock', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ encounterId })
+			});
+		}, 60000);
 	});
 
 	onDestroy(() => {
+		if (lockHeartbeat) clearInterval(lockHeartbeat);
+		fetch('/api/encounters/lock', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ encounterId })
+		});
 		if (encounterStore) encounterStore.destroy();
 		headerTitle.set(null);
 		isSidebarHidden.set(false);

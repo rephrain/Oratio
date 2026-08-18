@@ -1,411 +1,2053 @@
 <script>
 	import { onMount, onDestroy } from "svelte";
+	import { goto } from "$app/navigation";
+	import DataTable from "$lib/components/Tables/DataTable.svelte";
+	import RichSelect from "$lib/components/Forms/RichSelect.svelte";
+	import { createRealtimeList } from "$lib/stores/realtimeStore.js";
+	import { STATUS_COLORS, DAYS_OF_WEEK } from "$lib/utils/constants.js";
+	import {
+		formatElapsedTime,
+		formatTime,
+		getShiftCountdown,
+		formatDate,
+		getWhatsAppUrl,
+		getJakartaDateString,
+	} from "$lib/utils/formatters.js";
 
 	export let data;
 	$: user = data?.user;
 
-	let greeting = "";
-	let glCanvas;
-	let reqFrame;
-	let clockInterval;
-	let now = new Date();
+	// ── Assigned doctors (fetched on mount) ──
+	let assignedDoctors = [];
+	let doctorOptions = [];
+	let selectedDoctorId = "all";
+	let loadingDoctors = true;
 
-	// TODO: wire these up to real data from the page's load function.
-	// Kept here as clearly-labelled placeholders so the layout and
-	// interactions can be reviewed before the backend is connected.
-	const todayStats = [
-		{ icon: "groups", value: "8", label: "Patients Today" },
-		{ icon: "fact_check", value: "3", label: "Charts Pending Review" },
-		{ icon: "event_upcoming", value: "10:30", label: "Next Appointment · Room 3" }
-	];
+	// ── Encounters ──
+	let encountersStore;
+	let encounters = [];
+	let loading = true;
+	let filterDate = getJakartaDateString();
 
-	// Full literal Tailwind class strings per accent, so the JIT
-	// compiler can find and generate them (dynamic interpolation
-	// like `bg-${accent}-500/10` would not be picked up at build time).
-	const accentStyles = {
-		primary: {
-			blob: "bg-primary/5",
-			iconBg: "bg-primary/10",
-			iconText: "text-primary",
-			hoverBorder: "hover:border-primary/30",
-			hoverShadow: "hover:shadow-[0_8px_30px_rgba(225,29,72,0.15)]",
-			hoverTitle: "group-hover:text-primary",
-			ctaText: "text-primary"
-		},
-		teal: {
-			blob: "bg-teal-500/5",
-			iconBg: "bg-teal-500/10",
-			iconText: "text-teal-600",
-			hoverBorder: "hover:border-teal-600/30",
-			hoverShadow: "hover:shadow-[0_8px_30px_rgba(13,148,136,0.15)]",
-			hoverTitle: "group-hover:text-teal-600",
-			ctaText: "text-teal-600"
-		},
-		sky: {
-			blob: "bg-sky-500/5",
-			iconBg: "bg-sky-500/10",
-			iconText: "text-sky-600",
-			hoverBorder: "hover:border-sky-600/30",
-			hoverShadow: "hover:shadow-[0_8px_30px_rgba(2,132,199,0.15)]",
-			hoverTitle: "group-hover:text-sky-600",
-			ctaText: "text-sky-600"
-		},
-		amber: {
-			blob: "bg-amber-500/5",
-			iconBg: "bg-amber-500/10",
-			iconText: "text-amber-600",
-			hoverBorder: "hover:border-amber-600/30",
-			hoverShadow: "hover:shadow-[0_8px_30px_rgba(217,119,6,0.15)]",
-			hoverTitle: "group-hover:text-amber-600",
-			ctaText: "text-amber-600"
+	$: todayQueue = encounters.filter((e) =>
+		["Planned", "Arrived", "On Hold"].includes(e.encounter?.status),
+	);
+	$: inProgress = encounters.filter(
+		(e) => e.encounter?.status === "In Progress",
+	);
+	$: completedToday = encounters.filter((e) =>
+		["Discharged", "Completed"].includes(e.encounter?.status),
+	);
+
+	// Filter encounters by selected doctor
+	$: filteredEncounters =
+		selectedDoctorId === "all"
+			? encounters
+			: encounters.filter(
+					(e) => e.encounter?.doctor_id === selectedDoctorId,
+				);
+
+	// ── Encounter locks ──
+	let encounterLocks = {};
+	let lockPollInterval;
+
+	async function loadEncounterLocks() {
+		const ids = encounters.map((e) => e.encounter?.id).filter(Boolean);
+		if (ids.length === 0) {
+			encounterLocks = {};
+			return;
 		}
+		try {
+			const res = await fetch(
+				`/api/encounters/lock?ids=${ids.join(",")}`,
+			);
+			if (res.ok) {
+				const data = await res.json();
+				encounterLocks = data.locks || {};
+			}
+		} catch {}
+	}
+
+	// ── Shifts ──
+	let shiftInfo = { active: false, status: "no-shifts" };
+	let doctorShifts = [];
+	let shiftInterval;
+
+	// ── Stats ──
+	let stats = {
+		patientsToday: 0,
+		completedToday: 0,
+		avgWaitMinutes: 0,
+		avgTreatmentMinutes: 0,
 	};
 
-	const quickActions = [
-		{
-			href: "/suster/history",
-			icon: "history",
-			title: "Encounter History",
-			description:
-				"Access recent patient records, review detailed SOAP notes, and manage ongoing clinical encounters.",
-			cta: "View Records",
-			accent: "primary",
-			delay: "delay-100"
+	// ── Referrals ──
+	let referrals = [];
+	let loadingReferrals = false;
+	let referralsStore;
+
+	// ── Sidebar ──
+	let selectedEncounterData = null;
+	let patientMedicalBackground = null;
+	let isSidebarOpen = true;
+	let patientHistory = [];
+	let loadingMedical = false;
+	let expandedHistoryId = null;
+
+	$: personalDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "personal",
+		) || [];
+	$: familyDiseases =
+		patientMedicalBackground?.diseases?.filter(
+			(d) => d.type === "family",
+		) || [];
+
+	$: selectedLockInfo = selectedEncounterData?.encounter?.id
+		? encounterLocks[selectedEncounterData.encounter.id]
+		: null;
+
+	const REASON_THEMES = {
+		finding: {
+			bg: "bg-blue-50/50",
+			border: "border-blue-100",
+			text: "text-blue-700",
+			icon: "search",
+			label: "Finding / Symptom",
 		},
-		{
-			href: "/suster/patients",
-			icon: "patient_list",
-			title: "Patient Registry",
-			description:
-				"Browse the complete patient database, verify medical histories, and update critical allergy information.",
-			cta: "Manage Registry",
-			accent: "teal",
-			delay: "delay-200"
+		procedure: {
+			bg: "bg-emerald-50/50",
+			border: "border-emerald-100",
+			text: "text-emerald-700",
+			icon: "medical_services",
+			label: "Procedure / Treatment",
 		},
-		{
-			href: "/suster/schedule",
-			icon: "calendar_today",
-			title: "Today's Schedule",
-			description:
-				"View today's full appointment list, confirm arrivals, and prepare treatment rooms ahead of time.",
-			cta: "View Schedule",
-			accent: "sky",
-			delay: "delay-300"
+		situation: {
+			bg: "bg-amber-50/50",
+			border: "border-amber-100",
+			text: "text-amber-700",
+			icon: "check_circle",
+			label: "General Situation",
 		},
-		{
-			href: "/suster/sterilization",
-			icon: "sanitizer",
-			title: "Sterilization Log",
-			description:
-				"Record and verify instrument sterilization cycles to keep every treatment room compliant and safe.",
-			cta: "Open Log",
-			accent: "amber",
-			delay: "delay-400"
+		event: {
+			bg: "bg-rose-50/50",
+			border: "border-rose-100",
+			text: "text-rose-700",
+			icon: "notification_important",
+			label: "Accident / Event",
+		},
+	};
+
+	// ── Referral sort ──
+	let sortKey = "";
+	let sortDesc = false;
+
+	function handleSort(key) {
+		if (sortKey === key) {
+			sortDesc = !sortDesc;
+		} else {
+			sortKey = key;
+			sortDesc = false;
 		}
-	];
+	}
 
-	$: formattedDate = now.toLocaleDateString("id-ID", {
-		weekday: "long",
-		day: "numeric",
-		month: "long",
-		year: "numeric"
+	$: sortedReferrals = [...referrals].sort((a, b) => {
+		if (!sortKey) return 0;
+		let valA, valB;
+		if (sortKey === "doctor") {
+			valA = a.sender_name || "";
+			valB = b.sender_name || "";
+		} else if (sortKey === "date") {
+			valA = new Date(a.referral_date || 0).getTime();
+			valB = new Date(b.referral_date || 0).getTime();
+		} else if (sortKey === "patient") {
+			valA = a.patient_name || "";
+			valB = b.patient_name || "";
+		} else if (sortKey === "note") {
+			valA = a.note || "";
+			valB = b.note || "";
+		}
+
+		if (typeof valA === "string") valA = valA.toLowerCase();
+		if (typeof valB === "string") valB = valB.toLowerCase();
+
+		if (valA < valB) return sortDesc ? 1 : -1;
+		if (valA > valB) return sortDesc ? -1 : 1;
+		return 0;
 	});
-	$: formattedTime = now.toLocaleTimeString("id-ID", {
-		hour: "2-digit",
-		minute: "2-digit"
-	});
 
-	onMount(() => {
-		const hour = new Date().getHours();
-		if (hour >= 5 && hour < 12) greeting = "Selamat Pagi";
-		else if (hour >= 12 && hour < 15) greeting = "Selamat Siang";
-		else if (hour >= 15 && hour < 18) greeting = "Selamat Sore";
-		else greeting = "Selamat Malam";
+	// ── Data loaders ──
 
-		clockInterval = setInterval(() => {
-			now = new Date();
-		}, 30000);
-
-		const prefersReducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)"
-		).matches;
-
-		// WebGL Shader Background
-		const canvas = glCanvas;
-		const gl = canvas.getContext("webgl");
-
-		if (gl) {
-			const vsSource = `
-				attribute vec4 aVertexPosition;
-				void main() {
-					gl_Position = aVertexPosition;
-				}
-			`;
-
-			const fsSource = `
-				precision highp float;
-				uniform float u_time;
-				uniform vec2 u_resolution;
-
-				void main() {
-					vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-
-					// Slow, soothing organic motion - three overlapping waves
-					float wave1 = sin(uv.x * 2.0 + u_time * 0.35) * 0.5 + 0.5;
-					float wave2 = sin(uv.y * 2.6 - u_time * 0.28) * 0.5 + 0.5;
-					float wave3 = sin((uv.x + uv.y) * 1.8 + u_time * 0.2) * 0.5 + 0.5;
-
-					// Calming duotone: warm rose meeting a whisper of cool teal
-					vec3 colorRose = vec3(1.0, 0.98, 0.98);
-					vec3 colorRoseTint = vec3(0.99, 0.93, 0.94);
-					vec3 colorTealTint = vec3(0.94, 0.98, 0.97);
-
-					vec3 mixed = mix(colorRose, colorRoseTint, wave1 * wave2);
-					vec3 finalColor = mix(mixed, colorTealTint, wave3 * 0.25);
-
-					// Soft vignette for depth
-					float vignette = 1.0 - length(uv - 0.5) * 0.45;
-					finalColor *= vignette;
-
-					gl_FragColor = vec4(finalColor, 1.0);
-				}
-			`;
-
-			const initShaderProgram = (gl, vsSource, fsSource) => {
-				const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-				const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-				const shaderProgram = gl.createProgram();
-				gl.attachShader(shaderProgram, vertexShader);
-				gl.attachShader(shaderProgram, fragmentShader);
-				gl.linkProgram(shaderProgram);
-				return shaderProgram;
-			};
-
-			const loadShader = (gl, type, source) => {
-				const shader = gl.createShader(type);
-				gl.shaderSource(shader, source);
-				gl.compileShader(shader);
-				return shader;
-			};
-
-			const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-			const programInfo = {
-				program: shaderProgram,
-				attribLocations: {
-					vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition")
+	async function loadAssignedDoctors() {
+		try {
+			const res = await fetch("/api/dashboard/suster/doctors");
+			const resp = await res.json();
+			assignedDoctors = resp.data || [];
+			doctorOptions = [
+				{
+					value: "all",
+					label: "Semua Dokter",
+					sublabel: `${assignedDoctors.length} dokter`,
+					meta: {
+						icon: "groups",
+						iconColor: "bg-primary/10 text-primary",
+					},
 				},
-				uniformLocations: {
-					time: gl.getUniformLocation(shaderProgram, "u_time"),
-					resolution: gl.getUniformLocation(shaderProgram, "u_resolution")
+				...assignedDoctors.map((d) => ({
+					value: d.doctor_id,
+					label: d.doctor_name,
+					sublabel: `Kode: ${d.doctor_code || "-"}`,
+					meta: {
+						profile_image_url: d.profile_image_url,
+						is_doctor: true,
+					},
+				})),
+			];
+		} catch (err) {
+			console.error("Error loading assigned doctors:", err);
+		} finally {
+			loadingDoctors = false;
+		}
+	}
+
+	async function setupEncountersRealtime() {
+		if (encountersStore) encountersStore.destroy();
+
+		encountersStore = createRealtimeList(
+			`/api/encounters?date=${filterDate}`,
+			{
+				rooms: ["queue"],
+				events: {
+					queue_created: (list, data) => {
+						loadStats();
+						loadEncounterLocks();
+						return [data, ...list];
+					},
+					queue_updated: (list, data) => {
+						loadStats();
+						return list.map((e) =>
+							e.encounter.id === data.id
+								? {
+										...e,
+										encounter: {
+											...e.encounter,
+											status: data.status,
+										},
+									}
+								: e,
+						);
+					},
+					queue_completed: (list, data) => {
+						loadStats();
+						return list.map((e) =>
+							e.encounter.id === data.id
+								? {
+										...e,
+										encounter: {
+											...e.encounter,
+											status: data.status,
+										},
+									}
+								: e,
+						);
+					},
+					queue_cancelled: (list, data) => {
+						loadStats();
+						return list.filter(
+							(e) => e.encounter.id !== data.id,
+						);
+					},
+				},
+			},
+		);
+
+		encountersStore.subscribe((val) => {
+			encounters = val;
+			loading = false;
+			// Reload locks when encounters change
+			loadEncounterLocks();
+		});
+
+		await encountersStore.load();
+	}
+
+	async function loadStats() {
+		try {
+			const res = await fetch(
+				`/api/dashboard/suster/stats?date=${filterDate}`,
+			);
+			const resp = await res.json();
+			if (!resp.error) {
+				stats = resp;
+			}
+		} catch (err) {
+			console.error("Error loading stats:", err);
+		}
+	}
+
+	async function setupReferralsRealtime() {
+		if (referralsStore) referralsStore.destroy();
+
+		referralsStore = createRealtimeList(
+			"/api/dashboard/suster/referrals",
+			{
+				rooms: [`user_${user?.id}`],
+				events: {
+					notification_created: (list, data) => {
+						if (data.type === "referral") {
+							return [data.payload, ...list];
+						}
+						return list;
+					},
+				},
+			},
+		);
+
+		referralsStore.subscribe((val) => {
+			referrals = val;
+			loadingReferrals = false;
+		});
+
+		await referralsStore.load();
+	}
+
+	async function loadShifts() {
+		if (!user?.id) return;
+		try {
+			const res = await fetch("/api/auth/shifts");
+			const resp = await res.json();
+			doctorShifts = resp.data || [];
+			updateShift();
+		} catch {}
+	}
+
+	function updateShift() {
+		shiftInfo = getShiftCountdown(doctorShifts);
+	}
+
+	// ── UI helpers ──
+
+	function toggleHistory(id) {
+		expandedHistoryId = expandedHistoryId === id ? null : id;
+	}
+
+	function calculateAge(birthDate) {
+		if (!birthDate) return "-";
+		const today = new Date(
+			new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+		);
+		const birth = new Date(birthDate);
+		let age = today.getFullYear() - birth.getFullYear();
+		const m = today.getMonth() - birth.getMonth();
+		if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+			age--;
+		}
+		return age;
+	}
+
+	async function selectEncounter(row) {
+		if (selectedEncounterData?.encounter?.id === row?.encounter?.id) {
+			isSidebarOpen = !isSidebarOpen;
+			return;
+		}
+		selectedEncounterData = row;
+		patientMedicalBackground = null;
+		patientHistory = [];
+		expandedHistoryId = null;
+		isSidebarOpen = true;
+		if (row?.patient?.id) {
+			loadingMedical = true;
+			try {
+				const [bgRes, histRes] = await Promise.all([
+					fetch(`/api/patients/${row.patient.id}/medical-background`),
+					fetch(
+						`/api/encounters?patient_id=${row.patient.id}&limit=5`,
+					),
+				]);
+				if (bgRes.ok) patientMedicalBackground = await bgRes.json();
+				if (histRes.ok) {
+					const data = await histRes.json();
+					patientHistory = (data.data || []).filter(
+						(e) => e.encounter?.id !== row.encounter?.id,
+					);
 				}
-			};
-
-			const buffers = { position: gl.createBuffer() };
-			gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-			const positions = [-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0];
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-			const drawFrame = (time) => {
-				time *= 0.001;
-
-				const displayWidth = window.innerWidth;
-				const displayHeight = window.innerHeight;
-
-				if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-					canvas.width = displayWidth;
-					canvas.height = displayHeight;
-				}
-
-				gl.viewport(0, 0, canvas.width, canvas.height);
-
-				gl.clearColor(0.0, 0.0, 0.0, 1.0);
-				gl.clear(gl.COLOR_BUFFER_BIT);
-
-				gl.useProgram(programInfo.program);
-
-				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-				gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 2, gl.FLOAT, false, 0, 0);
-				gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-
-				gl.uniform1f(programInfo.uniformLocations.time, time);
-				gl.uniform2f(programInfo.uniformLocations.resolution, canvas.width, canvas.height);
-
-				gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-			};
-
-			const render = (time) => {
-				drawFrame(time);
-				reqFrame = requestAnimationFrame(render);
-			};
-
-			// Respect users who prefer reduced motion: paint one calm,
-			// static frame instead of animating indefinitely.
-			if (prefersReducedMotion) {
-				drawFrame(0);
-			} else {
-				reqFrame = requestAnimationFrame(render);
+			} catch (e) {
+				console.error(e);
+			} finally {
+				loadingMedical = false;
 			}
 		}
+	}
+
+	async function selectReferral(ref) {
+		const virtualRow = {
+			patient_name: ref.patient_name || "Unknown Patient",
+			patient: { id: ref.patient_id },
+			encounter: {
+				id: ref.id,
+				patient_id: ref.patient_id,
+				status: "Referral",
+				reason_type: "situation",
+			},
+			encounter_reason_display: `Referral from ${ref.sender_name}: ${ref.note || "No note"}`,
+			isReferral: true,
+		};
+		await selectEncounter(virtualRow);
+	}
+
+	async function startEncounter() {
+		if (selectedEncounterData?.encounter?.id) {
+			const id = selectedEncounterData.encounter.id;
+			const currentStatus = selectedEncounterData.encounter.status;
+
+			if (["Planned", "Arrived"].includes(currentStatus)) {
+				try {
+					await fetch(`/api/encounters/${id}`, {
+						method: "PUT",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ status: "In Progress" }),
+					});
+				} catch (err) {
+					console.error("Failed to update status:", err);
+				}
+			}
+
+			goto(`/suster/${id}`);
+		}
+	}
+
+	function editPatient() {
+		const patientId =
+			selectedEncounterData?.encounter?.patient_id ||
+			selectedEncounterData?.patient?.id;
+		if (patientId) {
+			goto(`/suster/edit-patient?patient_id=${patientId}`);
+		}
+	}
+
+	let waSentSet = new Set();
+
+	function sendWA(row, event) {
+		if (event) event.stopPropagation();
+
+		const phone = row.patient?.handphone || row.patient?.handphone;
+		if (!phone) return;
+
+		const patientName = row.patient_name || "Pasien";
+		const queueNum = String(row.encounter?.queue_number || "").padStart(
+			2,
+			"0",
+		);
+		const doctorName = row.doctor_name || "Dokter";
+
+		const text = `Halo *${patientName}*,\n\nGiliran antrian Anda (Nomor *${queueNum}*) telah tiba. Silakan masuk ke ruangan pemeriksaan *${doctorName}* sekarang.\n\n_Pesan otomatis dari Oratio Clinic._`;
+
+		const url = getWhatsAppUrl(phone) + "?text=" + encodeURIComponent(text);
+		window.open(url, "_blank");
+
+		waSentSet = new Set([...waSentSet, row.encounter?.id]);
+	}
+
+	$: selectedStatusConfig = (() => {
+		const status = selectedEncounterData?.encounter?.status;
+		const map = {
+			"In Progress": {
+				badge: "bg-blue-500",
+				bg: "from-blue-100 to-blue-50",
+				text: "text-blue-600",
+			},
+			Arrived: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Planned: {
+				badge: "bg-amber-400",
+				bg: "from-amber-100 to-amber-50",
+				text: "text-amber-600",
+			},
+			"On Hold": {
+				badge: "bg-rose-400",
+				bg: "from-rose-100 to-rose-50",
+				text: "text-rose-600",
+			},
+			Referral: {
+				badge: "bg-purple-500",
+				bg: "from-purple-100 to-purple-50",
+				text: "text-purple-600",
+			},
+			Discharged: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+			Completed: {
+				badge: "bg-emerald-500",
+				bg: "from-emerald-100 to-emerald-50",
+				text: "text-emerald-600",
+			},
+		};
+		return (
+			map[status] || {
+				badge: "bg-slate-400",
+				bg: "from-slate-100 to-slate-50",
+				text: "text-slate-600",
+			}
+		);
+	})();
+
+	// ── Lifecycle ──
+
+	onMount(() => {
+		loadAssignedDoctors();
+		setupEncountersRealtime();
+		loadShifts();
+		setupReferralsRealtime();
+		shiftInterval = setInterval(updateShift, 60000);
+		// Poll locks every 30s
+		lockPollInterval = setInterval(loadEncounterLocks, 30000);
 	});
 
 	onDestroy(() => {
-		if (reqFrame) cancelAnimationFrame(reqFrame);
-		if (clockInterval) clearInterval(clockInterval);
+		if (encountersStore) encountersStore.destroy();
+		if (referralsStore) referralsStore.destroy();
+		if (shiftInterval) clearInterval(shiftInterval);
+		if (lockPollInterval) clearInterval(lockPollInterval);
 	});
 </script>
 
 <svelte:head>
-	<title>Suster Dashboard — Oratio Clinic</title>
+	<title>Dashboard Suster — Oratio Clinic</title>
 </svelte:head>
 
-<!-- WebGL Background -->
-<canvas
-	bind:this={glCanvas}
-	aria-hidden="true"
-	class="fixed inset-0 w-full h-full -z-10 dark:opacity-5 transition-opacity duration-500"
-></canvas>
-
-<div class="flex-1 p-6 lg:p-12 max-w-7xl mx-auto w-full animate-fade-in-up opacity-0">
-	<!-- Welcome Section -->
+<div
+	class="-m-6 flex h-[calc(100vh-73px)] bg-slate-50 overflow-hidden font-sans relative"
+>
 	<section
-		aria-labelledby="welcome-heading"
-		class="relative overflow-hidden rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0px_8px_32px_rgba(225,29,72,0.08)] mb-8 p-8 lg:p-12 animate-scale-in opacity-0"
+		class="flex-1 min-w-0 {isSidebarOpen && selectedEncounterData
+			? 'mr-80'
+			: 'mr-0'} transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden custom-scrollbar p-6"
 	>
-		<div class="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none animate-float"></div>
-		<div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-48 h-48 bg-teal-500/20 rounded-full blur-2xl pointer-events-none animate-float-slow"></div>
-
-		<div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-			<div class="max-w-2xl">
-				<div class="flex flex-wrap items-center gap-2 mb-6">
-					<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary">
-						<span class="material-symbols-outlined text-[16px]">medical_services</span>
-						<span class="text-xs font-bold uppercase tracking-wider">Clinical Dashboard</span>
-					</div>
-					<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-						<span class="material-symbols-outlined text-[16px]">calendar_today</span>
-						<span class="text-xs font-semibold">{formattedDate}</span>
-					</div>
-				</div>
-				<h2 id="welcome-heading" class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight leading-tight">
-					{greeting}, <span class="text-primary">{user?.name || "Suster"}</span>
-				</h2>
-				<p class="text-lg text-slate-600 dark:text-slate-400">
-					Your shift is currently active. You have access to patient histories and editing capabilities for today's encounters.
-				</p>
+		<!-- Header: Date + Doctor Filter -->
+		<div class="flex items-center justify-between mb-6 gap-4">
+			<div class="flex-shrink-0" style="min-width: 240px;">
+				<RichSelect
+					bind:value={selectedDoctorId}
+					options={doctorOptions}
+					placeholder="Filter Dokter..."
+					loading={loadingDoctors}
+					wrapperClass=""
+				/>
 			</div>
-
-			<!-- Live shift status, replaces the previous avatar with something functional -->
-			<div class="hidden lg:flex flex-col items-center justify-center gap-2 w-48 h-48 rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 shadow-xl flex-shrink-0 p-6">
-				<span class="relative flex h-3 w-3 mb-1">
-					<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-					<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-				</span>
-				<p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Shift Active</p>
-				<p class="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight" aria-label="Current time">
-					{formattedTime}
-				</p>
-				<p class="text-xs text-slate-500 dark:text-slate-400 text-center leading-snug">
-					WIB · {user?.name ? "On duty" : "Nurse station"}
-				</p>
-			</div>
+			<p
+				class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+			>
+				{new Date(filterDate + "T00:00:00").toLocaleDateString(
+					"id-ID",
+					{
+						weekday: "long",
+						day: "numeric",
+						month: "long",
+						year: "numeric",
+					},
+				)}
+			</p>
 		</div>
-	</section>
 
-	<!-- Today at a Glance -->
-	<section aria-labelledby="glance-heading" class="mb-12">
-		<h3 id="glance-heading" class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 animate-fade-in-up opacity-0 delay-100">
-			<span class="material-symbols-outlined text-primary text-[20px]">insights</span>
-			Today at a Glance
-		</h3>
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-			{#each todayStats as stat, i}
-				<div
-					class="flex items-center gap-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-xl p-5 border border-slate-200/50 dark:border-slate-700/50 shadow-[0px_4px_20px_rgba(225,29,72,0.04)] animate-fade-in-up opacity-0"
-					style="animation-delay: {150 + i * 100}ms"
-				>
-					<div class="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-						<span class="material-symbols-outlined text-[22px]">{stat.icon}</span>
-					</div>
-					<div class="min-w-0">
-						<p class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums">{stat.value}</p>
-						<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 truncate">{stat.label}</p>
-					</div>
-				</div>
-			{/each}
-		</div>
-	</section>
-
-	<!-- Quick Operations -->
-	<section aria-labelledby="operations-heading">
-		<h3 id="operations-heading" class="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2 animate-fade-in-up opacity-0 delay-100">
-			<span class="material-symbols-outlined text-primary">bolt</span>
-			Quick Operations
-		</h3>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			{#each quickActions as action (action.href)}
-				{@const s = accentStyles[action.accent]}
-				<a
-					href={action.href}
-					class="group relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-6 lg:p-8 shadow-[0px_4px_20px_rgba(225,29,72,0.04)] border border-slate-200/50 dark:border-slate-700/50 {s.hoverBorder} transition-all duration-300 hover:-translate-y-1 {s.hoverShadow} flex flex-col h-full animate-fade-in-up opacity-0 {action.delay}"
-				>
-					<div class="absolute top-0 right-0 w-32 h-32 {s.blob} rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-					<div class="w-14 h-14 rounded-xl {s.iconBg} flex items-center justify-center mb-6 {s.iconText} group-hover:animate-pulse transition-all">
-						<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">{action.icon}</span>
-					</div>
-					<h4 class="text-xl font-bold text-slate-900 dark:text-white mb-2 {s.hoverTitle} transition-colors">{action.title}</h4>
-					<p class="text-base text-slate-500 dark:text-slate-400 mb-8 flex-1">
-						{action.description}
+		<!-- 1. Stats Cards -->
+		<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+			<!-- Patients Today Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Patients Today
 					</p>
-					<div class="flex items-center {s.ctaText} text-sm font-bold mt-auto">
-						{action.cta}
-						<span class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+					<div class="flex items-center gap-2 mt-1">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.patientsToday || 0}
+						</h3>
+						{#if stats.patientsTodayChange !== undefined}
+							{@const chg = stats.patientsTodayChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
+							{:else}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
+									</span>
+								</span>
+							{/if}
+						{/if}
 					</div>
-				</a>
-			{/each}
+				</div>
+				<div
+					class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>patient_list</span
+					>
+				</div>
+			</div>
+
+			<!-- Avg. Wait Time Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Avg. Wait Time
+					</p>
+					<div class="flex items-center gap-2 mt-1">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.avgWaitMinutes || 0}<span
+								class="text-sm font-bold text-slate-400 ml-1"
+								>m</span
+							>
+						</h3>
+						{#if stats.avgWaitMinutesChange !== undefined}
+							{@const chg = stats.avgWaitMinutesChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
+							{:else}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
+				</div>
+				<div
+					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>hourglass_empty</span
+					>
+				</div>
+			</div>
+
+			<!-- Avg. Treatment Time Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Avg. Treatment Time
+					</p>
+					<div class="flex items-center gap-2 mt-1">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.avgTreatmentMinutes || 0}<span
+								class="text-sm font-bold text-slate-400 ml-1"
+								>m</span
+							>
+						</h3>
+						{#if stats.avgTreatmentMinutesChange !== undefined}
+							{@const chg = stats.avgTreatmentMinutesChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
+							{:else}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
+				</div>
+				<div
+					class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>schedule</span
+					>
+				</div>
+			</div>
+
+			<!-- Completed Card -->
+			<div
+				class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+			>
+				<div>
+					<p
+						class="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-2"
+					>
+						Completed
+					</p>
+					<div class="flex items-center gap-2 mt-1">
+						<h3
+							class="text-3xl font-black text-blue-900 leading-tight"
+						>
+							{stats.completedToday || 0}
+							<span class="text-sm font-bold text-slate-300 mx-1"
+								>/</span
+							>
+							<span class="text-xl text-slate-400"
+								>{stats.patientsToday || 0}</span
+							>
+						</h3>
+						{#if stats.completedTodayChange !== undefined}
+							{@const chg = stats.completedTodayChange}
+							{@const isZero = chg === 0}
+							{@const isPos = chg > 0}
+							{#if isZero}
+								<span
+									class="text-slate-400 text-xs font-bold flex items-center"
+									>-</span
+								>
+							{:else}
+								<span
+									class="{isPos
+										? 'text-green-500'
+										: 'text-red-500'} text-xs font-bold flex items-center"
+								>
+									{isPos ? "+" : "-"}{Math.abs(chg)}%
+									<span
+										class="material-symbols-outlined text-[14px]"
+									>
+										{isPos
+											? "trending_up"
+											: "trending_down"}
+									</span>
+								</span>
+							{/if}
+						{/if}
+					</div>
+				</div>
+				<div
+					class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+				>
+					<span class="material-symbols-outlined text-2xl"
+						>check_circle</span
+					>
+				</div>
+			</div>
+		</div>
+
+		<!-- 2. Active Patient Queue -->
+		<div
+			class="mb-10"
+			style="display: grid; grid-template-columns: minmax(0, 1fr);"
+		>
+			<div class="flex items-center justify-between mb-6">
+				<h3
+					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+				>
+					<span class="material-symbols-outlined text-primary"
+						>pending_actions</span
+					>
+					Active Patient Queue
+				</h3>
+				<span
+					class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md"
+				>
+					{filteredEncounters.filter(
+						(e) =>
+							["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status),
+					).length} IN QUEUE
+				</span>
+			</div>
+
+			{#if loading}
+				<div style="text-align: center; padding: 2rem;">
+					<div
+						class="spinner spinner-lg"
+						style="margin: 0 auto;"
+					></div>
+				</div>
+			{:else}
+				<div
+					style="
+					overflow: hidden;
+					mask-image: linear-gradient(to right, black 80%, transparent 100%);
+					-webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+				"
+				>
+					<div
+						class="flex gap-6 pb-6 custom-scrollbar snap-x"
+						style="overflow-x: auto; overflow-y: visible;"
+					>
+						{#each filteredEncounters
+							.filter( (e) => ["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status), )
+							.sort((a, b) => {
+								const qA = a.encounter?.queue_number ?? Infinity;
+								const qB = b.encounter?.queue_number ?? Infinity;
+								if (qA !== qB) return qA - qB;
+								return new Date(a.encounter?.created_at) - new Date(b.encounter?.created_at);
+							}) as row, index}
+							<!-- Status color map -->
+							{@const statusConfig = {
+								"In Progress": {
+									banner: "bg-blue-500 text-white",
+									queueBg: "bg-blue-50 text-blue-600",
+									ring: "border-blue-400 ring-2 ring-blue-100",
+								},
+								Arrived: {
+									banner: "bg-emerald-500 text-white",
+									queueBg: "bg-emerald-50 text-emerald-600",
+									ring: "border-emerald-400 ring-2 ring-emerald-100",
+								},
+								Planned: {
+									banner: "bg-amber-400 text-white",
+									queueBg: "bg-amber-50 text-amber-600",
+									ring: "border-amber-400 ring-2 ring-amber-100",
+								},
+								"On Hold": {
+									banner: "bg-rose-400 text-white",
+									queueBg: "bg-rose-50 text-rose-500",
+									ring: "border-rose-400 ring-2 ring-rose-100",
+								},
+							}}
+							{@const config = statusConfig[
+								row.encounter?.status
+							] ?? {
+								banner: "bg-slate-400 text-white",
+								queueBg: "bg-slate-50 text-slate-400",
+								ring: "border-slate-300 ring-2 ring-slate-100",
+							}}
+							{@const lockInfo = encounterLocks[row.encounter?.id]}
+
+							<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
+							<div
+								class="bg-white p-6 rounded-2xl shadow-sm border overflow-hidden transition-all cursor-pointer relative shrink-0 snap-start
+									{selectedEncounterData?.encounter?.id === row.encounter?.id
+									? config.ring
+									: 'border-slate-100 hover:shadow-md'}
+									{lockInfo && !lockInfo.isMe ? 'opacity-60' : ''}"
+								style="min-width: 340px; width: 340px;"
+								on:click={() => selectEncounter(row)}
+							>
+								<!-- Lock indicator -->
+								{#if lockInfo && !lockInfo.isMe}
+									<div class="absolute top-0 left-0 right-0 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest text-center py-1.5 z-20 flex items-center justify-center gap-1.5">
+										<span class="material-symbols-outlined text-[12px]">lock</span>
+										{lockInfo.userRole === 'dokter' ? 'Dokter' : 'Suster'} {lockInfo.userName?.split(' ')[0]} is editing
+									</div>
+								{/if}
+
+								<!-- Status Banner (top-right ribbon) -->
+								<div class="absolute top-0 right-0">
+									<div
+										class="relative w-28 h-28 overflow-hidden"
+									>
+										<div
+											class="absolute top-4 -right-7 w-36 text-center py-1 text-[10px] font-black uppercase tracking-widest shadow-sm rotate-45 {config.banner}"
+										>
+											{row.encounter?.status || "Waiting"}
+										</div>
+									</div>
+								</div>
+
+								<div
+									class="flex justify-between items-start mb-4 {lockInfo && !lockInfo.isMe ? 'mt-4' : ''}"
+								>
+									<div
+										class="flex items-center gap-3 relative z-10 w-full pr-16"
+									>
+										<div
+											class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl {config.queueBg}"
+										>
+											{String(
+												row.encounter?.queue_number ||
+													index + 1,
+											).padStart(2, "0")}
+										</div>
+
+										{#if row.patient?.handphone && !waSentSet.has(row.encounter?.id)}
+											<button
+												class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all transform hover:scale-105"
+												on:click={(e) => sendWA(row, e)}
+												title="Kirim Panggilan WhatsApp"
+											>
+												<span
+													class="material-symbols-outlined text-[20px]"
+													>chat</span
+												>
+											</button>
+										{/if}
+									</div>
+								</div>
+
+								<div class="mb-6">
+									<div
+										class="text-xs text-slate-400 font-bold mb-1"
+									>
+										{String(row.encounter?.id).padStart(
+											5,
+											"0",
+										)}
+									</div>
+									<h4
+										class="text-xl font-bold text-slate-900 mb-2"
+									>
+										{row.patient_name}
+									</h4>
+									<p
+										class="text-sm text-slate-500 leading-relaxed line-clamp-2"
+									>
+										<span
+											class="font-bold text-slate-700 text-xs uppercase tracking-wider"
+										>
+											{row.patient?.gender === "Male" ||
+											row.patient?.gender === "L"
+												? "Laki-laki"
+												: row.patient?.gender ===
+															"Female" ||
+													  row.patient?.gender ===
+															"P"
+													? "Perempuan"
+													: row.patient?.gender ||
+														"-"} • {calculateAge(
+												row.patient?.birth_date,
+											)}th
+										</span>
+										<br />
+										Alasan Kunjungan: {row.encounter_reason_display}
+									</p>
+								</div>
+
+								<div
+									class="pt-4 border-t border-slate-50 flex justify-between items-center"
+								>
+									<div class="flex items-center gap-2">
+										<div
+											class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+										>
+											{#if row.kasir_profile_image}
+												<img
+													src={row.kasir_profile_image}
+													alt={row.kasir_name}
+													class="w-full h-full object-cover"
+												/>
+											{:else}
+												<span
+													class="text-[10px] font-bold text-slate-400"
+												>
+													{row.kasir_name
+														? row.kasir_name
+																.substring(0, 2)
+																.toUpperCase()
+														: "??"}
+												</span>
+											{/if}
+										</div>
+										<span
+											class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+										>
+											{row.kasir_name || "System"}
+										</span>
+									</div>
+									<!-- Doctor name badge (unique to suster view) -->
+									<div class="flex items-center gap-1.5">
+										<span
+											class="material-symbols-outlined text-[12px] text-primary"
+											>stethoscope</span
+										>
+										<span
+											class="text-[10px] font-black text-primary tracking-wider uppercase"
+										>
+											{row.doctor_name || "Dokter"}
+										</span>
+									</div>
+								</div>
+							</div>
+						{/each}
+
+						{#if filteredEncounters.filter( (e) => ["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status), ).length === 0}
+							<div
+								class="col-span-full py-8 text-center text-slate-400 text-sm font-medium"
+							>
+								{assignedDoctors.length === 0
+									? "Anda belum ditugaskan ke dokter manapun."
+									: "Bagus! Tidak ada antrian pasien saat ini."}
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
+		</div>
+
+		<!-- 3. Referral Inbox Section -->
+		<div>
+			<div class="flex items-center justify-between mb-6">
+				<h3
+					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+				>
+					<span class="material-symbols-outlined text-primary"
+						>inbox</span
+					>
+					Referral Inbox
+				</h3>
+				<button
+					class="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
+					>View All</button
+				>
+			</div>
+			<div
+				class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden"
+			>
+				<table class="w-full text-left">
+					<thead>
+						<tr class="bg-slate-50/50">
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("doctor")}
+							>
+								<div class="flex items-center gap-1">
+									Sender Doctor<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'doctor'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "doctor"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
+							</th>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("date")}
+							>
+								<div class="flex items-center gap-1">
+									Date<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'date'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "date"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
+							</th>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("patient")}
+							>
+								<div class="flex items-center gap-1">
+									Patient Name<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'patient'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "patient"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
+							</th>
+							<th
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								on:click={() => handleSort("note")}
+							>
+								<div class="flex items-center gap-1">
+									Note<span
+										class="material-symbols-outlined text-[14px] {sortKey ===
+										'note'
+											? 'text-primary'
+											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
+										>{sortKey === "note"
+											? sortDesc
+												? "arrow_downward"
+												: "arrow_upward"
+											: "unfold_more"}</span
+									>
+								</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-50">
+						{#if loadingReferrals}
+							<tr>
+								<td colspan="4" class="px-6 py-10 text-center">
+									<div
+										class="spinner spinner-sm"
+										style="margin: 0 auto;"
+									></div>
+									<p class="text-[10px] text-slate-400 mt-2">
+										Loading referrals...
+									</p>
+								</td>
+							</tr>
+						{:else if referrals.length > 0}
+							{#each sortedReferrals as ref}
+								<tr
+									class="hover:bg-slate-50 transition-colors cursor-pointer group"
+									on:click={() => selectReferral(ref)}
+								>
+									<td class="px-6 py-5">
+										<div class="flex items-center gap-3">
+											<div
+												class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm overflow-hidden"
+											>
+												{#if ref.sender_profile_image}
+													<img
+														src={ref.sender_profile_image}
+														alt={ref.sender_name}
+														class="w-full h-full object-cover"
+													/>
+												{:else}
+													{ref.sender_name?.[0] ||
+														"D"}
+												{/if}
+											</div>
+											<div>
+												<div
+													class="text-sm font-bold text-slate-900"
+												>
+													{ref.sender_name}
+												</div>
+												<div
+													class="text-[10px] text-slate-400"
+												>
+													Sender Doctor
+												</div>
+											</div>
+										</div>
+									</td>
+									<td
+										class="px-6 py-5 text-xs text-slate-600 font-medium"
+									>
+										{formatDate(ref.referral_date)}
+									</td>
+									<td class="px-6 py-5">
+										<div
+											class="text-sm font-bold text-slate-900"
+										>
+											{ref.patient_name}
+										</div>
+										<div class="text-[10px] text-slate-400">
+											ID: {ref.patient_id}
+										</div>
+									</td>
+									<td class="px-6 py-5">
+										<p
+											class="text-sm text-slate-500 line-clamp-1 italic"
+										>
+											"{ref.note || "No note"}"
+										</p>
+									</td>
+								</tr>
+							{/each}
+						{:else}
+							<tr>
+								<td
+									colspan="4"
+									class="px-6 py-10 text-center text-slate-400 text-sm font-medium"
+								>
+									Tidak ada rujukan masuk saat ini.
+								</td>
+							</tr>
+						{/if}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</section>
+
+	<!-- Right Pinned Sidebar (Patient Context) -->
+	<aside
+		class="fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-slate-200 z-[40] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out {isSidebarOpen &&
+		selectedEncounterData
+			? 'translate-x-0'
+			: 'translate-x-full'}"
+	>
+		{#if selectedEncounterData}
+			<div class="flex-1 overflow-y-auto custom-scrollbar relative">
+				<!-- Close Button -->
+				<button
+					type="button"
+					class="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
+					on:click={() => (isSidebarOpen = false)}
+				>
+					<span class="material-symbols-outlined text-[18px]"
+						>close</span
+					>
+				</button>
+
+				<!-- Patient Header -->
+				<div class="p-6 border-b border-slate-100 bg-slate-50/30">
+					<div class="flex flex-col items-center text-center">
+						<div class="relative mb-4">
+							<div
+								class="w-20 h-20 rounded-full ring-4 ring-white shadow-xl bg-gradient-to-br {selectedStatusConfig.bg} flex items-center justify-center transition-transform hover:scale-105 duration-300"
+							>
+								<span
+									class="text-3xl font-black {selectedStatusConfig.text} drop-shadow-sm"
+									>{(
+										selectedEncounterData.patient_name ||
+										"P"
+									)
+										.substring(0, 2)
+										.toUpperCase()}</span
+								>
+							</div>
+							<div
+								class="absolute -bottom-1 -right-1 w-7 h-7 {selectedStatusConfig.badge} rounded-full border-2 border-white shadow-lg flex items-center justify-center z-10"
+							>
+								<span class="text-white text-[11px] font-black"
+									>{selectedEncounterData.encounter
+										?.queue_number || "-"}</span
+								>
+							</div>
+						</div>
+						<h3
+							class="text-lg font-bold text-slate-800 leading-tight"
+						>
+							{selectedEncounterData.patient_name}
+						</h3>
+						<p
+							class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest"
+						>
+							ID Tindakan: {selectedEncounterData.encounter?.id ||
+								"-"}
+						</p>
+						<div class="mt-4 w-full flex justify-center gap-2">
+							<a
+								href={`/api/patients/${selectedEncounterData.encounter?.patient_id || selectedEncounterData.patient?.id}/pdf`}
+								target="_blank"
+								class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+							>
+								<span
+									class="material-symbols-outlined text-[16px]"
+									>picture_as_pdf</span
+								>
+								View PDF
+							</a>
+							<button
+								on:click={editPatient}
+								class="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+							>
+								<span
+									class="material-symbols-outlined text-[16px]"
+									>edit</span
+								>
+								Edit Patient
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Context Sections -->
+				<div class="p-6 flex flex-col gap-8 pb-32">
+					<!-- Encounter Reason -->
+					{#if selectedEncounterData.encounter?.reason_type || selectedEncounterData.encounter_reason_display}
+						<section>
+							<h4
+								class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+							>
+								<span class="material-symbols-outlined text-sm"
+									>assignment</span
+								>
+								Encounter Reason
+							</h4>
+							<div
+								class="p-4 rounded-2xl border {REASON_THEMES[
+									selectedEncounterData.encounter?.reason_type
+								]?.bg || 'bg-slate-50'} {REASON_THEMES[
+									selectedEncounterData.encounter?.reason_type
+								]?.border || 'border-slate-200'}"
+							>
+								<div class="flex items-center gap-3">
+									<div
+										class="w-8 h-8 rounded-lg flex items-center justify-center {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.bg ||
+											'bg-white'} border {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.border ||
+											'border-slate-200'} {REASON_THEMES[
+											selectedEncounterData.encounter
+												?.reason_type
+										]?.text || 'text-slate-600'}"
+									>
+										<span
+											class="material-symbols-outlined text-[18px]"
+											>{REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.icon || "info"}</span
+										>
+									</div>
+									<div>
+										<p
+											class="text-[9px] font-black uppercase tracking-widest {REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.text || 'text-slate-500'}"
+										>
+											{REASON_THEMES[
+												selectedEncounterData.encounter
+													?.reason_type
+											]?.label || "Visit Reason"}
+										</p>
+										<p
+											class="text-xs font-bold text-slate-800 leading-tight"
+										>
+											{selectedEncounterData.encounter_reason_display ||
+												"No detailed reason provided"}
+										</p>
+									</div>
+								</div>
+							</div>
+						</section>
+					{/if}
+
+					<!-- Identification Section -->
+					<section>
+						<h4
+							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+						>
+							<span class="material-symbols-outlined text-sm"
+								>id_card</span
+							>
+							Identification
+						</h4>
+						<div class="space-y-3">
+							<div
+								class="flex justify-between items-center group"
+							>
+								<span class="text-[11px] text-slate-500"
+									>Patient ID</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800"
+									>{selectedEncounterData.encounter
+										?.patient_id || "-"}</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>DOB / Age</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800"
+									>{formatDate(
+										selectedEncounterData.patient_birth_date ||
+											selectedEncounterData.patient
+												?.birth_date,
+									) || "-"} ({calculateAge(
+										selectedEncounterData.patient_birth_date ||
+											selectedEncounterData.patient
+												?.birth_date,
+									)}y)</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>Gender</span
+								>
+								<div class="flex items-center gap-1">
+									{#if selectedEncounterData.patient?.gender === "Male" || selectedEncounterData.patient?.gender === "L" || selectedEncounterData.patient?.gender === "male"}
+										<span
+											class="material-symbols-outlined text-[14px] text-blue-500"
+											>male</span
+										>
+									{:else if (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "Female" || (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "P" || (selectedEncounterData.patient_gender || selectedEncounterData.patient?.gender) === "female"}
+										<span
+											class="material-symbols-outlined text-[14px] text-pink-500"
+											>female</span
+										>
+									{/if}
+									<span
+										class="text-[11px] font-bold text-slate-800"
+										>{(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient
+												?.gender) === "Male" ||
+										(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient
+												?.gender) === "L" ||
+										(selectedEncounterData.patient_gender ||
+											selectedEncounterData.patient
+												?.gender) === "male"
+											? "Male"
+											: (selectedEncounterData.patient_gender ||
+														selectedEncounterData
+															.patient
+															?.gender) ===
+														"Female" ||
+												  (selectedEncounterData.patient_gender ||
+														selectedEncounterData
+															.patient
+															?.gender) === "P" ||
+												  (selectedEncounterData.patient_gender ||
+														selectedEncounterData
+															.patient
+															?.gender) ===
+														"female"
+												? "Female"
+												: selectedEncounterData.patient_gender ||
+													selectedEncounterData
+														.patient?.gender ||
+													"-"}</span
+									>
+								</div>
+							</div>
+							<div class="flex justify-between items-start">
+								<span class="text-[11px] text-slate-500"
+									>Address</span
+								>
+								<span
+									class="text-[11px] font-bold text-slate-800 text-right w-30 leading-relaxed"
+									>{selectedEncounterData.patient_address ||
+										selectedEncounterData.patient
+											?.address ||
+										"-"}</span
+								>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-[11px] text-slate-500"
+									>Contact</span
+								>
+								<div class="text-right">
+									{#if selectedEncounterData.patient_email || selectedEncounterData.patient?.email}
+										<a
+											href="mailto:{selectedEncounterData.patient_email ||
+												selectedEncounterData.patient
+													?.email}"
+											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+										>
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>mail</span
+											>
+											{selectedEncounterData.patient_email ||
+												selectedEncounterData.patient
+													?.email}
+										</a>
+									{/if}
+									{#if selectedEncounterData.patient_handphone || selectedEncounterData.patient?.handphone}
+										<a
+											href={getWhatsAppUrl(
+												selectedEncounterData.patient_handphone ||
+													selectedEncounterData
+														.patient?.handphone,
+											)}
+											target="_blank"
+											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+										>
+											<span
+												class="material-symbols-outlined text-[14px]"
+												>chat</span
+											>
+											{selectedEncounterData.patient_handphone ||
+												selectedEncounterData.patient
+													?.handphone}
+										</a>
+									{:else}
+										<span
+											class="text-[11px] font-bold text-slate-800"
+											>-</span
+										>
+									{/if}
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Medical Background -->
+					<section id="aside-medical-background">
+						<header class="flex items-center justify-between mb-4">
+							<h4
+								class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"
+							>
+								<span class="material-symbols-outlined text-sm"
+									>medical_services</span
+								>
+								Medical Background
+							</h4>
+						</header>
+
+						<div class="grid grid-cols-2 gap-3 mb-4">
+							<!-- Blood Type -->
+							<div
+								class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
+							>
+								<div class="flex flex-col">
+									<span
+										class="text-[10px] text-blue-600 uppercase font-bold"
+									>
+										Blood Type
+									</span>
+									<div class="flex items-baseline gap-1">
+										<span
+											class="text-lg font-black text-blue-900"
+										>
+											{selectedEncounterData.patient_blood_type ||
+												selectedEncounterData.patient
+													?.blood_type ||
+												"-"}
+										</span>
+										<span
+											class="text-sm font-bold text-blue-700"
+										>
+											{(selectedEncounterData.patient_rhesus ||
+												selectedEncounterData.patient
+													?.rhesus) === "+"
+												? "+"
+												: (selectedEncounterData.patient_rhesus ||
+															selectedEncounterData
+																.patient
+																?.rhesus) ===
+													  "-"
+													? "-"
+													: ""}
+										</span>
+									</div>
+								</div>
+								<span
+									class="material-symbols-outlined text-blue-400 shrink-0"
+								>
+									bloodtype
+								</span>
+							</div>
+
+							<!-- BP -->
+							<div
+								class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
+							>
+								<div class="flex flex-col flex-1">
+									<span
+										class="text-[10px] text-blue-600 uppercase font-bold"
+									>
+										BP
+									</span>
+									<div class="flex items-baseline gap-1">
+										<span
+											class="text-lg font-black text-blue-900"
+										>
+											{selectedEncounterData.patient_tekanan_darah ||
+												selectedEncounterData.patient
+													?.tekanan_darah ||
+												"-"}
+										</span>
+										<span
+											class="text-[10px] font-bold text-blue-700"
+										>
+											mmHg
+										</span>
+									</div>
+								</div>
+								<span
+									class="material-symbols-outlined text-blue-400 shrink-0"
+								>
+									vital_signs
+								</span>
+							</div>
+						</div>
+
+						{#if loadingMedical}
+							<div class="py-6 flex justify-center">
+								<span
+									class="material-symbols-outlined animate-spin text-primary"
+									>progress_activity</span
+								>
+							</div>
+						{:else if patientMedicalBackground}
+							<!-- Allergy Section -->
+							<div class="mb-8">
+								<p
+									class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
+								>
+									Allergies
+								</p>
+								{#if patientMedicalBackground.allergies?.length > 0}
+									<div class="space-y-3">
+										{#each patientMedicalBackground.allergies as allergy}
+											<div
+												class="bg-red-50 border border-red-100 p-3 rounded-xl flex items-start gap-3"
+											>
+												<span
+													class="material-symbols-outlined text-red-500 text-lg"
+													style="font-variation-settings: 'FILL' 1;"
+													>warning</span
+												>
+												<div>
+													<p
+														class="text-xs font-bold text-red-900 leading-tight"
+													>
+														{allergy.substance ||
+															"Unknown Substance"}
+													</p>
+													{#if allergy.reaction_display}
+														<p
+															class="text-[10px] font-medium text-red-700 leading-tight mt-0.5"
+														>
+															{allergy.reaction_display}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									</div>
+								{:else}
+									<p
+										class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+									>
+										No allergies reported
+									</p>
+								{/if}
+							</div>
+
+							<div class="space-y-8">
+								<!-- Illness (Personal) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-3 flex items-center gap-2"
+									>
+										Illness / History
+									</p>
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-orange-400"
+										></span>
+										Illness (Personal)
+									</p>
+									{#if personalDiseases.length > 0}
+										{#each personalDiseases as disease}
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50 border border-orange-100"
+											>
+												<div
+													class="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[14px]"
+														>person</span
+													>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight"
+													>
+														{disease.disease ||
+															"Condition"}
+													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+
+								<!-- Illness (Family) -->
+								<div class="space-y-3">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-2"
+									>
+										<span
+											class="w-1 h-1 rounded-full bg-purple-400"
+										></span>
+										Illness (Family)
+									</p>
+									{#if familyDiseases.length > 0}
+										{#each familyDiseases as disease}
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-purple-50/50 border border-purple-100"
+											>
+												<div
+													class="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[14px]"
+														>family_history</span
+													>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight"
+													>
+														{disease.disease ||
+															"Condition"}
+													</p>
+													{#if disease.description}
+														<p
+															class="text-[10px] text-slate-500 mt-0.5"
+														>
+															{disease.description}
+														</p>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50/50 p-2.5 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+								<div class="space-y-2">
+									<p
+										class="text-[10px] text-slate-400 font-bold uppercase mb-2"
+									>
+										Current Medication
+									</p>
+									{#if patientMedicalBackground.medications?.length > 0}
+										{#each patientMedicalBackground.medications as med}
+											<div
+												class="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100"
+											>
+												<div
+													class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"
+												>
+													<span
+														class="material-symbols-outlined text-[16px]"
+														>prescriptions</span
+													>
+												</div>
+												<div>
+													<p
+														class="text-xs font-bold text-slate-800 leading-tight mb-0.5"
+													>
+														{med.product_name ||
+															med.medication ||
+															"Unknown"}
+													</p>
+													<p
+														class="text-[10px] font-medium text-slate-600 leading-tight"
+													>
+														{med.dosage_form || ""}
+														{med.dosage || ""}
+													</p>
+												</div>
+											</div>
+										{/each}
+									{:else}
+										<p
+											class="text-[11px] font-medium text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200 text-center"
+										>
+											None reported
+										</p>
+									{/if}
+								</div>
+							</div>
+						{/if}
+					</section>
+
+					<!-- Encounter History -->
+					<section>
+						<h4
+							class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+						>
+							<span class="material-symbols-outlined text-sm"
+								>history</span
+							>
+							Encounter History
+						</h4>
+						<div
+							class="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-0 before:w-[2px] before:bg-slate-100 pb-2"
+						>
+							{#each patientHistory as hist, i}
+								<div class="relative pl-6">
+									<div
+										class="absolute left-0 top-1.5 w-[16px] h-[16px] bg-white border-2 {i ===
+										0
+											? 'border-primary'
+											: 'border-slate-200'} rounded-full"
+									></div>
+
+									<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
+									<div
+										class="cursor-pointer group"
+										on:click={() =>
+											toggleHistory(hist.encounter?.id)}
+									>
+										<div
+											class="flex justify-between items-start"
+										>
+											<div>
+												<p
+													class="text-[11px] font-bold text-slate-800 group-hover:text-primary transition-colors"
+												>
+													{hist.encounter?.id}
+												</p>
+												<p
+													class="text-[10px] text-slate-500"
+												>
+													{formatDate(
+														hist.encounter
+															?.created_at,
+													)}
+													{#if hist.doctor_name}
+														• {hist.doctor_name}
+													{/if}
+												</p>
+												<p
+													class="text-[10px] text-slate-400 mt-0.5"
+												>
+													{hist.encounter?.status}
+												</p>
+											</div>
+											<span
+												class="material-symbols-outlined text-slate-400 text-lg group-hover:text-primary transition-colors"
+											>
+												{expandedHistoryId ===
+												hist.encounter?.id
+													? "expand_less"
+													: "expand_more"}
+											</span>
+										</div>
+
+										{#if expandedHistoryId === hist.encounter?.id}
+											<div
+												class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-[11px] text-slate-700 space-y-2 relative z-10 leading-relaxed shadow-inner"
+											>
+												{#if hist.encounter?.subjective}
+													<div
+														class="whitespace-pre-wrap"
+													>
+														<strong
+															class="text-blue-900 font-black"
+															>S:</strong
+														>
+														{hist.encounter
+															.subjective}
+													</div>
+												{/if}
+												{#if hist.encounter?.objective}
+													<div
+														class="whitespace-pre-wrap"
+													>
+														<strong
+															class="text-blue-900 font-black"
+															>O:</strong
+														>
+														{hist.encounter
+															.objective}
+													</div>
+												{/if}
+												{#if hist.encounter?.assessment}
+													<div
+														class="whitespace-pre-wrap"
+													>
+														<strong
+															class="text-blue-900 font-black"
+															>A:</strong
+														>
+														{hist.encounter
+															.assessment}
+													</div>
+												{/if}
+												{#if hist.encounter?.plan}
+													<div
+														class="whitespace-pre-wrap"
+													>
+														<strong
+															class="text-blue-900 font-black"
+															>P:</strong
+														>
+														{hist.encounter.plan}
+													</div>
+												{/if}
+												{#if hist.encounter?.resep}
+													<div
+														class="whitespace-pre-wrap"
+													>
+														<strong
+															class="text-blue-900 font-black"
+															>R:</strong
+														>
+														{hist.encounter.resep}
+													</div>
+												{/if}
+												{#if hist.encounter?.keterangan}
+													<div
+														class="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-amber-800 whitespace-pre-wrap"
+													>
+														<strong
+															class="font-black"
+															>Ket:</strong
+														>
+														{hist.encounter
+															.keterangan}
+													</div>
+												{/if}
+												{#if !hist.encounter?.subjective && !hist.encounter?.assessment && !hist.encounter?.objective && !hist.encounter?.plan && !hist.encounter?.resep && !hist.encounter?.keterangan}
+													<div
+														class="italic text-slate-400"
+													>
+														No clinical notes
+														recorded.
+													</div>
+												{/if}
+												<div
+													class="pt-2 mt-2 border-t border-slate-200 flex justify-between items-center"
+												>
+													<span
+														class="text-[9px] font-bold uppercase tracking-wider text-slate-400"
+														>Status: {hist.encounter
+															?.status}</span
+													>
+												</div>
+											</div>
+										{/if}
+									</div>
+								</div>
+							{:else}
+								<div class="relative pl-6">
+									<p
+										class="text-[11px] font-medium text-slate-500 italic"
+									>
+										No past encounters recorded.
+									</p>
+								</div>
+							{/each}
+						</div>
+					</section>
+				</div>
+			</div>
+
+			<!-- Bottom Actions Sticky -->
+			<div
+				class="sticky bottom-0 bg-white p-6 border-t border-slate-100 flex flex-col gap-2 shrink-0"
+			>
+				{#if selectedLockInfo && !selectedLockInfo.isMe}
+					<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 mb-1">
+						<span class="material-symbols-outlined text-amber-500 text-lg">lock</span>
+						<div>
+							<p class="text-xs font-bold text-amber-800">
+								{selectedLockInfo.userRole === 'dokter' ? 'Dokter' : 'Suster'} {selectedLockInfo.userName} sedang mengedit
+							</p>
+							<p class="text-[10px] text-amber-600">Encounter ini tidak dapat dibuka saat ini</p>
+						</div>
+					</div>
+					<button
+						disabled
+						class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 rounded-xl shadow-sm cursor-not-allowed flex items-center justify-center gap-2"
+					>
+						<span class="material-symbols-outlined text-[20px]">lock</span>
+						Encounter Terkunci
+					</button>
+				{:else}
+					<button
+						on:click={startEncounter}
+						class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+					>
+						<span class="material-symbols-outlined text-[20px]"
+							>play_arrow</span
+						>
+						{selectedEncounterData.isReferral
+							? "Select from Queue to Treat"
+							: "Open Encounter"}
+					</button>
+				{/if}
+			</div>
+		{:else}
+			<div
+				class="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400"
+			>
+				<span
+					class="material-symbols-outlined text-6xl mb-4 text-slate-200"
+					>person_search</span
+				>
+				<h3 class="text-lg font-bold text-slate-500 mb-2">
+					No Patient Selected
+				</h3>
+				<p class="text-xs">
+					Select a patient from the active queue to view details
+				</p>
+			</div>
+		{/if}
+	</aside>
+
+	<!-- Button to Reopen Sidebar when collapsed -->
+	{#if selectedEncounterData && !isSidebarOpen}
+		<button
+			class="fixed right-0 top-1/2 -translate-y-1/2 bg-white hover:bg-slate-50 border-y border-l border-slate-200 px-2 py-4 rounded-l-xl shadow-[-8px_0_15px_-4px_rgba(0,0,0,0.1)] z-30 flex flex-col items-center gap-2 group transition-all"
+			on:click={() => (isSidebarOpen = true)}
+		>
+			<span
+				class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform"
+				>menu_open</span
+			>
+			<span
+				class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2"
+				style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);"
+			>
+				{selectedEncounterData.patient_name.split(" ")[0]} Profile
+			</span>
+		</button>
+	{/if}
 </div>
-
-<style>
-	@keyframes fadeInUp {
-		from { opacity: 0; transform: translateY(30px); }
-		to { opacity: 1; transform: translateY(0); }
-	}
-	@keyframes scaleIn {
-		from { opacity: 0; transform: scale(0.95); }
-		to { opacity: 1; transform: scale(1); }
-	}
-	@keyframes float {
-		0%, 100% { transform: translateY(0) scale(1); }
-		50% { transform: translateY(-16px) scale(1.05); }
-	}
-	.animate-fade-in-up {
-		animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-	}
-	.animate-scale-in {
-		animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-	}
-	.animate-float {
-		animation: float 10s ease-in-out infinite;
-	}
-	.animate-float-slow {
-		animation: float 14s ease-in-out infinite;
-		animation-delay: 2s;
-	}
-	.delay-100 { animation-delay: 100ms; }
-	.delay-200 { animation-delay: 200ms; }
-	.delay-300 { animation-delay: 300ms; }
-	.delay-400 { animation-delay: 400ms; }
-	.opacity-0 { opacity: 0; }
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-fade-in-up,
-		.animate-scale-in,
-		.animate-float,
-		.animate-float-slow {
-			animation: none !important;
-			opacity: 1 !important;
-			transform: none !important;
-		}
-	}
-</style>

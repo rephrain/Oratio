@@ -1,5 +1,5 @@
 import { j as json } from "../../../../../chunks/index.js";
-import { d as db, b as doctorItems, u as users, s as shifts, p as patients, c as patientDiseaseHistory, f as patientAllergy, g as patientMedication, t as terminologyMaster, h as documents, e as encounters, i as statusHistory, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures, v as encounterPrescriptions, w as encounterReferrals, x as items, y as encounterItems, z as payments, A as dokterSuster } from "../../../../../chunks/index3.js";
+import { d as db, b as doctorItems, u as users, s as shifts, p as patients, c as patientDiseaseHistory, f as patientAllergy, g as patientMedication, t as terminologyMaster, h as documents, e as encounters, i as statusHistory, j as encounterOdontograms, o as odontogramTeeth, k as odontogramSurfaces, l as odontogramRestorations, m as odontogramRestorationSurfaces, q as odontogramDiagnoses, r as odontogramProcedures, v as encounterPrescriptions, w as encounterReferrals, x as items, y as encounterItems, z as payments, A as doctorSuster } from "../../../../../chunks/index3.js";
 import { eq, inArray, sql, or, and, desc } from "drizzle-orm";
 import { A as ADMIN_TABLES } from "../../../../../chunks/constants.js";
 import { g as generatePatientId } from "../../../../../chunks/formatters.js";
@@ -27,7 +27,7 @@ const schemaMap = {
   doctorItems,
   encounterItems,
   payments,
-  dokterSuster
+  doctorSuster
 };
 const AUTO_MANAGED_FIELDS = ["created_at", "updated_at"];
 function cleanBody(body, tableConfig) {

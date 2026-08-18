@@ -1,16 +1,16 @@
-# Graph Report - Oratio  (2026-08-14)
+# Graph Report - Oratio  (2026-08-18)
 
 ## Corpus Check
-- 155 files · ~177,223 words
+- 162 files · ~190,793 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 744 nodes · 822 edges · 119 communities (106 shown, 13 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.62)
+- 799 nodes · 898 edges · 132 communities (113 shown, 19 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.6)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c11fcbf1`
+- Built from commit: `29e76cf0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -65,17 +65,26 @@
 - graphify reference: transcribe video and audio
 - AGENTS.md
 - extraction-spec.md
+- +page.svelte
+- +page.svelte
+- +page.svelte
+- $lib/stores/toast.js
+- encounterLock.js
+- +page.svelte
+- $lib/stores/realtimeStore.js
+- ToothDetailPanel.svelte
+- +page.svelte
 
 ## God Nodes (most connected - your core abstractions)
-1. `$lib/utils/constants.js` - 17 edges
-2. `$lib/utils/formatters.js` - 13 edges
-3. `generatePatientProfilePdf()` - 12 edges
-4. `What You Must Do When Invoked` - 12 edges
-5. `$lib/stores/toast.js` - 11 edges
-6. `ConnectionManager` - 10 edges
-7. `$lib/components/Forms/RichSelect.svelte` - 10 edges
-8. `/graphify` - 10 edges
-9. `$lib/stores/layout.js` - 9 edges
+1. `$lib/utils/constants.js` - 20 edges
+2. `$lib/utils/formatters.js` - 16 edges
+3. `$lib/stores/toast.js` - 12 edges
+4. `generatePatientProfilePdf()` - 12 edges
+5. `$lib/components/Forms/RichSelect.svelte` - 12 edges
+6. `What You Must Do When Invoked` - 12 edges
+7. `$lib/stores/layout.js` - 10 edges
+8. `ConnectionManager` - 10 edges
+9. `/graphify` - 10 edges
 10. `generateSoapWhoFormPdf()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -97,7 +106,7 @@
 - **NAS Docker Deployment Architecture** — _github_workflows_deploy_job_deploy, docker_compose_db_service, docker_compose_app_service [INFERRED 0.95]
 - **Oratio Compilation and Build Failures** — build_logs_pdfmake_error, build_log_const_tag_error, build_log2_await_error, build_output_app_css_error [INFERRED 0.85]
 
-## Communities (119 total, 13 thin omitted)
+## Communities (132 total, 19 thin omitted)
 
 ### Community 0 - "schema.js"
 Cohesion: 0.03
@@ -128,8 +137,8 @@ Cohesion: 0.09
 Nodes (23): autoprefixer, drizzle-kit, devDependencies, autoprefixer, drizzle-kit, postcss, svelte, @sveltejs/adapter-node (+15 more)
 
 ### Community 7 - "+page.svelte"
-Cohesion: 0.08
-Nodes (5): $lib/components/UI/Modal.svelte, $lib/components/Odontogram/OdontogramChart.svelte, calculateAge(), formatDate(), $lib/components/Odontogram/ToothDetailPanel.svelte
+Cohesion: 0.09
+Nodes (4): $lib/components/UI/Modal.svelte, $lib/components/Odontogram/OdontogramChart.svelte, calculateAge(), formatDate()
 
 ### Community 8 - "formatters.js"
 Cohesion: 0.14
@@ -156,8 +165,8 @@ Cohesion: 0.22
 Nodes (8): districts, loadingDistrict, loadingProvince, loadingRegency, loadingVillage, provinces, regencies, villages
 
 ### Community 14 - "$lib/utils/constants.js"
-Cohesion: 0.05
-Nodes (17): $lib/components/Tables/AdminDataTable.svelte, $lib/components/UI/AdminModal.svelte, $lib/utils/constants.js, $lib/components/Tables/DataTable.svelte, $lib/components/UI/FileUpload.svelte, $lib/utils/formatters.js, $lib/api/geonames, $app/navigation (+9 more)
+Cohesion: 0.26
+Nodes (7): $lib/utils/constants.js, $lib/components/Tables/DataTable.svelte, $lib/utils/formatters.js, $app/navigation, $lib/components/Forms/RichSelect.svelte, $lib/components/Forms/SearchableSelect.svelte, $app/stores
 
 ### Community 15 - "What You Must Do When Invoked"
 Cohesion: 0.08
@@ -165,7 +174,7 @@ Nodes (24): For /graphify add and --watch, For /graphify query, For the commit h
 
 ### Community 16 - "+layout.svelte"
 Cohesion: 0.13
-Nodes (17): $lib/components/Layout/AppShell.svelte, $lib/stores/auth.js, $lib/stores/chat.js, $lib/components/Chat/ChatPanel.svelte, $lib/components/Realtime/ConnectionStatus.svelte, $lib/stores/layout.js, $lib/components/Notifications/NotificationPanel.svelte, $lib/stores/notifications.js (+9 more)
+Nodes (16): $lib/components/Layout/AppShell.svelte, $lib/stores/auth.js, $lib/stores/chat.js, $lib/components/Chat/ChatPanel.svelte, $lib/components/Realtime/ConnectionStatus.svelte, $lib/stores/layout.js, $lib/components/Notifications/NotificationPanel.svelte, $lib/stores/notifications.js (+8 more)
 
 ### Community 17 - "satusehat.js"
 Cohesion: 0.46
@@ -247,22 +256,34 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
+### Community 116 - "+page.svelte"
+Cohesion: 0.09
+Nodes (3): calculateAge(), formatDate(), $lib/components/Odontogram/ToothDetailPanel.svelte
+
+### Community 120 - "$lib/stores/toast.js"
+Cohesion: 0.29
+Nodes (4): $lib/components/Tables/AdminDataTable.svelte, $lib/components/UI/AdminModal.svelte, $lib/components/UI/FileUpload.svelte, $lib/stores/toast.js
+
+### Community 122 - "+page.svelte"
+Cohesion: 0.15
+Nodes (7): loadEncounterLocks(), loadShifts(), loadStats(), selectEncounter(), selectReferral(), setupEncountersRealtime(), updateShift()
+
 ## Knowledge Gaps
-- **247 isolated node(s):** `name`, `version`, `private`, `dev`, `build` (+242 more)
+- **245 isolated node(s):** `name`, `version`, `private`, `dev`, `build` (+240 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `$lib/utils/constants.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+layout.svelte`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `$lib/stores/toast.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`?**
+- **Why does `$lib/utils/constants.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+layout.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `$lib/stores/toast.js`, `+page.svelte`, `$lib/stores/realtimeStore.js`, `ToothDetailPanel.svelte`?**
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
+- **Why does `$lib/stores/toast.js` connect `$lib/stores/toast.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `$lib/utils/constants.js`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `$lib/stores/layout.js` connect `+layout.svelte` to `$lib/utils/constants.js`, `+page.svelte`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `$lib/components/Forms/RichSelect.svelte` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _247 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _245 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `schema.js` be split into smaller, more focused modules?**
   _Cohesion score 0.027777777777777776 - nodes in this community are weakly interconnected._
 - **Should `+page.svelte` be split into smaller, more focused modules?**

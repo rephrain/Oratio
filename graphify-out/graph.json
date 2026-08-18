@@ -944,8 +944,8 @@
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "id": "src_lib_components_forms_searchableselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 127,
+      "community_name": "ToothDetailPanel.svelte",
       "norm_label": "../forms/searchableselect.svelte"
     },
     {
@@ -1113,8 +1113,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "stores",
-      "community": 16,
-      "community_name": "+layout.svelte",
+      "community": 14,
+      "community_name": "$lib/utils/constants.js",
       "norm_label": "$app/stores"
     },
     {
@@ -1148,8 +1148,8 @@
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "id": "src_lib_components_odontogram_singletoothmap",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 127,
+      "community_name": "ToothDetailPanel.svelte",
       "norm_label": "./singletoothmap.svelte"
     },
     {
@@ -1182,8 +1182,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_components_odontogram_toothdetailpanel",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 127,
+      "community_name": "ToothDetailPanel.svelte",
       "norm_label": "toothdetailpanel.svelte"
     },
     {
@@ -1304,8 +1304,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_components_ui_toast",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "toast.svelte"
     },
     {
@@ -1315,8 +1315,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "toast_js",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "$lib/stores/toast.js"
     },
     {
@@ -1947,15 +1947,15 @@
       "norm_label": "shifts"
     },
     {
-      "label": "dokterSuster",
+      "label": "doctorSuster",
       "file_type": "code",
       "source_file": "src/lib/server/db/schema.js",
       "source_location": "L469",
       "_origin": "ast",
-      "id": "src_lib_server_db_schema_doktersuster",
+      "id": "src_lib_server_db_schema_doctorsuster",
       "community": 0,
       "community_name": "schema.js",
-      "norm_label": "doktersuster"
+      "norm_label": "doctorsuster"
     },
     {
       "label": "chatConversations",
@@ -2343,15 +2343,15 @@
       "norm_label": "authauditlogsrelations"
     },
     {
-      "label": "dokterSusterRelations",
+      "label": "doctorSusterRelations",
       "file_type": "code",
       "source_file": "src/lib/server/db/schema.js",
       "source_location": "L746",
       "_origin": "ast",
-      "id": "src_lib_server_db_schema_doktersusterrelations",
+      "id": "src_lib_server_db_schema_doctorsusterrelations",
       "community": 0,
       "community_name": "schema.js",
-      "norm_label": "doktersusterrelations"
+      "norm_label": "doctorsusterrelations"
     },
     {
       "label": "terminology.js",
@@ -2374,6 +2374,72 @@
       "community": 58,
       "community_name": "terminology.js",
       "norm_label": "getorcreateterminology()"
+    },
+    {
+      "label": "encounterLock.js",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "encounterlock.js"
+    },
+    {
+      "label": "locks",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock_locks",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "locks"
+    },
+    {
+      "label": "lockEncounter()",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock_lockencounter",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "lockencounter()"
+    },
+    {
+      "label": "unlockEncounter()",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock_unlockencounter",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "unlockencounter()"
+    },
+    {
+      "label": "getLock()",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L55",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock_getlock",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "getlock()"
+    },
+    {
+      "label": "getLocksForEncounters()",
+      "file_type": "code",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L72",
+      "_origin": "ast",
+      "id": "src_lib_server_encounterlock_getlocksforencounters",
+      "community": 121,
+      "community_name": "encounterLock.js",
+      "norm_label": "getlocksforencounters()"
     },
     {
       "label": "pdf.js",
@@ -4340,8 +4406,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_admin_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 126,
+      "community_name": "$lib/stores/realtimeStore.js",
       "norm_label": "+page.svelte"
     },
     {
@@ -4351,8 +4417,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_routes_admin_page_for",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 126,
+      "community_name": "$lib/stores/realtimeStore.js",
       "norm_label": "for()"
     },
     {
@@ -4362,8 +4428,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "realtimestore_js",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 126,
+      "community_name": "$lib/stores/realtimeStore.js",
       "norm_label": "$lib/stores/realtimestore.js"
     },
     {
@@ -4373,8 +4439,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_admin_table_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "+page.svelte"
     },
     {
@@ -4384,8 +4450,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_routes_admin_table_page_if",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "if()"
     },
     {
@@ -4406,8 +4472,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "admindatatable_svelte",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "$lib/components/tables/admindatatable.svelte"
     },
     {
@@ -4417,8 +4483,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "adminmodal_svelte",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "$lib/components/ui/adminmodal.svelte"
     },
     {
@@ -4428,8 +4494,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "fileupload_svelte",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 120,
+      "community_name": "$lib/stores/toast.js",
       "norm_label": "$lib/components/ui/fileupload.svelte"
     },
     {
@@ -4601,7 +4667,7 @@
       "label": "POST()",
       "file_type": "code",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L241",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "src_routes_api_admin_table_server_post",
       "community": 19,
@@ -4612,7 +4678,7 @@
       "label": "PUT()",
       "file_type": "code",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L320",
+      "source_location": "L336",
       "_origin": "ast",
       "id": "src_routes_api_admin_table_server_put",
       "community": 19,
@@ -4623,7 +4689,7 @@
       "label": "DELETE()",
       "file_type": "code",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L396",
+      "source_location": "L412",
       "_origin": "ast",
       "id": "src_routes_api_admin_table_server_delete",
       "community": 19,
@@ -5106,6 +5172,72 @@
     {
       "label": "+server.js",
       "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/doctors/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_doctors_server",
+      "community": 129,
+      "community_name": "+server.js",
+      "norm_label": "+server.js"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/doctors/+server.js",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_doctors_server_get",
+      "community": 129,
+      "community_name": "+server.js",
+      "norm_label": "get()"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/referrals/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_referrals_server",
+      "community": 130,
+      "community_name": "+server.js",
+      "norm_label": "+server.js"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/referrals/+server.js",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_referrals_server_get",
+      "community": 130,
+      "community_name": "+server.js",
+      "norm_label": "get()"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/stats/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_stats_server",
+      "community": 131,
+      "community_name": "+server.js",
+      "norm_label": "+server.js"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/dashboard/suster/stats/+server.js",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "src_routes_api_dashboard_suster_stats_server_get",
+      "community": 131,
+      "community_name": "+server.js",
+      "norm_label": "get()"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
       "source_file": "src/routes/api/debug-tz/+server.js",
       "source_location": "L1",
       "_origin": "ast",
@@ -5228,7 +5360,7 @@
       "label": "POST()",
       "file_type": "code",
       "source_file": "src/routes/api/encounters/+server.js",
-      "source_location": "L104",
+      "source_location": "L117",
       "_origin": "ast",
       "id": "src_routes_api_encounters_server_post",
       "community": 40,
@@ -5298,6 +5430,50 @@
       "_origin": "ast",
       "id": "src_routes_api_encounters_id_pdf_server_get",
       "community": 81,
+      "community_name": "+server.js",
+      "norm_label": "get()"
+    },
+    {
+      "label": "+server.js",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_lock_server",
+      "community": 123,
+      "community_name": "+server.js",
+      "norm_label": "+server.js"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_lock_server_post",
+      "community": 123,
+      "community_name": "+server.js",
+      "norm_label": "post()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_lock_server_delete",
+      "community": 123,
+      "community_name": "+server.js",
+      "norm_label": "delete()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L59",
+      "_origin": "ast",
+      "id": "src_routes_api_encounters_lock_server_get",
+      "community": 123,
       "community_name": "+server.js",
       "norm_label": "get()"
     },
@@ -5932,7 +6108,7 @@
       "label": "removeReferral()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L700",
+      "source_location": "L703",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_removereferral",
       "community": 7,
@@ -5943,7 +6119,7 @@
       "label": "addEncounterItem()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L713",
+      "source_location": "L716",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_addencounteritem",
       "community": 7,
@@ -5954,7 +6130,7 @@
       "label": "removeEncounterItem()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L727",
+      "source_location": "L730",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_removeencounteritem",
       "community": 7,
@@ -5965,7 +6141,7 @@
       "label": "onNewItemSelect()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L730",
+      "source_location": "L733",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_onnewitemselect",
       "community": 7,
@@ -5976,7 +6152,7 @@
       "label": "updateNewItemSubtotal()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L742",
+      "source_location": "L745",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_updatenewitemsubtotal",
       "community": 7,
@@ -5987,7 +6163,7 @@
       "label": "calculateAge()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L747",
+      "source_location": "L750",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_calculateage",
       "community": 7,
@@ -5998,7 +6174,7 @@
       "label": "loadDoctors()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L761",
+      "source_location": "L764",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_loaddoctors",
       "community": 7,
@@ -6009,7 +6185,7 @@
       "label": "searchReason()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L772",
+      "source_location": "L775",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_searchreason",
       "community": 7,
@@ -6020,7 +6196,7 @@
       "label": "searchClinicalFinding()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L783",
+      "source_location": "L786",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_searchclinicalfinding",
       "community": 7,
@@ -6031,7 +6207,7 @@
       "label": "searchTerminology()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L794",
+      "source_location": "L797",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_searchterminology",
       "community": 7,
@@ -6042,7 +6218,7 @@
       "label": "resetOdontogram()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L803",
+      "source_location": "L806",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_resetodontogram",
       "community": 7,
@@ -6053,7 +6229,7 @@
       "label": "handleToothClick()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L821",
+      "source_location": "L824",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_handletoothclick",
       "community": 7,
@@ -6064,7 +6240,7 @@
       "label": "saveToothDetail()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L870",
+      "source_location": "L873",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_savetoothdetail",
       "community": 7,
@@ -6075,7 +6251,7 @@
       "label": "hasCondition()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L892",
+      "source_location": "L895",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_hascondition",
       "community": 7,
@@ -6086,7 +6262,7 @@
       "label": "renderToothSVG()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L899",
+      "source_location": "L902",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_rendertoothsvg",
       "community": 7,
@@ -6097,7 +6273,7 @@
       "label": "saveForm()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L914",
+      "source_location": "L917",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_saveform",
       "community": 7,
@@ -6108,7 +6284,7 @@
       "label": "handlePhotoUpload()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1006",
+      "source_location": "L1009",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_handlephotoupload",
       "community": 7,
@@ -6119,7 +6295,7 @@
       "label": "deletePhoto()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1061",
+      "source_location": "L1064",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_deletephoto",
       "community": 7,
@@ -6130,7 +6306,7 @@
       "label": "putOnHold()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1082",
+      "source_location": "L1085",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_putonhold",
       "community": 7,
@@ -6141,7 +6317,7 @@
       "label": "formatDate()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1276",
+      "source_location": "L1301",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_formatdate",
       "community": 7,
@@ -6152,7 +6328,7 @@
       "label": "lookupLabel()",
       "file_type": "code",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L2030",
+      "source_location": "L2055",
       "_origin": "ast",
       "id": "src_routes_dokter_encounterid_page_lookuplabel",
       "community": 7,
@@ -6210,7 +6386,7 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "toothdetailpanel_svelte",
-      "community": 7,
+      "community": 116,
       "community_name": "+page.svelte",
       "norm_label": "$lib/components/odontogram/toothdetailpanel.svelte"
     },
@@ -6221,8 +6397,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_dokter_analytics_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 128,
+      "community_name": "+page.svelte",
       "norm_label": "+page.svelte"
     },
     {
@@ -6232,8 +6408,8 @@
       "source_location": "L1202",
       "_origin": "ast",
       "id": "src_routes_dokter_analytics_page_active",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 128,
+      "community_name": "+page.svelte",
       "norm_label": "active"
     },
     {
@@ -6243,8 +6419,8 @@
       "source_location": "L3033",
       "_origin": "ast",
       "id": "src_routes_dokter_analytics_page_fmtdate",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 128,
+      "community_name": "+page.svelte",
       "norm_label": "fmtdate()"
     },
     {
@@ -6342,8 +6518,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "+page.svelte"
     },
     {
@@ -6353,8 +6529,8 @@
       "source_location": "L494",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_handleprovinceselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "handleprovinceselect()"
     },
     {
@@ -6364,8 +6540,8 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_handleregencyselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "handleregencyselect()"
     },
     {
@@ -6375,8 +6551,8 @@
       "source_location": "L536",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_handledistrictselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "handledistrictselect()"
     },
     {
@@ -6386,8 +6562,8 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_handlevillageselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "handlevillageselect()"
     },
     {
@@ -6397,8 +6573,8 @@
       "source_location": "L556",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_onbirthplaceinput",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "onbirthplaceinput()"
     },
     {
@@ -6408,8 +6584,8 @@
       "source_location": "L571",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_selectbirthplace",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "selectbirthplace()"
     },
     {
@@ -6419,8 +6595,8 @@
       "source_location": "L580",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_onbirthplaceblur",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "onbirthplaceblur()"
     },
     {
@@ -6430,8 +6606,8 @@
       "source_location": "L586",
       "_origin": "ast",
       "id": "src_routes_kasir_edit_patient_page_validatephone",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "validatephone()"
     },
     {
@@ -6441,8 +6617,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "validators_js",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "$lib/utils/validators.js"
     },
     {
@@ -6463,8 +6639,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "wilayah_js",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "$lib/api/wilayah.js"
     },
     {
@@ -6474,8 +6650,8 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "geonames",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 117,
+      "community_name": "+page.svelte",
       "norm_label": "$lib/api/geonames"
     },
     {
@@ -6485,8 +6661,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "+page.svelte"
     },
     {
@@ -6496,8 +6672,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_calculateage",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "calculateage()"
     },
     {
@@ -6507,8 +6683,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_loaddoctors",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "loaddoctors()"
     },
     {
@@ -6518,8 +6694,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_searchpatient",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "searchpatient()"
     },
     {
@@ -6529,8 +6705,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_handlepatientselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "handlepatientselect()"
     },
     {
@@ -6540,8 +6716,8 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_clearselection",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "clearselection()"
     },
     {
@@ -6551,8 +6727,8 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_handlesubmit",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "handlesubmit()"
     },
     {
@@ -6562,8 +6738,8 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "src_routes_kasir_existing_patient_page_searchcomplaint",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 119,
+      "community_name": "+page.svelte",
       "norm_label": "searchcomplaint()"
     },
     {
@@ -7062,14 +7238,432 @@
       "norm_label": "+page.svelte"
     },
     {
+      "label": "loadEncounterLocks()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_loadencounterlocks",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "loadencounterlocks()"
+    },
+    {
+      "label": "handleSort()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L145",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_handlesort",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "handlesort()"
+    },
+    {
+      "label": "loadAssignedDoctors()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L181",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_loadassigneddoctors",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "loadassigneddoctors()"
+    },
+    {
+      "label": "setupEncountersRealtime()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L213",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_setupencountersrealtime",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "setupencountersrealtime()"
+    },
+    {
+      "label": "loadStats()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L274",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_loadstats",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "loadstats()"
+    },
+    {
+      "label": "setupReferralsRealtime()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L288",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_setupreferralsrealtime",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "setupreferralsrealtime()"
+    },
+    {
+      "label": "loadShifts()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L314",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_loadshifts",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "loadshifts()"
+    },
+    {
+      "label": "updateShift()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L324",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_updateshift",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "updateshift()"
+    },
+    {
+      "label": "toggleHistory()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L330",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_togglehistory",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "togglehistory()"
+    },
+    {
+      "label": "calculateAge()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L334",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_calculateage",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "calculateage()"
+    },
+    {
+      "label": "selectEncounter()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L348",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_selectencounter",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "selectencounter()"
+    },
+    {
+      "label": "selectReferral()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L382",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_selectreferral",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "selectreferral()"
+    },
+    {
+      "label": "startEncounter()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L398",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_startencounter",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "startencounter()"
+    },
+    {
+      "label": "editPatient()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L419",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_editpatient",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "editpatient()"
+    },
+    {
+      "label": "sendWA()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L430",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_sendwa",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "sendwa()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L1849",
+      "_origin": "ast",
+      "id": "src_routes_suster_page_formatdate",
+      "community": 122,
+      "community_name": "+page.svelte",
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "+page.svelte",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "+page.svelte"
+    },
+    {
+      "label": "removeReferral()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L703",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_removereferral",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "removereferral()"
+    },
+    {
+      "label": "addEncounterItem()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L716",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_addencounteritem",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "addencounteritem()"
+    },
+    {
+      "label": "removeEncounterItem()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L730",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_removeencounteritem",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "removeencounteritem()"
+    },
+    {
+      "label": "onNewItemSelect()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L733",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_onnewitemselect",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "onnewitemselect()"
+    },
+    {
+      "label": "updateNewItemSubtotal()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L745",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_updatenewitemsubtotal",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "updatenewitemsubtotal()"
+    },
+    {
+      "label": "calculateAge()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L750",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_calculateage",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "calculateage()"
+    },
+    {
+      "label": "loadDoctors()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L764",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_loaddoctors",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "loaddoctors()"
+    },
+    {
+      "label": "searchReason()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L775",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_searchreason",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "searchreason()"
+    },
+    {
+      "label": "searchClinicalFinding()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L786",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_searchclinicalfinding",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "searchclinicalfinding()"
+    },
+    {
+      "label": "searchTerminology()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L797",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_searchterminology",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "searchterminology()"
+    },
+    {
+      "label": "resetOdontogram()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L806",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_resetodontogram",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "resetodontogram()"
+    },
+    {
+      "label": "handleToothClick()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L824",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_handletoothclick",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "handletoothclick()"
+    },
+    {
+      "label": "saveToothDetail()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L873",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_savetoothdetail",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "savetoothdetail()"
+    },
+    {
+      "label": "hasCondition()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L895",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_hascondition",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "hascondition()"
+    },
+    {
+      "label": "renderToothSVG()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L902",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_rendertoothsvg",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "rendertoothsvg()"
+    },
+    {
+      "label": "saveForm()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L917",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_saveform",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "saveform()"
+    },
+    {
+      "label": "handlePhotoUpload()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1009",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_handlephotoupload",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "handlephotoupload()"
+    },
+    {
+      "label": "deletePhoto()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1064",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_deletephoto",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "deletephoto()"
+    },
+    {
+      "label": "putOnHold()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1085",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_putonhold",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "putonhold()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1301",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_formatdate",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "lookupLabel()",
+      "file_type": "code",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L2055",
+      "_origin": "ast",
+      "id": "src_routes_suster_encounterid_page_lookuplabel",
+      "community": 116,
+      "community_name": "+page.svelte",
+      "norm_label": "lookuplabel()"
+    },
+    {
       "label": "+page.svelte",
       "file_type": "code",
       "source_file": "src/routes/suster/edit-patient/+page.svelte",
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "+page.svelte"
     },
     {
@@ -7079,8 +7673,8 @@
       "source_location": "L494",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_handleprovinceselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "handleprovinceselect()"
     },
     {
@@ -7090,8 +7684,8 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_handleregencyselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "handleregencyselect()"
     },
     {
@@ -7101,8 +7695,8 @@
       "source_location": "L536",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_handledistrictselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "handledistrictselect()"
     },
     {
@@ -7112,8 +7706,8 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_handlevillageselect",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "handlevillageselect()"
     },
     {
@@ -7123,8 +7717,8 @@
       "source_location": "L556",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_onbirthplaceinput",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "onbirthplaceinput()"
     },
     {
@@ -7134,8 +7728,8 @@
       "source_location": "L571",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_selectbirthplace",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "selectbirthplace()"
     },
     {
@@ -7145,8 +7739,8 @@
       "source_location": "L580",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_onbirthplaceblur",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "onbirthplaceblur()"
     },
     {
@@ -7156,8 +7750,8 @@
       "source_location": "L586",
       "_origin": "ast",
       "id": "src_routes_suster_edit_patient_page_validatephone",
-      "community": 14,
-      "community_name": "$lib/utils/constants.js",
+      "community": 118,
+      "community_name": "+page.svelte",
       "norm_label": "validatephone()"
     },
     {
@@ -7167,6 +7761,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_routes_suster_history_page",
+      "community": 14,
+      "community_name": "$lib/utils/constants.js",
+      "norm_label": "+page.svelte"
+    },
+    {
+      "label": "+page.svelte",
+      "file_type": "code",
+      "source_file": "src/routes/suster/patient/[patientId]/+page.svelte",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_routes_suster_patient_patientid_page",
       "community": 14,
       "community_name": "$lib/utils/constants.js",
       "norm_label": "+page.svelte"
@@ -9433,6 +10038,15 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "layout_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/lib/components/Notifications/NotificationPanel.svelte",
       "_origin": "ast",
       "source": "src_lib_components_notifications_notificationpanel",
@@ -9640,9 +10254,36 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "formatters_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/suster/history/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_history_page",
+      "target": "formatters_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "formatters_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/patient/[patientId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_patient_patientid_page",
       "target": "formatters_js",
       "confidence_score": 1.0
     },
@@ -9724,6 +10365,24 @@
       "source_file": "src/routes/suster/edit-patient/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_edit_patient_page",
+      "target": "stores",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "stores",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/patient/[patientId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_patient_patientid_page",
       "target": "stores",
       "confidence_score": 1.0
     },
@@ -9901,9 +10560,36 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "constants_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/suster/history/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_history_page",
+      "target": "constants_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "constants_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/patient/[patientId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_patient_patientid_page",
       "target": "constants_js",
       "confidence_score": 1.0
     },
@@ -10003,6 +10689,15 @@
       "source_file": "src/routes/suster/edit-patient/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_edit_patient_page",
+      "target": "toast_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
       "target": "toast_js",
       "confidence_score": 1.0
     },
@@ -10459,6 +11154,28 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/server/db/schema.js",
+      "source_location": "L469",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_db_schema",
+      "target": "src_lib_server_db_schema_doctorsuster",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/db/schema.js",
+      "source_location": "L746",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_db_schema",
+      "target": "src_lib_server_db_schema_doctorsusterrelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/db/schema.js",
       "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast",
@@ -10475,28 +11192,6 @@
       "_origin": "ast",
       "source": "src_lib_server_db_schema",
       "target": "src_lib_server_db_schema_documentsrelations",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/server/db/schema.js",
-      "source_location": "L469",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_lib_server_db_schema",
-      "target": "src_lib_server_db_schema_doktersuster",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/server/db/schema.js",
-      "source_location": "L746",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_lib_server_db_schema",
-      "target": "src_lib_server_db_schema_doktersusterrelations",
       "confidence_score": 1.0
     },
     {
@@ -11135,6 +11830,61 @@
       "_origin": "ast",
       "source": "src_lib_server_db_terminology",
       "target": "src_lib_server_db_terminology_getorcreateterminology",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_encounterlock",
+      "target": "src_lib_server_encounterlock_getlock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_encounterlock",
+      "target": "src_lib_server_encounterlock_getlocksforencounters",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_encounterlock",
+      "target": "src_lib_server_encounterlock_lockencounter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_encounterlock",
+      "target": "src_lib_server_encounterlock_locks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/server/encounterLock.js",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_server_encounterlock",
+      "target": "src_lib_server_encounterlock_unlockencounter",
       "confidence_score": 1.0
     },
     {
@@ -13836,6 +14586,24 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "realtimestore_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "realtimestore_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/admin/[table]/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_admin_table_page",
@@ -13910,6 +14678,15 @@
       "source_file": "src/routes/kasir/payment/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_kasir_payment_page",
+      "target": "fileupload_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
       "target": "fileupload_svelte",
       "confidence_score": 1.0
     },
@@ -14052,7 +14829,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L396",
+      "source_location": "L412",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_admin_table_server",
@@ -14074,7 +14851,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L241",
+      "source_location": "L257",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_admin_table_server",
@@ -14085,7 +14862,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L320",
+      "source_location": "L336",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_admin_table_server",
@@ -14120,7 +14897,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L260",
+      "source_location": "L276",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_admin_table_server_post",
@@ -14132,7 +14909,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/admin/[table]/+server.js",
-      "source_location": "L344",
+      "source_location": "L360",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_admin_table_server_put",
@@ -14395,6 +15172,39 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/dashboard/suster/doctors/+server.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_dashboard_suster_doctors_server",
+      "target": "src_routes_api_dashboard_suster_doctors_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/dashboard/suster/referrals/+server.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_dashboard_suster_referrals_server",
+      "target": "src_routes_api_dashboard_suster_referrals_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/dashboard/suster/stats/+server.js",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_dashboard_suster_stats_server",
+      "target": "src_routes_api_dashboard_suster_stats_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/api/debug-tz/+server.js",
       "source_location": "L3",
       "weight": 1.0,
@@ -14462,7 +15272,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/api/encounters/+server.js",
-      "source_location": "L104",
+      "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_api_encounters_server",
@@ -14511,6 +15321,39 @@
       "_origin": "ast",
       "source": "src_routes_api_encounters_id_pdf_server",
       "target": "src_routes_api_encounters_id_pdf_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_lock_server",
+      "target": "src_routes_api_encounters_lock_server_delete",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_lock_server",
+      "target": "src_routes_api_encounters_lock_server_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/api/encounters/lock/+server.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_api_encounters_lock_server",
+      "target": "src_routes_api_encounters_lock_server_post",
       "confidence_score": 1.0
     },
     {
@@ -15087,6 +15930,24 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "navigation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "navigation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/suster/patients/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_patients_page",
@@ -15108,6 +15969,24 @@
       "source_file": "src/routes/kasir/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_kasir_page",
+      "target": "datatable_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "datatable_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/patient/[patientId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_patient_patientid_page",
       "target": "datatable_svelte",
       "confidence_score": 1.0
     },
@@ -15151,7 +16030,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L2634",
+      "source_location": "L2659",
       "weight": 1.0,
       "_origin": "ast",
       "context": "collection",
@@ -15163,7 +16042,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L747",
+      "source_location": "L750",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15174,7 +16053,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1061",
+      "source_location": "L1064",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15185,7 +16064,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1276",
+      "source_location": "L1301",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15196,7 +16075,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L2825",
+      "source_location": "L2850",
       "weight": 1.0,
       "_origin": "ast",
       "context": "collection",
@@ -15208,7 +16087,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L821",
+      "source_location": "L824",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15219,7 +16098,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L892",
+      "source_location": "L895",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15230,7 +16109,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L761",
+      "source_location": "L764",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15241,7 +16120,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L2030",
+      "source_location": "L2055",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15252,7 +16131,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L730",
+      "source_location": "L733",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15263,7 +16142,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1082",
+      "source_location": "L1085",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15274,7 +16153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L727",
+      "source_location": "L730",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15285,7 +16164,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L700",
+      "source_location": "L703",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15296,7 +16175,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L899",
+      "source_location": "L902",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15307,7 +16186,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1785",
+      "source_location": "L1810",
       "weight": 1.0,
       "_origin": "ast",
       "context": "collection",
@@ -15319,7 +16198,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L914",
+      "source_location": "L917",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15330,7 +16209,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L870",
+      "source_location": "L873",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15341,7 +16220,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L783",
+      "source_location": "L786",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15352,7 +16231,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L772",
+      "source_location": "L775",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15363,7 +16242,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L794",
+      "source_location": "L797",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page",
@@ -15374,7 +16253,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L2602",
+      "source_location": "L2627",
       "weight": 1.0,
       "_origin": "ast",
       "context": "collection",
@@ -15396,7 +16275,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/routes/dokter/[encounterId]/+page.svelte",
-      "source_location": "L1278",
+      "source_location": "L1303",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_routes_dokter_encounterid_page_formatdate",
@@ -15454,6 +16333,15 @@
       "source_file": "src/routes/suster/edit-patient/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_edit_patient_page",
+      "target": "searchableselect_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
       "target": "searchableselect_svelte",
       "confidence_score": 1.0
     },
@@ -15541,10 +16429,55 @@
     {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "richselect_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
       "source_file": "src/routes/suster/history/+page.svelte",
       "_origin": "ast",
       "source": "src_routes_suster_history_page",
       "target": "richselect_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "richselect_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "modal_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "odontogramchart_svelte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "toothdetailpanel_svelte",
       "confidence_score": 1.0
     },
     {
@@ -16243,6 +17176,478 @@
       "_origin": "ast",
       "source": "src_routes_suster_layout_js_src_routes_suster_layout",
       "target": "src_routes_suster_layout_load",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L334",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_calculateage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "confidence": "INFERRED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L1282",
+      "weight": 1.0,
+      "_origin": "ast",
+      "context": "collection",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_editpatient",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L1849",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_formatdate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L145",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_handlesort",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_loadassigneddoctors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L54",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_loadencounterlocks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L314",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_loadshifts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L274",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_loadstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L348",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_selectencounter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L382",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_selectreferral",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L430",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_sendwa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L213",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_setupencountersrealtime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L288",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_setupreferralsrealtime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L398",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_startencounter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L330",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_togglehistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L324",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page",
+      "target": "src_routes_suster_page_updateshift",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L223",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page_setupencountersrealtime",
+      "target": "src_routes_suster_page_loadencounterlocks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L222",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page_setupencountersrealtime",
+      "target": "src_routes_suster_page_loadstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L320",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page_loadshifts",
+      "target": "src_routes_suster_page_updateshift",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/+page.svelte",
+      "source_location": "L395",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_page_selectreferral",
+      "target": "src_routes_suster_page_selectencounter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "confidence": "INFERRED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L2659",
+      "weight": 1.0,
+      "_origin": "ast",
+      "context": "collection",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_addencounteritem",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L750",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_calculateage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1064",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_deletephoto",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1301",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_formatdate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "confidence": "INFERRED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L2850",
+      "weight": 1.0,
+      "_origin": "ast",
+      "context": "collection",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_handlephotoupload",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L824",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_handletoothclick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L895",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_hascondition",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L764",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_loaddoctors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L2055",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_lookuplabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L733",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_onnewitemselect",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1085",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_putonhold",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L730",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_removeencounteritem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L703",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_removereferral",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L902",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_rendertoothsvg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "confidence": "INFERRED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1810",
+      "weight": 1.0,
+      "_origin": "ast",
+      "context": "collection",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_resetodontogram",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L917",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_saveform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L873",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_savetoothdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L786",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_searchclinicalfinding",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L775",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_searchreason",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L797",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_searchterminology",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "confidence": "INFERRED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L2627",
+      "weight": 1.0,
+      "_origin": "ast",
+      "context": "collection",
+      "source": "src_routes_suster_encounterid_page",
+      "target": "src_routes_suster_encounterid_page_updatenewitemsubtotal",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/suster/[encounterId]/+page.svelte",
+      "source_location": "L1303",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_routes_suster_encounterid_page_formatdate",
+      "target": "src_routes_suster_encounterid_page_calculateage",
       "confidence_score": 1.0
     },
     {
@@ -17161,5 +18566,5 @@
       "source_file": "build-logs.txt"
     }
   ],
-  "built_at_commit": "c11fcbf11a83dbd2c9808d3caeb7c7b08e88d4fb"
+  "built_at_commit": "29e76cf0c2c1fef7add9c16b3176b363c8b064d5"
 }

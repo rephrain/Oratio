@@ -247,8 +247,8 @@ export const ADMIN_TABLES = {
 				key: 'suster_ids',
 				label: 'Suster Pendamping',
 				type: 'm2m',
-				m2mSchema: 'dokterSuster',
-				m2mLocalKey: 'dokter_id',
+				m2mSchema: 'doctorSuster',
+				m2mLocalKey: 'doctor_id',
 				m2mForeignKey: 'suster_id',
 				fkTable: 'users',
 				fkLabel: 'name',
@@ -286,13 +286,13 @@ export const ADMIN_TABLES = {
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
 		]
 	},
-	'dokter-suster': {
+	'doctor-suster': {
 		label: 'Dokter - Suster Assignment',
-		schema: 'dokterSuster',
+		schema: 'doctorSuster',
 		compositePK: true,
-		pkKeys: ['dokter_id', 'suster_id'],
+		pkKeys: ['doctor_id', 'suster_id'],
 		fields: [
-			{ key: 'dokter_id', label: 'Dokter', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'dokter' } },
+			{ key: 'doctor_id', label: 'Dokter', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'dokter' } },
 			{ key: 'suster_id', label: 'Suster', type: 'fk', required: true, fkTable: 'users', fkLabel: 'name', fkFilter: { role: 'suster' } },
 			{ key: 'created_at', label: 'Created At', type: 'datetime', readOnly: true }
 		]

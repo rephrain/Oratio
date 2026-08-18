@@ -1,0 +1,185 @@
+import { json } from '@sveltejs/kit';
+import { db } from '$lib/server/db/index.js';
+import { encounters, statusHistory, doctorSuster } from '$lib/server/db/schema.js';
+import { eq, and, sql, notInArray, inArray } from 'drizzle-orm';
+
+export async function GET({ locals, url }) {
+	if (!locals.user?.id || locals.user.role !== 'suster') {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const susterId = locals.user.id;
+	const timezone = 'Asia/Jakarta';
+
+	// Get assigned doctor IDs
+	const assignedDoctors = await db.select({ doctor_id: doctorSuster.doctor_id })
+		.from(doctorSuster)
+		.where(eq(doctorSuster.suster_id, susterId));
+
+	const doctorIds = assignedDoctors.map(d => d.doctor_id);
+	if (doctorIds.length === 0) {
+		return json({
+			patientsToday: 0, patientsTodayChange: 0,
+			completedToday: 0, completedTodayChange: 0,
+			avgWaitMinutes: 0, avgWaitMinutesChange: 0,
+			avgTreatmentMinutes: 0, avgTreatmentMinutesChange: 0
+		});
+	}
+
+	const dateParam = url.searchParams.get('date');
+
+	const encounterDateFilter = dateParam
+		? sql`(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = ${dateParam}::date`
+		: sql`(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${timezone})::date`;
+
+	const statusHistoryDateFilter = dateParam
+		? sql`(${statusHistory.start_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = ${dateParam}::date`
+		: sql`(${statusHistory.start_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${timezone})::date`;
+
+	const prevEncounterDateFilter = dateParam
+		? sql`(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = ${dateParam}::date - INTERVAL '1 day'`
+		: sql`(${encounters.created_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${timezone})::date - INTERVAL '1 day'`;
+
+	const prevStatusHistoryDateFilter = dateParam
+		? sql`(${statusHistory.start_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = ${dateParam}::date - INTERVAL '1 day'`
+		: sql`(${statusHistory.start_at} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${timezone})::date - INTERVAL '1 day'`;
+
+	try {
+		// 1. Core daily counts — aggregate across all assigned doctors
+		const countsResult = await db.select({
+			total: sql`COUNT(${encounters.id})`,
+			completed: sql`COUNT(CASE WHEN ${encounters.status} IN ('Discharged', 'Completed') THEN 1 END)`
+		})
+		.from(encounters)
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			notInArray(encounters.status, ['Cancelled', 'Discontinued']),
+			encounterDateFilter
+		));
+
+		const counts = countsResult[0] || { total: '0', completed: '0' };
+		const totalToday = Number(counts.total || 0);
+
+		// 2. Average Wait Time
+		const avgWaitResult = await db.select({
+			avgMinutes: sql`AVG(
+				EXTRACT(EPOCH FROM (
+					${statusHistory.end_at} - ${statusHistory.start_at}
+				)) / 60
+			)`
+		})
+		.from(statusHistory)
+		.innerJoin(encounters, eq(statusHistory.encounter_id, encounters.id))
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			eq(statusHistory.status, 'Arrived'),
+			sql`${statusHistory.end_at} IS NOT NULL`,
+			statusHistoryDateFilter
+		));
+
+		// 3. Average Treatment Time
+		const avgTreatmentResult = await db.select({
+			avgMinutes: sql`AVG(
+				EXTRACT(EPOCH FROM (
+					${statusHistory.end_at} - ${statusHistory.start_at}
+				)) / 60
+			)`
+		})
+		.from(statusHistory)
+		.innerJoin(encounters, eq(statusHistory.encounter_id, encounters.id))
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			eq(statusHistory.status, 'In Progress'),
+			sql`${statusHistory.end_at} IS NOT NULL`,
+			statusHistoryDateFilter
+		));
+
+		// Previous day counts for comparison
+		const prevCountsResult = await db.select({
+			total: sql`COUNT(${encounters.id})`,
+			completed: sql`COUNT(CASE WHEN ${encounters.status} IN ('Discharged', 'Completed') THEN 1 END)`
+		})
+		.from(encounters)
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			notInArray(encounters.status, ['Cancelled', 'Discontinued']),
+			prevEncounterDateFilter
+		));
+
+		const prevCounts = prevCountsResult[0] || { total: '0', completed: '0' };
+		const prevTotalToday = Number(prevCounts.total || 0);
+		const prevCompletedToday = Number(prevCounts.completed || 0);
+
+		const prevAvgWaitResult = await db.select({
+			avgMinutes: sql`AVG(
+				EXTRACT(EPOCH FROM (
+					${statusHistory.end_at} - ${statusHistory.start_at}
+				)) / 60
+			)`
+		})
+		.from(statusHistory)
+		.innerJoin(encounters, eq(statusHistory.encounter_id, encounters.id))
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			eq(statusHistory.status, 'Arrived'),
+			sql`${statusHistory.end_at} IS NOT NULL`,
+			prevStatusHistoryDateFilter
+		));
+
+		const prevAvgTreatmentResult = await db.select({
+			avgMinutes: sql`AVG(
+				EXTRACT(EPOCH FROM (
+					${statusHistory.end_at} - ${statusHistory.start_at}
+				)) / 60
+			)`
+		})
+		.from(statusHistory)
+		.innerJoin(encounters, eq(statusHistory.encounter_id, encounters.id))
+		.where(and(
+			inArray(encounters.doctor_id, doctorIds),
+			eq(statusHistory.status, 'In Progress'),
+			sql`${statusHistory.end_at} IS NOT NULL`,
+			prevStatusHistoryDateFilter
+		));
+
+		const parseTime = (val) => {
+			if (!val) return 0;
+			const num = parseFloat(val);
+			if (num > 0 && num < 1) return '<1';
+			return Math.round(num);
+		};
+
+		const avgWaitMinutes = parseTime(avgWaitResult[0]?.avgMinutes);
+		const avgTreatmentMinutes = parseTime(avgTreatmentResult[0]?.avgMinutes);
+		
+		const getNumericTime = (val) => {
+			const parsed = parseTime(val);
+			return parsed === '<1' ? 0.5 : Number(parsed || 0);
+		};
+
+		const prevAvgWaitMinutes = getNumericTime(prevAvgWaitResult[0]?.avgMinutes);
+		const prevAvgTreatmentMinutes = getNumericTime(prevAvgTreatmentResult[0]?.avgMinutes);
+		
+		const currentAvgWait = getNumericTime(avgWaitResult[0]?.avgMinutes);
+		const currentAvgTreatment = getNumericTime(avgTreatmentResult[0]?.avgMinutes);
+
+		const calcChange = (curr, prev) => {
+			if (prev === 0) return curr > 0 ? 100 : 0;
+			return Math.round(((curr - prev) / prev) * 100);
+		};
+
+		return json({
+			patientsToday: totalToday,
+			patientsTodayChange: calcChange(totalToday, prevTotalToday),
+			completedToday: Number(counts.completed || 0),
+			completedTodayChange: calcChange(Number(counts.completed || 0), prevCompletedToday),
+			avgWaitMinutes,
+			avgWaitMinutesChange: calcChange(currentAvgWait, prevAvgWaitMinutes),
+			avgTreatmentMinutes,
+			avgTreatmentMinutesChange: calcChange(currentAvgTreatment, prevAvgTreatmentMinutes)
+		});
+	} catch (error) {
+		console.error('Error in suster stats dashboard API:', error);
+		return json({ error: 'Failed to fetch suster dashboard statistics' }, { status: 500 });
+	}
+}

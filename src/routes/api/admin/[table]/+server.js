@@ -29,7 +29,7 @@ const schemaMap = {
 	doctorItems: schema.doctorItems,
 	encounterItems: schema.encounterItems,
 	payments: schema.payments,
-	dokterSuster: schema.dokterSuster
+	doctorSuster: schema.doctorSuster
 };
 
 // Fields that should never be sent to the DB from client

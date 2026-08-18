@@ -292,12 +292,12 @@ const shifts = pgTable("shifts", {
   end_time: time("end_time").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull()
 });
-const dokterSuster = pgTable("dokter_suster", {
-  dokter_id: uuid("dokter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+const doctorSuster = pgTable("doctor_suster", {
+  doctor_id: uuid("doctor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   suster_id: uuid("suster_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   created_at: timestamp("created_at").defaultNow().notNull()
 }, (table) => ({
-  pk: primaryKey({ columns: [table.dokter_id, table.suster_id] })
+  pk: primaryKey({ columns: [table.doctor_id, table.suster_id] })
 }));
 const chatConversations = pgTable("chat_conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -369,8 +369,8 @@ const usersRelations = relations(users, ({ many }) => ({
   notificationReads: many(notificationReads),
   refreshTokens: many(refreshTokens),
   authAuditLogs: many(authAuditLogs),
-  susterAssigned: many(dokterSuster, { relationName: "dokter_to_suster" }),
-  dokterAssigned: many(dokterSuster, { relationName: "suster_to_dokter" })
+  susterAssigned: many(doctorSuster, { relationName: "doctor_to_suster" }),
+  doctorAssigned: many(doctorSuster, { relationName: "suster_to_doctor" })
 }));
 const terminologyMasterRelations = relations(terminologyMaster, ({ many }) => ({
   diseaseHistories: many(patientDiseaseHistory),
@@ -508,9 +508,9 @@ const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
 const authAuditLogsRelations = relations(authAuditLogs, ({ one }) => ({
   user: one(users, { fields: [authAuditLogs.user_id], references: [users.id] })
 }));
-const dokterSusterRelations = relations(dokterSuster, ({ one }) => ({
-  dokter: one(users, { fields: [dokterSuster.dokter_id], references: [users.id], relationName: "dokter_to_suster" }),
-  suster: one(users, { fields: [dokterSuster.suster_id], references: [users.id], relationName: "suster_to_dokter" })
+const doctorSusterRelations = relations(doctorSuster, ({ one }) => ({
+  doctor: one(users, { fields: [doctorSuster.doctor_id], references: [users.id], relationName: "doctor_to_suster" }),
+  suster: one(users, { fields: [doctorSuster.suster_id], references: [users.id], relationName: "suster_to_doctor" })
 }));
 const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -524,10 +524,10 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   citizenshipEnum,
   doctorItems,
   doctorItemsRelations,
+  doctorSuster,
+  doctorSusterRelations,
   documents,
   documentsRelations,
-  dokterSuster,
-  dokterSusterRelations,
   encounterItems,
   encounterItemsRelations,
   encounterOdontograms,
@@ -590,7 +590,7 @@ const connectionString = process.env.DATABASE_URL || "postgresql://oratio:Pwd%26
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 export {
-  dokterSuster as A,
+  doctorSuster as A,
   refreshTokens as B,
   chatConversations as C,
   chatMessages as D,

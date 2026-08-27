@@ -228,330 +228,338 @@ export async function GET({ params }) {
 }
 
 // PUT /api/encounters/[id] - update encounter (SOAP data + status)
-export async function PUT({ params, request }) {
-	const body = await request.json();
+export async function PUT({ params, request, locals }) {
+	try {
+		const body = await request.json();
 
-	const updateData = {};
-	if (body.subjective !== undefined) updateData.subjective = body.subjective;
-	if (body.objective !== undefined) updateData.objective = body.objective;
-	if (body.assessment !== undefined) updateData.assessment = body.assessment;
-	if (body.plan !== undefined) updateData.plan = body.plan;
-	if (body.resep !== undefined) updateData.resep = body.resep;
-	if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
-	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
-	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
-	if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
-	if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
+		const updateData = {};
+		if (body.subjective !== undefined) updateData.subjective = body.subjective;
+		if (body.objective !== undefined) updateData.objective = body.objective;
+		if (body.assessment !== undefined) updateData.assessment = body.assessment;
+		if (body.plan !== undefined) updateData.plan = body.plan;
+		if (body.resep !== undefined) updateData.resep = body.resep;
+		if (body.keterangan !== undefined) updateData.keterangan = body.keterangan;
+		if (body.reason_type !== undefined) updateData.reason_type = body.reason_type;
+		if (body.form_mode !== undefined) updateData.form_mode = body.form_mode;
 
-	// Handle encounter_reason FK update
-	if (body.reason_code !== undefined) {
-		if (body.reason_code && body.reason_display) {
-			updateData.encounter_reason_id = await getOrCreateTerminology(body.reason_code, body.reason_display, 'SNOMED');
-		} else {
-			updateData.encounter_reason_id = null;
-		}
-	}
-
-	// Status transition
-	if (body.status) {
-		updateData.status = body.status;
-
-		// End previous status history
-		const statusMap = {
-			'In Progress': 'In Progress',
-			'Discharged': 'Finished',
-			'Completed': 'Finished'
-		};
-
-		// End only open status_history entries (end_at IS NULL)
-		await db.update(statusHistory)
-			.set({ end_at: new Date() })
-			.where(and(
-				eq(statusHistory.encounter_id, params.id),
-				sql`${statusHistory.end_at} IS NULL`
-			));
-
-		// Start new status history if applicable
-		const historyStatus = statusMap[body.status];
-		if (historyStatus) {
-			await db.insert(statusHistory).values({
-				encounter_id: params.id,
-				status: historyStatus,
-				start_at: new Date()
-			});
-		}
-	}
-
-	// Auto-generate resep string from prescriptions if provided
-	if (body.prescriptions && Array.isArray(body.prescriptions)) {
-		const resepString = body.prescriptions
-			.map((rx, i) => {
-				const name = rx.product_name || 'Obat';
-				const form = rx.dosage_form ? `(${rx.dosage_form})` : '';
-				const dosage = rx.dosage ? ` - ${rx.dosage}` : '';
-				const qty = rx.quantity ? `, Qty: ${rx.quantity}` : '';
-				const instruction = rx.instruction || rx.notes ? `. ${rx.instruction || rx.notes}` : '';
-				return `${i + 1}. ${name} ${form}${dosage}${qty}${instruction}`;
-			})
-			.join('\n');
-		updateData.resep = resepString;
-	}
-
-	updateData.updated_at = new Date();
-
-	const [updated] = await db.update(encounters)
-		.set(updateData)
-		.where(eq(encounters.id, params.id))
-		.returning();
-
-	// Update patient BP if provided
-	if (body.tekanan_darah !== undefined) {
-		const [enc] = await db.select({ patient_id: encounters.patient_id })
-			.from(encounters)
-			.where(eq(encounters.id, params.id))
-			.limit(1);
-
-		if (enc?.patient_id) {
-			await db.update(patients)
-				.set({ tekanan_darah: body.tekanan_darah })
-				.where(eq(patients.id, enc.patient_id));
-		}
-	}
-
-	// Upsert prescriptions
-	if (body.prescriptions) {
-		await db.delete(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));
-		for (const rx of body.prescriptions) {
-			const kfaCode = rx.kfa_code;
-			const productName = rx.product_name;
-
-			let termId = null;
-			if (kfaCode && productName) {
-				termId = await getOrCreateTerminology(kfaCode, productName, 'KFA');
-			}
-
-			await db.insert(encounterPrescriptions).values({
-				encounter_id: params.id,
-				terminology_id: termId,
-				dosage_form: rx.dosage_form || null,
-				dosage: rx.dosage,
-				quantity: rx.quantity || 1,
-				instruction: rx.instruction || rx.notes || ''
-			});
-		}
-	}
-
-	// Upsert referrals
-	if (body.referrals) {
-		await db.delete(encounterReferrals).where(eq(encounterReferrals.encounter_id, params.id));
-		for (const r of body.referrals) {
-			await db.insert(encounterReferrals).values({
-				encounter_id: params.id,
-				doctor_code: r.doctor_code,
-				referral_date: r.referral_date,
-				note: r.note
-			});
-		}
-	}
-
-	// Upsert odontogram
-	if (body.odontogram) {
-		await db.delete(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, params.id));
-		const [odonto] = await db.insert(encounterOdontograms).values({
-			encounter_id: params.id,
-			dentition_type: body.odontogram.dentition_type || 'Adult',
-			occlusi: body.odontogram.occlusi,
-			torus_palatinus: body.odontogram.torus_palatinus,
-			torus_mandibularis: body.odontogram.torus_mandibularis,
-			palatum: body.odontogram.palatum,
-			diastema: body.odontogram.diastema || 'Tidak Ada',
-			gigi_anomali: body.odontogram.gigi_anomali || 'Tidak Ada'
-		}).returning();
-
-		if (body.odontogram.details) {
-			for (const d of body.odontogram.details) {
-				// Resolve icd10_id from code if only code+display provided (no UUID)
-				let icd10Id = d.icd10_id || null;
-				if (!icd10Id && d.diagnosis_code && d.diagnosis_display) {
-					icd10Id = await getOrCreateTerminology(d.diagnosis_code, d.diagnosis_display, 'ICD-10');
-				}
-
-				// Resolve icd9cm_id from code if only code+display provided (no UUID)
-				let icd9cmId = d.icd9cm_id || null;
-				if (!icd9cmId && d.procedure_code && d.procedure_display) {
-					icd9cmId = await getOrCreateTerminology(d.procedure_code, d.procedure_display, 'ICD-9-CM');
-				}
-
-				// Insert into odontogramTeeth
-				const [tooth] = await db.insert(odontogramTeeth).values({
-					odontogram_id: odonto.id,
-					tooth_number: d.tooth_number,
-					keadaan: d.keadaan,
-					protesa: d.protesa,
-					bahan_protesa: d.bahan_protesa
-				}).returning();
-
-				// --- SURFACES AND RESTORATIONS ---
-				const insertedSurfaces = {}; // map: clinical surface letter -> inserted surface row id
-				if (Array.isArray(d.restorations) && d.restorations.length > 0) {
-					for (const restData of d.restorations) {
-						let restId = null;
-						// Only create Restoration if a valid `restorasi` string is selected
-						if (restData.restorasi) {
-							const [newRest] = await db.insert(odontogramRestorations).values({
-								tooth_id: tooth.id,
-								restorasi: restData.restorasi,
-								bahan_restorasi: restData.bahan_restorasi
-							}).returning();
-							restId = newRest.id;
-						}
-
-						if (Array.isArray(restData.surfaces) && restData.surfaces.length > 0) {
-							for (const s of restData.surfaces) {
-								if (!s) continue;
-								
-								let surfId = insertedSurfaces[s];
-								if (!surfId) {
-									// Insert the unique geometric surface for this tooth exactly once
-									const [surfRow] = await db.insert(odontogramSurfaces).values({
-										tooth_id: tooth.id,
-										surface: s
-									}).returning();
-									surfId = surfRow.id;
-									insertedSurfaces[s] = surfId;
-								}
-								
-								// Link via Junction Table
-								if (restId) {
-									await db.insert(odontogramRestorationSurfaces).values({
-										restoration_id: restId,
-										surface_id: surfId
-									});
-								}
-							}
-						}
-					}
-				}
-
-				// --- DIAGNOSES ---
-				if (Array.isArray(d.diagnoses) && d.diagnoses.length > 0) {
-					for (const diag of d.diagnoses) {
-						let tempIcd10Id = diag.icd10_id || null;
-						if (!tempIcd10Id && diag.diagnosis_code && diag.diagnosis_display) {
-							tempIcd10Id = await getOrCreateTerminology(diag.diagnosis_code, diag.diagnosis_display, 'ICD-10');
-						}
-						if (tempIcd10Id) {
-							await db.insert(odontogramDiagnoses).values({
-								tooth_id: tooth.id,
-								icd10_id: tempIcd10Id,
-								is_primary: diag.is_primary || false
-							});
-						}
-					}
-				} else if (icd10Id) {
-					// Legacy fallback
-					await db.insert(odontogramDiagnoses).values({
-						tooth_id: tooth.id,
-						icd10_id: icd10Id,
-						is_primary: d.is_primary || false
-					});
-				}
-
-				// --- PROCEDURES ---
-				if (Array.isArray(d.procedures) && d.procedures.length > 0) {
-					for (const proc of d.procedures) {
-						let tempIcd9cmId = proc.icd9cm_id || null;
-						if (!tempIcd9cmId && proc.procedure_code && proc.procedure_display) {
-							tempIcd9cmId = await getOrCreateTerminology(proc.procedure_code, proc.procedure_display, 'ICD-9-CM');
-						}
-						if (tempIcd9cmId) {
-							await db.insert(odontogramProcedures).values({
-								tooth_id: tooth.id,
-								icd9cm_id: tempIcd9cmId
-							});
-						}
-					}
-				} else if (icd9cmId) {
-					// Legacy fallback
-					await db.insert(odontogramProcedures).values({
-						tooth_id: tooth.id,
-						icd9cm_id: icd9cmId
-					});
-				}
-			}
-		}
-	}
-
-	// Upsert encounter items (deduplicate by item_id to respect unique constraint)
-	if (body.encounter_items) {
-		await db.delete(encounterItems).where(eq(encounterItems.encounter_id, params.id));
-
-		// Merge duplicates: same item_id → sum quantities, keep price_at_time from first occurrence
-		const mergedItems = new Map();
-		for (const item of body.encounter_items) {
-			const key = item.item_id;
-			const qty = item.quantity || 1;
-			const price = parseInt(item.price_at_time || 0);
-			if (mergedItems.has(key)) {
-				const existing = mergedItems.get(key);
-				existing.quantity += qty;
-				existing.subtotal = existing.quantity * existing.price_at_time;
+		// Handle encounter_reason FK update
+		if (body.reason_code !== undefined) {
+			if (body.reason_code && body.reason_display) {
+				updateData.encounter_reason_id = await getOrCreateTerminology(body.reason_code, body.reason_display, 'SNOMED');
 			} else {
-				mergedItems.set(key, {
-					item_id: key,
-					quantity: qty,
-					price_at_time: price,
-					subtotal: qty * price
+				updateData.encounter_reason_id = null;
+			}
+		}
+
+		// Status transition
+		if (body.status) {
+			updateData.status = body.status;
+
+			// End previous status history
+			const statusMap = {
+				'In Progress': 'In Progress',
+				'Discharged': 'Finished',
+				'Completed': 'Finished'
+			};
+
+			// End only open status_history entries (end_at IS NULL)
+			await db.update(statusHistory)
+				.set({ end_at: new Date() })
+				.where(and(
+					eq(statusHistory.encounter_id, params.id),
+					sql`${statusHistory.end_at} IS NULL`
+				));
+
+			// Start new status history if applicable
+			const historyStatus = statusMap[body.status];
+			if (historyStatus) {
+				await db.insert(statusHistory).values({
+					encounter_id: params.id,
+					status: historyStatus,
+					start_at: new Date()
 				});
 			}
 		}
 
-		for (const item of mergedItems.values()) {
-			await db.insert(encounterItems).values({
-				encounter_id: params.id,
-				item_id: item.item_id,
-				quantity: item.quantity,
-				price_at_time: item.price_at_time,
-				subtotal: item.subtotal
-			});
+		// Auto-generate resep string from prescriptions if provided
+		if (body.prescriptions && Array.isArray(body.prescriptions)) {
+			const resepString = body.prescriptions
+				.map((rx, i) => {
+					const name = rx.product_name || 'Obat';
+					const form = rx.dosage_form ? `(${rx.dosage_form})` : '';
+					const dosage = rx.dosage ? ` - ${rx.dosage}` : '';
+					const qty = rx.quantity ? `, Qty: ${rx.quantity}` : '';
+					const instruction = rx.instruction || rx.notes ? `. ${rx.instruction || rx.notes}` : '';
+					return `${i + 1}. ${name} ${form}${dosage}${qty}${instruction}`;
+				})
+				.join('\n');
+			updateData.resep = resepString;
 		}
+
+		updateData.updated_at = new Date();
+
+		const [updated] = await db.update(encounters)
+			.set(updateData)
+			.where(eq(encounters.id, params.id))
+			.returning();
+
+		if (!updated) {
+			return json({ error: 'Encounter tidak ditemukan' }, { status: 404 });
+		}
+
+		// Update patient BP if provided
+		if (body.tekanan_darah !== undefined) {
+			const [enc] = await db.select({ patient_id: encounters.patient_id })
+				.from(encounters)
+				.where(eq(encounters.id, params.id))
+				.limit(1);
+
+			if (enc?.patient_id) {
+				await db.update(patients)
+					.set({ tekanan_darah: body.tekanan_darah })
+					.where(eq(patients.id, enc.patient_id));
+			}
+		}
+
+		// Upsert prescriptions
+		if (body.prescriptions) {
+			await db.delete(encounterPrescriptions).where(eq(encounterPrescriptions.encounter_id, params.id));
+			for (const rx of body.prescriptions) {
+				const kfaCode = rx.kfa_code;
+				const productName = rx.product_name;
+
+				let termId = null;
+				if (kfaCode && productName) {
+					termId = await getOrCreateTerminology(kfaCode, productName, 'KFA');
+				}
+
+				await db.insert(encounterPrescriptions).values({
+					encounter_id: params.id,
+					terminology_id: termId,
+					dosage_form: rx.dosage_form || null,
+					dosage: rx.dosage || '',
+					quantity: rx.quantity || 1,
+					instruction: rx.instruction || rx.notes || ''
+				});
+			}
+		}
+
+		// Upsert referrals
+		if (body.referrals) {
+			await db.delete(encounterReferrals).where(eq(encounterReferrals.encounter_id, params.id));
+			for (const r of body.referrals) {
+				if (!r.doctor_code || !r.referral_date) continue;
+				await db.insert(encounterReferrals).values({
+					encounter_id: params.id,
+					doctor_code: r.doctor_code,
+					referral_date: r.referral_date,
+					note: r.note || ''
+				});
+			}
+		}
+
+		// Upsert odontogram
+		if (body.odontogram) {
+			await db.delete(encounterOdontograms).where(eq(encounterOdontograms.encounter_id, params.id));
+			const [odonto] = await db.insert(encounterOdontograms).values({
+				encounter_id: params.id,
+				dentition_type: body.odontogram.dentition_type || 'Adult',
+				occlusi: body.odontogram.occlusi,
+				torus_palatinus: body.odontogram.torus_palatinus,
+				torus_mandibularis: body.odontogram.torus_mandibularis,
+				palatum: body.odontogram.palatum,
+				diastema: body.odontogram.diastema || 'Tidak Ada',
+				gigi_anomali: body.odontogram.gigi_anomali || 'Tidak Ada'
+			}).returning();
+
+			if (body.odontogram.details) {
+				for (const d of body.odontogram.details) {
+					// Resolve icd10_id from code if only code+display provided (no UUID)
+					let icd10Id = d.icd10_id || null;
+					if (!icd10Id && d.diagnosis_code && d.diagnosis_display) {
+						icd10Id = await getOrCreateTerminology(d.diagnosis_code, d.diagnosis_display, 'ICD-10');
+					}
+
+					// Resolve icd9cm_id from code if only code+display provided (no UUID)
+					let icd9cmId = d.icd9cm_id || null;
+					if (!icd9cmId && d.procedure_code && d.procedure_display) {
+						icd9cmId = await getOrCreateTerminology(d.procedure_code, d.procedure_display, 'ICD-9-CM');
+					}
+
+					// Insert into odontogramTeeth
+					const [tooth] = await db.insert(odontogramTeeth).values({
+						odontogram_id: odonto.id,
+						tooth_number: d.tooth_number,
+						keadaan: d.keadaan || 'Normal',
+						protesa: d.protesa || null,
+						bahan_protesa: d.bahan_protesa || null
+					}).returning();
+
+					// --- SURFACES AND RESTORATIONS ---
+					const insertedSurfaces = {}; // map: clinical surface letter -> inserted surface row id
+					if (Array.isArray(d.restorations) && d.restorations.length > 0) {
+						for (const restData of d.restorations) {
+							let restId = null;
+							// Only create Restoration if a valid `restorasi` string is selected
+							if (restData.restorasi) {
+								const [newRest] = await db.insert(odontogramRestorations).values({
+									tooth_id: tooth.id,
+									restorasi: restData.restorasi,
+									bahan_restorasi: restData.bahan_restorasi
+								}).returning();
+								restId = newRest.id;
+							}
+
+							if (Array.isArray(restData.surfaces) && restData.surfaces.length > 0) {
+								for (const s of restData.surfaces) {
+									if (!s) continue;
+
+									let surfId = insertedSurfaces[s];
+									if (!surfId) {
+										// Insert the unique geometric surface for this tooth exactly once
+										const [surfRow] = await db.insert(odontogramSurfaces).values({
+											tooth_id: tooth.id,
+											surface: s
+										}).returning();
+										surfId = surfRow.id;
+										insertedSurfaces[s] = surfId;
+									}
+
+									// Link via Junction Table
+									if (restId) {
+										await db.insert(odontogramRestorationSurfaces).values({
+											restoration_id: restId,
+											surface_id: surfId
+										});
+									}
+								}
+							}
+						}
+					}
+
+					// --- DIAGNOSES ---
+					if (Array.isArray(d.diagnoses) && d.diagnoses.length > 0) {
+						for (const diag of d.diagnoses) {
+							let tempIcd10Id = diag.icd10_id || null;
+							if (!tempIcd10Id && diag.diagnosis_code && diag.diagnosis_display) {
+								tempIcd10Id = await getOrCreateTerminology(diag.diagnosis_code, diag.diagnosis_display, 'ICD-10');
+							}
+							if (tempIcd10Id) {
+								await db.insert(odontogramDiagnoses).values({
+									tooth_id: tooth.id,
+									icd10_id: tempIcd10Id,
+									is_primary: diag.is_primary || false
+								});
+							}
+						}
+					} else if (icd10Id) {
+						// Legacy fallback
+						await db.insert(odontogramDiagnoses).values({
+							tooth_id: tooth.id,
+							icd10_id: icd10Id,
+							is_primary: d.is_primary || false
+						});
+					}
+
+					// --- PROCEDURES ---
+					if (Array.isArray(d.procedures) && d.procedures.length > 0) {
+						for (const proc of d.procedures) {
+							let tempIcd9cmId = proc.icd9cm_id || null;
+							if (!tempIcd9cmId && proc.procedure_code && proc.procedure_display) {
+								tempIcd9cmId = await getOrCreateTerminology(proc.procedure_code, proc.procedure_display, 'ICD-9-CM');
+							}
+							if (tempIcd9cmId) {
+								await db.insert(odontogramProcedures).values({
+									tooth_id: tooth.id,
+									icd9cm_id: tempIcd9cmId
+								});
+							}
+						}
+					} else if (icd9cmId) {
+						// Legacy fallback
+						await db.insert(odontogramProcedures).values({
+							tooth_id: tooth.id,
+							icd9cm_id: icd9cmId
+						});
+					}
+				}
+			}
+		}
+
+		// Upsert encounter items (deduplicate by item_id to respect unique constraint)
+		if (body.encounter_items) {
+			await db.delete(encounterItems).where(eq(encounterItems.encounter_id, params.id));
+
+			// Merge duplicates: same item_id → sum quantities, keep price_at_time from first occurrence
+			const mergedItems = new Map();
+			for (const item of body.encounter_items) {
+				if (!item || !item.item_id) continue;
+				const key = item.item_id;
+				const qty = item.quantity || 1;
+				const price = parseInt(item.price_at_time || 0);
+				if (mergedItems.has(key)) {
+					const existing = mergedItems.get(key);
+					existing.quantity += qty;
+					existing.subtotal = existing.quantity * existing.price_at_time;
+				} else {
+					mergedItems.set(key, {
+						item_id: key,
+						quantity: qty,
+						price_at_time: price,
+						subtotal: qty * price
+					});
+				}
+			}
+
+			for (const item of mergedItems.values()) {
+				await db.insert(encounterItems).values({
+					encounter_id: params.id,
+					item_id: item.item_id,
+					quantity: item.quantity,
+					price_at_time: item.price_at_time,
+					subtotal: item.subtotal
+				});
+			}
+		}
+
+		// Emit real-time events
+		const userId = locals?.user?.id;
+		const encounterId = params.id;
+
+		// Always notify encounter room of general update
+		emitEncounterEvent('encounter_updated', encounterId, { encounter: updated }, userId);
+
+		if (body.status) {
+			emitEncounterEvent('status_changed', encounterId, { status: body.status }, userId);
+			emitQueueEvent('queue_updated', { id: encounterId, status: body.status }, userId);
+		}
+
+		if (body.subjective !== undefined || body.objective !== undefined || body.assessment !== undefined || body.plan !== undefined) {
+			emitEncounterEvent('soap_updated', encounterId, {
+				subjective: updated?.subjective || '',
+				objective: updated?.objective || '',
+				assessment: updated?.assessment || '',
+				plan: updated?.plan || ''
+			}, userId);
+		}
+
+		if (body.prescriptions) {
+			emitEncounterEvent('prescription_updated', encounterId, { prescriptions: body.prescriptions }, userId);
+		}
+
+		if (body.odontogram) {
+			emitEncounterEvent('odontogram_updated', encounterId, { odontogram: body.odontogram }, userId);
+		}
+
+		if (body.encounter_items) {
+			emitEncounterEvent('item_updated', encounterId, { items: body.encounter_items }, userId);
+		}
+
+		return json({ encounter: updated });
+	} catch (err) {
+		console.error("PUT /api/encounters/[id] error:", err);
+		return json({ error: err?.message || 'Gagal menyimpan data encounter' }, { status: 500 });
 	}
-
-
-	// Emit real-time events
-	const userId = locals?.user?.id;
-	const encounterId = params.id;
-
-	// Always notify encounter room of general update
-	emitEncounterEvent('encounter_updated', encounterId, { encounter: updated }, userId);
-
-	if (body.status) {
-		emitEncounterEvent('status_changed', encounterId, { status: body.status }, userId);
-		emitQueueEvent('queue_updated', { id: encounterId, status: body.status }, userId);
-	}
-
-	if (body.subjective !== undefined || body.objective !== undefined || body.assessment !== undefined || body.plan !== undefined) {
-		emitEncounterEvent('soap_updated', encounterId, {
-			subjective: updated.subjective,
-			objective: updated.objective,
-			assessment: updated.assessment,
-			plan: updated.plan
-		}, userId);
-	}
-
-	if (body.prescriptions) {
-		emitEncounterEvent('prescription_updated', encounterId, { prescriptions: body.prescriptions }, userId);
-	}
-
-	if (body.odontogram) {
-		emitEncounterEvent('odontogram_updated', encounterId, { odontogram: body.odontogram }, userId);
-	}
-
-	if (body.encounter_items) {
-		emitEncounterEvent('item_updated', encounterId, { items: body.encounter_items }, userId);
-	}
-
-	return json({ encounter: updated });
 }
 
 // DELETE /api/encounters/[id] - hard delete encounter record if not yet treated by doctor

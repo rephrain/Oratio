@@ -47,7 +47,7 @@
 
 	export let data;
 
-	const encounterId = $page.params.encounterId;
+	$: encounterId = $page.params.encounterId;
 	let encounter = null;
 	let loading = true;
 	let saving = false;
@@ -422,7 +422,14 @@
 	async function loadEncounter() {
 		try {
 			const res = await fetch(`/api/encounters/${encounterId}`);
+			if (!res.ok) {
+				const errData = await res.json().catch(() => ({}));
+				throw new Error(errData.error || errData.message || `HTTP ${res.status}`);
+			}
 			const data = await res.json();
+			if (!data || (!data.encounter && !data.id)) {
+				throw new Error("Encounter data tidak valid");
+			}
 			encounter = data;
 
 			formMode = data.encounter?.form_mode || "SOAP";
@@ -516,11 +523,15 @@
 			}
 
 			if (["Planned", "Arrived"].includes(encounter.encounter?.status)) {
-				await updateStatus("In Progress");
+				try {
+					await updateStatus("In Progress");
+				} catch (statusErr) {
+					console.error("Failed to update encounter status to In Progress:", statusErr);
+				}
 			}
 		} catch (err) {
 			console.error("Error loading encounter:", err);
-			addToast("Gagal memuat data encounter", "error");
+			addToast(err?.message ? `Gagal memuat data encounter: ${err.message}` : "Gagal memuat data encounter", "error");
 		} finally {
 			loading = false;
 		}
@@ -996,8 +1007,8 @@
 				);
 				goto("/suster");
 			} else {
-				const err = await res.json();
-				addToast(err.error || "Gagal menyimpan", "error");
+				const err = await res.json().catch(() => ({}));
+				addToast(err.error || err.message || "Gagal menyimpan", "error");
 			}
 		} catch {
 			addToast("Terjadi kesalahan", "error");
@@ -1096,27 +1107,32 @@
 		setupEncounterRealtime();
 
 		// Acquire & heartbeat lock
-		fetch('/api/encounters/lock', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ encounterId })
-		});
-		lockHeartbeat = setInterval(() => {
+		if (encounterId) {
 			fetch('/api/encounters/lock', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ encounterId })
-			});
-		}, 60000);
+			}).catch(() => {});
+			lockHeartbeat = setInterval(() => {
+				fetch('/api/encounters/lock', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ encounterId })
+				}).catch(() => {});
+			}, 60000);
+		}
 	});
 
 	onDestroy(() => {
 		if (lockHeartbeat) clearInterval(lockHeartbeat);
-		fetch('/api/encounters/lock', {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ encounterId })
-		});
+		if (encounterStore) encounterStore.destroy();
+		if (encounterId) {
+			fetch('/api/encounters/lock', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ encounterId })
+			}).catch(() => {});
+		}
 		if (encounterStore) encounterStore.destroy();
 		headerTitle.set(null);
 		isSidebarHidden.set(false);

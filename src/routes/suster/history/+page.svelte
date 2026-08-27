@@ -598,6 +598,17 @@
 												>
 												SOAP
 											</a>
+											<a
+												href="/suster/{row.encounter?.id}"
+												class="text-[#E11D48] hover:text-[#E11D48]/80 font-semibold text-xs uppercase tracking-wider bg-[#E11D48]/10 px-3 py-1.5 rounded flex items-center gap-1 hover:bg-[#E11D48]/20 transition-colors border border-[#E11D48]/20 shadow-sm"
+												on:click|stopPropagation
+											>
+												<span
+													class="material-symbols-outlined text-[16px]"
+													>visibility</span
+												>
+												View
+											</a>
 										</div>
 									</td>
 								</tr>

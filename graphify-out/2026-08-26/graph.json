@@ -1099,7 +1099,7 @@
       "label": "active",
       "file_type": "code",
       "source_file": "src/lib/components/Layout/Sidebar.svelte",
-      "source_location": "L439",
+      "source_location": "L422",
       "_origin": "ast",
       "id": "src_lib_components_layout_sidebar_active",
       "community": 16,
@@ -6650,7 +6650,7 @@
       "confidence": "EXTRACTED",
       "_origin": "ast",
       "id": "geonames",
-      "community": 118,
+      "community": 117,
       "community_name": "+page.svelte",
       "norm_label": "$lib/api/geonames"
     },
@@ -9902,7 +9902,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/components/Layout/Sidebar.svelte",
-      "source_location": "L439",
+      "source_location": "L422",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_components_layout_sidebar",
@@ -18566,5 +18566,5 @@
       "source_file": "build-logs.txt"
     }
   ],
-  "built_at_commit": "82ffa078f127a761b80e4f1f4e0e954fbcb025b1"
+  "built_at_commit": "29e76cf0c2c1fef7add9c16b3176b363c8b064d5"
 }

@@ -190,7 +190,7 @@
 					sublabel: `${assignedDoctors.length} dokter`,
 					meta: {
 						icon: "groups",
-						iconColor: "bg-primary/10 text-primary",
+						iconColor: "bg-[#E11D48]/10 text-[#E11D48]",
 					},
 				},
 				...assignedDoctors.map((d) => ({
@@ -421,7 +421,7 @@
 			selectedEncounterData?.encounter?.patient_id ||
 			selectedEncounterData?.patient?.id;
 		if (patientId) {
-			goto(`/suster/edit-patient?patient_id=${patientId}`);
+			goto(`/suster/edit-patient?id=${patientId}`);
 		}
 	}
 
@@ -568,7 +568,7 @@
 					</p>
 					<div class="flex items-center gap-2 mt-1">
 						<h3
-							class="text-3xl font-black text-blue-900 leading-tight"
+							class="text-3xl font-black text-[#4C1D2F] leading-tight"
 						>
 							{stats.patientsToday || 0}
 						</h3>
@@ -601,7 +601,7 @@
 					</div>
 				</div>
 				<div
-					class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+					class="w-12 h-12 bg-[#E11D48]/10 text-[#E11D48] rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
 				>
 					<span class="material-symbols-outlined text-2xl"
 						>patient_list</span
@@ -621,7 +621,7 @@
 					</p>
 					<div class="flex items-center gap-2 mt-1">
 						<h3
-							class="text-3xl font-black text-blue-900 leading-tight"
+							class="text-3xl font-black text-[#4C1D2F] leading-tight"
 						>
 							{stats.avgWaitMinutes || 0}<span
 								class="text-sm font-bold text-slate-400 ml-1"
@@ -677,7 +677,7 @@
 					</p>
 					<div class="flex items-center gap-2 mt-1">
 						<h3
-							class="text-3xl font-black text-blue-900 leading-tight"
+							class="text-3xl font-black text-[#4C1D2F] leading-tight"
 						>
 							{stats.avgTreatmentMinutes || 0}<span
 								class="text-sm font-bold text-slate-400 ml-1"
@@ -713,7 +713,7 @@
 					</div>
 				</div>
 				<div
-					class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+					class="w-12 h-12 bg-[#E11D48]/10 text-[#E11D48] rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
 				>
 					<span class="material-symbols-outlined text-2xl"
 						>schedule</span
@@ -733,7 +733,7 @@
 					</p>
 					<div class="flex items-center gap-2 mt-1">
 						<h3
-							class="text-3xl font-black text-blue-900 leading-tight"
+							class="text-3xl font-black text-[#4C1D2F] leading-tight"
 						>
 							{stats.completedToday || 0}
 							<span class="text-sm font-bold text-slate-300 mx-1"
@@ -788,9 +788,9 @@
 		>
 			<div class="flex items-center justify-between mb-6">
 				<h3
-					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+					class="text-lg font-bold text-[#4C1D2F] flex items-center gap-2"
 				>
-					<span class="material-symbols-outlined text-primary"
+					<span class="material-symbols-outlined text-[#E11D48]"
 						>pending_actions</span
 					>
 					Active Patient Queue
@@ -912,7 +912,7 @@
 
 										{#if row.patient?.handphone && !waSentSet.has(row.encounter?.id)}
 											<button
-												class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all transform hover:scale-105"
+												class="w-10 h-10 rounded-full bg-[#E11D48]/10 text-[#E11D48] border border-[#E11D48]/20 shadow-sm flex items-center justify-center hover:bg-[#E11D48] hover:text-white transition-all transform hover:scale-105"
 												on:click={(e) => sendWA(row, e)}
 												title="Kirim Panggilan WhatsApp"
 											>
@@ -997,11 +997,11 @@
 									<!-- Doctor name badge (unique to suster view) -->
 									<div class="flex items-center gap-1.5">
 										<span
-											class="material-symbols-outlined text-[12px] text-primary"
+											class="material-symbols-outlined text-[12px] text-[#E11D48]"
 											>stethoscope</span
 										>
 										<span
-											class="text-[10px] font-black text-primary tracking-wider uppercase"
+											class="text-[10px] font-black text-[#E11D48] tracking-wider uppercase"
 										>
 											{row.doctor_name || "Dokter"}
 										</span>
@@ -1028,15 +1028,15 @@
 		<div>
 			<div class="flex items-center justify-between mb-6">
 				<h3
-					class="text-lg font-bold text-blue-900 flex items-center gap-2"
+					class="text-lg font-bold text-[#4C1D2F] flex items-center gap-2"
 				>
-					<span class="material-symbols-outlined text-primary"
+					<span class="material-symbols-outlined text-[#E11D48]"
 						>inbox</span
 					>
 					Referral Inbox
 				</h3>
 				<button
-					class="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
+					class="text-[11px] font-bold text-[#E11D48] uppercase tracking-widest hover:underline"
 					>View All</button
 				>
 			</div>
@@ -1047,14 +1047,14 @@
 					<thead>
 						<tr class="bg-slate-50/50">
 							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-[#E11D48] transition-colors select-none group"
 								on:click={() => handleSort("doctor")}
 							>
 								<div class="flex items-center gap-1">
 									Sender Doctor<span
 										class="material-symbols-outlined text-[14px] {sortKey ===
 										'doctor'
-											? 'text-primary'
+											? 'text-[#E11D48]'
 											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
 										>{sortKey === "doctor"
 											? sortDesc
@@ -1065,14 +1065,14 @@
 								</div>
 							</th>
 							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-[#E11D48] transition-colors select-none group"
 								on:click={() => handleSort("date")}
 							>
 								<div class="flex items-center gap-1">
 									Date<span
 										class="material-symbols-outlined text-[14px] {sortKey ===
 										'date'
-											? 'text-primary'
+											? 'text-[#E11D48]'
 											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
 										>{sortKey === "date"
 											? sortDesc
@@ -1083,14 +1083,14 @@
 								</div>
 							</th>
 							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-[#E11D48] transition-colors select-none group"
 								on:click={() => handleSort("patient")}
 							>
 								<div class="flex items-center gap-1">
 									Patient Name<span
 										class="material-symbols-outlined text-[14px] {sortKey ===
 										'patient'
-											? 'text-primary'
+											? 'text-[#E11D48]'
 											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
 										>{sortKey === "patient"
 											? sortDesc
@@ -1101,14 +1101,14 @@
 								</div>
 							</th>
 							<th
-								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors select-none group"
+								class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-[#E11D48] transition-colors select-none group"
 								on:click={() => handleSort("note")}
 							>
 								<div class="flex items-center gap-1">
 									Note<span
 										class="material-symbols-outlined text-[14px] {sortKey ===
 										'note'
-											? 'text-primary'
+											? 'text-[#E11D48]'
 											: 'text-slate-300 opacity-0 group-hover:opacity-100'}"
 										>{sortKey === "note"
 											? sortDesc
@@ -1270,7 +1270,7 @@
 							<a
 								href={`/api/patients/${selectedEncounterData.encounter?.patient_id || selectedEncounterData.patient?.id}/pdf`}
 								target="_blank"
-								class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+								class="px-4 py-2 bg-[#E11D48]/10 text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
 							>
 								<span
 									class="material-symbols-outlined text-[16px]"
@@ -1280,7 +1280,7 @@
 							</a>
 							<button
 								on:click={editPatient}
-								class="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+								class="px-4 py-2 bg-[#E11D48]/10 text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
 							>
 								<span
 									class="material-symbols-outlined text-[16px]"
@@ -1471,7 +1471,7 @@
 											href="mailto:{selectedEncounterData.patient_email ||
 												selectedEncounterData.patient
 													?.email}"
-											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+											class="text-[11px] font-bold text-[#E11D48] hover:underline flex items-center justify-end gap-1"
 										>
 											<span
 												class="material-symbols-outlined text-[14px]"
@@ -1490,7 +1490,7 @@
 														.patient?.handphone,
 											)}
 											target="_blank"
-											class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+											class="text-[11px] font-bold text-[#E11D48] hover:underline flex items-center justify-end gap-1"
 										>
 											<span
 												class="material-symbols-outlined text-[14px]"
@@ -1537,7 +1537,7 @@
 									</span>
 									<div class="flex items-baseline gap-1">
 										<span
-											class="text-lg font-black text-blue-900"
+											class="text-lg font-black text-[#4C1D2F]"
 										>
 											{selectedEncounterData.patient_blood_type ||
 												selectedEncounterData.patient
@@ -1580,7 +1580,7 @@
 									</span>
 									<div class="flex items-baseline gap-1">
 										<span
-											class="text-lg font-black text-blue-900"
+											class="text-lg font-black text-[#4C1D2F]"
 										>
 											{selectedEncounterData.patient_tekanan_darah ||
 												selectedEncounterData.patient
@@ -1605,7 +1605,7 @@
 						{#if loadingMedical}
 							<div class="py-6 flex justify-center">
 								<span
-									class="material-symbols-outlined animate-spin text-primary"
+									class="material-symbols-outlined animate-spin text-[#E11D48]"
 									>progress_activity</span
 								>
 							</div>
@@ -1839,7 +1839,7 @@
 										>
 											<div>
 												<p
-													class="text-[11px] font-bold text-slate-800 group-hover:text-primary transition-colors"
+													class="text-[11px] font-bold text-slate-800 group-hover:text-[#E11D48] transition-colors"
 												>
 													{hist.encounter?.id}
 												</p>
@@ -1861,7 +1861,7 @@
 												</p>
 											</div>
 											<span
-												class="material-symbols-outlined text-slate-400 text-lg group-hover:text-primary transition-colors"
+												class="material-symbols-outlined text-slate-400 text-lg group-hover:text-[#E11D48] transition-colors"
 											>
 												{expandedHistoryId ===
 												hist.encounter?.id
@@ -1879,7 +1879,7 @@
 														class="whitespace-pre-wrap"
 													>
 														<strong
-															class="text-blue-900 font-black"
+															class="text-[#4C1D2F] font-black"
 															>S:</strong
 														>
 														{hist.encounter
@@ -1891,7 +1891,7 @@
 														class="whitespace-pre-wrap"
 													>
 														<strong
-															class="text-blue-900 font-black"
+															class="text-[#4C1D2F] font-black"
 															>O:</strong
 														>
 														{hist.encounter
@@ -1903,7 +1903,7 @@
 														class="whitespace-pre-wrap"
 													>
 														<strong
-															class="text-blue-900 font-black"
+															class="text-[#4C1D2F] font-black"
 															>A:</strong
 														>
 														{hist.encounter
@@ -1915,7 +1915,7 @@
 														class="whitespace-pre-wrap"
 													>
 														<strong
-															class="text-blue-900 font-black"
+															class="text-[#4C1D2F] font-black"
 															>P:</strong
 														>
 														{hist.encounter.plan}
@@ -1926,7 +1926,7 @@
 														class="whitespace-pre-wrap"
 													>
 														<strong
-															class="text-blue-900 font-black"
+															class="text-[#4C1D2F] font-black"
 															>R:</strong
 														>
 														{hist.encounter.resep}
@@ -2003,7 +2003,7 @@
 				{:else}
 					<button
 						on:click={startEncounter}
-						class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+						class="w-full bg-[#E11D48] hover:bg-[#BE123C] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2"
 					>
 						<span class="material-symbols-outlined text-[20px]"
 							>play_arrow</span
@@ -2039,7 +2039,7 @@
 			on:click={() => (isSidebarOpen = true)}
 		>
 			<span
-				class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform"
+				class="material-symbols-outlined text-[#E11D48] group-hover:scale-110 transition-transform"
 				>menu_open</span
 			>
 			<span

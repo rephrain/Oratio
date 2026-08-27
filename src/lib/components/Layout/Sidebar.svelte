@@ -41,6 +41,7 @@
 			{ href: "/dokter/history", icon: "🕒", label: "History" },
 		],
 		suster: [
+			{ href: "/suster", icon: "📋", label: "Dashboard" },
 			{ href: "/suster/history", icon: "🕒", label: "History" },
 			{ href: "/suster/patients", icon: "🏥", label: "Data Pasien" },
 		],
@@ -349,6 +350,22 @@
 			{/if}
 		</div>
 		<nav class="flex-1 px-4 space-y-2 mt-4 { $isSidebarOpen ? '' : '!px-2' }">
+			<a
+				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath === '/suster'
+					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+				href="/suster"
+				title="Dashboard"
+			>
+				<span
+					class="material-symbols-outlined {currentPath === '/suster'
+						? ''
+						: 'opacity-70'}">dashboard</span
+				>
+				{#if $isSidebarOpen}
+				<span class="font-medium text-sm whitespace-nowrap">Dashboard</span>
+				{/if}
+			</a>
 			<a
 				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/history')
 					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'

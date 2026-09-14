@@ -151,7 +151,18 @@
 		}
 	}
 
-	$: sortedReferrals = [...referrals].sort((a, b) => {
+	$: filteredReferrals = (() => {
+		if (selectedDoctorId === "all") return referrals;
+		const selectedDoc = assignedDoctors.find(
+			(d) => d.doctor_id === selectedDoctorId,
+		);
+		if (!selectedDoc) return referrals;
+		return referrals.filter(
+			(ref) => ref.target_doctor_code === selectedDoc.doctor_code,
+		);
+	})();
+
+	$: sortedReferrals = [...filteredReferrals].sort((a, b) => {
 		if (!sortKey) return 0;
 		let valA, valB;
 		if (sortKey === "doctor") {
@@ -253,9 +264,7 @@
 					},
 					queue_cancelled: (list, data) => {
 						loadStats();
-						return list.filter(
-							(e) => e.encounter.id !== data.id,
-						);
+						return list.filter((e) => e.encounter.id !== data.id);
 					},
 				},
 			},
@@ -288,20 +297,17 @@
 	async function setupReferralsRealtime() {
 		if (referralsStore) referralsStore.destroy();
 
-		referralsStore = createRealtimeList(
-			"/api/dashboard/suster/referrals",
-			{
-				rooms: [`user_${user?.id}`],
-				events: {
-					notification_created: (list, data) => {
-						if (data.type === "referral") {
-							return [data.payload, ...list];
-						}
-						return list;
-					},
+		referralsStore = createRealtimeList("/api/dashboard/suster/referrals", {
+			rooms: [`user_${user?.id}`],
+			events: {
+				notification_created: (list, data) => {
+					if (data.type === "referral") {
+						return [data.payload, ...list];
+					}
+					return list;
 				},
 			},
-		);
+		});
 
 		referralsStore.subscribe((val) => {
 			referrals = val;
@@ -423,29 +429,6 @@
 		if (patientId) {
 			goto(`/suster/edit-patient?id=${patientId}`);
 		}
-	}
-
-	let waSentSet = new Set();
-
-	function sendWA(row, event) {
-		if (event) event.stopPropagation();
-
-		const phone = row.patient?.handphone || row.patient?.handphone;
-		if (!phone) return;
-
-		const patientName = row.patient_name || "Pasien";
-		const queueNum = String(row.encounter?.queue_number || "").padStart(
-			2,
-			"0",
-		);
-		const doctorName = row.doctor_name || "Dokter";
-
-		const text = `Halo *${patientName}*,\n\nGiliran antrian Anda (Nomor *${queueNum}*) telah tiba. Silakan masuk ke ruangan pemeriksaan *${doctorName}* sekarang.\n\n_Pesan otomatis dari Oratio Clinic._`;
-
-		const url = getWhatsAppUrl(phone) + "?text=" + encodeURIComponent(text);
-		window.open(url, "_blank");
-
-		waSentSet = new Set([...waSentSet, row.encounter?.id]);
 	}
 
 	$: selectedStatusConfig = (() => {
@@ -798,9 +781,13 @@
 				<span
 					class="text-xs font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-md"
 				>
-					{filteredEncounters.filter(
-						(e) =>
-							["Arrived", "Planned", "In Progress", "On Hold"].includes(e.encounter?.status),
+					{filteredEncounters.filter((e) =>
+						[
+							"Arrived",
+							"Planned",
+							"In Progress",
+							"On Hold",
+						].includes(e.encounter?.status),
 					).length} IN QUEUE
 				</span>
 			</div>
@@ -862,7 +849,8 @@
 								queueBg: "bg-slate-50 text-slate-400",
 								ring: "border-slate-300 ring-2 ring-slate-100",
 							}}
-							{@const lockInfo = encounterLocks[row.encounter?.id]}
+							{@const lockInfo =
+								encounterLocks[row.encounter?.id]}
 
 							<!-- svelte-ignore a11y-click-events-have-key-events // svelte-ignore a11y-no-static-element-interactions -->
 							<div
@@ -876,9 +864,14 @@
 							>
 								<!-- Lock indicator -->
 								{#if lockInfo && !lockInfo.isMe}
-									<div class="absolute top-0 left-0 right-0 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest text-center py-1.5 z-20 flex items-center justify-center gap-1.5">
-										<span class="material-symbols-outlined text-[12px]">lock</span>
-										{lockInfo.userRole === 'dokter' ? 'Dokter' : 'Suster'} {lockInfo.userName?.split(' ')[0]} is editing
+									<div
+										class="absolute top-0 left-0 right-0 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest text-center py-1.5 z-20 flex items-center justify-center gap-1.5"
+									>
+										<span
+											class="material-symbols-outlined text-[12px]"
+											>lock</span
+										>
+										{lockInfo.userName} is editing
 									</div>
 								{/if}
 
@@ -896,7 +889,10 @@
 								</div>
 
 								<div
-									class="flex justify-between items-start mb-4 {lockInfo && !lockInfo.isMe ? 'mt-4' : ''}"
+									class="flex justify-between items-start mb-4 {lockInfo &&
+									!lockInfo.isMe
+										? 'mt-4'
+										: ''}"
 								>
 									<div
 										class="flex items-center gap-3 relative z-10 w-full pr-16"
@@ -909,19 +905,6 @@
 													index + 1,
 											).padStart(2, "0")}
 										</div>
-
-										{#if row.patient?.handphone && !waSentSet.has(row.encounter?.id)}
-											<button
-												class="w-10 h-10 rounded-full bg-[#E11D48]/10 text-[#E11D48] border border-[#E11D48]/20 shadow-sm flex items-center justify-center hover:bg-[#E11D48] hover:text-white transition-all transform hover:scale-105"
-												on:click={(e) => sendWA(row, e)}
-												title="Kirim Panggilan WhatsApp"
-											>
-												<span
-													class="material-symbols-outlined text-[20px]"
-													>chat</span
-												>
-											</button>
-										{/if}
 									</div>
 								</div>
 
@@ -1035,10 +1018,6 @@
 					>
 					Referral Inbox
 				</h3>
-				<button
-					class="text-[11px] font-bold text-[#E11D48] uppercase tracking-widest hover:underline"
-					>View All</button
-				>
 			</div>
 			<div
 				class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden"
@@ -1133,12 +1112,9 @@
 									</p>
 								</td>
 							</tr>
-						{:else if referrals.length > 0}
+						{:else if filteredReferrals.length > 0}
 							{#each sortedReferrals as ref}
-								<tr
-									class="hover:bg-slate-50 transition-colors cursor-pointer group"
-									on:click={() => selectReferral(ref)}
-								>
+								<tr class="hover:bg-slate-50 transition-colors">
 									<td class="px-6 py-5">
 										<div class="flex items-center gap-3">
 											<div
@@ -1984,20 +1960,29 @@
 				class="sticky bottom-0 bg-white p-6 border-t border-slate-100 flex flex-col gap-2 shrink-0"
 			>
 				{#if selectedLockInfo && !selectedLockInfo.isMe}
-					<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 mb-1">
-						<span class="material-symbols-outlined text-amber-500 text-lg">lock</span>
+					<div
+						class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 mb-1"
+					>
+						<span
+							class="material-symbols-outlined text-amber-500 text-lg"
+							>lock</span
+						>
 						<div>
 							<p class="text-xs font-bold text-amber-800">
-								{selectedLockInfo.userRole === 'dokter' ? 'Dokter' : 'Suster'} {selectedLockInfo.userName} sedang mengedit
+								{selectedLockInfo.userName} sedang mengedit
 							</p>
-							<p class="text-[10px] text-amber-600">Encounter ini tidak dapat dibuka saat ini</p>
+							<p class="text-[10px] text-amber-600">
+								Encounter ini tidak dapat dibuka saat ini
+							</p>
 						</div>
 					</div>
 					<button
 						disabled
 						class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 rounded-xl shadow-sm cursor-not-allowed flex items-center justify-center gap-2"
 					>
-						<span class="material-symbols-outlined text-[20px]">lock</span>
+						<span class="material-symbols-outlined text-[20px]"
+							>lock</span
+						>
 						Encounter Terkunci
 					</button>
 				{:else}

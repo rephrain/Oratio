@@ -44,7 +44,7 @@ COPY --from=builder /app/src/lib/server/db ./src/lib/server/db
 # Copy drizzle migrations directly from builder source (before any build output)
 COPY --from=builder /app/drizzle/migrations ./drizzle/migrations
 
-RUN npm install --omit=dev && npm install drizzle-kit tsx
+RUN npm install --omit=dev drizzle-kit tsx
 
 EXPOSE 3000
 

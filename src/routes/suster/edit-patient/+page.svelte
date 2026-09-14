@@ -630,7 +630,7 @@
         <section
             class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
         >
-            <div class="flex items-center gap-2 mb-6 text-primary">
+            <div class="flex items-center gap-2 mb-6 text-[#E11D48]">
                 <span class="material-symbols-outlined">badge</span>
                 <h3 class="font-bold text-lg text-slate-800">
                     Identitas Pasien
@@ -644,7 +644,7 @@
                         >Patient ID (National ID) <span class="text-xs text-slate-400 font-normal">(Opsional)</span></label
                     >
                     <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.nik
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.nik
                             ? 'border-red-500 ring-1 ring-red-500'
                             : ''}"
                         placeholder="16-digit nomor induk"
@@ -663,7 +663,7 @@
                         >Nama Lengkap <span class="text-red-500">*</span></label
                     >
                     <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.nama_lengkap
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.nama_lengkap
                             ? 'border-red-500 ring-1 ring-red-500'
                             : ''}"
                         placeholder="Nama sesuai KTP"
@@ -682,7 +682,7 @@
                         ></label
                     >
                     <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.birth_date
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.birth_date
                             ? 'border-red-500 ring-1 ring-red-500'
                             : ''}"
                         type="date"
@@ -701,7 +701,7 @@
                     <div class="relative">
                         <input
                             class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm
-                                focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                                focus:outline-none focus:ring-2 focus:ring-[#E11D48]/40 focus:border-[#E11D48] transition-all"
                             placeholder="Cari Kota/Kabupaten..."
                             type="text"
                             value={form.birthplace}
@@ -768,7 +768,7 @@
         <section
             class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
         >
-            <div class="flex items-center gap-2 mb-6 text-primary">
+            <div class="flex items-center gap-2 mb-6 text-[#E11D48]">
                 <span class="material-symbols-outlined">home</span>
                 <h3 class="font-bold text-lg text-slate-800">
                     Keluarga & Alamat
@@ -781,7 +781,7 @@
                         >Nomor KK (Family Card)</label
                     >
                     <input
-                        class="w-full md:w-1/2 rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                        class="w-full md:w-1/2 rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all"
                         placeholder="16-digit nomor kartu keluarga"
                         type="text"
                         bind:value={form.nomor_kk}
@@ -795,7 +795,7 @@
                         ></label
                     >
                     <textarea
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.address
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.address
                             ? 'border-red-500 ring-1 ring-red-500'
                             : ''}"
                         placeholder="Nama jalan, nomor rumah, gedung..."
@@ -862,7 +862,7 @@
                         >RT</label
                     >
                     <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all"
                         placeholder="000"
                         type="text"
                         bind:value={form.rt}
@@ -875,7 +875,7 @@
                         >RW</label
                     >
                     <input
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all"
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all"
                         placeholder="000"
                         type="text"
                         bind:value={form.rw}
@@ -890,7 +890,7 @@
             <section
                 class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
             >
-                <div class="flex items-center gap-2 mb-6 text-primary">
+                <div class="flex items-center gap-2 mb-6 text-[#E11D48]">
                     <span class="material-symbols-outlined">contact_phone</span>
                     <h3 class="font-bold text-lg text-slate-800">Kontak</h3>
                 </div>
@@ -906,7 +906,7 @@
                             <div
                                 class="relative flex-shrink-0 w-28 bg-slate-50 hover:bg-slate-100 transition-colors border border-r-0 rounded-l-lg flex items-center px-3 {errors.handphone
                                     ? 'border-red-400'
-                                    : 'border-slate-200'} focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary overflow-hidden"
+                                    : 'border-slate-200'} focus-within:ring-2 focus-within:ring-[#E11D48]/40 focus-within:border-[#E11D48] overflow-hidden"
                             >
                                 <!-- Visual Display -->
                                 <span
@@ -960,7 +960,7 @@
                                     focus:outline-none focus:ring-2 transition-all
                                     {errors.handphone
                                     ? 'border-red-400 focus:ring-red-200 focus:border-red-400'
-                                    : 'border-slate-200 focus:ring-primary/30 focus:border-primary'}"
+                                    : 'border-slate-200 focus:ring-[#E11D48]/30 focus:border-[#E11D48]'}"
                                 placeholder="812-xxxx-xxxx"
                                 type="text"
                                 bind:value={inputPhoneNumber}
@@ -1013,7 +1013,7 @@
                             >Email</label
                         >
                         <input
-                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.email
+                            class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.email
                                 ? 'border-red-500 ring-1 ring-red-500'
                                 : ''}"
                             placeholder="contoh@email.com"
@@ -1031,7 +1031,7 @@
             <section
                 class="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
             >
-                <div class="flex items-center gap-2 mb-6 text-primary">
+                <div class="flex items-center gap-2 mb-6 text-[#E11D48]">
                     <span class="material-symbols-outlined"
                         >medical_information</span
                     >
@@ -1066,7 +1066,7 @@
                         >
                         <div class="flex items-center gap-3">
                             <input
-                                class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-primary focus:border-primary transition-all {errors.tekanan_darah
+                                class="w-full rounded-lg border-slate-200 bg-slate-50 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all {errors.tekanan_darah
                                     ? 'border-red-500 ring-1 ring-red-500'
                                     : ''}"
                                 placeholder="120/80"
@@ -1095,11 +1095,11 @@
                             bind:checked={form.pregnancy_status}
                         />
                         <div
-                            class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+                            class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#E11D48]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E11D48]"
                         ></div>
                     </div>
                     <span
-                        class="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors"
+                        class="text-sm font-medium text-slate-700 group-hover:text-[#E11D48] transition-colors"
                         >Status Kehamilan (Pregnancy Status)</span
                     >
                 </label>
@@ -1113,7 +1113,7 @@
             <div
                 class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"
             >
-                <div class="flex items-center gap-2 text-primary">
+                <div class="flex items-center gap-2 text-[#E11D48]">
                     <span class="material-symbols-outlined">history</span>
                     <h3 class="font-bold text-lg text-slate-800">
                         Riwayat Penyakit
@@ -1135,7 +1135,7 @@
                         {#if item.code}
                             <div class="flex items-center gap-2 text-sm">
                                 <span
-                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    class="material-symbols-outlined text-[#E11D48] text-[16px]"
                                     >check_circle</span
                                 >
                                 <span class="font-medium text-slate-800">{item.display}</span>
@@ -1155,7 +1155,7 @@
                         {:else}
                             <div class="flex flex-col md:flex-row gap-4 items-center">
                                 <div
-                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-[#E11D48] [&_input]:focus:border-[#E11D48] [&_input]:text-sm"
                                 >
                                     <SearchableSelect
                                         placeholder="Cari penyakit (SNOMED)..."
@@ -1207,7 +1207,7 @@
             <div
                 class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"
             >
-                <div class="flex items-center gap-2 text-primary">
+                <div class="flex items-center gap-2 text-[#E11D48]">
                     <span class="material-symbols-outlined">warning</span>
                     <h3 class="font-bold text-lg text-slate-800">Alergi</h3>
                 </div>
@@ -1227,7 +1227,7 @@
                         {#if item.substance_code && item.reaction_code}
                             <div class="flex items-center gap-2 text-sm">
                                 <span
-                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    class="material-symbols-outlined text-[#E11D48] text-[16px]"
                                     >check_circle</span
                                 >
                                 <span class="font-medium text-slate-800">{item.substance_display}</span>
@@ -1247,7 +1247,7 @@
                         {:else}
                             <div class="flex flex-col md:flex-row gap-4 items-center">
                                 <div
-                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-primary [&_input]:focus:border-primary [&_input]:text-sm"
+                                    class="flex-1 w-full min-w-0 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:h-11 [&_input]:rounded-lg [&_input]:border-slate-200 [&_input]:bg-white [&_input]:focus:ring-[#E11D48] [&_input]:focus:border-[#E11D48] [&_input]:text-sm"
                                 >
                                     <SearchableSelect
                                         placeholder="Cari alergen/substansi..."
@@ -1296,7 +1296,7 @@
             <div
                 class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4"
             >
-                <div class="flex items-center gap-2 text-primary">
+                <div class="flex items-center gap-2 text-[#E11D48]">
                     <span class="material-symbols-outlined">medication</span>
                     <h3 class="font-bold text-lg text-slate-800">
                         Riwayat Pengobatan
@@ -1318,7 +1318,7 @@
                         {#if item.product_name}
                             <div class="flex items-center gap-2 text-sm">
                                 <span
-                                    class="material-symbols-outlined text-primary text-[16px]"
+                                    class="material-symbols-outlined text-[#E11D48] text-[16px]"
                                     >check_circle</span
                                 >
                                 <span class="font-medium text-slate-800"
@@ -1354,7 +1354,7 @@
                                         type="button"
                                         class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {medicationMerkType ===
                                         'known'
-                                            ? 'bg-white text-primary shadow-sm'
+                                            ? 'bg-white text-[#E11D48] shadow-sm'
                                             : 'text-slate-500'}"
                                         on:click={() =>
                                             (medicationMerkType = "known")}
@@ -1364,7 +1364,7 @@
                                         type="button"
                                         class="px-3 py-1 text-[10px] font-bold rounded-md transition-all {medicationMerkType ===
                                         'unknown'
-                                            ? 'bg-white text-primary shadow-sm'
+                                            ? 'bg-white text-[#E11D48] shadow-sm'
                                             : 'text-slate-500'}"
                                         on:click={() =>
                                             (medicationMerkType = "unknown")}
@@ -1373,7 +1373,7 @@
                                 </div>
                                 <div class="flex flex-col sm:flex-row gap-2">
                                     <input
-                                        class="flex-1 h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                        class="flex-1 h-11 rounded-lg border-slate-200 bg-white focus:ring-[#E11D48] focus:border-[#E11D48] text-sm"
                                         placeholder="Ketik nama obat..."
                                         bind:value={medicationSearchTerm}
                                         on:keydown={(e) => {
@@ -1385,7 +1385,7 @@
                                     />
                                     <button
                                         type="button"
-                                        class="h-11 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-1 shrink-0 disabled:opacity-50"
+                                        class="h-11 px-4 bg-[#E11D48] text-white rounded-lg text-sm font-medium hover:bg-[#BE123C] transition-colors flex items-center gap-1 shrink-0 disabled:opacity-50"
                                         disabled={medicationSearchLoading}
                                         on:click={() =>
                                             triggerMedicationSearch(i)}
@@ -1445,14 +1445,14 @@
                         <div class="flex flex-row gap-3 items-center">
                             <div class="w-full md:w-40 shrink-0">
                                 <input
-                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-[#E11D48] focus:border-[#E11D48] text-sm"
                                     bind:value={item.dosage}
                                     placeholder="Dosis"
                                 />
                             </div>
                             <div class="flex-1">
                                 <input
-                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-primary focus:border-primary text-sm"
+                                    class="w-full h-11 rounded-lg border-slate-200 bg-white focus:ring-[#E11D48] focus:border-[#E11D48] text-sm"
                                     bind:value={item.note}
                                     placeholder="Catatan (opsional)"
                                 />
@@ -1493,7 +1493,7 @@
                 Batal
             </button>
             <button
-                class="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/25 hover:bg-emerald-600 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                class="flex items-center gap-2 px-8 py-3 bg-[#E11D48] text-white rounded-xl font-bold shadow-lg shadow-rose-200 hover:bg-[#BE123C] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
                 disabled={loading}
             >

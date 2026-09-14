@@ -349,55 +349,69 @@
 			</div>
 			{/if}
 		</div>
-		<nav class="flex-1 px-4 space-y-2 mt-4 { $isSidebarOpen ? '' : '!px-2' }">
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath === '/suster'
-					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/suster"
-				title="Dashboard"
-			>
-				<span
-					class="material-symbols-outlined {currentPath === '/suster'
-						? ''
-						: 'opacity-70'}">dashboard</span
+		<nav class="flex-1 px-4 mt-4 { $isSidebarOpen ? '' : '!px-2' } overflow-y-auto custom-scrollbar overflow-x-hidden pb-4">
+			<!-- DASHBOARD & RIWAYAT -->
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath === '/suster'
+						? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/suster"
+					title="Dashboard"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Dashboard</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/history')
-					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/suster/history"
-				title="History"
-			>
-				<span
-					class="material-symbols-outlined {currentPath.startsWith('/suster/history')
-						? ''
-						: 'opacity-70'}">history</span
+					<span
+						class="material-symbols-outlined {currentPath === '/suster'
+							? ''
+							: 'opacity-70'} !text-[20px]">dashboard</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Dashboard</span>
+					{/if}
+				</a>
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath.startsWith('/suster/history')
+						? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/suster/history"
+					title="History"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">History</span>
-				{/if}
-			</a>
-			<a
-				class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-3' : 'justify-center p-3' } {currentPath.startsWith('/suster/patients')
-					? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
-					: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
-				href="/suster/patients"
-				title="Data Pasien"
-			>
-				<span
-					class="material-symbols-outlined {currentPath.startsWith('/suster/patients')
-						? ''
-						: 'opacity-70'}">patient_list</span
+					<span
+						class="material-symbols-outlined {currentPath.startsWith('/suster/history')
+							? ''
+							: 'opacity-70'} !text-[20px]">history</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">History</span>
+					{/if}
+				</a>
+			</div>
+
+			<!-- DATA PASIEN -->
+			{#if $isSidebarOpen}
+				<div class="px-4 mt-6 mb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">
+					Data Pasien
+				</div>
+			{:else}
+				<div class="my-4 border-t border-white/10 mx-3"></div>
+			{/if}
+			<div class="space-y-1">
+				<a
+					class="flex items-center { $isSidebarOpen ? 'gap-3 px-4 py-2.5' : 'justify-center p-3' } {currentPath.startsWith('/suster/patients')
+						? 'bg-[#E11D48]/20 border-l-4 border-[#E11D48] !text-[#FB7185] hover:!text-[#FFE4E6]'
+						: 'hover:bg-white/10 !text-white/70 hover:!text-white'} rounded-lg transition-colors"
+					href="/suster/patients"
+					title="Data Pasien"
 				>
-				{#if $isSidebarOpen}
-				<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
-				{/if}
-			</a>
+					<span
+						class="material-symbols-outlined {currentPath.startsWith('/suster/patients')
+							? ''
+							: 'opacity-70'} !text-[20px]">patient_list</span
+					>
+					{#if $isSidebarOpen}
+					<span class="font-medium text-sm whitespace-nowrap">Data Pasien</span>
+					{/if}
+				</a>
+			</div>
 		</nav>
 		<div class="mt-auto p-4 border-t border-white/10">
 			<ShiftTimer />

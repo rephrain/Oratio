@@ -95,7 +95,9 @@
 	// Patient context
 	let patientInfo = null;
 	let patientHistory = [];
-	$: filteredHistory = patientHistory.filter(h => h.encounter?.id !== encounterId);
+	$: filteredHistory = patientHistory.filter(
+		(h) => h.encounter?.id !== encounterId,
+	);
 	let patientMedicalBackground = null;
 	let loadingMedical = false;
 	let showSidebar = true;
@@ -127,14 +129,14 @@
 		...doctorsList
 			.filter((doc) => doc.doctor_code !== encounter?.doctor_code)
 			.map((doc) => ({
-			value: doc.doctor_code,
-			label: doc.name,
-			sublabel: doc.doctor_code,
-			meta: {
-				profile_image_url: doc.profile_image_url,
-				is_doctor: true,
-			},
-		})),
+				value: doc.doctor_code,
+				label: doc.name,
+				sublabel: doc.doctor_code,
+				meta: {
+					profile_image_url: doc.profile_image_url,
+					is_doctor: true,
+				},
+			})),
 	];
 
 	$: itemOptions = availableItems.map((ai) => ({
@@ -143,7 +145,7 @@
 		sublabel: `${ai.item_group || "Umum"} • Rp ${parseFloat(ai.price || 0).toLocaleString("id-ID")}`,
 		meta: {
 			icon: "medical_services",
-			iconColor: "bg-primary/10 text-primary",
+			iconColor: "bg-[#E11D48]/10 text-[#E11D48]",
 		},
 	}));
 
@@ -424,7 +426,9 @@
 			const res = await fetch(`/api/encounters/${encounterId}`);
 			if (!res.ok) {
 				const errData = await res.json().catch(() => ({}));
-				throw new Error(errData.error || errData.message || `HTTP ${res.status}`);
+				throw new Error(
+					errData.error || errData.message || `HTTP ${res.status}`,
+				);
 			}
 			const data = await res.json();
 			if (!data || (!data.encounter && !data.id)) {
@@ -506,7 +510,9 @@
 
 			// Load available items for this doctor based on doctor_items relations
 			try {
-				const docId = data.encounter?.doctor_id || data.encounter?.encounter?.doctor_id;
+				const docId =
+					data.encounter?.doctor_id ||
+					data.encounter?.encounter?.doctor_id;
 				if (docId) {
 					const itemsRes = await fetch(
 						`/api/admin/items?doctor_id=${docId}&all=true`,
@@ -526,12 +532,20 @@
 				try {
 					await updateStatus("In Progress");
 				} catch (statusErr) {
-					console.error("Failed to update encounter status to In Progress:", statusErr);
+					console.error(
+						"Failed to update encounter status to In Progress:",
+						statusErr,
+					);
 				}
 			}
 		} catch (err) {
 			console.error("Error loading encounter:", err);
-			addToast(err?.message ? `Gagal memuat data encounter: ${err.message}` : "Gagal memuat data encounter", "error");
+			addToast(
+				err?.message
+					? `Gagal memuat data encounter: ${err.message}`
+					: "Gagal memuat data encounter",
+				"error",
+			);
 		} finally {
 			loading = false;
 		}
@@ -540,35 +554,41 @@
 	async function setupEncounterRealtime() {
 		if (encounterStore) encounterStore.destroy();
 
-		encounterStore = createRealtimeDetail(`/api/encounters/${encounterId}`, {
-			rooms: [`encounter_${encounterId}`],
-			events: {
-				encounter_updated: (current, data) => {
-					if (data.id === encounterId) {
-						// Only reactive update for core fields, avoid resetting form if user is typing
-						return { ...current, encounter: { ...current.encounter, ...data } };
-					}
-					return current;
+		encounterStore = createRealtimeDetail(
+			`/api/encounters/${encounterId}`,
+			{
+				rooms: [`encounter_${encounterId}`],
+				events: {
+					encounter_updated: (current, data) => {
+						if (data.id === encounterId) {
+							// Only reactive update for core fields, avoid resetting form if user is typing
+							return {
+								...current,
+								encounter: { ...current.encounter, ...data },
+							};
+						}
+						return current;
+					},
+					status_changed: (current, data) => {
+						if (current?.encounter) {
+							current.encounter.status = data.status;
+						}
+						return current;
+					},
+					soap_updated: (current, data) => {
+						// We only update if we're not the one who saved?
+						// For now, let's just make it reactive
+						subjective = data.subjective || subjective;
+						objective = data.objective || objective;
+						assessment = data.assessment || assessment;
+						plan = data.plan || plan;
+						return current;
+					},
 				},
-				status_changed: (current, data) => {
-					if (current?.encounter) {
-						current.encounter.status = data.status;
-					}
-					return current;
-				},
-				soap_updated: (current, data) => {
-					// We only update if we're not the one who saved? 
-					// For now, let's just make it reactive
-					subjective = data.subjective || subjective;
-					objective = data.objective || objective;
-					assessment = data.assessment || assessment;
-					plan = data.plan || plan;
-					return current;
-				}
-			}
-		});
+			},
+		);
 
-		encounterStore.subscribe(val => {
+		encounterStore.subscribe((val) => {
 			if (val) {
 				encounter = val;
 			}
@@ -577,7 +597,6 @@
 		// We don't call store.load() because we already have loadEncounter()
 		// which does complex mapping.
 	}
-
 
 	async function loadPatientContext(patientId) {
 		try {
@@ -900,7 +919,10 @@
 		// Spread to new object so $: mappedOdontogramData recalculates → ToothDiagram flashes
 		odontogram = { ...odontogram };
 
-		addToast(`Gigi ${updatedTooth.tooth_number} berhasil disimpan`, "success");
+		addToast(
+			`Gigi ${updatedTooth.tooth_number} berhasil disimpan`,
+			"success",
+		);
 	}
 
 	function hasCondition(toothNum) {
@@ -1008,7 +1030,10 @@
 				goto("/suster");
 			} else {
 				const err = await res.json().catch(() => ({}));
-				addToast(err.error || err.message || "Gagal menyimpan", "error");
+				addToast(
+					err.error || err.message || "Gagal menyimpan",
+					"error",
+				);
 			}
 		} catch {
 			addToast("Terjadi kesalahan", "error");
@@ -1108,16 +1133,16 @@
 
 		// Acquire & heartbeat lock
 		if (encounterId) {
-			fetch('/api/encounters/lock', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ encounterId })
+			fetch("/api/encounters/lock", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ encounterId }),
 			}).catch(() => {});
 			lockHeartbeat = setInterval(() => {
-				fetch('/api/encounters/lock', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ encounterId })
+				fetch("/api/encounters/lock", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ encounterId }),
 				}).catch(() => {});
 			}, 60000);
 		}
@@ -1127,10 +1152,10 @@
 		if (lockHeartbeat) clearInterval(lockHeartbeat);
 		if (encounterStore) encounterStore.destroy();
 		if (encounterId) {
-			fetch('/api/encounters/lock', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ encounterId })
+			fetch("/api/encounters/lock", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ encounterId }),
 			}).catch(() => {});
 		}
 		if (encounterStore) encounterStore.destroy();
@@ -1203,9 +1228,12 @@
 									<a
 										href={`/api/patients/${encounter.encounter?.patient_id || encounter.patient?.id}/pdf`}
 										target="_blank"
-										class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
+										class="px-4 py-2 bg-[#E11D48]/10 text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg text-[11px] font-bold transition-colors flex items-center gap-2 uppercase tracking-widest"
 									>
-										<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+										<span
+											class="material-symbols-outlined text-[16px]"
+											>picture_as_pdf</span
+										>
 										View PDF Record
 									</a>
 								</div>
@@ -1375,7 +1403,7 @@
 										<div class="text-right">
 											{#if encounter.patient_email}<a
 													href="mailto:{encounter.patient_email}"
-													class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+													class="text-[11px] font-bold text-[#E11D48] hover:underline flex items-center justify-end gap-1"
 													><span
 														class="material-symbols-outlined text-[14px]"
 														>mail</span
@@ -1385,7 +1413,7 @@
 														encounter.patient_handphone,
 													)}
 													target="_blank"
-													class="text-[11px] font-bold text-primary hover:underline flex items-center justify-end gap-1"
+													class="text-[11px] font-bold text-[#E11D48] hover:underline flex items-center justify-end gap-1"
 													><span
 														class="material-symbols-outlined text-[14px]"
 														>chat</span
@@ -1414,22 +1442,22 @@
 								</header>
 								<div class="grid grid-cols-2 gap-3 mb-4">
 									<div
-										class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
+										class="p-3 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between"
 									>
 										<div class="flex flex-col">
 											<span
-												class="text-[10px] text-blue-600 uppercase font-bold"
+												class="text-[10px] text-[#E11D48] uppercase font-bold"
 												>Blood Type</span
 											>
 											<div
 												class="flex items-baseline gap-1"
 											>
 												<span
-													class="text-lg font-black text-blue-900"
+													class="text-lg font-black text-[#4C1D2F]"
 													>{encounter.patient_blood_type ||
 														"-"}</span
 												><span
-													class="text-sm font-bold text-blue-700"
+													class="text-sm font-bold text-[#E11D48]"
 													>{encounter.patient_rhesus ===
 													"+"
 														? "+"
@@ -1441,33 +1469,33 @@
 											</div>
 										</div>
 										<span
-											class="material-symbols-outlined text-blue-400 shrink-0"
+											class="material-symbols-outlined text-[#FB7185] shrink-0"
 											>bloodtype</span
 										>
 									</div>
 									<div
-										class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between"
+										class="p-3 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between"
 									>
 										<div class="flex flex-col flex-1">
 											<span
-												class="text-[10px] text-blue-600 uppercase font-bold"
+												class="text-[10px] text-[#E11D48] uppercase font-bold"
 												>BP</span
 											>
 											<div
 												class="flex items-baseline gap-1"
 											>
 												<span
-													class="text-lg font-black text-blue-900"
+													class="text-lg font-black text-[#4C1D2F]"
 													>{encounter.patient_tekanan_darah ||
 														"-"}</span
 												><span
-													class="text-[10px] font-bold text-blue-700"
+													class="text-[10px] font-bold text-[#E11D48]"
 													>mmHg</span
 												>
 											</div>
 										</div>
 										<span
-											class="material-symbols-outlined text-blue-400 shrink-0"
+											class="material-symbols-outlined text-[#FB7185] shrink-0"
 											>vital_signs</span
 										>
 									</div>
@@ -1476,7 +1504,7 @@
 								{#if loadingMedical}
 									<div class="py-6 flex justify-center">
 										<span
-											class="material-symbols-outlined animate-spin text-primary"
+											class="material-symbols-outlined animate-spin text-[#E11D48]"
 											>progress_activity</span
 										>
 									</div>
@@ -1618,10 +1646,10 @@
 											</p>
 											{#if patientMedicalBackground.medications?.length > 0}
 												{#each patientMedicalBackground.medications as med}<div
-														class="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100"
+														class="flex items-start gap-3 p-3 rounded-xl bg-rose-50/50 border border-rose-100"
 													>
 														<div
-															class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"
+															class="w-8 h-8 rounded-lg bg-[#E11D48]/10 text-[#E11D48] flex items-center justify-center shrink-0"
 														>
 															<span
 																class="material-symbols-outlined text-[16px]"
@@ -1670,14 +1698,14 @@
 						<button
 							class="px-6 py-1.5 rounded-lg text-sm font-semibold transition-all {formMode ===
 							'SOAP'
-								? 'bg-white shadow-sm text-primary'
+								? 'bg-white shadow-sm text-[#E11D48]'
 								: 'text-slate-500 hover:text-slate-700'}"
 							on:click={() => (formMode = "SOAP")}>SOAP</button
 						>
 						<button
 							class="px-6 py-1.5 rounded-lg text-sm font-semibold transition-all {formMode ===
 							'SOAP_WHO'
-								? 'bg-white shadow-sm text-primary'
+								? 'bg-white shadow-sm text-[#E11D48]'
 								: 'text-slate-500 hover:text-slate-700'}"
 							on:click={() => (formMode = "SOAP_WHO")}
 							>SOAP-WHO</button
@@ -1707,7 +1735,7 @@
 								> Subjective</label
 							>
 							<textarea
-								class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary h-32 text-sm"
+								class="w-full rounded-xl border-slate-200 focus:border-[#E11D48] focus:ring-[#E11D48] h-32 text-sm"
 								bind:value={subjective}
 								placeholder="Chief complaints, pain levels, history of current illness..."
 							></textarea>
@@ -1721,7 +1749,7 @@
 								> Objective</label
 							>
 							<textarea
-								class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary h-32 text-sm"
+								class="w-full rounded-xl border-slate-200 focus:border-[#E11D48] focus:ring-[#E11D48] h-32 text-sm"
 								bind:value={objective}
 								placeholder="Clinical findings, extraoral & intraoral exam results..."
 							></textarea>
@@ -1735,7 +1763,7 @@
 								> Assessment</label
 							>
 							<textarea
-								class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary h-32 text-sm"
+								class="w-full rounded-xl border-slate-200 focus:border-[#E11D48] focus:ring-[#E11D48] h-32 text-sm"
 								bind:value={assessment}
 								placeholder="Diagnosis..."
 							></textarea>
@@ -1749,7 +1777,7 @@
 								> Plan</label
 							>
 							<textarea
-								class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary h-32 text-sm"
+								class="w-full rounded-xl border-slate-200 focus:border-[#E11D48] focus:ring-[#E11D48] h-32 text-sm"
 								bind:value={plan}
 								placeholder="Treatment plan, counseling, follow-up..."
 							></textarea>
@@ -1766,7 +1794,8 @@
 						<h3
 							class="text-base font-bold flex items-center gap-2 text-slate-800 m-0 mb-4 pb-4 border-b border-slate-50"
 						>
-							<span class="material-symbols-outlined text-primary"
+							<span
+								class="material-symbols-outlined text-[#E11D48]"
 								>search</span
 							>
 							Keluhan Utama
@@ -1777,7 +1806,7 @@
 								>Cari Keluhan Utama</label
 							>
 							<div
-								class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-3 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary"
+								class="[&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-3 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:focus:ring-[#E11D48]/10 [&_input]:focus:border-[#E11D48]"
 							>
 								<SearchableSelect
 									placeholder="Cari keluhan (SNOMED)..."
@@ -1815,7 +1844,7 @@
 								class="text-base font-bold flex items-center gap-2 text-slate-800 m-0"
 							>
 								<span
-									class="material-symbols-outlined text-primary"
+									class="material-symbols-outlined text-[#E11D48]"
 									>dentistry</span
 								>
 								Odontogram (PDGI Standard)
@@ -1913,7 +1942,7 @@
 									>
 									<input
 										id="diastema-inp"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm placeholder:text-slate-300"
+										class="w-full rounded-xl border-slate-200 text-sm focus:border-[#E11D48] focus:ring-[#E11D48] bg-white shadow-sm placeholder:text-slate-300"
 										bind:value={odontogram.diastema}
 										placeholder="Tidak Ada / lokasi dan lebar"
 									/>
@@ -1925,7 +1954,7 @@
 									>
 									<input
 										id="anomali-inp"
-										class="w-full rounded-xl border-slate-200 text-sm focus:border-primary focus:ring-primary bg-white shadow-sm placeholder:text-slate-300"
+										class="w-full rounded-xl border-slate-200 text-sm focus:border-[#E11D48] focus:ring-[#E11D48] bg-white shadow-sm placeholder:text-slate-300"
 										bind:value={odontogram.gigi_anomali}
 										placeholder="Tidak Ada / lokasi dan bentuk"
 									/>
@@ -1996,7 +2025,7 @@
 												>
 													<td class="px-4 py-3">
 														<div
-															class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold border border-primary/20"
+															class="w-8 h-8 rounded-full bg-[#E11D48]/10 text-[#E11D48] flex items-center justify-center text-xs font-bold border border-[#E11D48]/20"
 														>
 															{d.tooth_number}
 														</div>
@@ -2156,15 +2185,15 @@
 				{/if}
 				<!-- Prescriptions Section -->
 				<section
-					class="rounded-3xl p-8 border border-primary/10 mb-8 overflow-hidden relative"
-					style="background: linear-gradient(135deg, rgba(60, 60, 246, 0.03) 0%, rgba(60, 60, 246, 0.08) 100%);"
+					class="rounded-3xl p-8 border border-[#E11D48]/10 mb-8 overflow-hidden relative"
+					style="background: linear-gradient(135deg, rgba(225, 29, 72, 0.03) 0%, rgba(225, 29, 72, 0.08) 100%);"
 				>
 					<div class="flex items-center justify-between mb-6">
 						<h3
 							class="text-lg font-bold flex items-center gap-3 text-slate-800"
 						>
 							<div
-								class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+								class="w-10 h-10 rounded-xl bg-[#E11D48]/10 flex items-center justify-center text-[#E11D48]"
 							>
 								<span
 									class="material-symbols-outlined text-[24px]"
@@ -2175,7 +2204,7 @@
 						</h3>
 						{#if prescriptions.length > 0}
 							<span
-								class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest"
+								class="px-3 py-1 bg-[#E11D48]/10 text-[#E11D48] rounded-full text-[10px] font-black uppercase tracking-widest"
 							>
 								{prescriptions.length} Item(s)
 							</span>
@@ -2200,7 +2229,7 @@
 											type="button"
 											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type ===
 											'known'
-												? 'bg-white text-primary shadow-sm'
+												? 'bg-white text-[#E11D48] shadow-sm'
 												: 'text-slate-500 hover:text-slate-700'}"
 											on:click={() => {
 												newRx.merk_type = "known";
@@ -2210,7 +2239,7 @@
 											type="button"
 											class="px-3 py-1 text-[9px] font-black rounded-md transition-all {newRx.merk_type ===
 											'unknown'
-												? 'bg-white text-primary shadow-sm'
+												? 'bg-white text-[#E11D48] shadow-sm'
 												: 'text-slate-500 hover:text-slate-700'}"
 											on:click={() => {
 												newRx.merk_type = "unknown";
@@ -2223,7 +2252,7 @@
 										searchMedication(term, newRx.merk_type)}
 									placeholder="Cari produk obat (KFA)..."
 									wrapperClass="w-full"
-									inputClass="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm transition-all"
+									inputClass="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-[#E11D48] focus:border-[#E11D48] shadow-sm transition-all"
 									value={newRx.kfa_code}
 									on:select={(e) => {
 										newRx.kfa_code = e.detail.value;
@@ -2242,7 +2271,7 @@
 								>
 								<div class="relative flex items-center">
 									<input
-										class="w-full py-3 pl-4 pr-20 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm"
+										class="w-full py-3 pl-4 pr-20 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-[#E11D48] focus:border-[#E11D48] shadow-sm"
 										placeholder="e.g. 3 x 1, pc"
 										type="text"
 										bind:value={newRx.dosage}
@@ -2264,7 +2293,7 @@
 									>Quantity</label
 								>
 								<input
-									class="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm font-bold text-center focus:ring-primary focus:border-primary shadow-sm"
+									class="w-full py-3 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm font-bold text-center focus:ring-[#E11D48] focus:border-[#E11D48] shadow-sm"
 									type="number"
 									bind:value={newRx.quantity}
 								/>
@@ -2284,7 +2313,7 @@
 										>info</span
 									>
 									<input
-										class="w-full py-3 pl-10 pr-4 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-primary focus:border-primary shadow-sm placeholder:text-slate-300"
+										class="w-full py-3 pl-10 pr-4 rounded-2xl border-slate-200 bg-white/80 backdrop-blur-sm text-sm focus:ring-[#E11D48] focus:border-[#E11D48] shadow-sm placeholder:text-slate-300"
 										placeholder="e.g. Sesudah makan / Habiskan obat / Jika demam saja"
 										type="text"
 										bind:value={newRx.instruction}
@@ -2294,7 +2323,7 @@
 							<div class="col-span-12 md:col-span-1">
 								<button
 									type="button"
-									class="w-full aspect-square md:aspect-auto md:h-[46px] flex items-center justify-center rounded-2xl bg-primary text-white hover:brightness-110 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 group"
+									class="w-full aspect-square md:aspect-auto md:h-[46px] flex items-center justify-center rounded-2xl bg-[#E11D48] text-white hover:bg-[#BE123C] hover:shadow-lg hover:shadow-rose-200 transition-all active:scale-95 group"
 									on:click={addPrescription}
 									title="Tambah Resep"
 								>
@@ -2315,10 +2344,10 @@
 						<div class="grid grid-cols-1 gap-4">
 							{#each prescriptions as rx, i}
 								<div
-									class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-primary/20 hover:shadow-md transition-all group flex items-start gap-4"
+									class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-[#E11D48]/20 hover:shadow-md transition-all group flex items-start gap-4"
 								>
 									<div
-										class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors"
+										class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-[#E11D48]/5 group-hover:text-[#E11D48] transition-colors"
 									>
 										<span
 											class="material-symbols-outlined text-[24px]"
@@ -2379,14 +2408,14 @@
 										</div>
 										{#if rx.instruction}
 											<div
-												class="mt-3 p-2 px-3 bg-primary/5 rounded-xl border border-primary/10 inline-flex items-center gap-2"
+												class="mt-3 p-2 px-3 bg-[#E11D48]/5 rounded-xl border border-[#E11D48]/10 inline-flex items-center gap-2"
 											>
 												<span
-													class="material-symbols-outlined text-primary text-[16px]"
+													class="material-symbols-outlined text-[#E11D48] text-[16px]"
 													>info</span
 												>
 												<p
-													class="text-[11px] font-bold text-primary italic leading-none"
+													class="text-[11px] font-bold text-[#E11D48] italic leading-none"
 												>
 													{rx.instruction}
 												</p>
@@ -2432,12 +2461,12 @@
 
 				<!-- Keterangan -->
 				<section
-					class="bg-primary/5 rounded-2xl p-6 border border-primary/10 mb-6"
+					class="bg-[#E11D48]/5 rounded-2xl p-6 border border-[#E11D48]/10 mb-6"
 				>
 					<h3
 						class="text-base font-bold mb-4 flex items-center gap-2"
 					>
-						<span class="material-symbols-outlined text-primary"
+						<span class="material-symbols-outlined text-[#E11D48]"
 							>note_alt</span
 						>
 						Keterangan
@@ -2448,7 +2477,7 @@
 							>Keterangan Tambahan</label
 						>
 						<textarea
-							class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary"
+							class="w-full rounded-xl border-slate-200 text-sm focus:ring-[#E11D48] focus:border-[#E11D48]"
 							bind:value={keterangan}
 							rows="3"
 							placeholder="Catatan tambahan..."
@@ -2458,11 +2487,12 @@
 
 				<!-- Referrals -->
 				<section
-					class="bg-primary/5 rounded-2xl p-6 border border-primary/10 mb-6"
+					class="bg-[#E11D48]/5 rounded-2xl p-6 border border-[#E11D48]/10 mb-6"
 				>
 					<div class="flex items-center justify-between mb-4">
 						<h3 class="text-base font-bold flex items-center gap-2">
-							<span class="material-symbols-outlined text-primary"
+							<span
+								class="material-symbols-outlined text-[#E11D48]"
 								>forward</span
 							>
 							Rujukan
@@ -2470,7 +2500,7 @@
 						{#if !showRujukanForm}
 							<button
 								type="button"
-								class="px-4 py-1.5 bg-white border border-slate-200 hover:bg-primary/5 text-primary text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+								class="px-4 py-1.5 bg-white border border-slate-200 hover:bg-[#E11D48]/5 text-[#E11D48] text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
 								on:click={() => (showRujukanForm = true)}
 							>
 								<span
@@ -2502,7 +2532,7 @@
 								>
 								<input
 									type="date"
-									class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50"
+									class="w-full rounded-xl border-slate-200 text-sm focus:ring-[#E11D48] focus:border-[#E11D48] bg-slate-50/50"
 									bind:value={newRef.referral_date}
 								/>
 							</div>
@@ -2513,7 +2543,7 @@
 										>Catatan Rujukan</label
 									>
 									<input
-										class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50"
+										class="w-full rounded-xl border-slate-200 text-sm focus:ring-[#E11D48] focus:border-[#E11D48] bg-slate-50/50"
 										bind:value={newRef.note}
 										placeholder="Catatan rujukan..."
 									/>
@@ -2543,7 +2573,7 @@
 									</button>
 									<button
 										type="button"
-										class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+										class="aspect-square w-10 flex items-center justify-center rounded-xl bg-[#E11D48] text-white hover:bg-[#BE123C] transition-colors shadow-sm"
 										on:click={addReferral}
 									>
 										<span
@@ -2601,11 +2631,14 @@
 
 				<!-- Encounter Items -->
 				<section
-					class="bg-primary/5 rounded-2xl p-6 border border-primary/10 mb-6"
+					class="bg-[#E11D48]/5 rounded-2xl p-6 border border-[#E11D48]/10 mb-6"
 				>
 					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-base font-bold flex items-center gap-2 text-slate-800">
-							<span class="material-symbols-outlined text-primary"
+						<h3
+							class="text-base font-bold flex items-center gap-2 text-slate-800"
+						>
+							<span
+								class="material-symbols-outlined text-[#E11D48]"
 								>shopping_cart</span
 							>
 							Item Tindakan
@@ -2616,7 +2649,9 @@
 					<div
 						class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-4 mb-4 bg-white rounded-2xl border border-slate-200 shadow-sm"
 					>
-						<div class="md:col-span-5 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-2.5 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50/50 [&_input]:focus:ring-primary/10 [&_input]:focus:border-primary">
+						<div
+							class="md:col-span-5 [&>div.form-group]:mb-0 [&_input]:w-full [&_input]:py-2.5 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50/50 [&_input]:focus:ring-[#E11D48]/10 [&_input]:focus:border-[#E11D48]"
+						>
 							<label
 								class="text-xs font-bold text-slate-500 mb-1 block"
 								>Cari & Pilih Item</label
@@ -2637,7 +2672,7 @@
 							>
 							<input
 								type="number"
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-slate-50/50 text-center font-bold"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-[#E11D48] focus:border-[#E11D48] bg-slate-50/50 text-center font-bold"
 								bind:value={newItem.quantity}
 								min="1"
 								on:input={updateNewItemSubtotal}
@@ -2651,7 +2686,7 @@
 							<input
 								type="number"
 								min="0"
-								class="w-full rounded-xl border-slate-200 text-sm focus:ring-primary focus:border-primary bg-white font-semibold text-slate-700"
+								class="w-full rounded-xl border-slate-200 text-sm focus:ring-[#E11D48] focus:border-[#E11D48] bg-white font-semibold text-slate-700"
 								bind:value={newItem.price_at_time}
 								on:input={updateNewItemSubtotal}
 								placeholder="0"
@@ -2664,14 +2699,16 @@
 									>Subtotal (Rp)</label
 								>
 								<input
-									class="w-full rounded-xl border-slate-200 bg-slate-100/70 text-sm font-bold text-primary truncate"
-									value={newItem.subtotal?.toLocaleString("id-ID") || 0}
+									class="w-full rounded-xl border-slate-200 bg-slate-100/70 text-sm font-bold text-[#E11D48] truncate"
+									value={newItem.subtotal?.toLocaleString(
+										"id-ID",
+									) || 0}
 									disabled
 								/>
 							</div>
 							<button
 								type="button"
-								class="aspect-square w-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm shrink-0"
+								class="aspect-square w-10 flex items-center justify-center rounded-xl bg-[#E11D48] text-white hover:bg-[#BE123C] transition-colors shadow-sm shrink-0"
 								on:click={addEncounterItem}
 								title="Tambah Item"
 							>
@@ -2687,11 +2724,13 @@
 					<div class="space-y-3">
 						{#each encounterItems as item, i}
 							<div
-								class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-primary/20 transition-all"
+								class="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E11D48]/20 transition-all"
 							>
-								<div class="flex items-center gap-3 flex-1 min-w-0">
+								<div
+									class="flex items-center gap-3 flex-1 min-w-0"
+								>
 									<div
-										class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"
+										class="w-10 h-10 rounded-xl bg-[#E11D48]/10 text-[#E11D48] flex items-center justify-center shrink-0"
 									>
 										<span
 											class="material-symbols-outlined text-[22px]"
@@ -2699,46 +2738,76 @@
 										>
 									</div>
 									<div class="min-w-0 flex-1">
-										<p class="text-sm font-bold text-slate-800 truncate">
+										<p
+											class="text-sm font-bold text-slate-800 truncate"
+										>
 											{item.item_name || "Item Tindakan"}
 										</p>
 										<p class="text-xs text-slate-400">
-											Harga Master: Rp {(availableItems.find(ai => ai.id === item.item_id)?.price || item.price_at_time || 0).toLocaleString("id-ID")}
+											Harga Master: Rp {(
+												availableItems.find(
+													(ai) =>
+														ai.id === item.item_id,
+												)?.price ||
+												item.price_at_time ||
+												0
+											).toLocaleString("id-ID")}
 										</p>
 									</div>
 								</div>
 
 								<div class="flex items-center gap-4 flex-wrap">
 									<div class="flex items-center gap-1.5">
-										<span class="text-xs text-slate-400 font-medium">Qty:</span>
+										<span
+											class="text-xs text-slate-400 font-medium"
+											>Qty:</span
+										>
 										<input
 											type="number"
 											min="1"
-											class="w-16 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-center font-bold"
+											class="w-16 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-[#E11D48] focus:border-[#E11D48] text-center font-bold"
 											bind:value={item.quantity}
 											on:input={() => {
-												item.subtotal = (item.quantity || 1) * (item.price_at_time || 0);
-												encounterItems = [...encounterItems];
+												item.subtotal =
+													(item.quantity || 1) *
+													(item.price_at_time || 0);
+												encounterItems = [
+													...encounterItems,
+												];
 											}}
 										/>
 									</div>
 									<div class="flex items-center gap-1.5">
-										<span class="text-xs text-slate-400 font-medium">Harga:</span>
+										<span
+											class="text-xs text-slate-400 font-medium"
+											>Harga:</span
+										>
 										<input
 											type="number"
 											min="0"
-											class="w-28 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-right font-bold text-slate-700"
+											class="w-28 py-1 px-2 text-xs rounded-lg border-slate-200 focus:ring-[#E11D48] focus:border-[#E11D48] text-right font-bold text-slate-700"
 											bind:value={item.price_at_time}
 											on:input={() => {
-												item.subtotal = (item.quantity || 1) * (item.price_at_time || 0);
-												encounterItems = [...encounterItems];
+												item.subtotal =
+													(item.quantity || 1) *
+													(item.price_at_time || 0);
+												encounterItems = [
+													...encounterItems,
+												];
 											}}
 										/>
 									</div>
 									<div class="text-right min-w-[100px]">
-										<span class="text-[10px] text-slate-400 block uppercase font-semibold">Subtotal</span>
-										<strong class="text-xs text-primary font-bold">
-											Rp {(item.subtotal || 0).toLocaleString("id-ID")}
+										<span
+											class="text-[10px] text-slate-400 block uppercase font-semibold"
+											>Subtotal</span
+										>
+										<strong
+											class="text-xs text-[#E11D48] font-bold"
+										>
+											Rp {(
+												item.subtotal || 0
+											).toLocaleString("id-ID")}
 										</strong>
 									</div>
 									<button
@@ -2747,7 +2816,8 @@
 										on:click={() => removeEncounterItem(i)}
 										title="Hapus Item"
 									>
-										<span class="material-symbols-outlined text-[20px]"
+										<span
+											class="material-symbols-outlined text-[20px]"
 											>delete</span
 										>
 									</button>
@@ -2775,7 +2845,7 @@
 							class="text-lg font-bold flex items-center gap-3 text-slate-800 m-0"
 						>
 							<div
-								class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+								class="w-10 h-10 rounded-xl bg-[#E11D48]/10 flex items-center justify-center text-[#E11D48]"
 							>
 								<span
 									class="material-symbols-outlined text-[24px]"
@@ -2799,7 +2869,7 @@
 						>
 							{#each clinicalPhotos as photo (photo.id)}
 								<div
-									class="aspect-square rounded-2xl border border-slate-200 bg-slate-50 relative group overflow-hidden transition-all hover:ring-4 hover:ring-primary/10 shadow-sm"
+									class="aspect-square rounded-2xl border border-slate-200 bg-slate-50 relative group overflow-hidden transition-all hover:ring-4 hover:ring-[#E11D48]/10 shadow-sm"
 								>
 									<img
 										src="/api/documents/{photo.id}"
@@ -2833,22 +2903,22 @@
 							<!-- Upload Box -->
 							{#if uploadingPhoto}
 								<div
-									class="aspect-square rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-3"
+									class="aspect-square rounded-2xl border-2 border-dashed border-[#E11D48]/30 bg-[#E11D48]/5 flex flex-col items-center justify-center gap-3"
 								>
 									<span
-										class="spinner spinner-md text-primary"
+										class="spinner spinner-md text-[#E11D48]"
 									></span>
 									<span
-										class="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse"
+										class="text-[10px] font-black text-[#E11D48] uppercase tracking-widest animate-pulse"
 										>Uploading</span
 									>
 								</div>
 							{:else}
 								<label
-									class="aspect-square rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center cursor-pointer group hover:border-primary/40 hover:bg-slate-100/50 transition-all shadow-inner"
+									class="aspect-square rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center cursor-pointer group hover:border-[#E11D48]/40 hover:bg-slate-100/50 transition-all shadow-inner"
 								>
 									<div
-										class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-primary transition-all duration-300"
+										class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-[#E11D48] transition-all duration-300"
 									>
 										<span
 											class="material-symbols-outlined text-3xl"
@@ -2856,7 +2926,7 @@
 										>
 									</div>
 									<span
-										class="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest group-hover:text-primary transition-colors"
+										class="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest group-hover:text-[#E11D48] transition-colors"
 										>Add Photo</span
 									>
 									<input
@@ -2873,21 +2943,21 @@
 							class="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-50"
 						>
 							<div
-								class="flex-1 bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50 relative overflow-hidden"
+								class="flex-1 bg-rose-50/50 rounded-2xl p-6 border border-rose-100/50 relative overflow-hidden"
 							>
 								<div
 									class="absolute top-0 right-0 p-2 opacity-10"
 								>
 									<span
-										class="material-symbols-outlined text-4xl text-blue-700"
+										class="material-symbols-outlined text-4xl text-[#E11D48]"
 										>info</span
 									>
 								</div>
 								<p
-									class="text-xs text-blue-700 font-medium leading-relaxed"
+									class="text-xs text-[#E11D48] font-medium leading-relaxed"
 								>
 									<span
-										class="font-bold text-blue-800 block mb-1"
+										class="font-bold text-[#4C1D2F] block mb-1"
 										>DOKUMENTASI KLINIS:</span
 									>
 									Dokumentasi visual sangat membantu dalam diagnosa
@@ -2937,17 +3007,25 @@
 				</div>
 
 				<!-- End of Sections -->
-				<div class="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
+				<div
+					class="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3"
+				>
 					<button
-						class="px-8 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl text-base font-bold hover:bg-slate-50 hover:text-primary hover:border-primary transition-all flex items-center gap-2 shadow-sm"
-						on:click={() => window.open(`/api/encounters/${encounterId}/pdf`, "_blank")}
+						class="px-8 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl text-base font-bold hover:bg-slate-50 hover:text-[#E11D48] hover:border-[#E11D48] transition-all flex items-center gap-2 shadow-sm"
+						on:click={() =>
+							window.open(
+								`/api/encounters/${encounterId}/pdf`,
+								"_blank",
+							)}
 					>
-						<span class="material-symbols-outlined text-[20px]">print</span>
+						<span class="material-symbols-outlined text-[20px]"
+							>print</span
+						>
 						Cetak & Lihat PDF
 					</button>
 
 					<button
-						class="px-8 py-3 bg-primary text-white rounded-xl text-base font-bold shadow-lg shadow-primary/25 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+						class="px-8 py-3 bg-[#E11D48] text-white rounded-xl text-base font-bold shadow-lg shadow-rose-200 hover:bg-[#BE123C] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
 						disabled={saving}
 						on:click={() => saveForm(true)}
 					>
@@ -2974,7 +3052,8 @@
 						<h3
 							class="text-lg font-bold flex items-center gap-2 text-slate-800"
 						>
-							<span class="material-symbols-outlined text-primary"
+							<span
+								class="material-symbols-outlined text-[#E11D48]"
 								>timeline</span
 							>
 							Encounter Timeline
@@ -3238,7 +3317,7 @@
 														{/if}
 
 														<button
-															class="mt-5 w-full py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-primary hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm group/btn"
+															class="mt-5 w-full py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-[#E11D48] hover:bg-[#E11D48] hover:text-white hover:border-[#E11D48] transition-all duration-300 shadow-sm group/btn"
 															on:click={() =>
 																window.open(
 																	`/api/encounters/${hist.encounter?.id}/pdf`,
@@ -3285,7 +3364,7 @@
 		on:click={() => (showSidebar = true)}
 	>
 		<span
-			class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform"
+			class="material-symbols-outlined text-[#E11D48] group-hover:scale-110 transition-transform"
 			>menu_open</span
 		>
 		<span

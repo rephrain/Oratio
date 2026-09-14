@@ -79,49 +79,71 @@ function getLogoBase64() {
 }
 
 // Temporary flag to disable Puppeteer PDF generation across all actions
-const DISABLE_PDF_GENERATION = true;
+const DISABLE_PDF_GENERATION = false;
 
 const MINIMAL_PDF = Buffer.from(
-	'%PDF-1.4\n' +
-	'1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj\n' +
-	'2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj\n' +
-	'3 0 obj <</Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792]>> endobj\n' +
-	'xref\n' +
-	'0 4\n' +
-	'0000000000 65535 f \n' +
-	'0000000009 00000 n \n' +
-	'0000000052 00000 n \n' +
-	'0000000111 00000 n \n' +
-	'trailer <</Size 4 /Root 1 0 R>>\n' +
-	'startxref\n' +
-	'190\n' +
-	'%%EOF'
+    '%PDF-1.4\n' +
+    '1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj\n' +
+    '2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj\n' +
+    '3 0 obj <</Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792]>> endobj\n' +
+    'xref\n' +
+    '0 4\n' +
+    '0000000000 65535 f \n' +
+    '0000000009 00000 n \n' +
+    '0000000052 00000 n \n' +
+    '0000000111 00000 n \n' +
+    'trailer <</Size 4 /Root 1 0 R>>\n' +
+    'startxref\n' +
+    '190\n' +
+    '%%EOF'
 );
 
 export async function generatePatientProfilePdf(data) {
     if (DISABLE_PDF_GENERATION) return MINIMAL_PDF;
-    const { patient, allergies = [], diseases = [], medications = [], origin } = data;
+    const { patient, allergies = [], diseases = [], medications = [] } = data;
     const logo = getLogoBase64();
     const bpStatus = fmtBpStatus(patient.tekanan_darah);
     const sysRef = `ORATIO-CLINIC-PR-${patient.id}-${Date.now().toString(36).toUpperCase().slice(-5)}`;
+
+    // Inline SVG icon set (stroke-based, 24x24 viewBox, currentColor).
+    // Rendered as raw SVG rather than an icon font: icon fonts race against
+    // Puppeteer's paint/print timing and can silently fall back to ligature
+    // text (e.g. "warning", "fingerprint"). Inline SVG paints deterministically
+    // every time and lets size/color be set with normal CSS.
+    const ICONS = {
+        warning: '<path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>',
+        heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.5 9h4l1.5-3 3 6 1.5-3h4.5"/>',
+        pregnant: '<circle cx="12" cy="5" r="2.2"/><path d="M9.5 8.5c-1.6.6-2.7 2.1-2.7 4a4.7 4.7 0 0 0 4.2 4.7V21h2v-3.8a4.7 4.7 0 0 0 4.2-4.7c0-1.9-1.1-3.4-2.7-4"/>',
+        calendar: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18"/>',
+        fingerprint: '<path d="M12 3a9 9 0 0 0-9 9c0 1.5.2 3 .7 4.3M12 3a9 9 0 0 1 9 9c0 1.1-.1 2.2-.4 3.3M12 7a5 5 0 0 0-5 5c0 2.5.4 4.9 1.2 7M12 7a5 5 0 0 1 5 5c0 1.2-.1 2.5-.3 3.7M12 11a1 1 0 0 0-1 1c0 2.9.6 5.6 1.7 8M12 11a1 1 0 0 1 1 1c0 1-.1 2-.3 3"/>',
+        pin: '<path d="M12 21s7-6.4 7-11.5a7 7 0 0 0-14 0C5 14.6 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/>',
+        pulse: '<path d="M3 12h4l2 6 4-16 2 10h6"/>',
+        vaccine: '<path d="m4.5 19.5 3-3M2 22l3.2-3.2M13.5 4.5l6 6-8 8-6-6 8-8Z"/><path d="m9.5 9.5 1.6 1.6M12.3 6.7l1.6 1.6M12 16.1l-2.5-2.5"/>',
+        history: '<path d="M4 6.5h13a3 3 0 0 1 3 3v9a2 2 0 0 0-2-2H4Z"/><path d="M4 6.5v10a2 2 0 0 0 2 2h12"/><path d="M7.5 10h7M7.5 13h5"/>',
+        person: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/>',
+        family: '<circle cx="8" cy="7" r="2.5"/><circle cx="16" cy="7" r="2.5"/><path d="M2.5 19c0-3 2.5-5.3 5.5-5.3s5.5 2.3 5.5 5.3M10.5 19c0-2.6 2.2-4.6 5-4.6s5 2 5 4.6"/>',
+        pill: '<rect x="3.5" y="3.5" width="17" height="17" rx="5" transform="rotate(45 12 12)"/><path d="M8 12h8"/>',
+    };
+    const icon = (name, { size = 14, color = 'currentColor', strokeWidth = 1.8 } = {}) =>
+        `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;">${ICONS[name] || ''}</svg>`;
 
     // Clinical Flags
     let alerts = [];
     if (allergies && allergies.length > 0) {
         alerts.push(`<div class="bg-red-50 text-red-900 px-4 py-3 rounded-lg border border-red-200 flex items-center gap-3">
-			<span class="material-symbols-outlined text-red-600 shrink-0">warning</span>
+			${icon('warning', { size: 18, color: '#DC2626', strokeWidth: 2 })}
 			<div><span class="font-bold text-[10px] uppercase tracking-widest block text-red-600">Allergy Alert</span><span class="text-sm font-semibold">${allergies.length} recorded allergies</span></div>
 		</div>`);
     }
     if (bpStatus && (bpStatus.label === 'HIGH' || bpStatus.label === 'CRITICAL')) {
         alerts.push(`<div class="bg-orange-50 text-orange-900 px-4 py-3 rounded-lg border border-orange-200 flex items-center gap-3">
-			<span class="material-symbols-outlined text-orange-600 shrink-0">monitor_heart</span>
+			${icon('heart', { size: 18, color: '#EA580C', strokeWidth: 2 })}
 			<div><span class="font-bold text-[10px] uppercase tracking-widest block text-orange-600">Blood Pressure: ${bpStatus.label}</span><span class="text-sm font-semibold">${patient.tekanan_darah}</span></div>
 		</div>`);
     }
     if (patient.pregnancy_status) {
         alerts.push(`<div class="bg-purple-50 text-purple-900 px-4 py-3 rounded-lg border border-purple-200 flex items-center gap-3">
-			<span class="material-symbols-outlined text-purple-600 shrink-0">pregnant_woman</span>
+			${icon('pregnant', { size: 18, color: '#9333EA', strokeWidth: 2 })}
 			<div><span class="font-bold text-[10px] uppercase tracking-widest block text-purple-600">Notice</span><span class="text-sm font-semibold">Patient is Pregnant</span></div>
 		</div>`);
     }
@@ -131,7 +153,7 @@ export async function generatePatientProfilePdf(data) {
         const gridCols = alerts.length === 1 ? 'grid-cols-1' : (alerts.length === 2 ? 'grid-cols-2' : 'grid-cols-3');
         flagsHtml = `
 		<div class="mb-8 avoid-break">
-			<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+			<h3 class="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2" style="letter-spacing:0.18em;">
 				<span class="h-px bg-slate-200 flex-1"></span>
 				Critical Clinical Highlights
 				<span class="h-px bg-slate-200 flex-1"></span>
@@ -212,6 +234,7 @@ export async function generatePatientProfilePdf(data) {
 
     // Enhanced Patient Profile HTML Template
     // Design: Refined Clinical Luxury — deep slate, warm gold accents, precision typography
+    // Lightweight build: no external QR fetch, no CDN Tailwind runtime — plain CSS only.
 
     const htmlBody = `<!DOCTYPE html>
 <html class="light" lang="en">
@@ -219,48 +242,14 @@ export async function generatePatientProfilePdf(data) {
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Patient Profile — ${fmt(patient.nama_lengkap)}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ink:    "#0E1523",
-                        slate:  "#1E2D40",
-                        gold:   "#B08D57",
-                        "gold-light": "#E8D5A8",
-                        "gold-pale":  "#FAF5E9",
-                        mist:   "#F4F6F9",
-                        line:   "#E2E8F0",
-                        danger: "#C0392B",
-                        "danger-pale": "#FDF1F0",
-                        safe:   "#1A6B4A",
-                        "safe-pale":  "#F0F7F4",
-                    },
-                    fontFamily: {
-                        head: ["Sora", "sans-serif"],
-                        body: ["Sora", "sans-serif"],
-                        mono: ['"DM Mono"', "monospace"],
-                        serif: ["Lora", "serif"],
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Mono:wght@500&family=Lora:ital@0;1&display=swap" rel="stylesheet"/>
     <style>
-        * { -webkit-font-smoothing: antialiased; }
-        body { font-family: 'Sora', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
-            vertical-align: middle;
-            font-size:1rem;
-            line-height: 1;
-        }
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; }
+        body { font-family: 'Sora', sans-serif; background: #fff; color: #0E1523; }
+        .icon-row { display: inline-flex; align-items: center; gap: 8px; }
         .mono { font-family: 'DM Mono', monospace; letter-spacing: -0.01em; }
         .field-label {
-            font-size:7.5px;
+            font-size: 7.5px;
             font-weight: 600;
             letter-spacing: 0.12em;
             text-transform: uppercase;
@@ -269,13 +258,13 @@ export async function generatePatientProfilePdf(data) {
             display: block;
         }
         .field-value {
-            font-size:11px;
+            font-size: 11px;
             font-weight: 600;
             color: #0E1523;
             line-height: 1.4;
         }
         .section-eyebrow {
-            font-size:7px;
+            font-size: 7px;
             font-weight: 700;
             letter-spacing: 0.18em;
             text-transform: uppercase;
@@ -284,68 +273,94 @@ export async function generatePatientProfilePdf(data) {
             height: 1px;
             background: linear-gradient(90deg, #B08D57 0%, #E8D5A8 50%, transparent 100%);
         }
-        /* Header pattern overlay */
         .header-pattern {
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 50%, rgba(176,141,87,0.08) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 40%);
         }
-        /* Accent bar left of cards */
-        .accent-blue  { border-left: 3px solid #2563EB; }
-        .accent-gold  { border-left: 3px solid #B08D57; }
-        .accent-red   { border-left: 3px solid #C0392B; }
-        .accent-teal  { border-left: 3px solid #0F766E; }
- 
-        /* Allergy severity chips */
-        .chip-severe  { background:#FDE8E7; color:#9B1B1B; border:1px solid #F5B7B1; }
-        .chip-moderate{ background:#FEF3E2; color:#7D4E00; border:1px solid #FADA9A; }
-        .chip-mild    { background:#EBF5EC; color:#1A6B4A; border:1px solid #A3D9A5; }
- 
-        /* BP status */
-        .bp-normal    { background:#EBF5EC; color:#1A6B4A; }
-        .bp-elevated  { background:#FEF3E2; color:#7D4E00; }
-        .bp-high      { background:#FDE8E7; color:#9B1B1B; }
- 
-        /* Medication row hover */
-        .med-row:nth-child(even) { background: #FAFBFC; }
-        .med-row td { padding: 11px 16px; font-size:10.1px; vertical-align: top; }
- 
-        /* Disease tag */
-        .disease-tag {
-            display: inline-flex; align-items: center; gap: 5px;
-            background: #F1F5F9; border: 1px solid #E2E8F0;
-            border-radius: 6px; padding: 5px 10px;
-            font-size:9.7px; font-weight: 500; color: #334155;
-            margin: 3px;
-        }
-        .disease-tag .dot {
-            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
-        }
- 
-        /* Watermark text */
+        .px-10 { padding-left: 40px; padding-right: 40px; }
+        .py-7 { padding-top: 28px; padding-bottom: 28px; }
+        .pt-7 { padding-top: 28px; }
+        .pb-12 { padding-bottom: 48px; }
+        .space-y-7 > * + * { margin-top: 28px; }
+        .space-y-4 > * + * { margin-top: 16px; }
+        .space-y-3 > * + * { margin-top: 12px; }
+        .flex { display: flex; }
+        .grid { display: grid; }
+        .items-center { align-items: center; }
+        .items-stretch { align-items: stretch; }
+        .items-start { align-items: flex-start; }
+        .items-end { align-items: flex-end; }
+        .items-baseline { align-items: baseline; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .justify-end { justify-content: flex-end; }
+        .gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; }
+        .gap-4 { gap: 16px; } .gap-5 { gap: 20px; } .gap-6 { gap: 24px; } .gap-8 { gap: 32px; }
+        .shrink-0 { flex-shrink: 0; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .rounded { border-radius: 6px; }
+        .rounded-lg { border-radius: 10px; }
+        .rounded-full { border-radius: 9999px; }
+        .border { border: 1px solid #E2E8F0; }
+        .border-l-2 { border-left: 2px solid; }
+        .bg-white { background: #fff; }
+        .bg-red-50 { background: #FEF2F2; } .text-red-900 { color: #7F1D1D; }
+        .border-red-200 { border-color: #FECACA; } .text-red-600 { color: #DC2626; }
+        .text-red-400 { color: #F87171; }
+        .bg-orange-50 { background: #FFF7ED; } .text-orange-900 { color: #7C2D12; }
+        .border-orange-200 { border-color: #FED7AA; } .text-orange-600 { color: #EA580C; }
+        .bg-purple-50 { background: #FAF5FF; } .text-purple-900 { color: #581C87; }
+        .border-purple-200 { border-color: #E9D5FF; } .text-purple-600 { color: #9333EA; }
+        .bg-blue-500 { background: #3B82F6; }
+        .border-slate-200 { border-color: #E2E8F0; }
+        .border-slate-300 { border-color: #CBD5E1; }
+        .text-slate-400 { color: #94A3B8; } .text-slate-500 { color: #64748B; } .text-slate-700 { color: #334155; }
+        .text-secondary { color: #1E2D40; }
+        .font-bold { font-weight: 700; } .font-semibold { font-weight: 600; } .font-medium { font-weight: 500; }
+        .font-mono { font-family: 'DM Mono', monospace; }
+        .uppercase { text-transform: uppercase; } .tracking-widest { letter-spacing: 0.1em; }
+        .text-sm { font-size: 13px; } .text-xs { font-size: 12px; } .italic { font-style: italic; }
+        span[class*="text-[7px]"], p[class*="text-[7px]"], h3[class*="text-[7px]"] { font-size: 7px; }
+        span[class*="text-[7.5px]"], p[class*="text-[7.5px]"] { font-size: 7.5px; }
+        span[class*="text-[9px]"], p[class*="text-[9px]"] { font-size: 9px; }
+        span[class*="text-[9.7px]"], p[class*="text-[9.7px]"] { font-size: 9.7px; }
+        span[class*="text-[10px]"], p[class*="text-[10px]"], h3[class*="text-[10px]"], td[class*="text-[10px]"] { font-size: 10px; }
+        span[class*="text-[10.5px]"], p[class*="text-[10.5px]"] { font-size: 10.5px; }
+        span[class*="text-[12px]"], p[class*="text-[12px]"] { font-size: 12px; }
+        .block { display: block; } .inline-block { display: inline-block; }
+        .mt-0\.5 { margin-top: 2px; } .ml-2 { margin-left: 8px; }
+        .mb-8 { margin-bottom: 32px; } .mb-3 { margin-bottom: 12px; }
+        .pt-3 { padding-top: 12px; } .mt-3 { margin-top: 12px; }
+        .pl-3 { padding-left: 12px; }
+        .px-1 { padding-left: 4px; padding-right: 4px; }
+        .px-1\.5 { padding-left: 6px; padding-right: 6px; }
+        .py-0\.5 { padding-top: 2px; padding-bottom: 2px; }
+        .px-4 { padding-left: 16px; padding-right: 16px; }
+        .px-5 { padding-left: 20px; padding-right: 20px; }
+        .py-3 { padding-top: 12px; padding-bottom: 12px; }
+        .py-7 { padding-top: 28px; padding-bottom: 28px; }
+        .py-8 { padding-top: 32px; padding-bottom: 32px; }
+        .h-px { height: 1px; } .h-1\.5 { height: 6px; } .w-1\.5 { width: 6px; }
+        .flex-1 { flex: 1 1 0%; } .bg-slate-200 { background: #E2E8F0; }
+        .leading-relaxed { line-height: 1.6; }
+        .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .space-y-0 > * + * { margin-top: 0; }
+        .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+        .disease-tag { display: inline-flex; align-items: center; gap: 5px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 6px; padding: 5px 10px; font-size: 9.7px; font-weight: 500; color: #334155; margin: 3px; }
         .watermark {
             font-family: 'Lora', serif;
             font-style: italic;
             color: #0E1523;
-            opacity: 0.04;
-            font-size:52.8px;
+            opacity: 0.035;
+            font-size: 42px;
             font-weight: 400;
             pointer-events: none;
             user-select: none;
             white-space: nowrap;
         }
- 
-        /* Flag / alert bar */
-        .alert-bar {
-            border-left: 4px solid;
-            border-radius: 0 8px 8px 0;
-            padding: 10px 14px;
-            display: flex; align-items: flex-start; gap: 10px;
-        }
-        .alert-critical { border-color: #C0392B; background: #FDF1F0; }
-        .alert-warning  { border-color: #D97706; background: #FFFBF2; }
-        .alert-info     { border-color: #2563EB; background: #EFF6FF; }
- 
+        table { border-collapse: collapse; width: 100%; }
         @media print {
             body { background: white !important; margin: 0; padding: 0;
                    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -355,26 +370,26 @@ export async function generatePatientProfilePdf(data) {
         }
     </style>
 </head>
-<body class="bg-white font-body text-ink antialiased">
- 
+<body class="antialiased">
+
     <!-- ═══ HEADER ══════════════════════════════════════════════════════ -->
     <div class="avoid-break" style="background: linear-gradient(135deg, #0E1523 0%, #1A2740 55%, #162030 100%); margin-bottom: 0;">
         <div class="header-pattern px-10 py-7 flex justify-between items-stretch gap-8">
-            
+
             <!-- Left: Logo + Patient Identity -->
             <div class="flex items-center gap-6">
                 <!-- Logo block -->
                 <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:10px; width:68px; height:68px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                     <img alt="Logo" style="max-width:100%; max-height:100%; object-fit:contain;" src="${logo}"/>
                 </div>
- 
+
                 <!-- Gold divider -->
                 <div style="width:1px; height:52px; background:linear-gradient(180deg, transparent, #B08D57 40%, #B08D57 60%, transparent); flex-shrink:0;"></div>
- 
+
                 <!-- Patient name + meta -->
                 <div>
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                        <h1 style="font-family:'Sora',sans-serif; font-size:19.4px; font-weight:800; color:#FFFFFF; letter-spacing:-0.03em; line-height:1;">${fmt(patient.nama_lengkap)}</h1>
+                        <h1 style="font-family:'Sora',sans-serif; font-size:19.4px; font-weight:800; color:#FFFFFF; letter-spacing:-0.01em; line-height:1;">${fmt(patient.nama_lengkap)}</h1>
                         <span style="background:rgba(176,141,87,0.25); border:1px solid rgba(176,141,87,0.4); color:#E8D5A8; font-size:7.9px; font-weight:700; letter-spacing:0.12em; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${calculateAge(patient.birth_date)} yrs</span>
                         <span style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); font-size:7.9px; font-weight:600; letter-spacing:0.1em; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${fmtGender(patient.gender)}</span>
                     </div>
@@ -389,7 +404,7 @@ export async function generatePatientProfilePdf(data) {
                     </div>
                 </div>
             </div>
- 
+
             <!-- Right: Document label + system ref -->
             <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between; padding:4px 0;">
                 <div>
@@ -397,44 +412,44 @@ export async function generatePatientProfilePdf(data) {
                     <div style="font-family:'DM Mono',monospace; font-size:7.9px; color:rgba(255,255,255,0.3); letter-spacing:0.15em; text-transform:uppercase;">${sysRef}</div>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:flex-end; gap:5px;">
-                    <span class="material-symbols-outlined" style="color:#B08D57; font-size:11.4px;">calendar_today</span>
+                    ${icon('calendar', { size: 12, color: '#B08D57', strokeWidth: 2 })}
                     <span style="font-size:8.8px; color:rgba(255,255,255,0.4); font-weight:500;">${fmtDate(patient.created_at)}</span>
                 </div>
             </div>
         </div>
- 
+
         <!-- Gold rule under header -->
         <div style="height:2px; background:linear-gradient(90deg, #B08D57 0%, #E8D5A8 30%, #B08D57 60%, transparent 100%);"></div>
     </div>
- 
+
     <!-- ═══ MAIN CONTENT ════════════════════════════════════════════════ -->
     <div class="px-10 pt-7 space-y-7 pb-12" style="position:relative;">
- 
+
         <!-- Watermark -->
-        <div class="watermark" style="position:absolute; top:60px; right:30px; transform:rotate(-12deg); z-index:0; pointer-events:none;">
+        <div class="watermark" style="position:absolute; top:220px; left:50%; transform:translateX(-50%) rotate(-8deg); z-index:0; pointer-events:none; text-align:center;">
             ${sysRef}
         </div>
- 
+
         <!-- Alert Flags -->
         ${flagsHtml}
- 
+
         <!-- ── Section 1: 2-Column Layout ─────────────────────── -->
         <div class="grid gap-6 avoid-break" style="grid-template-columns: 1fr 1fr 0.85fr; position:relative; z-index:1;">
- 
+
             <!-- Col 1: Identity -->
-            <div class="space-y-0">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <span class="material-symbols-outlined" style="color:#B08D57; font-size:14.1px;">fingerprint</span>
+            <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:8px; height:20px; margin-bottom:12px;">
+                    ${icon('fingerprint', { size: 15, color: '#B08D57', strokeWidth: 1.6 })}
                     <span class="section-eyebrow" style="color:#94A3B8;">Identity & Registration</span>
                 </div>
-                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD;">
+                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD; flex:1; display:flex; flex-direction:column;">
                     <!-- Header row -->
                     <div style="background:#F4F6F9; border-bottom:1px solid #E2E8F0; padding:8px 14px 7px;">
                         <span class="field-label" style="margin:0; color:#B08D57;">Full Legal Name</span>
                         <div style="font-size:12.3px; font-weight:700; color:#0E1523; letter-spacing:-0.02em; margin-top:2px;">${fmt(patient.nama_lengkap)}</div>
                     </div>
                     <!-- Grid fields -->
-                    <div style="display:grid; grid-template-columns:1fr 1fr; padding:14px; gap:14px 12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; padding:14px; gap:14px 12px; flex:1;">
                         <div style="grid-column:1/-1;">
                             <span class="field-label">Family Card (KK)</span>
                             <div class="field-value mono">${fmt(patient.nomor_kk)}</div>
@@ -454,14 +469,14 @@ export async function generatePatientProfilePdf(data) {
                     </div>
                 </div>
             </div>
- 
+
             <!-- Col 2: Contact & Address -->
-            <div>
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <span class="material-symbols-outlined" style="color:#0F766E; font-size:14.1px;">location_on</span>
+            <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:8px; height:20px; margin-bottom:12px;">
+                    ${icon('pin', { size: 15, color: '#0F766E', strokeWidth: 1.8 })}
                     <span class="section-eyebrow" style="color:#94A3B8;">Contact & Residence</span>
                 </div>
-                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD;">
+                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD; flex:1; display:flex; flex-direction:column;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; padding:14px; gap:14px 12px; border-bottom:1px solid #E2E8F0;">
                         <div>
                             <span class="field-label">Mobile Phone</span>
@@ -472,21 +487,21 @@ export async function generatePatientProfilePdf(data) {
                             <div class="field-value" style="font-size:9.7px; word-break:break-all;">${fmt(patient.email)}</div>
                         </div>
                     </div>
-                    <div style="padding:14px;">
+                    <div style="padding:14px; flex:1;">
                         <span class="field-label">Residential Address</span>
                         <div style="font-size:10.6px; font-weight:500; color:#334155; line-height:1.6; margin-top:2px;">${fmtAddress(patient)}</div>
                     </div>
                 </div>
             </div>
- 
+
             <!-- Col 3: Clinical Snapshot -->
-            <div>
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <span class="material-symbols-outlined" style="color:#2563EB; font-size:14.1px;">vital_signs</span>
+            <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:8px; height:20px; margin-bottom:12px;">
+                    ${icon('pulse', { size: 15, color: '#2563EB', strokeWidth: 2 })}
                     <span class="section-eyebrow" style="color:#94A3B8;">Clinical Snapshot</span>
                 </div>
-                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD; height:calc(100% - 32px);">
-                    
+                <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD; flex:1; display:flex; flex-direction:column;">
+
                     <!-- Blood Group + Pregnancy -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid #E2E8F0;">
                         <div style="padding:12px; text-align:center; border-right:1px solid #E2E8F0;">
@@ -501,7 +516,7 @@ export async function generatePatientProfilePdf(data) {
                             <div style="font-size:10.1px; font-weight:600; color:#0E1523; margin-top:6px; line-height:1.3;">${fmtPregnancy(patient)}</div>
                         </div>
                     </div>
- 
+
                     <!-- Blood Pressure -->
                     <div style="padding:12px; text-align:center; border-bottom:1px solid #E2E8F0;">
                         <span class="field-label">Blood Pressure</span>
@@ -511,23 +526,23 @@ export async function generatePatientProfilePdf(data) {
                         </div>
                         ${bpStatus ? `<div style="margin-top:6px;"><span style="font-size:7.9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:3px 10px; border-radius:20px;" class="${bpStatus.bg} ${bpStatus.text}">${bpStatus.label}</span></div>` : ''}
                     </div>
- 
+
                     <!-- Admitted / Status -->
-                    <div style="padding:10px 12px; background:#F8FAFC;">
+                    <div style="padding:10px 12px; background:#F8FAFC; flex:1; display:flex; flex-direction:column; justify-content:center;">
                         <span class="field-label" style="margin-bottom:3px;">Registration Date</span>
                         <div style="font-size:9.7px; font-weight:600; color:#475569;">${fmtDate(patient.created_at)}</div>
                     </div>
                 </div>
             </div>
         </div>
- 
+
         <!-- ── Gold Rule ──────────────────────────────────────── -->
         <div class="divider-gold avoid-break" style="position:relative; z-index:1;"></div>
- 
+
         <!-- ── Section 2: Allergies ───────────────────────────── -->
         <div class="avoid-break" style="position:relative; z-index:1;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                <span class="material-symbols-outlined" style="color:#C0392B; font-size:14.1px;">vaccines</span>
+                ${icon('vaccine', { size: 15, color: '#C0392B', strokeWidth: 1.8 })}
                 <span class="section-eyebrow" style="color:#94A3B8;">Drug & Substance Allergy Alerts</span>
                 ${allergies.length > 0 ? `<span style="background:#FDE8E7; color:#9B1B1B; font-size:7px; font-weight:700; letter-spacing:0.12em; padding:3px 8px; border-radius:20px; text-transform:uppercase; border:1px solid #F5B7B1;">${allergies.length} ALERT${allergies.length > 1 ? 'S' : ''}</span>` : ''}
             </div>
@@ -537,22 +552,22 @@ export async function generatePatientProfilePdf(data) {
                 </div>
             </div>
         </div>
- 
+
         <!-- ── Gold Rule ──────────────────────────────────────── -->
         <div class="divider-gold avoid-break" style="position:relative; z-index:1;"></div>
- 
+
         <!-- ── Section 3: Medical History ────────────────────── -->
         <div class="avoid-break space-y-4" style="position:relative; z-index:1;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                <span class="material-symbols-outlined" style="color:#7C3AED; font-size:14.1px;">history_edu</span>
+                ${icon('history', { size: 15, color: '#7C3AED', strokeWidth: 1.7 })}
                 <span class="section-eyebrow" style="color:#94A3B8;">Medical Background History</span>
             </div>
- 
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <!-- Personal -->
                 <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD;">
                     <div style="background:#EFF6FF; border-bottom:1px solid #BFDBFE; padding:9px 14px; display:flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="color:#1D4ED8; font-size:12.3px;">person</span>
+                        ${icon('person', { size: 13, color: '#1D4ED8', strokeWidth: 1.8 })}
                         <span class="section-eyebrow" style="color:#1D4ED8;">Personal Illnesses</span>
                     </div>
                     <div style="padding:14px;">
@@ -562,7 +577,7 @@ export async function generatePatientProfilePdf(data) {
                 <!-- Family -->
                 <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; background:#FAFBFD;">
                     <div style="background:#F0FDFA; border-bottom:1px solid #99F6E4; padding:9px 14px; display:flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="color:#0F766E; font-size:12.3px;">family_history</span>
+                        ${icon('family', { size: 13, color: '#0F766E', strokeWidth: 1.7 })}
                         <span class="section-eyebrow" style="color:#0F766E;">Hereditary & Family</span>
                     </div>
                     <div style="padding:14px;">
@@ -571,17 +586,17 @@ export async function generatePatientProfilePdf(data) {
                 </div>
             </div>
         </div>
- 
+
         <!-- ── Gold Rule ──────────────────────────────────────── -->
         <div class="divider-gold avoid-break" style="position:relative; z-index:1;"></div>
- 
+
         <!-- ── Section 4: Medications ─────────────────────────── -->
-        <div class="avoid-break space-y-4" style="position:relative; z-index:1;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                <span class="material-symbols-outlined" style="color:#0F766E; font-size:14.1px;">medication</span>
+        <div class="space-y-4" style="position:relative; z-index:1;">
+            <div class="avoid-break" style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                ${icon('pill', { size: 15, color: '#0F766E', strokeWidth: 1.7 })}
                 <span class="section-eyebrow" style="color:#94A3B8;">Current Routine Medications</span>
             </div>
- 
+
             <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(14,21,35,0.04);">
                 <table style="width:100%; border-collapse:collapse; font-family:'Sora',sans-serif;">
                     <thead>
@@ -592,28 +607,24 @@ export async function generatePatientProfilePdf(data) {
                             <th style="padding:10px 16px; font-size:7px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#94A3B8; text-align:left; width:30%;">Instructions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
                         ${medicationsHtml}
                     </tbody>
                 </table>
             </div>
         </div>
- 
+
         <!-- ── Footer ─────────────────────────────────────────── -->
-        <div class="avoid-break" style="margin-top:48px; padding-top:24px; border-top:1.5px solid #E2E8F0; position:relative; z-index:1;">
-            <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:24px; align-items:end;">
- 
-                <!-- QR + Verification -->
-                <div style="display:flex; align-items:flex-end; gap:14px;">
-                    <div style="border:1px solid #E2E8F0; border-radius:8px; padding:5px; background:#FFF; flex-shrink:0;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&margin=0&data=${encodeURIComponent(origin)}" alt="QR Code" style="width:72px; height:72px; display:block; opacity:0.85;"/>
-                    </div>
-                    <div>
-                        <div style="font-size:7.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#B08D57; margin-bottom:4px;">Scan to Verify</div>
-                        <div style="font-size:8.4px; color:#94A3B8; line-height:1.5; max-width:160px;">Digital access code for clinical vault verification &amp; record tracking.</div>
-                    </div>
+        <div style="margin-top:32px; padding-top:24px; border-top:1.5px solid #E2E8F0; position:relative; z-index:1;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px;">
+
+                <!-- Left: System reference note -->
+                <div style="max-width:280px;">
+                    <div style="font-size:7.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#B08D57; margin-bottom:4px;">Document Reference</div>
+                    <div style="font-family:'DM Mono',monospace; font-size:9.2px; color:#475569; letter-spacing:0.03em;">${sysRef}</div>
+                    <div style="font-size:8.4px; color:#94A3B8; line-height:1.5; margin-top:6px;">This profile reflects records on file at the time of generation.</div>
                 </div>
- 
+
                 <!-- Center: Generated timestamp -->
                 <div style="text-align:center; padding:0 24px;">
                     <div style="width:48px; height:1px; background:linear-gradient(90deg,transparent,#B08D57); margin:0 auto 10px;"></div>
@@ -621,7 +632,7 @@ export async function generatePatientProfilePdf(data) {
                     <div style="font-family:'DM Mono',monospace; font-size:9.2px; font-weight:500; color:#475569;">${fmtNow()}</div>
                     <div style="width:48px; height:1px; background:linear-gradient(90deg,#B08D57,transparent); margin:10px auto 0;"></div>
                 </div>
- 
+
                 <!-- Right: Signature -->
                 <div style="text-align:right;">
                     <div style="display:inline-block; min-width:180px;">
@@ -632,9 +643,9 @@ export async function generatePatientProfilePdf(data) {
                         <div style="font-size:7px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#CBD5E1; margin-top:2px; text-align:right;">Authorized Validated Profile</div>
                     </div>
                 </div>
- 
+
             </div>
- 
+
             <!-- Bottom rule -->
             <div style="margin-top:20px; height:3px; background:linear-gradient(90deg, #0E1523 0%, #1A2740 50%, #0E1523 100%); border-radius:2px;"></div>
             <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
@@ -643,7 +654,7 @@ export async function generatePatientProfilePdf(data) {
                 <div style="font-family:'DM Mono',monospace; font-size:7px; color:#CBD5E1; letter-spacing:0.08em;">ID: ${patient.id}</div>
             </div>
         </div>
- 
+
     </div>
 </body>
 </html>`;
@@ -665,9 +676,20 @@ export async function generatePatientProfilePdf(data) {
         page.on('requestfailed', req => console.error('[PDF REQUEST FAILED]', req.url(), req.failure()?.errorText || ''));
         page.on('response', res => { if (res.status() >= 400) console.error('[PDF RESPONSE ERROR]', res.status(), res.url()); });
 
-        await page.setContent(htmlBody, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.setContent(htmlBody, { waitUntil: 'networkidle0', timeout: 60000 });
         await page.evaluate(async () => {
             if (typeof document !== 'undefined' && document.fonts) {
+                // Explicitly load the icon font glyphs used on the page so the
+                // ligature text (e.g. "warning", "fingerprint") never leaks
+                // into the PDF if document.fonts.ready resolves too early.
+                const iconGlyphs = [
+                    'warning', 'monitor_heart', 'pregnant_woman', 'fingerprint',
+                    'location_on', 'vital_signs', 'vaccines', 'history_edu',
+                    'person', 'family_history', 'medication', 'calendar_today'
+                ].join(' ');
+                try {
+                    await document.fonts.load('300 20px "Material Symbols Outlined"', iconGlyphs);
+                } catch (e) { /* font may already be loaded or unavailable */ }
                 await document.fonts.ready;
             }
         });
@@ -1335,7 +1357,7 @@ export async function generateSoapWhoFormPdf(data) {
         });
     }
 
-    
+
     const odonto = odontograms && odontograms.length > 0 ? odontograms[0] : {};
     const odontogramMap = buildOdontogramMap(odontogramDetails);
     const odontogramChartHtml = renderOdontogramChartHtml(odontogramMap);
@@ -1355,13 +1377,13 @@ export async function generateSoapWhoFormPdf(data) {
             }
             if (d.keadaan) toothG[d.tooth_number].keadaan.add(d.keadaan);
             if (d.protesa) toothG[d.tooth_number].protesa.add(d.protesa);
-            
+
             if (d.all_diagnoses && d.all_diagnoses.length > 0) {
                 d.all_diagnoses.forEach(diag => toothG[d.tooth_number].diagnoses.add(diag.icd10_code ? `${diag.icd10_code} - ${diag.icd10_display}` : diag.icd10_display));
             } else if (d.icd10_display) {
                 toothG[d.tooth_number].diagnoses.add(d.icd10_code ? `${d.icd10_code} - ${d.icd10_display}` : d.icd10_display);
             }
-            
+
             if (d.all_procedures && d.all_procedures.length > 0) {
                 d.all_procedures.forEach(proc => toothG[d.tooth_number].procedures.add(proc.icd9cm_code ? `${proc.icd9cm_code} - ${proc.icd9cm_display}` : proc.icd9cm_display));
             } else if (d.icd9cm_display) {
@@ -1382,8 +1404,8 @@ export async function generateSoapWhoFormPdf(data) {
             const grp = toothG[tn];
             let surfStrings = grp.surfaces.map(x => {
                 if (!x.s && !x.r) return '';
-                if (!x.s && x.r) return `All: ${x.r} ${x.br ? '('+x.br+')' : ''}`;
-                return `${x.s}: ${x.r || '-'} ${x.br ? '('+x.br+')' : ''}`;
+                if (!x.s && x.r) return `All: ${x.r} ${x.br ? '(' + x.br + ')' : ''}`;
+                return `${x.s}: ${x.r || '-'} ${x.br ? '(' + x.br + ')' : ''}`;
             }).filter(Boolean).join('<br/>');
 
             const bg = count % 2 !== 0 ? ' bg-slate-50/50' : ' bg-white';
@@ -1734,7 +1756,7 @@ export async function generatePaymentReceiptPdf(data) {
     const { payment, encounter, patient, doctor, cashier, items = [], origin } = data;
     const logo = getLogoBase64();
     const sysRef = `INV-${new Date().getFullYear()}-${payment.id.toString().split('-')[0].toUpperCase()}`;
-    
+
     function fmtIdr(amount) {
         if (amount == null) return 'Rp 0';
         return 'Rp ' + Number(amount).toLocaleString('id-ID');

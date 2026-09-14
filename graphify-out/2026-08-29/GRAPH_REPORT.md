@@ -1,11 +1,11 @@
-# Graph Report - Oratio  (2026-08-27)
+# Graph Report - Oratio  (2026-08-28)
 
 ## Corpus Check
-- 164 files · ~196,309 words
+- 165 files · ~196,486 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 801 nodes · 900 edges · 124 communities (110 shown, 14 thin omitted)
+- 805 nodes · 907 edges · 125 communities (111 shown, 14 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.6)
 - Token cost: 0 input · 0 output
 
@@ -71,7 +71,7 @@
 ## God Nodes (most connected - your core abstractions)
 1. `$lib/utils/constants.js` - 20 edges
 2. `$lib/utils/formatters.js` - 16 edges
-3. `$lib/stores/toast.js` - 12 edges
+3. `$lib/stores/toast.js` - 13 edges
 4. `generatePatientProfilePdf()` - 12 edges
 5. `$lib/components/Forms/RichSelect.svelte` - 12 edges
 6. `What You Must Do When Invoked` - 12 edges
@@ -99,7 +99,7 @@
 - **NAS Docker Deployment Architecture** — _github_workflows_deploy_job_deploy, docker_compose_db_service, docker_compose_app_service [INFERRED 0.95]
 - **Oratio Compilation and Build Failures** — build_logs_pdfmake_error, build_log_const_tag_error, build_log2_await_error, build_output_app_css_error [INFERRED 0.85]
 
-## Communities (124 total, 14 thin omitted)
+## Communities (125 total, 14 thin omitted)
 
 ### Community 0 - "schema.js"
 Cohesion: 0.03
@@ -139,7 +139,7 @@ Nodes (3): getJakartaDateString(), getJakartaDateStringFromDate(), getJakartaMon
 
 ### Community 9 - "+page.svelte"
 Cohesion: 0.13
-Nodes (10): $lib/stores/realtimeStore.js, loadEncounters(), loadReferrals(), loadShifts(), loadStats(), selectEncounter(), selectReferral(), setupEncountersRealtime() (+2 more)
+Nodes (14): $lib/stores/realtimeStore.js, importantTables, loadKPIs(), loadStats(), setupDashboardRealtime(), loadEncounters(), loadReferrals(), loadShifts() (+6 more)
 
 ### Community 10 - "+page.svelte"
 Cohesion: 0.16
@@ -250,11 +250,11 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 122 - "+page.svelte"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (7): loadEncounterLocks(), loadShifts(), loadStats(), selectEncounter(), selectReferral(), setupEncountersRealtime(), updateShift()
 
 ## Knowledge Gaps
-- **245 isolated node(s):** `name`, `version`, `private`, `dev`, `build` (+240 more)
+- **246 isolated node(s):** `name`, `version`, `private`, `dev`, `build` (+241 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -262,13 +262,13 @@ Nodes (7): loadEncounterLocks(), loadShifts(), loadStats(), selectEncounter(), s
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `$lib/utils/constants.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`, `+layout.svelte`, `+page.svelte`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `$lib/stores/toast.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `$lib/stores/toast.js` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`, `+page.svelte`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **Why does `$lib/components/Forms/RichSelect.svelte` connect `$lib/utils/constants.js` to `+page.svelte`, `+page.svelte`, `+page.svelte`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _245 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _246 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `schema.js` be split into smaller, more focused modules?**
   _Cohesion score 0.027777777777777776 - nodes in this community are weakly interconnected._
 - **Should `+page.svelte` be split into smaller, more focused modules?**

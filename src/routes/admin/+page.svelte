@@ -3,11 +3,36 @@
 	import { ADMIN_TABLES } from "$lib/utils/constants.js";
 	import { createRealtimeDetail } from "$lib/stores/realtimeStore.js";
 
+	import { addToast } from "$lib/stores/toast.js";
+
 	let stats = {};
 	let recentActivity = [];
 	let onShiftNow = [];
 	let loading = true;
+	let runningCron = false;
 	let dashboardStore;
+
+	async function triggerCron() {
+		if (runningCron) return;
+		runningCron = true;
+		try {
+			const res = await fetch("/api/cron", { method: "POST" });
+			const data = await res.json();
+			if (res.ok) {
+				addToast(
+					data.message || "End-of-day cleanup berhasil dijalankan",
+					"success",
+				);
+				loadStats(true);
+			} else {
+				addToast(data.error || "Gagal menjalankan cleanup", "error");
+			}
+		} catch (err) {
+			addToast("Terjadi kesalahan jaringan saat menjalankan cleanup", "error");
+		} finally {
+			runningCron = false;
+		}
+	}
 
 	const importantTables = [
 		"users",
@@ -428,6 +453,30 @@
 							</p>
 						</div>
 					</a>
+					<button
+						type="button"
+						on:click={triggerCron}
+						disabled={runningCron}
+						class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-left hover:border-rose-500/50 hover:shadow-md transition-all group disabled:opacity-50"
+					>
+						<div
+							class="p-3 bg-rose-500/10 text-rose-500 rounded-xl group-hover:bg-rose-500 group-hover:text-white transition-all shrink-0"
+						>
+							<span class="material-symbols-outlined"
+								>{runningCron ? "progress_activity" : "cleaning_services"}</span
+							>
+						</div>
+						<div>
+							<p
+								class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-rose-500 transition-colors"
+							>
+								{runningCron ? "Menjalankan..." : "End-of-Day Cleanup"}
+							</p>
+							<p class="text-[11px] text-slate-500">
+								Cancel Planned & Discontinue Active
+							</p>
+						</div>
+					</button>
 				</div>
 			</div>
 

@@ -236,6 +236,13 @@ export async function generatePatientProfilePdf(data) {
     // Design: Refined Clinical Luxury — deep slate, warm gold accents, precision typography
     // Lightweight build: no external QR fetch, no CDN Tailwind runtime — plain CSS only.
 
+    // If the medications table is short, keep it glued to the footer so a
+    // near-page-boundary table doesn't strand the footer alone on a mostly-blank
+    // trailing page. Longer tables are left free to paginate naturally (with the
+    // table header repeating), since forcing a large block to avoid breaking
+    // would just move the overflow problem earlier.
+    const keepMedsWithFooter = medications.length <= 4;
+
     const htmlBody = `<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
@@ -280,9 +287,9 @@ export async function generatePatientProfilePdf(data) {
         }
         .px-10 { padding-left: 40px; padding-right: 40px; }
         .py-7 { padding-top: 28px; padding-bottom: 28px; }
-        .pt-7 { padding-top: 28px; }
-        .pb-12 { padding-bottom: 48px; }
-        .space-y-7 > * + * { margin-top: 28px; }
+        .pt-7 { padding-top: 22px; }
+        .pb-12 { padding-bottom: 20px; }
+        .space-y-7 > * + * { margin-top: 22px; }
         .space-y-4 > * + * { margin-top: 16px; }
         .space-y-3 > * + * { margin-top: 12px; }
         .flex { display: flex; }
@@ -446,7 +453,7 @@ export async function generatePatientProfilePdf(data) {
                     <!-- Header row -->
                     <div style="background:#F4F6F9; border-bottom:1px solid #E2E8F0; padding:8px 14px 7px;">
                         <span class="field-label" style="margin:0; color:#B08D57;">Full Legal Name</span>
-                        <div style="font-size:12.3px; font-weight:700; color:#0E1523; letter-spacing:-0.02em; margin-top:2px;">${fmt(patient.nama_lengkap)}</div>
+                        <div style="font-size:12.3px; font-weight:700; color:#0E1523; letter-spacing:-0.01em; margin-top:2px;">${fmt(patient.nama_lengkap)}</div>
                     </div>
                     <!-- Grid fields -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; padding:14px; gap:14px 12px; flex:1;">
@@ -590,8 +597,9 @@ export async function generatePatientProfilePdf(data) {
         <!-- ── Gold Rule ──────────────────────────────────────── -->
         <div class="divider-gold avoid-break" style="position:relative; z-index:1;"></div>
 
-        <!-- ── Section 4: Medications ─────────────────────────── -->
-        <div class="space-y-4" style="position:relative; z-index:1;">
+        <!-- ── Section 4: Medications (+ Footer, glued together when short) ── -->
+        <div class="${keepMedsWithFooter ? 'avoid-break' : ''}" style="position:relative; z-index:1;">
+        <div class="space-y-4">
             <div class="avoid-break" style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
                 ${icon('pill', { size: 15, color: '#0F766E', strokeWidth: 1.7 })}
                 <span class="section-eyebrow" style="color:#94A3B8;">Current Routine Medications</span>
@@ -615,7 +623,7 @@ export async function generatePatientProfilePdf(data) {
         </div>
 
         <!-- ── Footer ─────────────────────────────────────────── -->
-        <div style="margin-top:32px; padding-top:24px; border-top:1.5px solid #E2E8F0; position:relative; z-index:1;">
+        <div style="margin-top:8px; padding-top:18px; border-top:1.5px solid #E2E8F0;">
             <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px;">
 
                 <!-- Left: System reference note -->
@@ -654,10 +662,16 @@ export async function generatePatientProfilePdf(data) {
                 <div style="font-family:'DM Mono',monospace; font-size:7px; color:#CBD5E1; letter-spacing:0.08em;">ID: ${patient.id}</div>
             </div>
         </div>
+        </div>
 
     </div>
 </body>
 </html>`;
+
+    if (process.env.DEBUG_DUMP_HTML) {
+        const fsMod = await import('fs');
+        fsMod.writeFileSync(process.env.DEBUG_DUMP_HTML, htmlBody);
+    }
 
     const browser = await puppeteer.launch({
         headless: "new",
